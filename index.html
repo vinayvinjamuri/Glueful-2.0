@@ -304,23 +304,11 @@ function statCard(label, value, accent){
 function setFilter(f){ filterStatus = f; render(); }
 
 // install banner (only shown when not already installed, and not on desktop)
-function initInstallBanner(){
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  if(isStandalone || !isMobile) return;
-  const el = document.getElementById("install-banner");
-  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-  el.style.display = "block";
-  el.innerHTML = isIOS
-    ? `Tap the <b>Share</b> icon below, then <b>Add to Home Screen</b> to install this as an app.`
-    : `Open the browser menu (&#8942;) and tap <b>Add to Home screen</b> to install this as an app.`;
-}
 
 document.getElementById("today-label").textContent = new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
 document.getElementById("f-date").value = todayISO();
 load();
 render();
-initInstallBanner();
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
