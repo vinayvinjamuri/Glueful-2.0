@@ -1160,7 +1160,8 @@
 
       z-index:30;
 
-      display:none;
+      /* Hidden until a valid authenticated session is shown. */
+      display:none !important;
 
       border-top:
         1px solid
@@ -1179,6 +1180,11 @@
           env(safe-area-inset-bottom)
         );
 
+    }
+
+
+    .bottom-nav.authenticated {
+      display:flex !important;
     }
 
 
@@ -2995,10 +3001,10 @@
     let APPLICATION_KEY =
       "job_applications_v1";
 
-    const INTERVIEW_KEY =
+    let INTERVIEW_KEY =
       "glueful_interviews_v1";
 
-    const RESUME_KEY =
+    let RESUME_KEY =
       "glueful_resumes_v1";
 
 
@@ -5765,11 +5771,26 @@
 
     async function logoutUser() {
 
-      await supabaseClient.auth.signOut();
+      const {
+        error
+      } =
+        await supabaseClient.auth.signOut();
+
 
       closeModal(
         "logout-modal"
       );
+
+
+      if(error) {
+
+        console.error(
+          "Logout error:",
+          error
+        );
+
+      }
+
 
       showLoginScreen();
 
@@ -6146,7 +6167,9 @@
           data.session
         ) {
 
-          showMainApp();
+          await showMainApp(
+            data.session
+          );
 
         }
 
@@ -6222,61 +6245,186 @@
 
 
     /* =====================================================
-       SHOW APP
+       SHOW / HIDE APP
     ====================================================== */
 
-    function showMainApp() {
-
-  supabaseClient.auth.getUser().then(({ data }) => {
-
-    if (data && data.user) {
-
-      APPLICATION_KEY =
-        "job_applications_" + data.user.id;
-
-    }
-
-    document.getElementById(
-      "auth-screen"
-    ).style.display =
-      "none";
+    let appStarting = false;
 
 
-    document.querySelector(
-      ".wrap"
-    ).style.display =
-      "block";
+    async function showMainApp(session = null) {
+
+      /*
+       * Use the session user directly when available.
+       * This avoids a race where signInWithPassword has just
+       * succeeded but getUser() has not finished refreshing yet.
+       */
+
+      if(appStarting) {
+        return;
+      }
+
+      appStarting = true;
+
+      try {
+
+        let user =
+          session?.user || null;
 
 
-    load();
+        if(!user) {
 
-    render();
-
-  });
-
-}
-
-      document.getElementById(
-        "auth-screen"
-      ).style.display =
-        "none";
+          const {
+            data,
+            error
+          } =
+            await supabaseClient.auth.getUser();
 
 
-      document.getElementById(
-        "main-app"
-      ).style.display =
-        "block";
+          if(error) {
+            throw error;
+          }
 
 
-      document.getElementById(
-        "bottom-nav"
-      ).style.display =
-        "flex";
+          user =
+            data?.user || null;
+
+        }
 
 
-      loadAll();
+        if(!user) {
 
-      renderAll();
+          showLoginScreen();
+
+          return;
+
+        }
+
+
+        /*
+         * Every account gets its own local-storage namespace.
+         * This prevents one user's applications/interviews/resumes
+         * from appearing for another user on the same device.
+         */
+
+        APPLICATION_KEY =
+          "job_applications_" + user.id;
+
+        INTERVIEW_KEY =
+          "glueful_interviews_" + user.id;
+
+        RESUME_KEY =
+          "glueful_resumes_" + user.id;
+
+
+        /*
+         * One-time migration of the old application key.
+         * This preserves applications created before user-scoped
+         * storage was introduced.
+         */
+
+        const migrationKey =
+          "glueful_storage_migrated_" + user.id;
+
+
+        if(
+          !localStorage.getItem(
+            migrationKey
+          )
+        ) {
+
+          const oldApplications =
+            localStorage.getItem(
+              "job_applications_v1"
+            );
+
+
+          if(
+            oldApplications &&
+            !localStorage.getItem(
+              APPLICATION_KEY
+            )
+          ) {
+
+            localStorage.setItem(
+              APPLICATION_KEY,
+              oldApplications
+            );
+
+          }
+
+
+          localStorage.setItem(
+            migrationKey,
+            "1"
+          );
+
+        }
+
+
+        document.getElementById(
+          "auth-screen"
+        ).style.display =
+          "none";
+
+
+        document.getElementById(
+          "main-app"
+        ).style.display =
+          "block";
+
+
+        document.getElementById(
+          "bottom-nav"
+        ).classList.add(
+          "authenticated"
+        );
+
+
+        loadAll();
+
+        renderAll();
+
+
+        /*
+         * Reset the login button in case the user returns to
+         * the login screen later.
+         */
+
+        const loginButton =
+          document.getElementById(
+            "login-button"
+          );
+
+
+        if(loginButton) {
+
+          loginButton.disabled =
+            false;
+
+          loginButton.innerHTML =
+            "Login";
+
+        }
+
+
+      } catch(error) {
+
+        console.error(
+          "Unable to start Glueful:",
+          error
+        );
+
+        showLoginScreen();
+
+        showAuthMessage(
+          "We couldn't open your account. Please try logging in again."
+        );
+
+      } finally {
+
+        appStarting = false;
+
+      }
 
     }
 
@@ -6297,8 +6445,37 @@
 
       document.getElementById(
         "bottom-nav"
-      ).style.display =
-        "none";
+      ).classList.remove(
+        "authenticated"
+      );
+
+
+      /*
+       * Close anything that may have been left open before logout.
+       */
+
+      document
+        .querySelectorAll(
+          ".modal-overlay.open"
+        )
+        .forEach(
+          modal => {
+            modal.classList.remove(
+              "open"
+            );
+          }
+        );
+
+
+      document.getElementById(
+        "profile-sheet"
+      ).classList.remove(
+        "open"
+      );
+
+
+      currentView =
+        "dashboard";
 
     }
 
@@ -6385,7 +6562,9 @@
           data.session
         ) {
 
-          showMainApp();
+          await showMainApp(
+            data.session
+          );
 
         } else {
 
@@ -6419,7 +6598,9 @@
 
         if(session) {
 
-          showMainApp();
+          showMainApp(
+            session
+          );
 
         } else {
 
