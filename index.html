@@ -3375,51 +3375,128 @@
        LOAD / SAVE
     ====================================================== */
 
-    function loadAll() {
+    async function getCurrentUser() {
+
+      const {
+        data,
+        error
+      } = await supabaseClient.auth.getUser();
+
+      if(error)
+        throw error;
+
+      return data?.user || null;
+
+    }
+
+
+    async function loadAll() {
 
       try {
 
-        applications =
-          JSON.parse(
-            localStorage.getItem(
-              APPLICATION_KEY
-            ) || "[]"
-          );
+        /* Applications are stored in Supabase so the same account
+           can see them on every phone, laptop, or tablet. */
+        const user = await getCurrentUser();
 
-        interviews =
-          JSON.parse(
-            localStorage.getItem(
-              INTERVIEW_KEY
-            ) || "[]"
-          );
+        if(!user) {
 
-        resumes =
-          JSON.parse(
-            localStorage.getItem(
-              RESUME_KEY
-            ) || "[]"
-          );
+          applications = [];
+
+        } else {
+
+          const {
+            data: cloudApplications,
+            error
+          } = await supabaseClient
+            .from("applications")
+            .select("id,user_id,company,role,date,status,link,jd,created_at,updated_at")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending:false });
+
+          if(error)
+            throw error;
+
+          applications = cloudApplications || [];
+
+          /* Migrate older local applications only when the cloud table
+             has no applications for this account. */
+          if(applications.length === 0) {
+
+            const oldLocal = JSON.parse(
+              localStorage.getItem(APPLICATION_KEY) || "[]"
+            );
+
+            if(oldLocal.length) {
+
+              const rows = oldLocal.map(app => ({
+                user_id:user.id,
+                company:app.company || "",
+                role:app.role || "",
+                date:app.date || todayISO(),
+                status:app.status || "applied",
+                link:app.link || null,
+                jd:app.jd || null
+              }));
+
+              const {
+                data: migrated,
+                error:migrateError
+              } = await supabaseClient
+                .from("applications")
+                .insert(rows)
+                .select("id,user_id,company,role,date,status,link,jd,created_at,updated_at");
+
+              if(migrateError)
+                throw migrateError;
+
+              applications = migrated || [];
+
+            }
+
+          }
+
+        }
+
+        /* Interviews and resumes remain local until their own cloud
+           tables are created. */
+        interviews = JSON.parse(
+          localStorage.getItem(INTERVIEW_KEY) || "[]"
+        );
+
+        resumes = JSON.parse(
+          localStorage.getItem(RESUME_KEY) || "[]"
+        );
 
       } catch(e) {
 
+        console.error("Cloud load error:", e);
+
         applications = [];
-        interviews = [];
-        resumes = [];
+
+        interviews = JSON.parse(
+          localStorage.getItem(INTERVIEW_KEY) || "[]"
+        );
+
+        resumes = JSON.parse(
+          localStorage.getItem(RESUME_KEY) || "[]"
+        );
+
+        showError(
+          "Couldn't load applications from the cloud."
+        );
 
       }
 
     }
 
 
-    function saveAll() {
+    async function saveAll() {
 
       try {
 
-        localStorage.setItem(
-          APPLICATION_KEY,
-          JSON.stringify(applications)
-        );
-
+        /* Interviews and resumes remain local for now.
+           Applications are written to Supabase by their own
+           create/update/delete functions below. */
         localStorage.setItem(
           INTERVIEW_KEY,
           JSON.stringify(interviews)
@@ -3432,11 +3509,88 @@
 
       } catch(e) {
 
+        console.error("Save error:", e);
+
         showError(
-          "Couldn't save data on this device."
+          "Couldn't save data."
         );
 
       }
+
+    }
+
+
+    async function saveApplicationToCloud(app, isNew = false) {
+
+      const user = await getCurrentUser();
+
+      if(!user)
+        throw new Error("You are not signed in.");
+
+      const row = {
+        user_id:user.id,
+        company:app.company || "",
+        role:app.role || "",
+        date:app.date || todayISO(),
+        status:app.status || "applied",
+        link:app.link || null,
+        jd:app.jd || null
+      };
+
+      if(isNew) {
+
+        const {
+          data,
+          error
+        } = await supabaseClient
+          .from("applications")
+          .insert(row)
+          .select("id,user_id,company,role,date,status,link,jd,created_at,updated_at")
+          .single();
+
+        if(error)
+          throw error;
+
+        return data;
+
+      }
+
+      const {
+        data,
+        error
+      } = await supabaseClient
+        .from("applications")
+        .update(row)
+        .eq("id", app.id)
+        .eq("user_id", user.id)
+        .select("id,user_id,company,role,date,status,link,jd,created_at,updated_at")
+        .single();
+
+      if(error)
+        throw error;
+
+      return data;
+
+    }
+
+
+    async function deleteApplicationFromCloud(id) {
+
+      const user = await getCurrentUser();
+
+      if(!user)
+        throw new Error("You are not signed in.");
+
+      const {
+        error
+      } = await supabaseClient
+        .from("applications")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", user.id);
+
+      if(error)
+        throw error;
 
     }
 
@@ -4370,7 +4524,7 @@
     }
 
 
-    function submitApplication(e) {
+    async function submitApplication(e) {
 
       e.preventDefault();
 
@@ -4411,42 +4565,56 @@
       };
 
 
-      if(
-        editingApplicationId
-      ) {
+      try {
 
-        applications =
-          applications.map(
+        if(editingApplicationId) {
+
+          const updated = await saveApplicationToCloud(
+            {
+              id:editingApplicationId,
+              ...data
+            },
+            false
+          );
+
+          applications = applications.map(
             app =>
-              app.id ===
-              editingApplicationId
-                ? {
-                    ...app,
-                    ...data
-                  }
+              app.id === editingApplicationId
+                ? updated
                 : app
           );
 
-      } else {
+        } else {
 
-        applications.unshift({
+          const created = await saveApplicationToCloud(
+            data,
+            true
+          );
 
-          id:makeId(),
+          applications.unshift(created);
 
-          ...data
+        }
 
-        });
+        await saveAll();
+
+        closeModal(
+          "application-modal"
+        );
+
+        renderAll();
+
+      } catch(error) {
+
+        console.error(
+          "Application save error:",
+          error
+        );
+
+        showError(
+          "Couldn't save the application to the cloud."
+        );
 
       }
-
-
-      saveAll();
-
-      closeModal(
-        "application-modal"
-      );
-
-      renderAll();
 
     }
 
@@ -4492,7 +4660,7 @@
     }
 
 
-    function confirmDeleteApplication() {
+    async function confirmDeleteApplication() {
 
       if (!pendingDeleteApplicationId) {
         closeDeleteModal();
@@ -4501,16 +4669,33 @@
 
       const id = pendingDeleteApplicationId;
 
-      applications =
-        applications.filter(
-          a => a.id !== id
+      try {
+
+        await deleteApplicationFromCloud(id);
+
+        applications =
+          applications.filter(
+            a => a.id !== id
+          );
+
+        await saveAll();
+
+        closeDeleteModal();
+
+        renderAll();
+
+      } catch(error) {
+
+        console.error(
+          "Application delete error:",
+          error
         );
 
-      saveAll();
+        showError(
+          "Couldn't delete the application from the cloud."
+        );
 
-      closeDeleteModal();
-
-      renderAll();
+      }
 
     }
 
@@ -6592,7 +6777,7 @@
         );
 
 
-        loadAll();
+        await loadAll();
 
         renderAll();
 
