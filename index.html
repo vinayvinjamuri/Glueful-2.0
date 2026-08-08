@@ -67,109 +67,118 @@ const supabaseClient = window.supabase.createClient(
 </style>
 </head>
 <body>
-  <!-- Authentication -->
+<!-- Authentication -->
 <div id="auth-screen" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem;">
   <div class="card" style="width:100%;max-width:400px;padding:1.5rem;">
 
-    <h2 class="display" style="margin:0 0 6px;">Welcome to Glueful</h2>
+    <h2 class="display" style="margin:0 0 6px;">
+      Welcome to Glueful
+    </h2>
+
     <p style="color:#7C8797;font-size:13px;margin:0 0 1.5rem;">
       Sign in to manage your applications
     </p>
 
-   <div class="field">
-  <label>Email</label>
-  <input
-    id="auth-email"
-    class="input"
-    type="email"
-    placeholder="you@example.com"
-    required
-  />
-</div>
-
-<div class="field">
-  <label>Password</label>
-
-  <div style="position:relative;">
-    <input
-      id="auth-password"
-      class="input"
-      type="password"
-      placeholder="Password"
-      required
-      style="padding-right:45px;"
-    />
-
-    <button
-      type="button"
-      onclick="togglePassword()"
-      style="
-        position:absolute;
-        right:8px;
-        top:50%;
-        transform:translateY(-50%);
-        background:transparent;
-        color:#AEB7C2;
-        font-size:18px;
-        padding:6px;
-      "
-      aria-label="Show password"
-    >
-      👁️
-    </button>
-  </div>
-</div>
-
-  <div style="position:relative;">
-    <input id="auth-password"
-           class="input"
-           type="password"
-           placeholder="Password"
-           required
-           style="padding-right:45px;" />
-
-    <button type="button"
-            onclick="togglePassword()"
-            style="position:absolute;
-                   right:10px;
-                   top:50%;
-                   transform:translateY(-50%);
-                   background:transparent;
-                   color:#AEB7C2;
-                   font-size:18px;
-                   padding:5px;">
-      👁️
-    </button>
-  </div>
-</div>
-
+    <!-- Email -->
     <div class="field">
-      <label>Password</label>
-      <input id="auth-password" class="input" type="password"
-             placeholder="Password" required />
+      <label>Email</label>
+      <input
+        id="auth-email"
+        class="input"
+        type="email"
+        placeholder="you@example.com"
+        required
+      />
     </div>
 
-    <button onclick="loginUser()"
-      style="width:100%;background:linear-gradient(135deg,#8B2FE0,#2F6FFF);color:white;font-weight:600;padding:.75rem;border-radius:8px;">
+    <!-- Password -->
+    <div class="field">
+      <label>Password</label>
+
+      <div style="position:relative;">
+        <input
+          id="auth-password"
+          class="input"
+          type="password"
+          placeholder="Password"
+          required
+          style="padding-right:45px;"
+        />
+
+        <button
+          type="button"
+          onclick="togglePassword(this)"
+          style="
+            position:absolute;
+            right:8px;
+            top:50%;
+            transform:translateY(-50%);
+            background:transparent;
+            color:#AEB7C2;
+            font-size:18px;
+            padding:6px;
+          "
+          aria-label="Show password"
+        >👁️</button>
+      </div>
+    </div>
+
+    <!-- Login -->
+    <button
+      type="button"
+      onclick="loginUser()"
+      style="
+        width:100%;
+        background:linear-gradient(135deg,#8B2FE0,#2F6FFF);
+        color:white;
+        font-weight:600;
+        padding:.75rem;
+        border-radius:8px;
+      "
+    >
       Login
     </button>
 
-    <button onclick="signupUser()"
-      style="width:100%;background:#1A2029;color:#E8ECF1;font-weight:600;padding:.75rem;border-radius:8px;margin-top:.6rem;">
+    <!-- Create account -->
+    <button
+      type="button"
+      onclick="signupUser()"
+      style="
+        width:100%;
+        background:#1A2029;
+        color:#E8ECF1;
+        font-weight:600;
+        padding:.75rem;
+        border-radius:8px;
+        margin-top:.6rem;
+      "
+    >
       Create account
     </button>
 
-    <button onclick="resetPassword()"
-      style="width:100%;background:transparent;color:#8B6BF0;font-size:13px;padding:.7rem;margin-top:.4rem;">
+    <!-- Forgot password -->
+    <button
+      type="button"
+      onclick="resetPassword()"
+      style="
+        width:100%;
+        background:transparent;
+        color:#8B6BF0;
+        font-size:13px;
+        padding:.7rem;
+        margin-top:.4rem;
+      "
+    >
       Forgot password?
     </button>
 
-    <p id="auth-message"
-       style="font-size:13px;color:#7C8797;margin:1rem 0 0;"></p>
+    <p
+      id="auth-message"
+      style="font-size:13px;color:#7C8797;margin:1rem 0 0;"
+    ></p>
 
   </div>
 </div>
-
 <div class="wrap">
   <!-- Header -->
   <div class="row" style="justify-content: space-between; margin-bottom: 1.75rem; flex-wrap: wrap; gap: 12px;">
@@ -496,28 +505,17 @@ async function resetPassword() {
   showAuthMessage("Password reset email sent. Check your inbox.");
 }
 
-function showAuthMessage(message) {
-  function togglePassword() {
-  const password = document.getElementById("auth-password");
-  const button = event.currentTarget;
-
-  if (password.type === "password") {
-    password.type = "text";
-    button.textContent = "🙈";
-  } else {
-    password.type = "password";
-    button.textContent = "👁️";
-  }
-}
   document.getElementById("auth-message").textContent = message;
 }
-  function togglePassword() {
+  function togglePassword(button) {
   const passwordInput = document.getElementById("auth-password");
 
   if (passwordInput.type === "password") {
     passwordInput.type = "text";
+    button.textContent = "🙈";
   } else {
     passwordInput.type = "password";
+    button.textContent = "👁️";
   }
 }
 function setFilter(f){ filterStatus = f; render(); }
