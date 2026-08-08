@@ -8,7 +8,14 @@ const SUPABASE_KEY = "sb_publishable_91SKh77UlMjhwIcTimKyAg_Nbb_uVIN";
 
 const supabaseClient = window.supabase.createClient(
     SUPABASE_URL,
-    SUPABASE_KEY
+    SUPABASE_KEY,
+    {
+        auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: true
+        }
+    }
 );
 </script>
 <meta charset="UTF-8" />
