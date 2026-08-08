@@ -442,10 +442,54 @@ function setFilter(f){ filterStatus = f; render(); }
 
 // install banner (only shown when not already installed, and not on desktop)
 
-document.getElementById("today-label").textContent = new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
+document.getElementById("today-label").textContent =
+  new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "short",
+    day: "numeric"
+  });
+
 document.getElementById("f-date").value = todayISO();
-load();
-render();
+
+async function initializeAuth() {
+  const { data: { session }, error } =
+    await supabaseClient.auth.getSession();
+
+  if (error) {
+    console.error("Session error:", error);
+    return;
+  }
+
+  if (session) {
+    // User is already logged in
+    document.getElementById("auth-screen").style.display = "none";
+    document.querySelector(".wrap").style.display = "block";
+
+    load();
+    render();
+  } else {
+    // No existing session
+    document.getElementById("auth-screen").style.display = "flex";
+    document.querySelector(".wrap").style.display = "none";
+  }
+}
+
+// Check login when app starts
+initializeAuth();
+
+// Keep UI synchronized with Supabase authentication
+supabaseClient.auth.onAuthStateChange((event, session) => {
+  if (session) {
+    document.getElementById("auth-screen").style.display = "none";
+    document.querySelector(".wrap").style.display = "block";
+
+    load();
+    render();
+  } else {
+    document.getElementById("auth-screen").style.display = "flex";
+    document.querySelector(".wrap").style.display = "none";
+  }
+});
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
