@@ -2992,7 +2992,7 @@
        STORAGE
     ====================================================== */
 
-    const APPLICATION_KEY =
+    let APPLICATION_KEY =
       "job_applications_v1";
 
     const INTERVIEW_KEY =
@@ -6226,6 +6226,35 @@
     ====================================================== */
 
     function showMainApp() {
+
+  supabaseClient.auth.getUser().then(({ data }) => {
+
+    if (data && data.user) {
+
+      APPLICATION_KEY =
+        "job_applications_" + data.user.id;
+
+    }
+
+    document.getElementById(
+      "auth-screen"
+    ).style.display =
+      "none";
+
+
+    document.querySelector(
+      ".wrap"
+    ).style.display =
+      "block";
+
+
+    load();
+
+    render();
+
+  });
+
+}
 
       document.getElementById(
         "auth-screen"
