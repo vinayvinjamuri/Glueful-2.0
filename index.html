@@ -2,580 +2,2357 @@
 <html lang="en">
 <head>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <script>
-const SUPABASE_URL = "https://xztbhheexianejsvwpva.supabase.co";
-const SUPABASE_KEY = "sb_publishable_91SKh77UlMjhwIcTimKyAg_Nbb_uVIN";
+    const SUPABASE_URL = "https://xztbhheexianejsvwpva.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_91SKh77UlMjhwIcTimKyAg_Nbb_uVIN";
 
-const supabaseClient = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY,
-    {
+    const supabaseClient = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_KEY,
+      {
         auth: {
-            persistSession: true,
-            autoRefreshToken: true,
-            detectSessionInUrl: true
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true
         }
+      }
+    );
+  </script>
+
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"
+  />
+
+  <title>Glueful</title>
+
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta
+    name="apple-mobile-web-app-status-bar-style"
+    content="black-translucent"
+  />
+  <meta name="apple-mobile-web-app-title" content="Glueful" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#5B2FE0" />
+
+  <link rel="manifest" href="./manifest.json" />
+
+  <link
+    rel="icon"
+    type="image/png"
+    sizes="192x192"
+    href="./icons/icon-192.png"
+  />
+
+  <link
+    rel="icon"
+    type="image/png"
+    sizes="512x512"
+    href="./icons/icon-512.png"
+  />
+
+  <link
+    rel="apple-touch-icon"
+    href="./icons/icon-180.png"
+  />
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
     }
-);
-</script>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
-<title>Glueful</title>
 
-<!-- Make it installable / full-screen on iOS and Android home screens -->
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="Glueful" />
-<meta name="mobile-web-app-capable" content="yes" />
-<meta name="theme-color" content="#5B2FE0" />
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: #0B0E14;
+      color: #E8ECF1;
+      font-family: 'Inter', sans-serif;
+    }
 
-<link rel="manifest" href="./manifest.json" />
-<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
-<link rel="icon" type="image/png" sizes="512x512" href="./icons/icon-512.png" />
-<link rel="apple-touch-icon" href="./icons/icon-180.png" />
+    body {
+      padding:
+        calc(1.5rem + env(safe-area-inset-top))
+        1rem
+        calc(3rem + env(safe-area-inset-bottom));
+    }
 
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
 
+    .display {
+      font-family: 'Space Grotesk', sans-serif;
+    }
 
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap');
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { margin: 0; padding: 0; background: #0B0E14; color: #E8ECF1; font-family: 'Inter', sans-serif; }
-  body { padding: calc(1.5rem + env(safe-area-inset-top)) 1rem calc(3rem + env(safe-area-inset-bottom)); }
-  .mono { font-family: 'JetBrains Mono', monospace; }
-  .display { font-family: 'Space Grotesk', sans-serif; }
-  button, input, select, textarea { font-family: inherit; }
-  button { cursor: pointer; border: none; transition: transform .08s ease, background .15s ease; }
-  button:active { transform: scale(0.97); }
-  input::placeholder, textarea::placeholder { color: #556072; }
-  input:focus, textarea:focus, select:focus { outline: none; border-color: #8B6BF0 !important; }
-  .wrap { max-width: 880px; margin: 0 auto; display: none; }
-  .row { display: flex; align-items: center; }
-  .card { background: #12161F; border: 1px solid #262D38; border-radius: 10px; }
-  .icon-btn { background: #1A2029; border: 1px solid #262D38; color: #AEB7C2; width: 32px; height: 32px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 15px; }
-  .icon-btn.danger { color: #F27272; }
-  .pill { font-size: 12.5px; padding: 5px 12px; border-radius: 20px; font-weight: 500; border: 1px solid #262D38; background: transparent; color: #7C8797; }
-  .pill.active { border-color: var(--pc, #4FD1C5); color: var(--pc, #4FD1C5); background: color-mix(in srgb, var(--pc, #4FD1C5) 13%, transparent); }
-  .field label { display: block; font-size: 12px; color: #7C8797; margin-bottom: 5px; }
-  .field { margin-bottom: 0.85rem; }
-  .input { width: 100%; background: #0B0E14; border: 1px solid #262D38; border-radius: 8px; padding: 0.6rem 0.7rem; color: #E8ECF1; font-size: 15px; }
-  #modal-overlay { position: fixed; inset: 0; background: rgba(4,6,10,0.75); display: none; align-items: center; justify-content: center; padding: 1.2rem; z-index: 50; }
-  #modal-overlay.open { display: flex; }
-  #form-card { background: #12161F; border: 1px solid #262D38; border-radius: 14px; padding: 1.4rem; width: 100%; max-width: 460px; max-height: 85vh; overflow-y: auto; }
-  .heat-scroll { overflow-x: auto; }
-  .heat-cell { width: 13px; height: 13px; border-radius: 3px; }
-  #install-banner { display: none; }
-</style>
+    button,
+    input,
+    select,
+    textarea {
+      font-family: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      transition:
+        transform .08s ease,
+        background .15s ease;
+    }
+
+    button:active {
+      transform: scale(0.97);
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: #556072;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      outline: none;
+      border-color: #8B6BF0 !important;
+    }
+
+    .wrap {
+      max-width: 880px;
+      margin: 0 auto;
+      display: none;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+    }
+
+    .card {
+      background: #12161F;
+      border: 1px solid #262D38;
+      border-radius: 10px;
+    }
+
+    .icon-btn {
+      background: #1A2029;
+      border: 1px solid #262D38;
+      color: #AEB7C2;
+      width: 32px;
+      height: 32px;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+    }
+
+    .icon-btn.danger {
+      color: #F27272;
+    }
+
+    .pill {
+      font-size: 12.5px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-weight: 500;
+      border: 1px solid #262D38;
+      background: transparent;
+      color: #7C8797;
+    }
+
+    .pill.active {
+      border-color: var(--pc, #4FD1C5);
+      color: var(--pc, #4FD1C5);
+      background: color-mix(
+        in srgb,
+        var(--pc, #4FD1C5) 13%,
+        transparent
+      );
+    }
+
+    .field label {
+      display: block;
+      font-size: 12px;
+      color: #7C8797;
+      margin-bottom: 5px;
+    }
+
+    .field {
+      margin-bottom: 0.85rem;
+    }
+
+    .input {
+      width: 100%;
+      background: #0B0E14;
+      border: 1px solid #262D38;
+      border-radius: 8px;
+      padding: 0.6rem 0.7rem;
+      color: #E8ECF1;
+      font-size: 15px;
+    }
+
+    #modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(4, 6, 10, 0.75);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1.2rem;
+      z-index: 50;
+    }
+
+    #modal-overlay.open {
+      display: flex;
+    }
+
+    #form-card {
+      background: #12161F;
+      border: 1px solid #262D38;
+      border-radius: 14px;
+      padding: 1.4rem;
+      width: 100%;
+      max-width: 460px;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+
+    .heat-scroll {
+      overflow-x: auto;
+    }
+
+    .heat-cell {
+      width: 13px;
+      height: 13px;
+      border-radius: 3px;
+    }
+
+    #install-banner {
+      display: none;
+    }
+
+    .password-wrapper {
+      position: relative;
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: transparent;
+      color: #AEB7C2;
+      font-size: 18px;
+      padding: 6px;
+      border-radius: 6px;
+    }
+
+    .password-toggle:hover {
+      background: #1A2029;
+    }
+  </style>
 </head>
+
 <body>
-<!-- Authentication -->
-<div id="auth-screen" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem;">
-  <div class="card" style="width:100%;max-width:400px;padding:1.5rem;">
 
-    <h2 class="display" style="margin:0 0 6px;">
-      Welcome to Glueful
-    </h2>
+  <!-- =====================================================
+       AUTHENTICATION
+  ====================================================== -->
 
-    <p style="color:#7C8797;font-size:13px;margin:0 0 1.5rem;">
-      Sign in to manage your applications
-    </p>
+  <div
+    id="auth-screen"
+    style="
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:1rem;
+    "
+  >
 
-    <!-- Email -->
-    <div class="field">
-      <label>Email</label>
-      <input
-        id="auth-email"
-        class="input"
-        type="email"
-        placeholder="you@example.com"
-        required
-      />
+    <div
+      class="card"
+      style="
+        width:100%;
+        max-width:400px;
+        padding:1.5rem;
+      "
+    >
+
+      <h2
+        class="display"
+        style="margin:0 0 6px;"
+      >
+        Welcome to Glueful
+      </h2>
+
+      <p
+        style="
+          color:#7C8797;
+          font-size:13px;
+          margin:0 0 1.5rem;
+        "
+      >
+        Sign in to manage your applications
+      </p>
+
+
+      <!-- EMAIL -->
+
+      <div class="field">
+
+        <label>Email</label>
+
+        <input
+          id="auth-email"
+          class="input"
+          type="email"
+          placeholder="you@example.com"
+          required
+        />
+
+      </div>
+
+
+      <!-- PASSWORD -->
+
+      <div class="field">
+
+        <label>Password</label>
+
+        <div class="password-wrapper">
+
+          <input
+            id="auth-password"
+            class="input"
+            type="password"
+            placeholder="Password"
+            required
+            style="padding-right:45px;"
+          />
+
+          <button
+            type="button"
+            class="password-toggle"
+            onclick="togglePassword(this)"
+            aria-label="Show password"
+          >
+            👁️
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <!-- LOGIN -->
+
+      <button
+        type="button"
+        onclick="loginUser()"
+        style="
+          width:100%;
+          background:linear-gradient(135deg,#8B2FE0,#2F6FFF);
+          color:white;
+          font-weight:600;
+          padding:.75rem;
+          border-radius:8px;
+        "
+      >
+        Login
+      </button>
+
+
+      <!-- CREATE ACCOUNT -->
+
+      <button
+        type="button"
+        onclick="signupUser()"
+        style="
+          width:100%;
+          background:#1A2029;
+          color:#E8ECF1;
+          font-weight:600;
+          padding:.75rem;
+          border-radius:8px;
+          margin-top:.6rem;
+        "
+      >
+        Create account
+      </button>
+
+
+      <!-- FORGOT PASSWORD -->
+
+      <button
+        type="button"
+        onclick="resetPassword()"
+        style="
+          width:100%;
+          background:transparent;
+          color:#8B6BF0;
+          font-size:13px;
+          padding:.7rem;
+          margin-top:.4rem;
+        "
+      >
+        Forgot password?
+      </button>
+
+
+      <!-- AUTH MESSAGE -->
+
+      <p
+        id="auth-message"
+        style="
+          font-size:13px;
+          color:#7C8797;
+          margin:1rem 0 0;
+        "
+      ></p>
+
     </div>
 
-    <!-- Password -->
-    <div class="field">
-      <label>Password</label>
+  </div>
 
-      <div style="position:relative;">
+
+  <!-- =====================================================
+       MAIN APPLICATION
+  ====================================================== -->
+
+  <div class="wrap">
+
+    <!-- HEADER -->
+
+    <div
+      class="row"
+      style="
+        justify-content:space-between;
+        margin-bottom:1.75rem;
+        flex-wrap:wrap;
+        gap:12px;
+      "
+    >
+
+      <div
+        class="row"
+        style="gap:10px;"
+      >
+
+        <div
+          style="
+            width:40px;
+            height:40px;
+            border-radius:10px;
+            background:linear-gradient(135deg,#8B2FE0,#2F6FFF);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+          "
+        >
+
+          <svg
+            width="21"
+            height="21"
+            viewBox="0 0 100 100"
+          >
+            <path
+              d="M64,30 A24,24 0 1,0 64,70"
+              stroke="white"
+              stroke-width="11"
+              fill="none"
+              stroke-linecap="round"
+            />
+
+            <path
+              d="M50,50 L70,50 L70,63 A13,13 0 0,1 57,63 Z"
+              fill="white"
+            />
+          </svg>
+
+        </div>
+
+        <div>
+
+          <h1
+            class="display"
+            style="
+              font-size:20px;
+              font-weight:600;
+              margin:0;
+              letter-spacing:-0.01em;
+            "
+          >
+            Glueful
+          </h1>
+
+          <p
+            class="mono"
+            id="today-label"
+            style="
+              font-size:12px;
+              color:#7C8797;
+              margin:0;
+            "
+          ></p>
+
+        </div>
+
+      </div>
+
+
+      <!-- LOG APPLICATION -->
+
+      <button
+        onclick="openForm()"
+        class="row"
+        style="
+          gap:6px;
+          background:linear-gradient(135deg,#8B2FE0,#2F6FFF);
+          color:#FFFFFF;
+          padding:0.6rem 1rem;
+          border-radius:8px;
+          font-weight:600;
+          font-size:14px;
+        "
+      >
+
+        <span
+          style="
+            font-size:16px;
+            line-height:0;
+          "
+        >
+          +
+        </span>
+
+        Log application
+
+      </button>
+
+    </div>
+
+
+    <div
+      id="install-banner"
+      class="card"
+      style="
+        padding:0.75rem 1rem;
+        margin-bottom:1.25rem;
+        font-size:13px;
+        color:#B7C0CC;
+      "
+    ></div>
+
+
+    <div
+      id="error-banner"
+      style="
+        display:none;
+        background:#2A1515;
+        color:#F27272;
+        padding:0.6rem 0.9rem;
+        border-radius:8px;
+        font-size:13px;
+        margin-bottom:1rem;
+      "
+    ></div>
+
+
+    <!-- STATS -->
+
+    <div
+      id="stats"
+      style="
+        display:grid;
+        grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+        gap:12px;
+        margin-bottom:1.75rem;
+      "
+    ></div>
+
+
+    <!-- HEATMAP -->
+
+    <div
+      class="card"
+      style="
+        padding:1.25rem 1.4rem;
+        margin-bottom:1.75rem;
+      "
+    >
+
+      <p
+        class="mono"
+        style="
+          font-size:11px;
+          color:#7C8797;
+          margin:0 0 0.8rem;
+          text-transform:uppercase;
+          letter-spacing:0.05em;
+        "
+      >
+        Last 12 weeks
+      </p>
+
+      <div class="heat-scroll">
+
+        <div
+          id="heatmap"
+          style="
+            display:flex;
+            gap:4px;
+            min-width:560px;
+          "
+        ></div>
+
+      </div>
+
+
+      <div
+        class="row"
+        style="
+          gap:6px;
+          margin-top:0.9rem;
+        "
+      >
+
+        <span
+          class="mono"
+          style="
+            font-size:10px;
+            color:#556072;
+          "
+        >
+          Less
+        </span>
+
+        <div
+          id="legend"
+          class="row"
+          style="gap:6px;"
+        ></div>
+
+        <span
+          class="mono"
+          style="
+            font-size:10px;
+            color:#556072;
+          "
+        >
+          More
+        </span>
+
+      </div>
+
+    </div>
+
+
+    <!-- SEARCH / FILTERS -->
+
+    <div
+      class="row"
+      style="
+        gap:10px;
+        margin-bottom:1.25rem;
+        flex-wrap:wrap;
+      "
+    >
+
+      <div
+        style="
+          position:relative;
+          flex:1 1 220px;
+        "
+      >
+
+        <span
+          style="
+            position:absolute;
+            left:12px;
+            top:50%;
+            transform:translateY(-50%);
+            color:#556072;
+            font-size:14px;
+          "
+        >
+          &#128269;
+        </span>
+
         <input
-          id="auth-password"
+          id="search"
           class="input"
-          type="password"
-          placeholder="Password"
-          required
-          style="padding-right:45px;"
+          placeholder="Search company, role, or JD…"
+          style="padding-left:2.1rem;"
+          oninput="render()"
         />
+
+      </div>
+
+
+      <div
+        id="filters"
+        class="row"
+        style="
+          gap:6px;
+          flex-wrap:wrap;
+        "
+      ></div>
+
+    </div>
+
+
+    <!-- APPLICATION LIST -->
+
+    <div
+      id="list"
+      style="
+        display:flex;
+        flex-direction:column;
+        gap:10px;
+      "
+    ></div>
+
+  </div>
+
+
+  <!-- =====================================================
+       APPLICATION MODAL
+  ====================================================== -->
+
+  <div
+    id="modal-overlay"
+    onclick="if(event.target===this) closeForm()"
+  >
+
+    <form
+      id="form-card"
+      onsubmit="submitForm(event)"
+    >
+
+      <div
+        class="row"
+        style="
+          justify-content:space-between;
+          margin-bottom:1.1rem;
+        "
+      >
+
+        <h2
+          class="display"
+          id="form-title"
+          style="
+            font-size:17px;
+            font-weight:600;
+            margin:0;
+          "
+        >
+          Log an application
+        </h2>
 
         <button
           type="button"
-          onclick="togglePassword(this)"
-          style="
-            position:absolute;
-            right:8px;
-            top:50%;
-            transform:translateY(-50%);
-            background:transparent;
-            color:#AEB7C2;
-            font-size:18px;
-            padding:6px;
-          "
-          aria-label="Show password"
-        >👁️</button>
+          class="icon-btn"
+          onclick="closeForm()"
+        >
+          &#10005;
+        </button>
+
       </div>
-    </div>
 
-    <!-- Login -->
-    <button
-      type="button"
-      onclick="loginUser()"
-      style="
-        width:100%;
-        background:linear-gradient(135deg,#8B2FE0,#2F6FFF);
-        color:white;
-        font-weight:600;
-        padding:.75rem;
-        border-radius:8px;
-      "
-    >
-      Login
-    </button>
 
-    <!-- Create account -->
-    <button
-      type="button"
-      onclick="signupUser()"
-      style="
-        width:100%;
-        background:#1A2029;
-        color:#E8ECF1;
-        font-weight:600;
-        padding:.75rem;
-        border-radius:8px;
-        margin-top:.6rem;
-      "
-    >
-      Create account
-    </button>
+      <div class="field">
 
-    <!-- Forgot password -->
-    <button
-      type="button"
-      onclick="resetPassword()"
-      style="
-        width:100%;
-        background:transparent;
-        color:#8B6BF0;
-        font-size:13px;
-        padding:.7rem;
-        margin-top:.4rem;
-      "
-    >
-      Forgot password?
-    </button>
+        <label>Company</label>
 
-    <p
-      id="auth-message"
-      style="font-size:13px;color:#7C8797;margin:1rem 0 0;"
-    ></p>
+        <input
+          class="input"
+          id="f-company"
+          required
+          placeholder="Acme Corp"
+        />
+
+      </div>
+
+
+      <div class="field">
+
+        <label>Role</label>
+
+        <input
+          class="input"
+          id="f-role"
+          required
+          placeholder="Senior Product Designer"
+        />
+
+      </div>
+
+
+      <div
+        class="row"
+        style="gap:10px;"
+      >
+
+        <div
+          class="field"
+          style="flex:1;"
+        >
+
+          <label>Date applied</label>
+
+          <input
+            class="input"
+            type="date"
+            id="f-date"
+          />
+
+        </div>
+
+
+        <div
+          class="field"
+          style="flex:1;"
+        >
+
+          <label>Status</label>
+
+          <select
+            class="input"
+            id="f-status"
+          >
+
+            <option value="applied">
+              Applied
+            </option>
+
+            <option value="interview">
+              Interview
+            </option>
+
+            <option value="offer">
+              Offer
+            </option>
+
+            <option value="rejected">
+              Rejected
+            </option>
+
+          </select>
+
+        </div>
+
+      </div>
+
+
+      <div class="field">
+
+        <label>Job link (optional)</label>
+
+        <input
+          class="input"
+          id="f-link"
+          placeholder="https://…"
+        />
+
+      </div>
+
+
+      <div class="field">
+
+        <label>Job description (optional)</label>
+
+        <textarea
+          class="input"
+          id="f-jd"
+          rows="5"
+          placeholder="Paste the JD or a summary…"
+          style="resize:vertical;"
+        ></textarea>
+
+      </div>
+
+
+      <button
+        type="submit"
+        style="
+          width:100%;
+          background:linear-gradient(135deg,#8B2FE0,#2F6FFF);
+          color:#FFFFFF;
+          font-weight:600;
+          font-size:14px;
+          padding:0.75rem;
+          border-radius:8px;
+          margin-top:0.4rem;
+        "
+      >
+        Save
+      </button>
+
+    </form>
 
   </div>
-</div>
-<div class="wrap">
-  <!-- Header -->
-  <div class="row" style="justify-content: space-between; margin-bottom: 1.75rem; flex-wrap: wrap; gap: 12px;">
-    <div class="row" style="gap: 10px;">
-      <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#8B2FE0,#2F6FFF);display:flex;align-items:center;justify-content:center;">
-        <svg width="21" height="21" viewBox="0 0 100 100"><path d="M64,30 A24,24 0 1,0 64,70" stroke="white" stroke-width="11" fill="none" stroke-linecap="round"/><path d="M50,50 L70,50 L70,63 A13,13 0 0,1 57,63 Z" fill="white"/></svg>
-      </div>
-      <div>
-        <h1 class="display" style="font-size:20px;font-weight:600;margin:0;letter-spacing:-0.01em;">Glueful</h1>
-        <p class="mono" id="today-label" style="font-size:12px;color:#7C8797;margin:0;"></p>
-      </div>
-    </div>
-    <button onclick="openForm()" class="row" style="gap:6px;background:linear-gradient(135deg,#8B2FE0,#2F6FFF);color:#FFFFFF;padding:0.6rem 1rem;border-radius:8px;font-weight:600;font-size:14px;">
-      <span style="font-size:16px;line-height:0;">+</span> Log application
-    </button>
-  </div>
 
-  <div id="install-banner" class="card" style="padding: 0.75rem 1rem; margin-bottom: 1.25rem; font-size: 13px; color: #B7C0CC;"></div>
-  <div id="error-banner" style="display:none; background:#2A1515; color:#F27272; padding:0.6rem 0.9rem; border-radius:8px; font-size:13px; margin-bottom:1rem;"></div>
 
-  <!-- Stats -->
-  <div id="stats" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap:12px; margin-bottom:1.75rem;"></div>
+  <!-- =====================================================
+       JAVASCRIPT
+  ====================================================== -->
 
-  <!-- Heatmap -->
-  <div class="card" style="padding: 1.25rem 1.4rem; margin-bottom: 1.75rem;">
-    <p class="mono" style="font-size:11px;color:#7C8797;margin:0 0 0.8rem;text-transform:uppercase;letter-spacing:0.05em;">Last 12 weeks</p>
-    <div class="heat-scroll"><div id="heatmap" style="display:flex; gap:4px; min-width:560px;"></div></div>
-    <div class="row" style="gap:6px; margin-top:0.9rem;">
-      <span class="mono" style="font-size:10px;color:#556072;">Less</span>
-      <div id="legend" class="row" style="gap:6px;"></div>
-      <span class="mono" style="font-size:10px;color:#556072;">More</span>
-    </div>
-  </div>
+  <script>
 
-  <!-- Filters -->
-  <div class="row" style="gap:10px; margin-bottom:1.25rem; flex-wrap:wrap;">
-    <div style="position:relative; flex:1 1 220px;">
-      <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#556072; font-size:14px;">&#128269;</span>
-      <input id="search" class="input" placeholder="Search company, role, or JD…" style="padding-left:2.1rem;" oninput="render()" />
-    </div>
-    <div id="filters" class="row" style="gap:6px; flex-wrap:wrap;"></div>
-  </div>
+    const STATUS = {
 
-  <!-- List -->
-  <div id="list" style="display:flex; flex-direction:column; gap:10px;"></div>
-</div>
+      applied: {
+        label: "Applied",
+        color: "#F2B84B",
+        bg: "#2A2415"
+      },
 
-<!-- Modal -->
-<div id="modal-overlay" onclick="if(event.target===this) closeForm()">
-  <form id="form-card" onsubmit="submitForm(event)">
-    <div class="row" style="justify-content:space-between; margin-bottom:1.1rem;">
-      <h2 class="display" id="form-title" style="font-size:17px;font-weight:600;margin:0;">Log an application</h2>
-      <button type="button" class="icon-btn" onclick="closeForm()">&#10005;</button>
-    </div>
-    <div class="field"><label>Company</label><input class="input" id="f-company" required placeholder="Acme Corp" /></div>
-    <div class="field"><label>Role</label><input class="input" id="f-role" required placeholder="Senior Product Designer" /></div>
-    <div class="row" style="gap:10px;">
-      <div class="field" style="flex:1;"><label>Date applied</label><input class="input" type="date" id="f-date" /></div>
-      <div class="field" style="flex:1;"><label>Status</label>
-        <select class="input" id="f-status">
-          <option value="applied">Applied</option>
-          <option value="interview">Interview</option>
-          <option value="offer">Offer</option>
-          <option value="rejected">Rejected</option>
-        </select>
-      </div>
-    </div>
-    <div class="field"><label>Job link (optional)</label><input class="input" id="f-link" placeholder="https://…" /></div>
-    <div class="field"><label>Job description (optional)</label><textarea class="input" id="f-jd" rows="5" placeholder="Paste the JD or a summary…" style="resize:vertical;"></textarea></div>
-    <button type="submit" style="width:100%;background:linear-gradient(135deg,#8B2FE0,#2F6FFF);color:#FFFFFF;font-weight:600;font-size:14px;padding:0.75rem;border-radius:8px;margin-top:0.4rem;">Save</button>
-  </form>
-</div>
+      interview: {
+        label: "Interview",
+        color: "#6EE7A8",
+        bg: "#132A20"
+      },
 
-<script>
-const STATUS = {
-  applied:   { label: "Applied",   color: "#F2B84B", bg: "#2A2415" },
-  interview: { label: "Interview", color: "#6EE7A8", bg: "#132A20" },
-  offer:     { label: "Offer",     color: "#4FD1C5", bg: "#0F2A28" },
-  rejected:  { label: "Rejected",  color: "#F27272", bg: "#2A1515" },
-};
-const STORAGE_KEY = "job_applications_v1";
+      offer: {
+        label: "Offer",
+        color: "#4FD1C5",
+        bg: "#0F2A28"
+      },
 
-let applications = [];
-let filterStatus = "all";
-let editingId = null;
+      rejected: {
+        label: "Rejected",
+        color: "#F27272",
+        bg: "#2A1515"
+      }
 
-function todayISO(){ return new Date().toISOString().slice(0,10); }
-function daysAgoISO(n){ const d=new Date(); d.setDate(d.getDate()-n); return d.toISOString().slice(0,10); }
-function startOfWeekISO(){ const d=new Date(); const day=d.getDay(); const diff = day===0?6:day-1; d.setDate(d.getDate()-diff); return d.toISOString().slice(0,10); }
-function startOfMonthISO(){ const d=new Date(); d.setDate(1); return d.toISOString().slice(0,10); }
-function esc(s){ return (s||"").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+    };
 
-function load(){
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    applications = raw ? JSON.parse(raw) : [];
-  } catch(e){ applications = []; }
-}
-function save(){
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(applications));
-    document.getElementById("error-banner").style.display = "none";
-  } catch(e){
-    const el = document.getElementById("error-banner");
-    el.style.display = "block";
-    el.textContent = "Couldn't save. Your device storage may be full or private browsing is on.";
-  }
-}
 
-function openForm(app){
-  editingId = app ? app.id : null;
-  document.getElementById("form-title").textContent = app ? "Edit application" : "Log an application";
-  document.getElementById("f-company").value = app ? app.company : "";
-  document.getElementById("f-role").value = app ? app.role : "";
-  document.getElementById("f-date").value = app ? app.date : todayISO();
-  document.getElementById("f-status").value = app ? app.status : "applied";
-  document.getElementById("f-link").value = app ? (app.link||"") : "";
-  document.getElementById("f-jd").value = app ? (app.jd||"") : "";
-  document.getElementById("modal-overlay").classList.add("open");
-}
-function closeForm(){ document.getElementById("modal-overlay").classList.remove("open"); }
+    const STORAGE_KEY = "job_applications_v1";
 
-function submitForm(e){
-  e.preventDefault();
-  const data = {
-    company: document.getElementById("f-company").value.trim(),
-    role: document.getElementById("f-role").value.trim(),
-    date: document.getElementById("f-date").value || todayISO(),
-    status: document.getElementById("f-status").value,
-    link: document.getElementById("f-link").value.trim(),
-    jd: document.getElementById("f-jd").value.trim(),
-  };
-  if(!data.company || !data.role) return;
-  if(editingId){
-    applications = applications.map(a => a.id===editingId ? {...a, ...data} : a);
-  } else {
-    applications.unshift({ id: Date.now()+"-"+Math.random().toString(36).slice(2,8), ...data });
-  }
-  save();
-  closeForm();
-  render();
-}
 
-function deleteApp(id){
-  applications = applications.filter(a => a.id !== id);
-  save();
-  render();
-}
+    let applications = [];
 
-let expandedId = null;
-function toggleExpand(id){ expandedId = expandedId===id ? null : id; render(); }
+    let filterStatus = "all";
 
-function heatColor(count){
-  if(count===0) return "#161B22";
-  if(count===1) return "#134E45";
-  if(count===2) return "#0F6E56";
-  if(count<=4) return "#1D9E75";
-  return "#4FD1C5";
-}
+    let editingId = null;
 
-function render(){
-  const t = todayISO(), wk = startOfWeekISO(), mo = startOfMonthISO();
-  const stats = {
-    today: applications.filter(a=>a.date===t).length,
-    week: applications.filter(a=>a.date>=wk).length,
-    month: applications.filter(a=>a.date>=mo).length,
-    total: applications.length,
-  };
-  document.getElementById("stats").innerHTML = `
-    ${statCard("Today", stats.today, "#4FD1C5")}
-    ${statCard("This week", stats.week, "#F2B84B")}
-    ${statCard("This month", stats.month, "#6EE7A8")}
-    ${statCard("Total logged", stats.total, "#E8ECF1")}
-  `;
+    let expandedId = null;
 
-  // heatmap
-  const counts = {};
-  applications.forEach(a => counts[a.date] = (counts[a.date]||0)+1);
-  const days = [];
-  for(let i=83;i>=0;i--){ const iso = daysAgoISO(i); days.push({date:iso, count:counts[iso]||0}); }
-  const firstDow = new Date(days[0].date).getDay();
-  const padCount = firstDow===0?6:firstDow-1;
-  const padded = Array(padCount).fill(null).concat(days);
-  const weeks = [];
-  for(let i=0;i<padded.length;i+=7) weeks.push(padded.slice(i,i+7));
-  document.getElementById("heatmap").innerHTML = weeks.map(week => `
-    <div style="display:flex;flex-direction:column;gap:4px;">
-      ${week.map(day => day
-        ? `<div class="heat-cell" title="${day.date}: ${day.count} application${day.count===1?"":"s"}" style="background:${heatColor(day.count)};${day.count===0?"border:1px solid #1E242E;":""}"></div>`
-        : `<div class="heat-cell"></div>`
-      ).join("")}
-    </div>
-  `).join("");
-  document.getElementById("legend").innerHTML = [0,1,2,3,5].map(c => `<div style="width:11px;height:11px;border-radius:2px;background:${heatColor(c)};${c===0?"border:1px solid #1E242E;":""}"></div>`).join("");
 
-  // filters
-  document.getElementById("filters").innerHTML = `
-    <button class="pill ${filterStatus==='all'?'active':''}" onclick="setFilter('all')">All</button>
-    ${Object.entries(STATUS).map(([k,s]) => `<button class="pill ${filterStatus===k?'active':''}" style="--pc:${s.color}" onclick="setFilter('${k}')">${s.label}</button>`).join("")}
-  `;
+    /* =====================================================
+       DATE FUNCTIONS
+    ====================================================== */
 
-  // list
-  const q = document.getElementById("search").value.trim().toLowerCase();
-  let list = applications.slice();
-  if(filterStatus!=="all") list = list.filter(a=>a.status===filterStatus);
-  if(q) list = list.filter(a => a.company.toLowerCase().includes(q) || a.role.toLowerCase().includes(q) || (a.jd||"").toLowerCase().includes(q));
-  list.sort((a,b) => a.date < b.date ? 1 : -1);
+    function todayISO() {
 
-  const listEl = document.getElementById("list");
-  if(list.length===0){
-    listEl.innerHTML = `
-      <div style="text-align:center; padding:3rem 1rem; border:1px dashed #262D38; border-radius:12px; color:#7C8797;">
-        <div style="font-size:28px; margin-bottom:8px;">&#128188;</div>
-        <p style="margin:0; font-size:14px;">${applications.length===0 ? "No applications logged yet. Add your first one above." : "Nothing matches your filters."}</p>
-      </div>`;
-    return;
-  }
-  listEl.innerHTML = list.map(app => {
-    const s = STATUS[app.status];
-    const expanded = expandedId===app.id;
-    return `
-    <div class="card" style="padding:1rem 1.15rem;">
-      <div class="row" style="justify-content:space-between; align-items:flex-start; gap:12px;">
-        <div style="min-width:0; flex:1;">
-          <div class="row" style="gap:8px; flex-wrap:wrap;">
-            <span class="display" style="font-size:15px; font-weight:600;">${esc(app.company)}</span>
-            <span class="mono" style="font-size:11px; font-weight:500; color:${s.color}; background:${s.bg}; padding:2px 8px; border-radius:20px;">${s.label}</span>
+      return new Date()
+        .toISOString()
+        .slice(0, 10);
+
+    }
+
+
+    function daysAgoISO(n) {
+
+      const d = new Date();
+
+      d.setDate(d.getDate() - n);
+
+      return d.toISOString().slice(0, 10);
+
+    }
+
+
+    function startOfWeekISO() {
+
+      const d = new Date();
+
+      const day = d.getDay();
+
+      const diff =
+        day === 0
+          ? 6
+          : day - 1;
+
+      d.setDate(d.getDate() - diff);
+
+      return d.toISOString().slice(0, 10);
+
+    }
+
+
+    function startOfMonthISO() {
+
+      const d = new Date();
+
+      d.setDate(1);
+
+      return d.toISOString().slice(0, 10);
+
+    }
+
+
+    /* =====================================================
+       ESCAPE HTML
+    ====================================================== */
+
+    function esc(s) {
+
+      return (s || "").replace(
+        /[&<>"']/g,
+        c => ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;"
+        }[c])
+      );
+
+    }
+
+
+    /* =====================================================
+       LOCAL STORAGE
+    ====================================================== */
+
+    function load() {
+
+      try {
+
+        const raw =
+          localStorage.getItem(STORAGE_KEY);
+
+        applications =
+          raw
+            ? JSON.parse(raw)
+            : [];
+
+      } catch (e) {
+
+        applications = [];
+
+      }
+
+    }
+
+
+    function save() {
+
+      try {
+
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify(applications)
+        );
+
+        document.getElementById(
+          "error-banner"
+        ).style.display = "none";
+
+      } catch (e) {
+
+        const el =
+          document.getElementById(
+            "error-banner"
+          );
+
+        el.style.display = "block";
+
+        el.textContent =
+          "Couldn't save. Your device storage may be full or private browsing is on.";
+
+      }
+
+    }
+
+
+    /* =====================================================
+       APPLICATION FORM
+    ====================================================== */
+
+    function openForm(app) {
+
+      editingId =
+        app
+          ? app.id
+          : null;
+
+
+      document.getElementById(
+        "form-title"
+      ).textContent =
+        app
+          ? "Edit application"
+          : "Log an application";
+
+
+      document.getElementById(
+        "f-company"
+      ).value =
+        app
+          ? app.company
+          : "";
+
+
+      document.getElementById(
+        "f-role"
+      ).value =
+        app
+          ? app.role
+          : "";
+
+
+      document.getElementById(
+        "f-date"
+      ).value =
+        app
+          ? app.date
+          : todayISO();
+
+
+      document.getElementById(
+        "f-status"
+      ).value =
+        app
+          ? app.status
+          : "applied";
+
+
+      document.getElementById(
+        "f-link"
+      ).value =
+        app
+          ? (app.link || "")
+          : "";
+
+
+      document.getElementById(
+        "f-jd"
+      ).value =
+        app
+          ? (app.jd || "")
+          : "";
+
+
+      document.getElementById(
+        "modal-overlay"
+      ).classList.add("open");
+
+    }
+
+
+    function closeForm() {
+
+      document.getElementById(
+        "modal-overlay"
+      ).classList.remove("open");
+
+    }
+
+
+    function submitForm(e) {
+
+      e.preventDefault();
+
+
+      const data = {
+
+        company:
+          document.getElementById(
+            "f-company"
+          ).value.trim(),
+
+        role:
+          document.getElementById(
+            "f-role"
+          ).value.trim(),
+
+        date:
+          document.getElementById(
+            "f-date"
+          ).value ||
+          todayISO(),
+
+        status:
+          document.getElementById(
+            "f-status"
+          ).value,
+
+        link:
+          document.getElementById(
+            "f-link"
+          ).value.trim(),
+
+        jd:
+          document.getElementById(
+            "f-jd"
+          ).value.trim()
+
+      };
+
+
+      if (
+        !data.company ||
+        !data.role
+      ) {
+
+        return;
+
+      }
+
+
+      if (editingId) {
+
+        applications =
+          applications.map(
+            a =>
+              a.id === editingId
+                ? {
+                    ...a,
+                    ...data
+                  }
+                : a
+          );
+
+      } else {
+
+        applications.unshift({
+
+          id:
+            Date.now() +
+            "-" +
+            Math.random()
+              .toString(36)
+              .slice(2, 8),
+
+          ...data
+
+        });
+
+      }
+
+
+      save();
+
+      closeForm();
+
+      render();
+
+    }
+
+
+    function deleteApp(id) {
+
+      applications =
+        applications.filter(
+          a => a.id !== id
+        );
+
+      save();
+
+      render();
+
+    }
+
+
+    function toggleExpand(id) {
+
+      expandedId =
+        expandedId === id
+          ? null
+          : id;
+
+      render();
+
+    }
+
+
+    /* =====================================================
+       HEATMAP
+    ====================================================== */
+
+    function heatColor(count) {
+
+      if (count === 0)
+        return "#161B22";
+
+      if (count === 1)
+        return "#134E45";
+
+      if (count === 2)
+        return "#0F6E56";
+
+      if (count <= 4)
+        return "#1D9E75";
+
+      return "#4FD1C5";
+
+    }
+
+
+    /* =====================================================
+       MAIN RENDER
+    ====================================================== */
+
+    function render() {
+
+      const t =
+        todayISO();
+
+      const wk =
+        startOfWeekISO();
+
+      const mo =
+        startOfMonthISO();
+
+
+      const stats = {
+
+        today:
+          applications.filter(
+            a => a.date === t
+          ).length,
+
+        week:
+          applications.filter(
+            a => a.date >= wk
+          ).length,
+
+        month:
+          applications.filter(
+            a => a.date >= mo
+          ).length,
+
+        total:
+          applications.length
+
+      };
+
+
+      document.getElementById(
+        "stats"
+      ).innerHTML = `
+
+        ${statCard(
+          "Today",
+          stats.today,
+          "#4FD1C5"
+        )}
+
+        ${statCard(
+          "This week",
+          stats.week,
+          "#F2B84B"
+        )}
+
+        ${statCard(
+          "This month",
+          stats.month,
+          "#6EE7A8"
+        )}
+
+        ${statCard(
+          "Total logged",
+          stats.total,
+          "#E8ECF1"
+        )}
+
+      `;
+
+
+      /* HEATMAP */
+
+      const counts = {};
+
+      applications.forEach(
+        a => {
+          counts[a.date] =
+            (counts[a.date] || 0) + 1;
+        }
+      );
+
+
+      const days = [];
+
+      for (
+        let i = 83;
+        i >= 0;
+        i--
+      ) {
+
+        const iso =
+          daysAgoISO(i);
+
+        days.push({
+          date: iso,
+          count:
+            counts[iso] || 0
+        });
+
+      }
+
+
+      const firstDow =
+        new Date(
+          days[0].date
+        ).getDay();
+
+
+      const padCount =
+        firstDow === 0
+          ? 6
+          : firstDow - 1;
+
+
+      const padded =
+        Array(padCount)
+          .fill(null)
+          .concat(days);
+
+
+      const weeks = [];
+
+
+      for (
+        let i = 0;
+        i < padded.length;
+        i += 7
+      ) {
+
+        weeks.push(
+          padded.slice(i, i + 7)
+        );
+
+      }
+
+
+      document.getElementById(
+        "heatmap"
+      ).innerHTML =
+
+        weeks
+          .map(
+            week => `
+
+              <div
+                style="
+                  display:flex;
+                  flex-direction:column;
+                  gap:4px;
+                "
+              >
+
+                ${week
+                  .map(
+                    day =>
+                      day
+
+                        ? `
+                          <div
+                            class="heat-cell"
+                            title="${day.date}: ${day.count} application${day.count === 1 ? "" : "s"}"
+                            style="
+                              background:${heatColor(day.count)};
+                              ${
+                                day.count === 0
+                                  ? "border:1px solid #1E242E;"
+                                  : ""
+                              }
+                            "
+                          ></div>
+                        `
+
+                        : `
+                          <div class="heat-cell"></div>
+                        `
+                  )
+                  .join("")}
+
+              </div>
+
+            `
+          )
+          .join("");
+
+
+      document.getElementById(
+        "legend"
+      ).innerHTML =
+
+        [0, 1, 2, 3, 5]
+          .map(
+            c => `
+
+              <div
+                style="
+                  width:11px;
+                  height:11px;
+                  border-radius:2px;
+                  background:${heatColor(c)};
+                  ${
+                    c === 0
+                      ? "border:1px solid #1E242E;"
+                      : ""
+                  }
+                "
+              ></div>
+
+            `
+          )
+          .join("");
+
+
+      /* FILTERS */
+
+      document.getElementById(
+        "filters"
+      ).innerHTML = `
+
+        <button
+          class="pill ${
+            filterStatus === "all"
+              ? "active"
+              : ""
+          }"
+          onclick="setFilter('all')"
+        >
+          All
+        </button>
+
+        ${Object.entries(STATUS)
+          .map(
+            ([k, s]) => `
+
+              <button
+                class="pill ${
+                  filterStatus === k
+                    ? "active"
+                    : ""
+                }"
+                style="--pc:${s.color}"
+                onclick="setFilter('${k}')"
+              >
+                ${s.label}
+              </button>
+
+            `
+          )
+          .join("")}
+
+      `;
+
+
+      /* SEARCH */
+
+      const q =
+        document.getElementById(
+          "search"
+        ).value
+          .trim()
+          .toLowerCase();
+
+
+      let list =
+        applications.slice();
+
+
+      if (
+        filterStatus !== "all"
+      ) {
+
+        list =
+          list.filter(
+            a =>
+              a.status ===
+              filterStatus
+          );
+
+      }
+
+
+      if (q) {
+
+        list =
+          list.filter(
+            a =>
+              a.company
+                .toLowerCase()
+                .includes(q) ||
+
+              a.role
+                .toLowerCase()
+                .includes(q) ||
+
+              (a.jd || "")
+                .toLowerCase()
+                .includes(q)
+          );
+
+      }
+
+
+      list.sort(
+        (a, b) =>
+          a.date < b.date
+            ? 1
+            : -1
+      );
+
+
+      const listEl =
+        document.getElementById(
+          "list"
+        );
+
+
+      if (
+        list.length === 0
+      ) {
+
+        listEl.innerHTML = `
+
+          <div
+            style="
+              text-align:center;
+              padding:3rem 1rem;
+              border:1px dashed #262D38;
+              border-radius:12px;
+              color:#7C8797;
+            "
+          >
+
+            <div
+              style="
+                font-size:28px;
+                margin-bottom:8px;
+              "
+            >
+              &#128188;
+            </div>
+
+            <p
+              style="
+                margin:0;
+                font-size:14px;
+              "
+            >
+              ${
+                applications.length === 0
+                  ? "No applications logged yet. Add your first one above."
+                  : "Nothing matches your filters."
+              }
+            </p>
+
           </div>
-          <p style="margin:3px 0 0; font-size:13.5px; color:#B7C0CC;">${esc(app.role)}</p>
-          <p class="mono" style="margin:4px 0 0; font-size:11.5px; color:#556072;">${app.date}</p>
+
+        `;
+
+        return;
+
+      }
+
+
+      listEl.innerHTML =
+
+        list
+          .map(
+            app => {
+
+              const s =
+                STATUS[app.status];
+
+              const expanded =
+                expandedId ===
+                app.id;
+
+
+              return `
+
+                <div
+                  class="card"
+                  style="
+                    padding:1rem 1.15rem;
+                  "
+                >
+
+                  <div
+                    class="row"
+                    style="
+                      justify-content:space-between;
+                      align-items:flex-start;
+                      gap:12px;
+                    "
+                  >
+
+                    <div
+                      style="
+                        min-width:0;
+                        flex:1;
+                      "
+                    >
+
+                      <div
+                        class="row"
+                        style="
+                          gap:8px;
+                          flex-wrap:wrap;
+                        "
+                      >
+
+                        <span
+                          class="display"
+                          style="
+                            font-size:15px;
+                            font-weight:600;
+                          "
+                        >
+                          ${esc(app.company)}
+                        </span>
+
+                        <span
+                          class="mono"
+                          style="
+                            font-size:11px;
+                            font-weight:500;
+                            color:${s.color};
+                            background:${s.bg};
+                            padding:2px 8px;
+                            border-radius:20px;
+                          "
+                        >
+                          ${s.label}
+                        </span>
+
+                      </div>
+
+
+                      <p
+                        style="
+                          margin:3px 0 0;
+                          font-size:13.5px;
+                          color:#B7C0CC;
+                        "
+                      >
+                        ${esc(app.role)}
+                      </p>
+
+
+                      <p
+                        class="mono"
+                        style="
+                          margin:4px 0 0;
+                          font-size:11.5px;
+                          color:#556072;
+                        "
+                      >
+                        ${app.date}
+                      </p>
+
+                    </div>
+
+
+                    <div
+                      class="row"
+                      style="
+                        gap:4px;
+                        flex-shrink:0;
+                      "
+                    >
+
+                      ${
+                        app.link
+                          ? `
+                            <button
+                              class="icon-btn"
+                              title="Open link"
+                              onclick="window.open('${esc(app.link)}','_blank')"
+                            >
+                              &#8599;
+                            </button>
+                          `
+                          : ""
+                      }
+
+
+                      <button
+                        class="icon-btn"
+                        title="Edit"
+                        onclick='openForm(${JSON.stringify(app).replace(/'/g, "&#39;")})'
+                      >
+                        &#9998;
+                      </button>
+
+
+                      <button
+                        class="icon-btn danger"
+                        title="Delete"
+                        onclick="deleteApp('${app.id}')"
+                      >
+                        &#128465;
+                      </button>
+
+
+                      ${
+                        app.jd
+                          ? `
+                            <button
+                              class="icon-btn"
+                              title="Toggle description"
+                              onclick="toggleExpand('${app.id}')"
+                            >
+                              ${
+                                expanded
+                                  ? "&#9650;"
+                                  : "&#9660;"
+                              }
+                            </button>
+                          `
+                          : ""
+                      }
+
+                    </div>
+
+                  </div>
+
+
+                  ${
+                    expanded && app.jd
+                      ? `
+                        <p
+                          style="
+                            margin-top:10px;
+                            padding-top:10px;
+                            border-top:1px solid #1E242E;
+                            font-size:13px;
+                            line-height:1.6;
+                            color:#AEB7C2;
+                            white-space:pre-wrap;
+                          "
+                        >
+                          ${esc(app.jd)}
+                        </p>
+                      `
+                      : ""
+                  }
+
+                </div>
+
+              `;
+
+            }
+          )
+          .join("");
+
+    }
+
+
+    /* =====================================================
+       STAT CARD
+    ====================================================== */
+
+    function statCard(
+      label,
+      value,
+      accent
+    ) {
+
+      return `
+
+        <div
+          class="card"
+          style="padding:0.9rem 1rem;"
+        >
+
+          <p
+            style="
+              margin:0;
+              font-size:12px;
+              color:#7C8797;
+            "
+          >
+            ${label}
+          </p>
+
+          <p
+            class="mono"
+            style="
+              margin:4px 0 0;
+              font-size:26px;
+              font-weight:700;
+              color:${accent};
+            "
+          >
+            ${value}
+          </p>
+
         </div>
-        <div class="row" style="gap:4px; flex-shrink:0;">
-          ${app.link ? `<button class="icon-btn" title="Open link" onclick="window.open('${esc(app.link)}','_blank')">&#8599;</button>` : ""}
-          <button class="icon-btn" title="Edit" onclick='openForm(${JSON.stringify(app).replace(/'/g, "&#39;")})'>&#9998;</button>
-          <button class="icon-btn danger" title="Delete" onclick="deleteApp('${app.id}')">&#128465;</button>
-          ${app.jd ? `<button class="icon-btn" title="Toggle description" onclick="toggleExpand('${app.id}')">${expanded ? "&#9650;" : "&#9660;"}</button>` : ""}
-        </div>
-      </div>
-      ${expanded && app.jd ? `<p style="margin-top:10px; padding-top:10px; border-top:1px solid #1E242E; font-size:13px; line-height:1.6; color:#AEB7C2; white-space:pre-wrap;">${esc(app.jd)}</p>` : ""}
-    </div>`;
-  }).join("");
-}
 
-function statCard(label, value, accent){
-  return `<div class="card" style="padding:0.9rem 1rem;">
-    <p style="margin:0; font-size:12px; color:#7C8797;">${label}</p>
-    <p class="mono" style="margin:4px 0 0; font-size:26px; font-weight:700; color:${accent};">${value}</p>
-  </div>`;
-}
-// ================================
-// Supabase Authentication
-// ================================
+      `;
 
-async function signupUser() {
-  const email = document.getElementById("auth-email").value.trim();
-  const password = document.getElementById("auth-password").value;
+    }
 
-  if (!email || !password) {
-    showAuthMessage("Please enter your email and password.");
-    return;
-  }
 
-  if (password.length < 6) {
-    showAuthMessage("Password must be at least 6 characters.");
-    return;
-  }
+    /* =====================================================
+       SUPABASE AUTHENTICATION
+    ====================================================== */
 
-  const { error } = await supabaseClient.auth.signUp({
-    email: email,
-    password: password
-  });
+    async function signupUser() {
 
-  if (error) {
-    showAuthMessage(error.message);
-    return;
-  }
+      const email =
+        document
+          .getElementById(
+            "auth-email"
+          )
+          .value
+          .trim();
 
-  showAuthMessage(
-    "Account created! Check your email to verify your account."
-  );
-}
 
-async function loginUser() {
-  const email = document.getElementById("auth-email").value.trim();
-  const password = document.getElementById("auth-password").value;
+      const password =
+        document
+          .getElementById(
+            "auth-password"
+          )
+          .value;
 
-  if (!email || !password) {
-    showAuthMessage("Please enter your email and password.");
-    return;
-  }
 
-  const { data, error } = await supabaseClient.auth.signInWithPassword({
-    email: email,
-    password: password
-  });
+      if (
+        !email ||
+        !password
+      ) {
 
-  if (error) {
-    showAuthMessage(error.message);
-    return;
-  }
+        showAuthMessage(
+          "Please enter your email and password."
+        );
 
-  document.getElementById("auth-screen").style.display = "none";
-  document.querySelector(".wrap").style.display = "block";
+        return;
 
-  load();
-  render();
-}
+      }
 
-async function resetPassword() {
-  const email = document.getElementById("auth-email").value.trim();
 
-  if (!email) {
-    showAuthMessage("Enter your email address first.");
-    return;
-  }
+      if (
+        password.length < 6
+      ) {
 
-  const { error } = await supabaseClient.auth.resetPasswordForEmail(email);
+        showAuthMessage(
+          "Password must be at least 6 characters."
+        );
 
-  if (error) {
-    showAuthMessage(error.message);
-    return;
-  }
+        return;
 
-  showAuthMessage("Password reset email sent. Check your inbox.");
-}
+      }
 
-  document.getElementById("auth-message").textContent = message;
-}
-  function togglePassword(button) {
-  const passwordInput = document.getElementById("auth-password");
 
-  if (passwordInput.type === "password") {
-    passwordInput.type = "text";
-    button.textContent = "🙈";
-  } else {
-    passwordInput.type = "password";
-    button.textContent = "👁️";
-  }
-}
-function setFilter(f){ filterStatus = f; render(); }
+      const {
+        error
+      } =
+        await supabaseClient.auth.signUp({
 
-// install banner (only shown when not already installed, and not on desktop)
+          email: email,
 
-document.getElementById("today-label").textContent =
-  new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "short",
-    day: "numeric"
-  });
+          password: password
 
-document.getElementById("f-date").value = todayISO();
+        });
 
-async function initializeAuth() {
-  const { data: { session }, error } =
-    await supabaseClient.auth.getSession();
 
-  if (error) {
-    console.error("Session error:", error);
-    return;
-  }
+      if (error) {
 
-  if (session) {
-    // User is already logged in
-    document.getElementById("auth-screen").style.display = "none";
-    document.querySelector(".wrap").style.display = "block";
+        showAuthMessage(
+          error.message
+        );
 
-    load();
-    render();
-  } else {
-    // No existing session
-    document.getElementById("auth-screen").style.display = "flex";
-    document.querySelector(".wrap").style.display = "none";
-  }
-}
+        return;
 
-// Check login when app starts
-initializeAuth();
+      }
 
-// Keep UI synchronized with Supabase authentication
-supabaseClient.auth.onAuthStateChange((event, session) => {
-  if (session) {
-    document.getElementById("auth-screen").style.display = "none";
-    document.querySelector(".wrap").style.display = "block";
 
-    load();
-    render();
-  } else {
-    document.getElementById("auth-screen").style.display = "flex";
-    document.querySelector(".wrap").style.display = "none";
-  }
-});
+      showAuthMessage(
+        "Account created! Check your email to verify your account."
+      );
 
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js").catch(() => {});
-  });
-}
-</script>
+    }
+
+
+    async function loginUser() {
+
+      const email =
+        document
+          .getElementById(
+            "auth-email"
+          )
+          .value
+          .trim();
+
+
+      const password =
+        document
+          .getElementById(
+            "auth-password"
+          )
+          .value;
+
+
+      if (
+        !email ||
+        !password
+      ) {
+
+        showAuthMessage(
+          "Please enter your email and password."
+        );
+
+        return;
+
+      }
+
+
+      showAuthMessage(
+        "Logging in..."
+      );
+
+
+      const {
+        data,
+        error
+      } =
+        await supabaseClient.auth
+          .signInWithPassword({
+
+            email: email,
+
+            password: password
+
+          });
+
+
+      if (error) {
+
+        showAuthMessage(
+          error.message
+        );
+
+        return;
+
+      }
+
+
+      if (data.session) {
+
+        showMainApp();
+
+      }
+
+    }
+
+
+    async function resetPassword() {
+
+      const email =
+        document
+          .getElementById(
+            "auth-email"
+          )
+          .value
+          .trim();
+
+
+      if (!email) {
+
+        showAuthMessage(
+          "Enter your email address first."
+        );
+
+        return;
+
+      }
+
+
+      const {
+        error
+      } =
+        await supabaseClient.auth
+          .resetPasswordForEmail(
+            email
+          );
+
+
+      if (error) {
+
+        showAuthMessage(
+          error.message
+        );
+
+        return;
+
+      }
+
+
+      showAuthMessage(
+        "Password reset email sent. Check your inbox."
+      );
+
+    }
+
+
+    /* =====================================================
+       AUTH MESSAGE
+    ====================================================== */
+
+    function showAuthMessage(
+      message
+    ) {
+
+      document.getElementById(
+        "auth-message"
+      ).textContent =
+        message;
+
+    }
+
+
+    /* =====================================================
+       PASSWORD SHOW / HIDE
+    ====================================================== */
+
+    function togglePassword(
+      button
+    ) {
+
+      const passwordInput =
+        document.getElementById(
+          "auth-password"
+        );
+
+
+      if (
+        passwordInput.type ===
+        "password"
+      ) {
+
+        passwordInput.type =
+          "text";
+
+        button.textContent =
+          "🙈";
+
+        button.setAttribute(
+          "aria-label",
+          "Hide password"
+        );
+
+      } else {
+
+        passwordInput.type =
+          "password";
+
+        button.textContent =
+          "👁️";
+
+        button.setAttribute(
+          "aria-label",
+          "Show password"
+        );
+
+      }
+
+    }
+
+
+    /* =====================================================
+       FILTER
+    ====================================================== */
+
+    function setFilter(f) {
+
+      filterStatus = f;
+
+      render();
+
+    }
+
+
+    /* =====================================================
+       SHOW / HIDE APP
+    ====================================================== */
+
+    function showMainApp() {
+
+      document.getElementById(
+        "auth-screen"
+      ).style.display =
+        "none";
+
+
+      document.querySelector(
+        ".wrap"
+      ).style.display =
+        "block";
+
+
+      load();
+
+      render();
+
+    }
+
+
+    function showLoginScreen() {
+
+      document.getElementById(
+        "auth-screen"
+      ).style.display =
+        "flex";
+
+
+      document.querySelector(
+        ".wrap"
+      ).style.display =
+        "none";
+
+    }
+
+
+    /* =====================================================
+       INITIALIZE
+    ====================================================== */
+
+    document.getElementById(
+      "today-label"
+    ).textContent =
+      new Date().toLocaleDateString(
+        "en-US",
+        {
+          weekday: "long",
+          month: "short",
+          day: "numeric"
+        }
+      );
+
+
+    document.getElementById(
+      "f-date"
+    ).value =
+      todayISO();
+
+
+    /* =====================================================
+       CHECK EXISTING SESSION
+    ====================================================== */
+
+    async function initializeAuth() {
+
+      try {
+
+        const {
+          data,
+          error
+        } =
+          await supabaseClient.auth
+            .getSession();
+
+
+        if (error) {
+
+          console.error(
+            "Session error:",
+            error
+          );
+
+          showLoginScreen();
+
+          return;
+
+        }
+
+
+        if (
+          data &&
+          data.session
+        ) {
+
+          showMainApp();
+
+        } else {
+
+          showLoginScreen();
+
+        }
+
+      } catch (error) {
+
+        console.error(
+          "Authentication initialization error:",
+          error
+        );
+
+        showLoginScreen();
+
+      }
+
+    }
+
+
+    initializeAuth();
+
+
+    /* =====================================================
+       AUTH STATE LISTENER
+    ====================================================== */
+
+    supabaseClient.auth.onAuthStateChange(
+      (event, session) => {
+
+        if (session) {
+
+          showMainApp();
+
+        } else {
+
+          showLoginScreen();
+
+        }
+
+      }
+    );
+
+
+    /* =====================================================
+       SERVICE WORKER
+    ====================================================== */
+
+    if (
+      "serviceWorker" in navigator
+    ) {
+
+      window.addEventListener(
+        "load",
+        () => {
+
+          navigator.serviceWorker
+            .register("./sw.js")
+            .catch(
+              error => {
+                console.log(
+                  "Service worker registration failed:",
+                  error
+                );
+              }
+            );
+
+        }
+      );
+
+    }
+
+  </script>
+
 </body>
 </html>
