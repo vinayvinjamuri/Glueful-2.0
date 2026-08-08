@@ -256,6 +256,28 @@
     .password-toggle:hover {
       background: #1A2029;
     }
+    .login-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  border: 2px solid rgba(255,255,255,0.35);
+  border-top-color: white;
+  border-radius: 50%;
+  vertical-align: -3px;
+  animation: loginSpin 0.7s linear infinite;
+}
+
+@keyframes loginSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+button:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+}
   </style>
 </head>
 
@@ -1988,74 +2010,99 @@
 
     async function loginUser() {
 
-      const email =
-        document
-          .getElementById(
-            "auth-email"
-          )
-          .value
-          .trim();
+  const email =
+    document
+      .getElementById("auth-email")
+      .value
+      .trim();
+
+  const password =
+    document
+      .getElementById("auth-password")
+      .value;
+
+  const loginButton =
+    document.querySelector(
+      'button[onclick="loginUser()"]'
+    );
 
 
-      const password =
-        document
-          .getElementById(
-            "auth-password"
-          )
-          .value;
+  if (!email || !password) {
+
+    showAuthMessage(
+      "Please enter your email and password."
+    );
+
+    return;
+  }
 
 
-      if (
-        !email ||
-        !password
-      ) {
+  // Show loading state
+  loginButton.disabled = true;
 
-        showAuthMessage(
-          "Please enter your email and password."
-        );
+  loginButton.innerHTML = `
+    <span class="login-spinner"></span>
+    Signing in...
+  `;
 
-        return;
+  showAuthMessage("");
 
-      }
 
+  try {
+
+    const {
+      data,
+      error
+    } =
+      await supabaseClient.auth
+        .signInWithPassword({
+
+          email: email,
+
+          password: password
+
+        });
+
+
+    if (error) {
 
       showAuthMessage(
-        "Logging in..."
+        error.message
       );
 
+      // Restore button
+      loginButton.disabled = false;
 
-      const {
-        data,
-        error
-      } =
-        await supabaseClient.auth
-          .signInWithPassword({
+      loginButton.innerHTML =
+        "Login";
 
-            email: email,
-
-            password: password
-
-          });
+      return;
+    }
 
 
-      if (error) {
+    if (data.session) {
 
-        showAuthMessage(
-          error.message
-        );
-
-        return;
-
-      }
-
-
-      if (data.session) {
-
-        showMainApp();
-
-      }
+      showMainApp();
 
     }
+
+
+  } catch (err) {
+
+    console.error(err);
+
+    showAuthMessage(
+      "Something went wrong. Please try again."
+    );
+
+    loginButton.disabled = false;
+
+    loginButton.innerHTML =
+      "Login";
+
+  }
+
+}
 
 
     async function resetPassword() {
