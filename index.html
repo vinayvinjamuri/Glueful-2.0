@@ -458,6 +458,15 @@ async function resetPassword() {
 function showAuthMessage(message) {
   document.getElementById("auth-message").textContent = message;
 }
+  function togglePassword() {
+  const passwordInput = document.getElementById("auth-password");
+
+  if (passwordInput.type === "password") {
+    passwordInput.type = "text";
+  } else {
+    passwordInput.type = "password";
+  }
+}
 function setFilter(f){ filterStatus = f; render(); }
 
 // install banner (only shown when not already installed, and not on desktop)
