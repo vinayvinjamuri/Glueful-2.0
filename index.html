@@ -76,8 +76,49 @@ const supabaseClient = window.supabase.createClient(
       Sign in to manage your applications
     </p>
 
-    <div class="field">
+   <div class="field">
+  <label>Email</label>
+  <input
+    id="auth-email"
+    class="input"
+    type="email"
+    placeholder="you@example.com"
+    required
+  />
+</div>
+
+<div class="field">
   <label>Password</label>
+
+  <div style="position:relative;">
+    <input
+      id="auth-password"
+      class="input"
+      type="password"
+      placeholder="Password"
+      required
+      style="padding-right:45px;"
+    />
+
+    <button
+      type="button"
+      onclick="togglePassword()"
+      style="
+        position:absolute;
+        right:8px;
+        top:50%;
+        transform:translateY(-50%);
+        background:transparent;
+        color:#AEB7C2;
+        font-size:18px;
+        padding:6px;
+      "
+      aria-label="Show password"
+    >
+      👁️
+    </button>
+  </div>
+</div>
 
   <div style="position:relative;">
     <input id="auth-password"
@@ -456,6 +497,18 @@ async function resetPassword() {
 }
 
 function showAuthMessage(message) {
+  function togglePassword() {
+  const password = document.getElementById("auth-password");
+  const button = event.currentTarget;
+
+  if (password.type === "password") {
+    password.type = "text";
+    button.textContent = "🙈";
+  } else {
+    password.type = "password";
+    button.textContent = "👁️";
+  }
+}
   document.getElementById("auth-message").textContent = message;
 }
   function togglePassword() {
