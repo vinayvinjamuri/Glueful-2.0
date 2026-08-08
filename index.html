@@ -2206,12 +2206,6 @@
         </div>
 
 
-        <button
-          class="primary-btn"
-          onclick="openResumeForm()"
-        >
-          + Add
-        </button>
 
       </div>
 
@@ -2523,6 +2517,63 @@
           rows="6"
           placeholder="Paste the JD..."
         ></textarea>
+
+      </div>
+
+
+      <!-- =====================================================
+           RESUME USED FOR THIS APPLICATION
+      ====================================================== -->
+
+      <div class="field">
+
+        <label>Resume used</label>
+
+        <div
+          class="row"
+          style="
+            gap:8px;
+            align-items:stretch;
+          "
+        >
+
+          <select
+            id="f-resume"
+            class="input"
+            style="flex:1;"
+          >
+            <option value="">
+              No resume selected
+            </option>
+          </select>
+
+          <button
+            type="button"
+            class="icon-btn"
+            title="Add new resume"
+            onclick="addResumeFromApplication()"
+            style="
+              width:42px;
+              height:42px;
+              flex-shrink:0;
+              font-size:20px;
+            "
+          >
+            +
+          </button>
+
+        </div>
+
+        <p
+          style="
+            margin:5px 0 0;
+            color:var(--text-faint);
+            font-size:11px;
+          "
+        >
+          Select the resume you used for this application,
+          or add a new one.
+        </p>
 
       </div>
 
@@ -3168,8 +3219,19 @@
 
 
     /* =====================================================
-       STORAGE
+       STORAGE / CLOUD SYNC
+    ======================================================
+       Applications, interviews and resumes are stored in Supabase
+       so the same account sees the same data on phone, laptop and
+       every other device. localStorage remains a local backup.
     ====================================================== */
+
+    const GLUEFUL_DATA_TABLE =
+      "glueful_data";
+
+    let DATA_USER_ID = null;
+    let cloudSyncReady = false;
+    let saveQueue = Promise.resolve();
 
     let APPLICATION_KEY =
       "job_applications_v1";
@@ -3206,6 +3268,10 @@
 
     let editingResumeId =
       null;
+
+
+    let resumeReturnToApplication =
+      false;
 
 
     /* =====================================================
@@ -3375,114 +3441,114 @@
        LOAD / SAVE
     ====================================================== */
 
-    async function getCurrentUser() {
+    async function loadLocalBackup() {
 
-      const {
-        data,
-        error
-      } = await supabaseClient.auth.getUser();
+      try {
 
-      if(error)
-        throw error;
+        applications =
+          JSON.parse(
+            localStorage.getItem(
+              APPLICATION_KEY
+            ) || "[]"
+          );
 
-      return data?.user || null;
+        interviews =
+          JSON.parse(
+            localStorage.getItem(
+              INTERVIEW_KEY
+            ) || "[]"
+          );
+
+        resumes =
+          JSON.parse(
+            localStorage.getItem(
+              RESUME_KEY
+            ) || "[]"
+          );
+
+      } catch(e) {
+
+        console.error(
+          "Local Glueful data could not be read:",
+          e
+        );
+
+        applications = [];
+        interviews = [];
+        resumes = [];
+
+      }
 
     }
 
 
     async function loadAll() {
 
+      await loadLocalBackup();
+
+      if(!DATA_USER_ID) {
+        cloudSyncReady = false;
+        return;
+      }
+
       try {
 
-        /* Applications are stored in Supabase so the same account
-           can see them on every phone, laptop, or tablet. */
-        const user = await getCurrentUser();
+        const {
+          data,
+          error
+        } = await supabaseClient
+          .from(GLUEFUL_DATA_TABLE)
+          .select(
+            "applications,interviews,resumes"
+          )
+          .eq(
+            "user_id",
+            DATA_USER_ID
+          )
+          .maybeSingle();
 
-        if(!user) {
+        if(error) {
+          throw error;
+        }
 
-          applications = [];
+        if(data) {
+
+          applications =
+            Array.isArray(data.applications)
+              ? data.applications
+              : [];
+
+          interviews =
+            Array.isArray(data.interviews)
+              ? data.interviews
+              : [];
+
+          resumes =
+            Array.isArray(data.resumes)
+              ? data.resumes
+              : [];
 
         } else {
 
-          const {
-            data: cloudApplications,
-            error
-          } = await supabaseClient
-            .from("applications")
-            .select("id,user_id,company,role,date,status,link,jd,created_at,updated_at")
-            .eq("user_id", user.id)
-            .order("created_at", { ascending:false });
-
-          if(error)
-            throw error;
-
-          applications = cloudApplications || [];
-
-          /* Migrate older local applications only when the cloud table
-             has no applications for this account. */
-          if(applications.length === 0) {
-
-            const oldLocal = JSON.parse(
-              localStorage.getItem(APPLICATION_KEY) || "[]"
-            );
-
-            if(oldLocal.length) {
-
-              const rows = oldLocal.map(app => ({
-                user_id:user.id,
-                company:app.company || "",
-                role:app.role || "",
-                date:app.date || todayISO(),
-                status:app.status || "applied",
-                link:app.link || null,
-                jd:app.jd || null
-              }));
-
-              const {
-                data: migrated,
-                error:migrateError
-              } = await supabaseClient
-                .from("applications")
-                .insert(rows)
-                .select("id,user_id,company,role,date,status,link,jd,created_at,updated_at");
-
-              if(migrateError)
-                throw migrateError;
-
-              applications = migrated || [];
-
-            }
-
-          }
+          /* First-device migration: upload existing local data. */
+          await writeCloudData();
 
         }
 
-        /* Interviews and resumes remain local until their own cloud
-           tables are created. */
-        interviews = JSON.parse(
-          localStorage.getItem(INTERVIEW_KEY) || "[]"
-        );
+        cloudSyncReady = true;
+        writeLocalBackup();
 
-        resumes = JSON.parse(
-          localStorage.getItem(RESUME_KEY) || "[]"
-        );
+      } catch(error) {
 
-      } catch(e) {
+        cloudSyncReady = false;
 
-        console.error("Cloud load error:", e);
-
-        applications = [];
-
-        interviews = JSON.parse(
-          localStorage.getItem(INTERVIEW_KEY) || "[]"
-        );
-
-        resumes = JSON.parse(
-          localStorage.getItem(RESUME_KEY) || "[]"
+        console.error(
+          "Glueful cloud sync load failed:",
+          error
         );
 
         showError(
-          "Couldn't load applications from the cloud."
+          "Cloud sync unavailable. Your local data is still safe on this device."
         );
 
       }
@@ -3490,13 +3556,15 @@
     }
 
 
-    async function saveAll() {
+    function writeLocalBackup() {
 
       try {
 
-        /* Interviews and resumes remain local for now.
-           Applications are written to Supabase by their own
-           create/update/delete functions below. */
+        localStorage.setItem(
+          APPLICATION_KEY,
+          JSON.stringify(applications)
+        );
+
         localStorage.setItem(
           INTERVIEW_KEY,
           JSON.stringify(interviews)
@@ -3509,10 +3577,9 @@
 
       } catch(e) {
 
-        console.error("Save error:", e);
-
-        showError(
-          "Couldn't save data."
+        console.error(
+          "Could not write local Glueful backup:",
+          e
         );
 
       }
@@ -3520,77 +3587,62 @@
     }
 
 
-    async function saveApplicationToCloud(app, isNew = false) {
+    async function writeCloudData() {
 
-      const user = await getCurrentUser();
-
-      if(!user)
-        throw new Error("You are not signed in.");
-
-      const row = {
-        user_id:user.id,
-        company:app.company || "",
-        role:app.role || "",
-        date:app.date || todayISO(),
-        status:app.status || "applied",
-        link:app.link || null,
-        jd:app.jd || null
-      };
-
-      if(isNew) {
-
-        const {
-          data,
-          error
-        } = await supabaseClient
-          .from("applications")
-          .insert(row)
-          .select("id,user_id,company,role,date,status,link,jd,created_at,updated_at")
-          .single();
-
-        if(error)
-          throw error;
-
-        return data;
-
+      if(!DATA_USER_ID) {
+        return;
       }
 
       const {
-        data,
         error
       } = await supabaseClient
-        .from("applications")
-        .update(row)
-        .eq("id", app.id)
-        .eq("user_id", user.id)
-        .select("id,user_id,company,role,date,status,link,jd,created_at,updated_at")
-        .single();
+        .from(GLUEFUL_DATA_TABLE)
+        .upsert(
+          {
+            user_id: DATA_USER_ID,
+            applications: applications,
+            interviews: interviews,
+            resumes: resumes,
+            updated_at: new Date().toISOString()
+          },
+          {
+            onConflict: "user_id"
+          }
+        );
 
-      if(error)
+      if(error) {
         throw error;
-
-      return data;
+      }
 
     }
 
 
-    async function deleteApplicationFromCloud(id) {
+    function saveAll() {
 
-      const user = await getCurrentUser();
+      writeLocalBackup();
 
-      if(!user)
-        throw new Error("You are not signed in.");
+      if(!DATA_USER_ID || !cloudSyncReady) {
+        return Promise.resolve();
+      }
 
-      const {
-        error
-      } = await supabaseClient
-        .from("applications")
-        .delete()
-        .eq("id", id)
-        .eq("user_id", user.id);
+      saveQueue = saveQueue
+        .then(
+          () => writeCloudData()
+        )
+        .catch(
+          error => {
+            console.error(
+              "Glueful cloud sync save failed:",
+              error
+            );
 
-      if(error)
-        throw error;
+            showError(
+              "Couldn't sync to the cloud. Your local data is still saved on this device."
+            );
+          }
+        );
+
+      return saveQueue;
 
     }
 
@@ -4380,6 +4432,28 @@
                 ${formatShortDate(app.date)}
               </p>
 
+              ${
+                app.resumeId
+                  ? (() => {
+                      const linkedResume =
+                        resumes.find(
+                          r => r.id === app.resumeId
+                        );
+                      return linkedResume
+                        ? `
+                          <p
+                            class="date-text"
+                            style="margin-top:4px;"
+                            title="Resume used"
+                          >
+                            📄 ${esc(linkedResume.name)}
+                          </p>
+                        `
+                        : "";
+                    })()
+                  : ""
+              }
+
             </div>
 
 
@@ -4517,6 +4591,11 @@
         app?.jd || "";
 
 
+      renderResumeOptions(
+        app?.resumeId || ""
+      );
+
+
       openModal(
         "application-modal"
       );
@@ -4524,7 +4603,7 @@
     }
 
 
-    async function submitApplication(e) {
+    function submitApplication(e) {
 
       e.preventDefault();
 
@@ -4560,61 +4639,52 @@
         jd:
           document.getElementById(
             "f-jd"
-          ).value.trim()
+          ).value.trim(),
+
+        resumeId:
+          document.getElementById(
+            "f-resume"
+          ).value || null
 
       };
 
 
-      try {
+      if(
+        editingApplicationId
+      ) {
 
-        if(editingApplicationId) {
-
-          const updated = await saveApplicationToCloud(
-            {
-              id:editingApplicationId,
-              ...data
-            },
-            false
-          );
-
-          applications = applications.map(
+        applications =
+          applications.map(
             app =>
-              app.id === editingApplicationId
-                ? updated
+              app.id ===
+              editingApplicationId
+                ? {
+                    ...app,
+                    ...data
+                  }
                 : app
           );
 
-        } else {
+      } else {
 
-          const created = await saveApplicationToCloud(
-            data,
-            true
-          );
+        applications.unshift({
 
-          applications.unshift(created);
+          id:makeId(),
 
-        }
+          ...data
 
-        await saveAll();
-
-        closeModal(
-          "application-modal"
-        );
-
-        renderAll();
-
-      } catch(error) {
-
-        console.error(
-          "Application save error:",
-          error
-        );
-
-        showError(
-          "Couldn't save the application to the cloud."
-        );
+        });
 
       }
+
+
+      saveAll();
+
+      closeModal(
+        "application-modal"
+      );
+
+      renderAll();
 
     }
 
@@ -4660,7 +4730,7 @@
     }
 
 
-    async function confirmDeleteApplication() {
+    function confirmDeleteApplication() {
 
       if (!pendingDeleteApplicationId) {
         closeDeleteModal();
@@ -4669,33 +4739,16 @@
 
       const id = pendingDeleteApplicationId;
 
-      try {
-
-        await deleteApplicationFromCloud(id);
-
-        applications =
-          applications.filter(
-            a => a.id !== id
-          );
-
-        await saveAll();
-
-        closeDeleteModal();
-
-        renderAll();
-
-      } catch(error) {
-
-        console.error(
-          "Application delete error:",
-          error
+      applications =
+        applications.filter(
+          a => a.id !== id
         );
 
-        showError(
-          "Couldn't delete the application from the cloud."
-        );
+      saveAll();
 
-      }
+      closeDeleteModal();
+
+      renderAll();
 
     }
 
@@ -5655,6 +5708,59 @@
        RESUMES
     ====================================================== */
 
+    function renderResumeOptions(selectedId="") {
+
+      const select =
+        document.getElementById(
+          "f-resume"
+        );
+
+      if(!select)
+        return;
+
+      select.innerHTML = `
+
+        <option value="">
+          No resume selected
+        </option>
+
+        ${resumes
+          .map(
+            resume => `
+
+              <option
+                value="${esc(resume.id)}"
+                ${
+                  resume.id === selectedId
+                    ? "selected"
+                    : ""
+                }
+              >
+                ${esc(resume.name)}
+              </option>
+
+            `
+          )
+          .join("")}
+
+      `;
+
+      select.value =
+        selectedId || "";
+
+    }
+
+
+    function addResumeFromApplication() {
+
+      resumeReturnToApplication =
+        true;
+
+      openResumeForm();
+
+    }
+
+
     function renderResumes() {
 
       const container =
@@ -5702,6 +5808,12 @@
 
               <div
                 class="card resume-card"
+                role="button"
+                tabindex="0"
+                title="Open resume"
+                onclick="openExternal('${esc(resume.url)}')"
+                onkeydown="if(event.key==='Enter' || event.key===' ') { event.preventDefault(); openExternal('${esc(resume.url)}'); }"
+                style="cursor:pointer;"
               >
 
                 <div
@@ -5744,6 +5856,7 @@
 
                 <div
                   class="card-actions"
+                  onclick="event.stopPropagation()"
                 >
 
                   <button
@@ -5783,6 +5896,11 @@
 
 
     function openResumeForm(id=null) {
+
+      if(!resumeReturnToApplication) {
+        resumeReturnToApplication =
+          false;
+      }
 
       editingResumeId =
         id;
@@ -5883,6 +6001,10 @@
       }
 
 
+      const newResumeId =
+        editingResumeId ||
+        (resumes[0]?.id || null);
+
       saveAll();
 
       closeModal(
@@ -5890,6 +6012,20 @@
       );
 
       renderResumes();
+
+      if(resumeReturnToApplication) {
+
+        resumeReturnToApplication =
+          false;
+
+        renderResumeOptions(
+          newResumeId
+        );
+
+      }
+
+      editingResumeId =
+        null;
 
     }
 
@@ -5910,9 +6046,25 @@
         );
 
 
+      applications =
+        applications.map(
+          app =>
+            app.resumeId === id
+              ? {
+                  ...app,
+                  resumeId:null
+                }
+              : app
+        );
+
+
       saveAll();
 
       renderResumes();
+
+      if(currentView === "applications") {
+        renderApplications();
+      }
 
     }
 
@@ -6187,6 +6339,11 @@
         );
 
       }
+
+
+      DATA_USER_ID = null;
+      cloudSyncReady = false;
+      saveQueue = Promise.resolve();
 
 
       showLoginScreen();
@@ -6695,6 +6852,10 @@
           return;
 
         }
+
+
+        DATA_USER_ID =
+          user.id;
 
 
         /*
