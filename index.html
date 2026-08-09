@@ -29,6 +29,77 @@
       );
   </script>
 
+  <!-- =====================================================
+       GLUEFUL CHROME EXTENSION AUTH BRIDGE
+       =====================================================
+
+       Replace the value below with the ID shown for
+       "Glueful Auto Capture" at chrome://extensions.
+       ====================================================== -->
+  <script>
+    const GLUEFUL_EXTENSION_ID =
+      "mdmgapjgmkfnaafehabjoamdcnklikjf";
+
+    async function syncGluefulExtensionAuth(session) {
+      try {
+        if (!session || !session.access_token) {
+          console.log(
+            "Glueful extension auth: no active session to sync."
+          );
+          return;
+        }
+
+        if (
+          GLUEFUL_EXTENSION_ID ===
+            "REPLACE_WITH_YOUR_GLUEFUL_EXTENSION_ID"
+        ) {
+          console.warn(
+            "Glueful extension auth: extension ID has not been configured yet."
+          );
+          return;
+        }
+
+        if (
+          !window.chrome ||
+          !chrome.runtime ||
+          typeof chrome.runtime.sendMessage !== "function"
+        ) {
+          console.warn(
+            "Glueful extension auth: Chrome extension messaging is unavailable on this page."
+          );
+          return;
+        }
+
+        chrome.runtime.sendMessage(
+          GLUEFUL_EXTENSION_ID,
+          {
+            type: "GLUEFUL_AUTH",
+            accessToken: session.access_token
+          },
+          (response) => {
+            if (chrome.runtime.lastError) {
+              console.error(
+                "Glueful extension auth sync error:",
+                chrome.runtime.lastError.message
+              );
+              return;
+            }
+
+            console.log(
+              "Glueful extension auth sync response:",
+              response
+            );
+          }
+        );
+      } catch (error) {
+        console.error(
+          "Glueful extension auth bridge error:",
+          error
+        );
+      }
+    }
+  </script>
+
 
   <meta charset="UTF-8" />
 
@@ -9001,6 +9072,37 @@
       cloudSyncReady = false;
       saveQueue = Promise.resolve();
 
+      try {
+        if (
+          GLUEFUL_EXTENSION_ID &&
+          GLUEFUL_EXTENSION_ID !==
+            "REPLACE_WITH_YOUR_GLUEFUL_EXTENSION_ID" &&
+          window.chrome &&
+          chrome.runtime &&
+          typeof chrome.runtime.sendMessage === "function"
+        ) {
+          chrome.runtime.sendMessage(
+            GLUEFUL_EXTENSION_ID,
+            {
+              type: "GLUEFUL_AUTH_LOGOUT"
+            },
+            () => {
+              if (chrome.runtime.lastError) {
+                console.warn(
+                  "Glueful extension logout sync:",
+                  chrome.runtime.lastError.message
+                );
+              }
+            }
+          );
+        }
+      } catch(error) {
+        console.warn(
+          "Glueful extension logout bridge error:",
+          error
+        );
+      }
+
 
       showLoginScreen();
 
@@ -9377,6 +9479,10 @@
           data.session
         ) {
 
+          await syncGluefulExtensionAuth(
+            data.session
+          );
+
           await showMainApp(
             data.session
           );
@@ -9738,6 +9844,10 @@
           data.session
         ) {
 
+          await syncGluefulExtensionAuth(
+            data.session
+          );
+
           await showMainApp(
             data.session
           );
@@ -9773,6 +9883,10 @@
       ) => {
 
         if(session) {
+
+          syncGluefulExtensionAuth(
+            session
+          );
 
           showMainApp(
             session
