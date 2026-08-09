@@ -1184,21 +1184,23 @@
     }
 
     .resume-filter-button {
-      min-width:84px;
-      min-height:42px;
-      padding:.65rem .8rem;
+      width:74px;
+      min-width:74px;
+      height:42px;
+      padding:.5rem .6rem;
       border-radius:8px;
       border:1px solid #7045F4;
       background:#171D27;
       color:#B497FF;
       font-family:'Space Grotesk',sans-serif;
-      font-size:12px;
+      font-size:11px;
       font-weight:600;
       display:flex;
       align-items:center;
       justify-content:center;
-      gap:5px;
+      gap:4px;
       white-space:nowrap;
+      align-self:stretch;
     }
 
     .resume-filter-button:hover,
@@ -1678,7 +1680,9 @@
       }
 
       .resume-filter-button {
-        min-width:78px;
+        width:72px;
+        min-width:72px;
+        height:42px;
       }
     }
 
@@ -2842,11 +2846,6 @@
       <div class="resume-filter-grid">
 
         <div class="resume-filter-section">
-          <div class="resume-filter-label">Company</div>
-          <div id="resume-filter-companies" class="resume-filter-options"></div>
-        </div>
-
-        <div class="resume-filter-section">
           <div class="resume-filter-label">Usage</div>
           <div class="resume-filter-options">
             <label class="resume-filter-option">
@@ -3990,7 +3989,6 @@
     /* Resume Manager filter state. These filters are UI-only and do not
        modify or replace any synced resume/application data. */
     let resumeFilters = {
-      company: "all",
       usage: "all",
       date: "all",
       sort: "recently_added",
@@ -7508,7 +7506,6 @@
 
       let count = 0;
 
-      if(resumeFilters.company !== "all") count++;
       if(resumeFilters.usage !== "all") count++;
       if(resumeFilters.date !== "all") count++;
       if(resumeFilters.sort !== "recently_added") count++;
@@ -7558,54 +7555,7 @@
     }
 
 
-    function renderResumeFilterCompanies() {
-
-      const container =
-        document.getElementById("resume-filter-companies");
-
-      if(!container) return;
-
-      const companies =
-        buildResumeGroups()
-          .map(group => group.company)
-          .sort((a,b) => a.localeCompare(b));
-
-      const options = [
-        `<label class="resume-filter-option">
-          <input type="radio" name="resume-filter-company" value="all" />
-          <span>All companies</span>
-        </label>`
-      ];
-
-      companies.forEach(company => {
-
-        options.push(`
-          <label class="resume-filter-option">
-            <input
-              type="radio"
-              name="resume-filter-company"
-              value="${esc(company)}"
-            />
-            <span>${esc(company)}</span>
-          </label>
-        `);
-
-      });
-
-      container.innerHTML =
-        options.join("");
-
-      setResumeFilterRadio(
-        "resume-filter-company",
-        resumeFilters.company
-      );
-
-    }
-
-
     function syncResumeFilterForm() {
-
-      renderResumeFilterCompanies();
 
       setResumeFilterRadio(
         "resume-filter-usage",
@@ -7696,7 +7646,6 @@
     function resetResumeFilters(closeSheet=true) {
 
       resumeFilters = {
-        company: "all",
         usage: "all",
         date: "all",
         sort: "recently_added",
@@ -7716,11 +7665,6 @@
 
 
     function applyResumeFilters() {
-
-      const company =
-        document.querySelector(
-          'input[name="resume-filter-company"]:checked'
-        )?.value || "all";
 
       const usage =
         document.querySelector(
@@ -7760,7 +7704,6 @@
       }
 
       resumeFilters = {
-        company,
         usage,
         date,
         sort,
@@ -7828,14 +7771,6 @@
             resumes:
               group.resumes.filter(
                 resume => {
-
-                  if(
-                    resumeFilters.company !== "all" &&
-                    group.company.toLowerCase() !==
-                      resumeFilters.company.toLowerCase()
-                  ) {
-                    return false;
-                  }
 
                   if(
                     resumeFilters.usage === "used" &&
