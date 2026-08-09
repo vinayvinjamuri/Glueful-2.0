@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Glueful Auto Capture",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Automatically capture job applications and send them to Glueful.",
 
   "permissions": [
@@ -30,9 +30,7 @@
         "https://www.naukri.com/*",
         "https://www.indeed.com/*"
       ],
-      "js": [
-        "content.js"
-      ],
+      "js": ["content.js"],
       "run_at": "document_idle"
     }
   ],
