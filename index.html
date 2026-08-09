@@ -1175,6 +1175,55 @@
       margin-bottom:.75rem;
     }
 
+    .resume-search-row {
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      gap:8px;
+      align-items:stretch;
+      margin-bottom:.75rem;
+    }
+
+    .resume-filter-button {
+      min-width:84px;
+      min-height:42px;
+      padding:.65rem .8rem;
+      border-radius:8px;
+      border:1px solid #7045F4;
+      background:#171D27;
+      color:#B497FF;
+      font-family:'Space Grotesk',sans-serif;
+      font-size:12px;
+      font-weight:600;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:5px;
+      white-space:nowrap;
+    }
+
+    .resume-filter-button:hover,
+    .resume-filter-button.active {
+      background:linear-gradient(135deg,#8B2FE0,#2F6FFF);
+      border-color:transparent;
+      color:white;
+    }
+
+    .resume-filter-icon {
+      flex:0 0 auto;
+    }
+
+    .resume-filter-count {
+      min-width:17px;
+      height:17px;
+      padding:0 4px;
+      border-radius:9px;
+      background:rgba(255,255,255,.18);
+      color:white;
+      font-size:9px;
+      line-height:17px;
+      text-align:center;
+    }
+
     .resume-search {
       width:100%;
       padding-left:42px !important;
@@ -1471,6 +1520,166 @@
 
       margin-top:3px;
 
+    }
+
+
+    /* =====================================================
+       RESUME FILTER SHEET
+    ====================================================== */
+
+    .resume-filter-overlay {
+      position:fixed;
+      inset:0;
+      z-index:95;
+      display:none;
+      align-items:flex-end;
+      justify-content:center;
+      background:rgba(4,6,10,.78);
+      padding:0;
+    }
+
+    .resume-filter-overlay.open {
+      display:flex;
+    }
+
+    .resume-filter-panel {
+      width:100%;
+      max-width:900px;
+      max-height:88vh;
+      overflow-y:auto;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-bottom:none;
+      border-radius:18px 18px 0 0;
+      padding:8px 1rem calc(1rem + env(safe-area-inset-bottom));
+      box-shadow:0 -20px 70px rgba(0,0,0,.45);
+    }
+
+    .resume-filter-handle {
+      width:34px;
+      height:4px;
+      border-radius:4px;
+      background:var(--border);
+      margin:0 auto 1rem;
+    }
+
+    .resume-filter-header {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:1rem;
+    }
+
+    .resume-filter-grid {
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px;
+    }
+
+    .resume-filter-section {
+      background:#0E131B;
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:12px;
+    }
+
+    .resume-filter-label {
+      font-family:'Space Grotesk',sans-serif;
+      font-size:13px;
+      font-weight:600;
+      margin-bottom:8px;
+    }
+
+    .resume-filter-options {
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+
+    .resume-filter-option {
+      display:flex;
+      align-items:center;
+      gap:8px;
+      min-height:31px;
+      padding:4px 3px;
+      color:var(--text-dim);
+      font-size:11px;
+      cursor:pointer;
+      border-radius:6px;
+    }
+
+    .resume-filter-option:hover {
+      background:#151B25;
+      color:var(--text);
+    }
+
+    .resume-filter-option input {
+      appearance:none;
+      width:16px;
+      height:16px;
+      margin:0;
+      border:1px solid #697486;
+      border-radius:50%;
+      background:transparent;
+      flex:0 0 16px;
+      position:relative;
+    }
+
+    .resume-filter-option input:checked {
+      border-color:#A98BFF;
+      box-shadow:inset 0 0 0 4px #0E131B;
+      background:#A98BFF;
+    }
+
+    .resume-custom-date-range {
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+      align-items:end;
+      gap:6px;
+      margin-top:8px;
+    }
+
+    .resume-custom-date-range > span {
+      color:var(--text-faint);
+      padding-bottom:10px;
+    }
+
+    .resume-custom-date-range label {
+      display:block;
+      font-size:9px;
+      color:var(--text-faint);
+      margin-bottom:4px;
+    }
+
+    .resume-custom-date-range .input {
+      font-size:11px;
+      padding:.55rem .5rem;
+    }
+
+    .resume-filter-actions {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+      margin-top:12px;
+    }
+
+    .resume-filter-actions button {
+      min-height:42px;
+    }
+
+    @media(max-width:700px) {
+      .resume-filter-grid {
+        grid-template-columns:1fr;
+      }
+
+      .resume-filter-panel {
+        max-height:90vh;
+      }
+
+      .resume-filter-button {
+        min-width:78px;
+      }
     }
 
 
@@ -2552,15 +2761,44 @@
         </div>
       </div>
 
-      <div class="resume-search-wrap">
-        <span class="resume-search-icon">⌕</span>
-        <input
-          id="resume-search"
-          class="input resume-search"
-          placeholder="Search company or resume name..."
-          oninput="renderResumes()"
-          autocomplete="off"
-        />
+      <div class="resume-search-row">
+        <div class="resume-search-wrap">
+          <span class="resume-search-icon">⌕</span>
+          <input
+            id="resume-search"
+            class="input resume-search"
+            placeholder="Search company or resume name..."
+            oninput="renderResumes()"
+            autocomplete="off"
+          />
+        </div>
+
+        <button
+          type="button"
+          id="resume-filter-button"
+          class="resume-filter-button"
+          onclick="openResumeFilters()"
+          title="Filter resumes"
+        >
+          <svg
+            class="resume-filter-icon"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M4 5h16"/>
+            <path d="M7 12h10"/>
+            <path d="M10 19h4"/>
+          </svg>
+          <span>Filter</span>
+          <span id="resume-filter-count" class="resume-filter-count" style="display:none;">0</span>
+        </button>
       </div>
 
       <div class="card resume-info-banner">
@@ -2572,6 +2810,132 @@
 
     </section>
 
+  </div>
+
+
+  <!-- =====================================================
+       RESUME FILTER SHEET
+  ====================================================== -->
+
+  <div
+    id="resume-filter-sheet"
+    class="resume-filter-overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="resume-filter-title"
+    onclick="if(event.target===this) closeResumeFilters()"
+  >
+    <div class="resume-filter-panel">
+
+      <div class="resume-filter-handle"></div>
+
+      <div class="resume-filter-header">
+        <h3 id="resume-filter-title" class="modal-title">Filter resumes</h3>
+        <button
+          type="button"
+          class="icon-btn"
+          onclick="closeResumeFilters()"
+          aria-label="Close filters"
+        >✕</button>
+      </div>
+
+      <div class="resume-filter-grid">
+
+        <div class="resume-filter-section">
+          <div class="resume-filter-label">Company</div>
+          <div id="resume-filter-companies" class="resume-filter-options"></div>
+        </div>
+
+        <div class="resume-filter-section">
+          <div class="resume-filter-label">Usage</div>
+          <div class="resume-filter-options">
+            <label class="resume-filter-option">
+              <input type="radio" name="resume-filter-usage" value="all" checked />
+              <span>All</span>
+            </label>
+            <label class="resume-filter-option">
+              <input type="radio" name="resume-filter-usage" value="used" />
+              <span>Used in applications</span>
+            </label>
+            <label class="resume-filter-option">
+              <input type="radio" name="resume-filter-usage" value="unused" />
+              <span>Not used yet</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="resume-filter-section">
+          <div class="resume-filter-label">Date added</div>
+          <div class="resume-filter-options">
+            <label class="resume-filter-option">
+              <input type="radio" name="resume-filter-date" value="all" checked />
+              <span>All time</span>
+            </label>
+            <label class="resume-filter-option">
+              <input type="radio" name="resume-filter-date" value="today" />
+              <span>Today</span>
+            </label>
+            <label class="resume-filter-option">
+              <input type="radio" name="resume-filter-date" value="7" />
+              <span>Last 7 days</span>
+            </label>
+            <label class="resume-filter-option">
+              <input type="radio" name="resume-filter-date" value="30" />
+              <span>Last 30 days</span>
+            </label>
+            <label class="resume-filter-option">
+              <input type="radio" name="resume-filter-date" value="custom" />
+              <span>Custom range</span>
+            </label>
+          </div>
+
+          <div id="resume-custom-date-range" class="resume-custom-date-range" style="display:none;">
+            <div>
+              <label for="resume-filter-start">Start date</label>
+              <input id="resume-filter-start" class="input" type="date" />
+            </div>
+            <span>—</span>
+            <div>
+              <label for="resume-filter-end">End date</label>
+              <input id="resume-filter-end" class="input" type="date" />
+            </div>
+          </div>
+        </div>
+
+        <div class="resume-filter-section">
+          <div class="resume-filter-label">Sort by</div>
+          <div class="resume-filter-options">
+            <label class="resume-filter-option">
+              <input type="radio" name="resume-filter-sort" value="recently_added" checked />
+              <span>Recently added</span>
+            </label>
+            <label class="resume-filter-option">
+              <input type="radio" name="resume-filter-sort" value="recently_used" />
+              <span>Recently used</span>
+            </label>
+            <label class="resume-filter-option">
+              <input type="radio" name="resume-filter-sort" value="most_used" />
+              <span>Most used</span>
+            </label>
+            <label class="resume-filter-option">
+              <input type="radio" name="resume-filter-sort" value="resume_name" />
+              <span>Resume name A–Z</span>
+            </label>
+            <label class="resume-filter-option">
+              <input type="radio" name="resume-filter-sort" value="company" />
+              <span>Company A–Z</span>
+            </label>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="resume-filter-actions">
+        <button type="button" class="secondary-btn" onclick="resetResumeFilters()">Reset</button>
+        <button type="button" class="primary-btn" onclick="applyResumeFilters()">Apply filters</button>
+      </div>
+
+    </div>
   </div>
 
 
@@ -3622,6 +3986,17 @@
 
     let filterStatus =
       "all";
+
+    /* Resume Manager filter state. These filters are UI-only and do not
+       modify or replace any synced resume/application data. */
+    let resumeFilters = {
+      company: "all",
+      usage: "all",
+      date: "all",
+      sort: "recently_added",
+      startDate: "",
+      endDate: ""
+    };
 
 
     let editingApplicationId =
@@ -7099,6 +7474,586 @@
     }
 
 
+    function resumeDateKey(value) {
+
+      if(!value) return "";
+
+      const raw = String(value).trim();
+
+      if(/^\\d{4}-\\d{2}-\\d{2}$/.test(raw)) {
+        return raw;
+      }
+
+      const date = new Date(raw);
+
+      if(Number.isNaN(date.getTime())) return "";
+
+      return date.toISOString().slice(0,10);
+
+    }
+
+
+    function resumeTimestamp(value) {
+
+      if(!value) return 0;
+
+      const time = new Date(value).getTime();
+
+      return Number.isNaN(time) ? 0 : time;
+
+    }
+
+
+    function activeResumeFilterCount() {
+
+      let count = 0;
+
+      if(resumeFilters.company !== "all") count++;
+      if(resumeFilters.usage !== "all") count++;
+      if(resumeFilters.date !== "all") count++;
+      if(resumeFilters.sort !== "recently_added") count++;
+
+      return count;
+
+    }
+
+
+    function updateResumeFilterButton() {
+
+      const button =
+        document.getElementById("resume-filter-button");
+
+      const badge =
+        document.getElementById("resume-filter-count");
+
+      if(!button || !badge) return;
+
+      const count =
+        activeResumeFilterCount();
+
+      button.classList.toggle(
+        "active",
+        count > 0
+      );
+
+      badge.textContent = count;
+      badge.style.display =
+        count > 0 ? "inline-block" : "none";
+
+    }
+
+
+    function setResumeFilterRadio(name, value) {
+
+      const inputs =
+        document.querySelectorAll(
+          `input[name="${name}"]`
+        );
+
+      inputs.forEach(input => {
+        input.checked =
+          input.value === value;
+      });
+
+    }
+
+
+    function renderResumeFilterCompanies() {
+
+      const container =
+        document.getElementById("resume-filter-companies");
+
+      if(!container) return;
+
+      const companies =
+        buildResumeGroups()
+          .map(group => group.company)
+          .sort((a,b) => a.localeCompare(b));
+
+      const options = [
+        `<label class="resume-filter-option">
+          <input type="radio" name="resume-filter-company" value="all" />
+          <span>All companies</span>
+        </label>`
+      ];
+
+      companies.forEach(company => {
+
+        options.push(`
+          <label class="resume-filter-option">
+            <input
+              type="radio"
+              name="resume-filter-company"
+              value="${esc(company)}"
+            />
+            <span>${esc(company)}</span>
+          </label>
+        `);
+
+      });
+
+      container.innerHTML =
+        options.join("");
+
+      setResumeFilterRadio(
+        "resume-filter-company",
+        resumeFilters.company
+      );
+
+    }
+
+
+    function syncResumeFilterForm() {
+
+      renderResumeFilterCompanies();
+
+      setResumeFilterRadio(
+        "resume-filter-usage",
+        resumeFilters.usage
+      );
+
+      setResumeFilterRadio(
+        "resume-filter-date",
+        resumeFilters.date
+      );
+
+      setResumeFilterRadio(
+        "resume-filter-sort",
+        resumeFilters.sort
+      );
+
+      const start =
+        document.getElementById(
+          "resume-filter-start"
+        );
+
+      const end =
+        document.getElementById(
+          "resume-filter-end"
+        );
+
+      if(start) {
+        start.value =
+          resumeFilters.startDate || "";
+      }
+
+      if(end) {
+        end.value =
+          resumeFilters.endDate || "";
+      }
+
+      const custom =
+        document.getElementById(
+          "resume-custom-date-range"
+        );
+
+      if(custom) {
+        custom.style.display =
+          resumeFilters.date === "custom"
+            ? "grid"
+            : "none";
+      }
+
+    }
+
+
+    function openResumeFilters() {
+
+      syncResumeFilterForm();
+
+      const sheet =
+        document.getElementById(
+          "resume-filter-sheet"
+        );
+
+      if(sheet) {
+        sheet.classList.add("open");
+      }
+
+      document.body.style.overflow =
+        "hidden";
+
+    }
+
+
+    function closeResumeFilters() {
+
+      const sheet =
+        document.getElementById(
+          "resume-filter-sheet"
+        );
+
+      if(sheet) {
+        sheet.classList.remove("open");
+      }
+
+      document.body.style.overflow =
+        "";
+
+    }
+
+
+    function resetResumeFilters(closeSheet=true) {
+
+      resumeFilters = {
+        company: "all",
+        usage: "all",
+        date: "all",
+        sort: "recently_added",
+        startDate: "",
+        endDate: ""
+      };
+
+      updateResumeFilterButton();
+      syncResumeFilterForm();
+      renderResumes();
+
+      if(closeSheet) {
+        closeResumeFilters();
+      }
+
+    }
+
+
+    function applyResumeFilters() {
+
+      const company =
+        document.querySelector(
+          'input[name="resume-filter-company"]:checked'
+        )?.value || "all";
+
+      const usage =
+        document.querySelector(
+          'input[name="resume-filter-usage"]:checked'
+        )?.value || "all";
+
+      const date =
+        document.querySelector(
+          'input[name="resume-filter-date"]:checked'
+        )?.value || "all";
+
+      const sort =
+        document.querySelector(
+          'input[name="resume-filter-sort"]:checked'
+        )?.value || "recently_added";
+
+      const startDate =
+        document.getElementById(
+          "resume-filter-start"
+        )?.value || "";
+
+      const endDate =
+        document.getElementById(
+          "resume-filter-end"
+        )?.value || "";
+
+      if(
+        date === "custom" &&
+        startDate &&
+        endDate &&
+        startDate > endDate
+      ) {
+        showError(
+          "Resume filter start date cannot be after the end date."
+        );
+        return;
+      }
+
+      resumeFilters = {
+        company,
+        usage,
+        date,
+        sort,
+        startDate:
+          date === "custom"
+            ? startDate
+            : "",
+        endDate:
+          date === "custom"
+            ? endDate
+            : ""
+      };
+
+      updateResumeFilterButton();
+      renderResumes();
+      closeResumeFilters();
+
+    }
+
+
+    document.addEventListener(
+      "change",
+      event => {
+
+        if(
+          event.target?.name ===
+          "resume-filter-date"
+        ) {
+
+          const custom =
+            document.getElementById(
+              "resume-custom-date-range"
+            );
+
+          if(custom) {
+            custom.style.display =
+              event.target.value === "custom"
+                ? "grid"
+                : "none";
+          }
+
+        }
+
+      }
+    );
+
+
+    function filterResumeGroups(groups) {
+
+      const today =
+        todayISO();
+
+      const sevenDaysAgo =
+        daysAgoISO(7);
+
+      const thirtyDaysAgo =
+        daysAgoISO(30);
+
+      let filtered =
+        groups
+          .map(group => ({
+
+            ...group,
+
+            resumes:
+              group.resumes.filter(
+                resume => {
+
+                  if(
+                    resumeFilters.company !== "all" &&
+                    group.company.toLowerCase() !==
+                      resumeFilters.company.toLowerCase()
+                  ) {
+                    return false;
+                  }
+
+                  if(
+                    resumeFilters.usage === "used" &&
+                    Number(
+                      resume.applicationCount || 0
+                    ) <= 0
+                  ) {
+                    return false;
+                  }
+
+                  if(
+                    resumeFilters.usage === "unused" &&
+                    Number(
+                      resume.applicationCount || 0
+                    ) > 0
+                  ) {
+                    return false;
+                  }
+
+                  const added =
+                    resumeDateKey(
+                      resume.createdAt
+                    );
+
+                  if(
+                    resumeFilters.date === "today" &&
+                    added !== today
+                  ) {
+                    return false;
+                  }
+
+                  if(
+                    resumeFilters.date === "7" &&
+                    (
+                      !added ||
+                      added < sevenDaysAgo
+                    )
+                  ) {
+                    return false;
+                  }
+
+                  if(
+                    resumeFilters.date === "30" &&
+                    (
+                      !added ||
+                      added < thirtyDaysAgo
+                    )
+                  ) {
+                    return false;
+                  }
+
+                  if(
+                    resumeFilters.date === "custom"
+                  ) {
+
+                    if(
+                      resumeFilters.startDate &&
+                      (
+                        !added ||
+                        added < resumeFilters.startDate
+                      )
+                    ) {
+                      return false;
+                    }
+
+                    if(
+                      resumeFilters.endDate &&
+                      (
+                        !added ||
+                        added > resumeFilters.endDate
+                      )
+                    ) {
+                      return false;
+                    }
+
+                  }
+
+                  return true;
+
+                }
+              )
+
+          }))
+          .filter(
+            group =>
+              group.resumes.length > 0
+          );
+
+      const sortResumes =
+        (a,b) => {
+
+          if(
+            resumeFilters.sort === "recently_used"
+          ) {
+
+            return (
+              resumeTimestamp(
+                b.lastUsedAt ||
+                b.createdAt
+              ) -
+              resumeTimestamp(
+                a.lastUsedAt ||
+                a.createdAt
+              )
+            );
+
+          }
+
+          if(
+            resumeFilters.sort === "most_used"
+          ) {
+
+            const usageDiff =
+              Number(
+                b.applicationCount || 0
+              ) -
+              Number(
+                a.applicationCount || 0
+              );
+
+            if(usageDiff !== 0) {
+              return usageDiff;
+            }
+
+            return (
+              resumeTimestamp(
+                b.createdAt
+              ) -
+              resumeTimestamp(
+                a.createdAt
+              )
+            );
+
+          }
+
+          if(
+            resumeFilters.sort === "resume_name"
+          ) {
+
+            return a.name.localeCompare(
+              b.name
+            );
+
+          }
+
+          return (
+            resumeTimestamp(
+              b.createdAt
+            ) -
+            resumeTimestamp(
+              a.createdAt
+            )
+          );
+
+        };
+
+
+      filtered.forEach(
+        group => {
+          group.resumes.sort(
+            sortResumes
+          );
+        }
+      );
+
+
+      if(
+        resumeFilters.sort === "company"
+      ) {
+
+        filtered.sort(
+          (a,b) =>
+            a.company.localeCompare(
+              b.company
+            )
+        );
+
+      } else {
+
+        filtered.sort(
+          (a,b) => {
+
+            const aValue =
+              Math.max(
+                ...a.resumes.map(
+                  r =>
+                    resumeTimestamp(
+                      resumeFilters.sort === "recently_used"
+                        ? (r.lastUsedAt || r.createdAt)
+                        : r.createdAt
+                    )
+                )
+              );
+
+            const bValue =
+              Math.max(
+                ...b.resumes.map(
+                  r =>
+                    resumeTimestamp(
+                      resumeFilters.sort === "recently_used"
+                        ? (r.lastUsedAt || r.createdAt)
+                        : r.createdAt
+                    )
+                )
+              );
+
+            return bValue - aValue;
+
+          }
+        );
+
+      }
+
+      return filtered;
+
+    }
+
+
     function renderResumes() {
 
       const container =
@@ -7117,7 +8072,7 @@
       const groups =
         buildResumeGroups();
 
-      const filtered =
+      let filtered =
         groups
           .map(group => {
 
@@ -7146,6 +8101,9 @@
             group =>
               group.resumes.length > 0
           );
+
+      filtered =
+        filterResumeGroups(filtered);
 
       if(!filtered.length) {
 
@@ -7356,6 +8314,7 @@
         }).join("");
 
       loadCompanyLogos();
+      updateResumeFilterButton();
 
     }
 
@@ -8887,6 +9846,34 @@
         } else {
 
           showLoginScreen();
+
+        }
+
+      }
+    );
+
+
+    /* =====================================================
+       RESUME FILTER KEYBOARD SUPPORT
+    ====================================================== */
+
+    document.addEventListener(
+      "keydown",
+      event => {
+
+        if(event.key === "Escape") {
+
+          const sheet =
+            document.getElementById(
+              "resume-filter-sheet"
+            );
+
+          if(
+            sheet &&
+            sheet.classList.contains("open")
+          ) {
+            closeResumeFilters();
+          }
 
         }
 
