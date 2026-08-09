@@ -15,6 +15,11 @@
     const SUPABASE_KEY =
       "sb_publishable_91SKh77UlMjhwIcTimKyAg_Nbb_uVIN";
 
+    // Brandfetch Logo API client ID — used to fetch consistent,
+    // high-quality company logos for any company in the world.
+    const BRANDFETCH_CLIENT_ID =
+      "1id_c53sjhZ8vJteGbe";
+
     const supabaseClient =
       window.supabase.createClient(
         SUPABASE_URL,
@@ -813,6 +818,73 @@
       gap:8px;
 
       flex-wrap:wrap;
+
+    }
+
+
+    .company-logo {
+
+      width:44px;
+      height:44px;
+
+      border-radius:11px;
+
+      object-fit:contain;
+
+      background:#FFFFFF;
+
+      border:
+        1px solid
+        var(--border);
+
+      flex-shrink:0;
+
+      padding:7px;
+
+    }
+
+
+    .company-logo.company-logo-sm {
+
+      width:38px;
+      height:38px;
+
+      border-radius:9px;
+
+      padding:6px;
+
+    }
+
+
+    .company-logo-fallback {
+
+      display:flex;
+
+      align-items:center;
+
+      justify-content:center;
+
+      font-family:
+        'Space Grotesk',
+        sans-serif;
+
+      font-weight:700;
+
+      font-size:16px;
+
+      color:white;
+
+      background:var(--grad);
+
+      padding:0;
+
+    }
+
+
+    .company-logo.company-logo-sm.company-logo-fallback,
+    .company-logo-sm.company-logo-fallback {
+
+      font-size:14px;
 
     }
 
@@ -3446,6 +3518,142 @@
 
 
     /* =====================================================
+       COMPANY LOGOS (Brandfetch)
+    ====================================================== */
+
+    function companyDomainGuess(company) {
+
+      const key = String(company || "")
+        .trim()
+        .toLowerCase();
+
+      if(!key) return "";
+
+      /*
+       * Overrides for companies whose real domain doesn't match a
+       * simple "name + .com" guess. Extend this list any time a
+       * specific company's logo isn't resolving correctly.
+       */
+
+      const overrides = {
+        "google":"google.com",
+        "alphabet":"abc.xyz",
+        "microsoft":"microsoft.com",
+        "apple":"apple.com",
+        "nvidia":"nvidia.com",
+        "qualcomm":"qualcomm.com",
+        "amd":"amd.com",
+        "samsung":"samsung.com",
+        "intel":"intel.com",
+        "meta":"meta.com",
+        "facebook":"meta.com",
+        "amazon":"amazon.com",
+        "adobe":"adobe.com",
+        "tesla":"tesla.com",
+        "cisco":"cisco.com",
+        "dell":"dell.com",
+        "ibm":"ibm.com",
+        "goldman sachs":"goldmansachs.com",
+        "jpmorgan":"jpmorganchase.com",
+        "jp morgan":"jpmorganchase.com",
+        "jpmorgan chase":"jpmorganchase.com",
+        "procter & gamble":"pg.com",
+        "procter and gamble":"pg.com",
+        "general electric":"ge.com",
+        "general motors":"gm.com",
+        "hewlett packard":"hp.com",
+        "hp":"hp.com",
+        "at&t":"att.com",
+        "3m":"3m.com",
+        "pwc":"pwc.com",
+        "ey":"ey.com",
+        "kpmg":"kpmg.com",
+        "deloitte":"deloitte.com",
+        "mckinsey":"mckinsey.com",
+        "bcg":"bcg.com",
+        "boston consulting group":"bcg.com",
+        "x":"x.com",
+        "twitter":"x.com"
+      };
+
+      if(overrides[key]) {
+        return overrides[key];
+      }
+
+      /*
+       * Generic fallback: guess the domain from the company name so
+       * that logos can resolve for any company, not just a hardcoded
+       * list. Strips common legal suffixes and punctuation, e.g.
+       * "Acme Corp, Inc." -> "acme.com".
+       */
+
+      const cleaned = key
+        .replace(
+          /\b(inc|incorporated|llc|ltd|limited|corp|corporation|co|company|group|holdings|technologies|technology|labs|plc|gmbh)\b\.?/g,
+          ""
+        )
+        .replace(/[^a-z0-9]+/g, "");
+
+      if(!cleaned) return "";
+
+      return cleaned + ".com";
+
+    }
+
+
+    function brandfetchLogoUrl(domain) {
+
+      if(!domain) return "";
+
+      return (
+        "https://cdn.brandfetch.io/" +
+        encodeURIComponent(domain) +
+        "/w/128/h/128/fallback/404/icon" +
+        "?c=" +
+        BRANDFETCH_CLIENT_ID
+      );
+
+    }
+
+
+    function companyLogoMarkup(company, sizeClass) {
+
+      const name = String(company || "Company").trim() || "Company";
+      const domain = companyDomainGuess(name);
+      const initials = name
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0,2)
+        .map(word => word[0])
+        .join("")
+        .toUpperCase();
+
+      const cls =
+        "company-logo" +
+        (sizeClass ? " " + sizeClass : "");
+
+      if(domain) {
+        return `
+          <img
+            class="${cls}"
+            src="${brandfetchLogoUrl(domain)}"
+            alt="${esc(name)} logo"
+            loading="lazy"
+            onerror="this.outerHTML='<div class=&quot;${cls} company-logo-fallback&quot;>${esc(initials || "C")}</div>'"
+          />
+        `;
+      }
+
+      return `
+        <div class="${cls} company-logo-fallback">
+          ${esc(initials || "C")}
+        </div>
+      `;
+
+    }
+
+
+    /* =====================================================
        LOAD / SAVE
     ====================================================== */
 
@@ -4944,7 +5152,18 @@
             "
           >
 
-            <div class="application-main">
+            <div
+              class="row"
+              style="
+                align-items:flex-start;
+                gap:10px;
+                min-width:0;
+              "
+            >
+
+              ${companyLogoMarkup(app.company)}
+
+              <div class="application-main">
 
               <div class="company-row">
 
@@ -4997,6 +5216,8 @@
                     })()
                   : ""
               }
+
+              </div>
 
             </div>
 
@@ -5839,7 +6060,18 @@
             "
           >
 
-            <div>
+            <div
+              class="row"
+              style="
+                align-items:flex-start;
+                gap:9px;
+                min-width:0;
+              "
+            >
+
+              ${companyLogoMarkup(interview.company, "company-logo-sm")}
+
+              <div>
 
               <div
                 style="
@@ -5865,6 +6097,8 @@
                     "Interview"
                   )
                 }
+              </div>
+
               </div>
 
             </div>
