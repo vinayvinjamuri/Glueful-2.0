@@ -3622,6 +3622,123 @@
     }
 
 
+    /*
+     * Rebuild the resume list from cloud-backed application records.
+     *
+     * public.applications already stores resume_id, resume_name and
+     * resume_url. This lets the Resume screen work on a new device
+     * even when the legacy glueful_data resume storage is unavailable.
+     */
+    function mergeApplicationResumes() {
+
+      if(!Array.isArray(applications) || !applications.length) {
+        return;
+      }
+
+      if(!Array.isArray(resumes)) {
+        resumes = [];
+      }
+
+      const byId = new Map();
+      const byUrl = new Map();
+
+      resumes.forEach(resume => {
+
+        if(resume?.id) {
+          byId.set(String(resume.id), resume);
+        }
+
+        if(resume?.url) {
+          byUrl.set(
+            String(resume.url).trim().toLowerCase(),
+            resume
+          );
+        }
+
+      });
+
+      applications.forEach(app => {
+
+        const name =
+          String(app?.resumeName || "").trim();
+
+        const url =
+          String(app?.resumeUrl || "").trim();
+
+        const id =
+          app?.resumeId
+            ? String(app.resumeId)
+            : "";
+
+        if(!name && !url) {
+          return;
+        }
+
+        let resume =
+          id
+            ? byId.get(id)
+            : null;
+
+        /* Avoid duplicate local entries when the same URL is known. */
+        if(!resume && url) {
+          resume =
+            byUrl.get(url.toLowerCase());
+        }
+
+        if(resume) {
+
+          resume.name =
+            name || resume.name || "Resume";
+
+          resume.url =
+            url || resume.url || "";
+
+          resume.note =
+            resume.note || "Used for an application";
+
+          return;
+        }
+
+        /*
+         * Use the cloud resume_id when available. Otherwise use a
+         * stable URL/name-based id instead of makeId(), so a page
+         * refresh does not create another resume record.
+         */
+        const stableId =
+          id ||
+          (
+            "app-resume-" +
+            encodeURIComponent(
+              (url || name).toLowerCase()
+            )
+          );
+
+        const newResume = {
+          id: stableId,
+          name: name || "Resume",
+          url: url,
+          note: "Used for an application"
+        };
+
+        resumes.push(newResume);
+
+        byId.set(
+          String(newResume.id),
+          newResume
+        );
+
+        if(url) {
+          byUrl.set(
+            url.toLowerCase(),
+            newResume
+          );
+        }
+
+      });
+
+    }
+
+
     async function loadSupportingCloudData() {
 
       const {
@@ -3904,6 +4021,13 @@
         );
 
       }
+
+      /*
+       * The applications table is the fallback/source for resume
+       * metadata. This makes resumes appear on every device even if
+       * glueful_data is missing or returns 404.
+       */
+      mergeApplicationResumes();
 
       writeLocalBackup();
 
@@ -6468,6 +6592,8 @@
       if(!select)
         return;
 
+      mergeApplicationResumes();
+
       select.innerHTML = `
 
         <option value="">
@@ -6517,6 +6643,8 @@
         document.getElementById(
           "resume-list"
         );
+
+      mergeApplicationResumes();
 
 
       if(!resumes.length) {
