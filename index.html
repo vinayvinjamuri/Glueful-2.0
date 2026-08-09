@@ -1223,6 +1223,9 @@
       min-width:0;
     }
 
+    /* Resume Manager uses the exact same logo geometry as Applications.
+       This keeps the logo centered inside the 46x46 cuboid without
+       the extra inner padding that made logos look smaller. */
     .resume-company-logo-wrap {
       width:46px;
       height:46px;
@@ -1234,22 +1237,28 @@
       align-items:center;
       justify-content:center;
       overflow:hidden;
+      position:relative;
     }
 
     .resume-company-logo {
       width:100%;
       height:100%;
+      max-width:100%;
+      max-height:100%;
       object-fit:contain;
-      padding:7px;
+      object-position:center;
+      padding:0;
       display:block;
     }
 
     .resume-company-fallback {
       width:100%;
       height:100%;
+      display:flex;
       align-items:center;
       justify-content:center;
-      font-size:20px;
+      font-family:'Space Grotesk',sans-serif;
+      font-size:17px;
       font-weight:700;
       color:#E8ECF2;
     }
@@ -2377,16 +2386,6 @@
       ></div>
 
 
-      <!-- RECENT APPLICATIONS -->
-
-      <div class="section-title">
-        Recent applications
-      </div>
-
-      <div
-        id="dashboard-applications"
-        class="dashboard-list"
-      ></div>
 
     </section>
 
@@ -4812,49 +4811,6 @@
 
       }
 
-
-      /* RECENT APPLICATIONS */
-
-      const recent =
-        applications
-          .slice()
-          .sort(
-            (a,b) =>
-              b.date.localeCompare(
-                a.date
-              )
-          )
-          .slice(0,4);
-
-
-      const appContainer =
-        document.getElementById(
-          "dashboard-applications"
-        );
-
-
-      if(
-        recent.length === 0
-      ) {
-
-        appContainer.innerHTML = `
-          <div class="empty-state">
-            <div class="empty-icon">💼</div>
-            No applications yet
-          </div>
-        `;
-
-      } else {
-
-        appContainer.innerHTML =
-          recent
-            .map(
-              applicationCard
-            )
-            .join("");
-
-      }
-
     }
 
 
@@ -5137,7 +5093,8 @@
 
 
       if(
-        filterStatus !== "all"
+        filterStatus !== "all" &&
+        filterStatus !== "recent"
       ) {
 
         list =
@@ -5185,15 +5142,39 @@
 
       list.sort(
         (a,b) =>
-          b.date.localeCompare(
-            a.date
+          (b.date || "").localeCompare(
+            a.date || ""
           )
       );
+
+
+      /* Recently is a dedicated Applications tab.
+         It shows the latest 10 applications after search filtering. */
+      if(
+        filterStatus === "recent"
+      ) {
+        list =
+          list.slice(0,10);
+      }
 
 
       document.getElementById(
         "filters"
       ).innerHTML = `
+
+        <button
+          class="pill ${
+            filterStatus === "recent"
+              ? "active"
+              : ""
+          }"
+          onclick="
+            setFilter('recent')
+          "
+        >
+          Recently
+        </button>
+
 
         <button
           class="pill ${
@@ -7176,18 +7157,6 @@
                       class="resume-company-logo"
                       alt="${esc(group.company)} logo"
                       style="display:none;"
-                      onload="
-                        this.style.display='block';
-                        this.parentElement
-                          .querySelector('.resume-company-fallback')
-                          .style.display='none';
-                      "
-                      onerror="
-                        this.style.display='none';
-                        this.parentElement
-                          .querySelector('.resume-company-fallback')
-                          .style.display='flex';
-                      "
                     />
 
                     <span
