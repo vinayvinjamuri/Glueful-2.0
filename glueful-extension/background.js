@@ -1,5 +1,5 @@
 const GLUEFUL_AUTO_CAPTURE_URL =
-    "https://xztbhheexianejswvpva.supabase.co/functions/v1/auto-capture";
+"https://xztbhheexianejsvwpva.supabase.co/functions/v1/auto-capture";
 
 const SUPABASE_PUBLISHABLE_KEY =
     "sb_publishable_91SKh77UlMjhwIcTimKyAg_Nbb_uVIN";
