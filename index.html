@@ -795,6 +795,92 @@
     }
 
 
+    .application-company-block {
+
+      display:flex;
+
+      align-items:flex-start;
+
+      gap:10px;
+
+      min-width:0;
+
+      flex:1;
+
+    }
+
+
+    .company-logo-wrap {
+
+      width:46px;
+
+      height:46px;
+
+      flex:0 0 46px;
+
+      border-radius:13px;
+
+      background:#18202B;
+
+      border:1px solid var(--border);
+
+      display:flex;
+
+      align-items:center;
+
+      justify-content:center;
+
+      overflow:hidden;
+
+      position:relative;
+
+    }
+
+
+    .company-logo {
+
+      width:100%;
+
+      height:100%;
+
+      max-width:100%;
+
+      max-height:100%;
+
+      object-fit:contain;
+
+      object-position:center;
+
+      padding:0;
+
+      display:block;
+
+    }
+
+
+    .company-logo-fallback {
+
+      width:100%;
+
+      height:100%;
+
+      display:flex;
+
+      align-items:center;
+
+      justify-content:center;
+
+      font-family:'Space Grotesk',sans-serif;
+
+      font-size:17px;
+
+      font-weight:700;
+
+      color:#E8ECF2;
+
+    }
+
+
     .application-main {
 
       min-width:0;
@@ -1878,6 +1964,33 @@
       .view-title {
 
         font-size:20px;
+
+      }
+
+
+      .application-company-block {
+
+        gap:9px;
+
+      }
+
+
+      .company-logo-wrap {
+
+        width:44px;
+
+        height:44px;
+
+        flex-basis:44px;
+
+        border-radius:12px;
+
+      }
+
+
+      .company-logo-fallback {
+
+        font-size:16px;
 
       }
 
@@ -5170,6 +5283,8 @@
           )
           .join("");
 
+      loadCompanyLogos();
+
     }
 
 
@@ -5180,6 +5295,12 @@
           app.status
         ] ||
         STATUS.applied;
+
+      const company =
+        String(app.company || "").trim();
+
+      const initial =
+        company.charAt(0).toUpperCase() || "?";
 
 
       return `
@@ -5200,59 +5321,81 @@
             "
           >
 
-            <div class="application-main">
+            <div class="application-company-block">
 
-              <div class="company-row">
+              <div
+                class="company-logo-wrap"
+                data-company-logo="${esc(company)}"
+              >
 
-                <span class="company-name">
-                  ${esc(app.company)}
-                </span>
+                <img
+                  class="company-logo"
+                  alt="${esc(company)} logo"
+                  style="display:none;"
+                />
 
-                <span
-                  class="status-pill"
-                  style="
-                    color:${s.color};
-                    background:${s.bg};
-                  "
-                >
-                  ${s.label}
+                <span class="company-logo-fallback">
+                  ${esc(initial)}
                 </span>
 
               </div>
 
 
-              <p class="role-name">
-                ${esc(app.role)}
-              </p>
+              <div class="application-main">
+
+                <div class="company-row">
+
+                  <span class="company-name">
+                    ${esc(company)}
+                  </span>
+
+                  <span
+                    class="status-pill"
+                    style="
+                      color:${s.color};
+                      background:${s.bg};
+                    "
+                  >
+                    ${s.label}
+                  </span>
+
+                </div>
 
 
-              <p class="date-text mono">
-                ${formatShortDate(app.date)}
-              </p>
+                <p class="role-name">
+                  ${esc(app.role)}
+                </p>
 
-              ${
-                app.resumeId
-                  ? (() => {
-                      const linkedResume =
-                        resumes.find(
-                          r => r.id === app.resumeId
-                        );
-                      const resumeName =
-                        linkedResume?.name ||
-                        app.resumeName ||
-                        "Resume used";
-                      return `
-                        <p
-                          class="date-text"
-                          style="margin-top:4px;"
-                          title="Resume used"
-                        >
-                          📄 ${esc(resumeName)}
-                        </p>
-                      `;
-                    })()
-                  : ""
-              }
+
+                <p class="date-text mono">
+                  ${formatShortDate(app.date)}
+                </p>
+
+                ${
+                  app.resumeId
+                    ? (() => {
+                        const linkedResume =
+                          resumes.find(
+                            r => r.id === app.resumeId
+                          );
+                        const resumeName =
+                          linkedResume?.name ||
+                          app.resumeName ||
+                          "Resume used";
+                        return `
+                          <p
+                            class="date-text"
+                            style="margin-top:4px;"
+                            title="Resume used"
+                          >
+                            📄 ${esc(resumeName)}
+                          </p>
+                        `;
+                      })()
+                    : ""
+                }
+
+              </div>
 
             </div>
 
@@ -5315,6 +5458,7 @@
       `;
 
     }
+
 
 
     function setFilter(filter) {
@@ -7178,7 +7322,7 @@
 
         }).join("");
 
-      loadResumeCompanyLogos();
+      loadCompanyLogos();
 
     }
 
@@ -7261,7 +7405,8 @@
               ""
             )
             .split("/")[0]
-            .replace(/^www\./i,"");
+            .replace(/^www\./i,"")
+            .trim();
 
         if(domain) {
 
@@ -7294,7 +7439,122 @@
     }
 
 
-    async function loadResumeCompanyLogos() {
+    function setCompanyLogoFallback(node) {
+
+      if(!node) return;
+
+      const image =
+        node.querySelector(
+          ".company-logo, .resume-company-logo"
+        );
+
+      const fallback =
+        node.querySelector(
+          ".company-logo-fallback, .resume-company-fallback"
+        );
+
+      if(image) {
+        image.style.display = "none";
+        image.removeAttribute("src");
+      }
+
+      if(fallback) {
+        fallback.style.display = "flex";
+      }
+
+    }
+
+
+    function showCompanyLogo(node, src) {
+
+      if(!node || !src) return false;
+
+      const image =
+        node.querySelector(
+          ".company-logo, .resume-company-logo"
+        );
+
+      const fallback =
+        node.querySelector(
+          ".company-logo-fallback, .resume-company-fallback"
+        );
+
+      if(!image) return false;
+
+      image.onload = () => {
+
+        image.style.display = "block";
+
+        if(fallback) {
+          fallback.style.display = "none";
+        }
+
+      };
+
+      image.onerror = () => {
+
+        image.style.display = "none";
+
+        if(fallback) {
+          fallback.style.display = "flex";
+        }
+
+      };
+
+      image.src = src;
+
+      return true;
+
+    }
+
+
+    async function loadCompanyLogo(node) {
+
+      const company =
+        String(
+          node?.getAttribute(
+            "data-company-logo"
+          ) || ""
+        ).trim();
+
+      if(!company) return;
+
+      const domain =
+        await findBrandDomain(
+          company
+        );
+
+      if(!domain) {
+        setCompanyLogoFallback(node);
+        return;
+      }
+
+      const client =
+        encodeURIComponent(
+          BRANDFETCH_CLIENT_ID
+        );
+
+      /*
+       * Brandfetch is the primary logo source.
+       * The CSS container keeps every logo centered and contained
+       * without adding an unnecessary inner square or stretching
+       * the source image.
+       */
+      const brandfetchUrl =
+        "https://cdn.brandfetch.io/domain/" +
+        encodeURIComponent(domain) +
+        "?c=" +
+        client;
+
+      showCompanyLogo(
+        node,
+        brandfetchUrl
+      );
+
+    }
+
+
+    async function loadCompanyLogos() {
 
       const nodes =
         Array.from(
@@ -7303,42 +7563,17 @@
           )
         );
 
+      if(!nodes.length) return;
+
       await Promise.all(
         nodes.map(
-          async node => {
-
-            const company =
-              node.getAttribute(
-                "data-company-logo"
-              );
-
-            const domain =
-              await findBrandDomain(
-                company
-              );
-
-            if(!domain) return;
-
-            const image =
-              node.querySelector(
-                ".resume-company-logo"
-              );
-
-            if(!image) return;
-
-            image.src =
-              "https://cdn.brandfetch.io/domain/" +
-              encodeURIComponent(domain) +
-              "?c=" +
-              encodeURIComponent(
-                BRANDFETCH_CLIENT_ID
-              );
-
-          }
+          node =>
+            loadCompanyLogo(node)
         )
       );
 
     }
+
 
 
     function openResumeForm(id=null) {
