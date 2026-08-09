@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "Glueful Auto Capture",
+  "version": "1.0.0",
+  "description": "Automatically capture job applications and send them to Glueful.",
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://www.linkedin.com/*",
+    "https://www.naukri.com/*",
+    "https://www.indeed.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Glueful"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.linkedin.com/*",
+        "https://www.naukri.com/*",
+        "https://www.indeed.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}
