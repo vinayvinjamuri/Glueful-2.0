@@ -3818,6 +3818,13 @@
 
     async function loadAll() {
 
+      /*
+       * IMPORTANT ARCHITECTURE:
+       * Applications are stored in public.applications and must not
+       * depend on the legacy glueful_data table.
+       * Interviews/resumes still use glueful_data for now.
+       */
+
       await loadLocalBackup();
 
       if(!DATA_USER_ID) {
@@ -3825,12 +3832,12 @@
         return;
       }
 
+      /* -----------------------------------------------------
+         1. LOAD APPLICATIONS FIRST
+         ----------------------------------------------------- */
+
       try {
 
-        /* Load interviews/resumes from the existing supporting table. */
-        await loadSupportingCloudData();
-
-        /* Applications are now loaded from public.applications. */
         const cloudApplications =
           await loadApplicationsFromCloud();
 
@@ -3839,7 +3846,6 @@
             cloudApplications
           );
 
-        /* The dedicated table is now authoritative. */
         applications.sort(
           (a,b) =>
             (b.date || "").localeCompare(
@@ -3847,26 +3853,61 @@
             )
         );
 
+        /*
+         * Application cloud sync is now independently ready.
+         * A failure in the old interviews/resumes storage must not
+         * prevent applications from being saved to public.applications.
+         */
         cloudSyncReady = true;
-        writeLocalBackup();
 
       } catch(error) {
 
         cloudSyncReady = false;
 
         console.error(
-          "Glueful cloud sync load failed:",
+          "Glueful applications cloud load failed:",
           error
         );
 
         showError(
-          "Cloud sync unavailable. Your local data is still safe on this device."
+          "Applications could not be loaded from the cloud. " +
+          (error?.message || "Please check your Supabase permissions.")
+        );
+
+        /* Keep the local backup visible if the cloud query fails. */
+        writeLocalBackup();
+        return;
+
+      }
+
+      /* -----------------------------------------------------
+         2. LOAD INTERVIEWS / RESUMES SEPARATELY
+         ----------------------------------------------------- */
+
+      try {
+
+        await loadSupportingCloudData();
+
+      } catch(error) {
+
+        /*
+         * Do NOT turn off application cloud sync here.
+         * The legacy glueful_data table is only supporting storage.
+         */
+        console.error(
+          "Glueful interviews/resumes cloud load failed:",
+          error
+        );
+
+        showError(
+          "Applications are synced. Interviews/resumes cloud sync is temporarily unavailable."
         );
 
       }
 
-    }
+      writeLocalBackup();
 
+    }
 
     function writeLocalBackup() {
 
