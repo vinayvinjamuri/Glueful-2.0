@@ -3226,6 +3226,14 @@
        every other device. localStorage remains a local backup.
     ====================================================== */
 
+    /*
+     * Applications now live in the dedicated public.applications table.
+     * Interviews and resumes continue to use glueful_data for now.
+     * localStorage is only a device-side backup.
+     */
+    const APPLICATIONS_TABLE =
+      "applications";
+
     const GLUEFUL_DATA_TABLE =
       "glueful_data";
 
@@ -3441,6 +3449,121 @@
        LOAD / SAVE
     ====================================================== */
 
+    function normalizeApplication(row) {
+
+      return {
+        id:
+          row?.id || makeId(),
+
+        company:
+          row?.company || "",
+
+        role:
+          row?.role || "",
+
+        date:
+          row?.date || todayISO(),
+
+        status:
+          row?.status || "applied",
+
+        link:
+          row?.link || "",
+
+        jd:
+          row?.jd || "",
+
+        resumeId:
+          row?.resume_id ||
+          row?.resumeId ||
+          null,
+
+        resumeName:
+          row?.resume_name ||
+          row?.resumeName ||
+          "",
+
+        resumeUrl:
+          row?.resume_url ||
+          row?.resumeUrl ||
+          "",
+
+        /* cloudId tells saveApplicationToCloud that this row already
+           exists in public.applications. */
+        cloudId:
+          Object.prototype.hasOwnProperty.call(
+            row || {},
+            "cloudId"
+          )
+            ? row.cloudId
+            : (row?.id || null)
+      };
+
+    }
+
+
+    function applicationFingerprint(app) {
+
+      return [
+        app?.company || "",
+        app?.role || "",
+        app?.date || "",
+        app?.link || ""
+      ]
+        .map(
+          value =>
+            String(value)
+              .trim()
+              .toLowerCase()
+        )
+        .join("|");
+
+    }
+
+
+    function buildApplicationPayload(app) {
+
+      const payload = {
+        user_id:
+          DATA_USER_ID,
+
+        company:
+          app.company || "",
+
+        role:
+          app.role || "",
+
+        date:
+          app.date || todayISO(),
+
+        status:
+          app.status || "applied",
+
+        link:
+          app.link || "",
+
+        jd:
+          app.jd || "",
+
+        resume_id:
+          app.resumeId || null
+      };
+
+      /* These two fields are supported by the new applications table.
+         They are added when a resume was selected. */
+      if(app.resumeName) {
+        payload.resume_name = app.resumeName;
+      }
+
+      if(app.resumeUrl) {
+        payload.resume_url = app.resumeUrl;
+      }
+
+      return payload;
+
+    }
+
+
     async function loadLocalBackup() {
 
       try {
@@ -3466,6 +3589,23 @@
             ) || "[]"
           );
 
+        applications =
+          Array.isArray(applications)
+            ? applications.map(
+                normalizeApplication
+              )
+            : [];
+
+        interviews =
+          Array.isArray(interviews)
+            ? interviews
+            : [];
+
+        resumes =
+          Array.isArray(resumes)
+            ? resumes
+            : [];
+
       } catch(e) {
 
         console.error(
@@ -3482,6 +3622,200 @@
     }
 
 
+    async function loadSupportingCloudData() {
+
+      const {
+        data,
+        error
+      } = await supabaseClient
+        .from(GLUEFUL_DATA_TABLE)
+        .select(
+          "interviews,resumes"
+        )
+        .eq(
+          "user_id",
+          DATA_USER_ID
+        )
+        .maybeSingle();
+
+      if(error) {
+        throw error;
+      }
+
+      if(data) {
+
+        interviews =
+          Array.isArray(data.interviews)
+            ? data.interviews
+            : [];
+
+        resumes =
+          Array.isArray(data.resumes)
+            ? data.resumes
+            : [];
+
+      } else {
+
+        /* Preserve any existing local interview/resume data. */
+        await writeCloudData();
+
+      }
+
+    }
+
+
+    async function loadApplicationsFromCloud() {
+
+      const {
+        data,
+        error
+      } = await supabaseClient
+        .from(APPLICATIONS_TABLE)
+        .select("*")
+        .eq(
+          "user_id",
+          DATA_USER_ID
+        )
+        .order(
+          "date",
+          {
+            ascending:false
+          }
+        );
+
+      if(error) {
+        throw error;
+      }
+
+      return Array.isArray(data)
+        ? data.map(
+            normalizeApplication
+          )
+        : [];
+
+    }
+
+
+    async function migrateLocalApplicationsToCloud(
+      cloudApplications
+    ) {
+
+      const migrationKey =
+        "glueful_applications_migrated_" +
+        DATA_USER_ID;
+
+      if(
+        localStorage.getItem(
+          migrationKey
+        )
+      ) {
+        return cloudApplications;
+      }
+
+      const merged =
+        cloudApplications.slice();
+
+      const fingerprints =
+        new Set(
+          merged.map(
+            applicationFingerprint
+          )
+        );
+
+      const idMap = {};
+
+      for(
+        const legacyApp of applications
+      ) {
+
+        const fingerprint =
+          applicationFingerprint(
+            legacyApp
+          );
+
+        if(
+          fingerprints.has(
+            fingerprint
+          )
+        ) {
+          continue;
+        }
+
+        try {
+
+          const migrated =
+            await insertApplicationRow(
+              legacyApp
+            );
+
+          if(migrated) {
+
+            merged.push(
+              migrated
+            );
+
+            fingerprints.add(
+              fingerprint
+            );
+
+            if(
+              legacyApp.id &&
+              migrated.id
+            ) {
+              idMap[
+                legacyApp.id
+              ] = migrated.id;
+            }
+
+          }
+
+        } catch(error) {
+
+          console.error(
+            "Legacy application migration failed:",
+            error
+          );
+
+        }
+
+      }
+
+      /* Keep interview links valid when a legacy application received
+         a new Supabase id during migration. */
+      if(
+        Object.keys(idMap).length
+      ) {
+
+        interviews =
+          interviews.map(
+            interview =>
+              idMap[
+                interview.applicationId
+              ]
+                ? {
+                    ...interview,
+                    applicationId:
+                      idMap[
+                        interview.applicationId
+                      ]
+                  }
+                : interview
+          );
+
+        await writeCloudData();
+
+      }
+
+      localStorage.setItem(
+        migrationKey,
+        "1"
+      );
+
+      return merged;
+
+    }
+
+
     async function loadAll() {
 
       await loadLocalBackup();
@@ -3493,47 +3827,25 @@
 
       try {
 
-        const {
-          data,
-          error
-        } = await supabaseClient
-          .from(GLUEFUL_DATA_TABLE)
-          .select(
-            "applications,interviews,resumes"
-          )
-          .eq(
-            "user_id",
-            DATA_USER_ID
-          )
-          .maybeSingle();
+        /* Load interviews/resumes from the existing supporting table. */
+        await loadSupportingCloudData();
 
-        if(error) {
-          throw error;
-        }
+        /* Applications are now loaded from public.applications. */
+        const cloudApplications =
+          await loadApplicationsFromCloud();
 
-        if(data) {
+        applications =
+          await migrateLocalApplicationsToCloud(
+            cloudApplications
+          );
 
-          applications =
-            Array.isArray(data.applications)
-              ? data.applications
-              : [];
-
-          interviews =
-            Array.isArray(data.interviews)
-              ? data.interviews
-              : [];
-
-          resumes =
-            Array.isArray(data.resumes)
-              ? data.resumes
-              : [];
-
-        } else {
-
-          /* First-device migration: upload existing local data. */
-          await writeCloudData();
-
-        }
+        /* The dedicated table is now authoritative. */
+        applications.sort(
+          (a,b) =>
+            (b.date || "").localeCompare(
+              a.date || ""
+            )
+        );
 
         cloudSyncReady = true;
         writeLocalBackup();
@@ -3587,6 +3899,225 @@
     }
 
 
+    async function insertApplicationRow(
+      app
+    ) {
+
+      if(!DATA_USER_ID) {
+        return null;
+      }
+
+      const basePayload =
+        buildApplicationPayload(
+          app
+        );
+
+      let payload = {
+        ...basePayload
+      };
+
+      let {
+        data,
+        error
+      } = await supabaseClient
+        .from(APPLICATIONS_TABLE)
+        .insert(payload)
+        .select()
+        .single();
+
+      /* If the database does not yet have the optional cached resume
+         columns, retry with the core application fields. */
+      if(
+        error &&
+        (
+          "resume_name" in payload ||
+          "resume_url" in payload
+        )
+      ) {
+
+        payload = {
+          ...basePayload
+        };
+
+        delete payload.resume_name;
+        delete payload.resume_url;
+
+        const retry =
+          await supabaseClient
+            .from(APPLICATIONS_TABLE)
+            .insert(payload)
+            .select()
+            .single();
+
+        data = retry.data;
+        error = retry.error;
+
+      }
+
+      if(error) {
+        throw error;
+      }
+
+      return normalizeApplication(
+        data
+      );
+
+    }
+
+
+    async function updateApplicationRow(
+      app
+    ) {
+
+      if(
+        !DATA_USER_ID ||
+        !app.cloudId
+      ) {
+        return null;
+      }
+
+      const basePayload =
+        buildApplicationPayload(
+          app
+        );
+
+      let payload = {
+        ...basePayload
+      };
+
+      delete payload.user_id;
+
+      let {
+        data,
+        error
+      } = await supabaseClient
+        .from(APPLICATIONS_TABLE)
+        .update(payload)
+        .eq(
+          "id",
+          app.cloudId
+        )
+        .eq(
+          "user_id",
+          DATA_USER_ID
+        )
+        .select()
+        .single();
+
+      if(
+        error &&
+        (
+          "resume_name" in payload ||
+          "resume_url" in payload
+        )
+      ) {
+
+        payload = {
+          ...basePayload
+        };
+
+        delete payload.user_id;
+        delete payload.resume_name;
+        delete payload.resume_url;
+
+        const retry =
+          await supabaseClient
+            .from(APPLICATIONS_TABLE)
+            .update(payload)
+            .eq(
+              "id",
+              app.cloudId
+            )
+            .eq(
+              "user_id",
+              DATA_USER_ID
+            )
+            .select()
+            .single();
+
+        data = retry.data;
+        error = retry.error;
+
+      }
+
+      if(error) {
+        throw error;
+      }
+
+      return normalizeApplication(
+        data
+      );
+
+    }
+
+
+    async function saveApplicationToCloud(
+      app
+    ) {
+
+      if(
+        !DATA_USER_ID ||
+        !cloudSyncReady
+      ) {
+        return app;
+      }
+
+      const saved =
+        app.cloudId
+          ? await updateApplicationRow(
+              app
+            )
+          : await insertApplicationRow(
+              app
+            );
+
+      if(!saved) {
+        return app;
+      }
+
+      return {
+        ...app,
+        ...saved,
+        id:saved.id,
+        cloudId:saved.id
+      };
+
+    }
+
+
+    async function deleteApplicationFromCloud(
+      app
+    ) {
+
+      if(
+        !DATA_USER_ID ||
+        !cloudSyncReady ||
+        !app?.cloudId
+      ) {
+        return;
+      }
+
+      const {
+        error
+      } = await supabaseClient
+        .from(APPLICATIONS_TABLE)
+        .delete()
+        .eq(
+          "id",
+          app.cloudId
+        )
+        .eq(
+          "user_id",
+          DATA_USER_ID
+        );
+
+      if(error) {
+        throw error;
+      }
+
+    }
+
+
     async function writeCloudData() {
 
       if(!DATA_USER_ID) {
@@ -3599,14 +4130,18 @@
         .from(GLUEFUL_DATA_TABLE)
         .upsert(
           {
-            user_id: DATA_USER_ID,
-            applications: applications,
-            interviews: interviews,
-            resumes: resumes,
-            updated_at: new Date().toISOString()
+            user_id:
+              DATA_USER_ID,
+            interviews:
+              interviews,
+            resumes:
+              resumes,
+            updated_at:
+              new Date().toISOString()
           },
           {
-            onConflict: "user_id"
+            onConflict:
+              "user_id"
           }
         );
 
@@ -3621,26 +4156,33 @@
 
       writeLocalBackup();
 
-      if(!DATA_USER_ID || !cloudSyncReady) {
+      if(
+        !DATA_USER_ID ||
+        !cloudSyncReady
+      ) {
         return Promise.resolve();
       }
 
-      saveQueue = saveQueue
-        .then(
-          () => writeCloudData()
-        )
-        .catch(
-          error => {
-            console.error(
-              "Glueful cloud sync save failed:",
-              error
-            );
+      saveQueue =
+        saveQueue
+          .then(
+            () =>
+              writeCloudData()
+          )
+          .catch(
+            error => {
 
-            showError(
-              "Couldn't sync to the cloud. Your local data is still saved on this device."
-            );
-          }
-        );
+              console.error(
+                "Glueful cloud sync save failed:",
+                error
+              );
+
+              showError(
+                "Couldn't sync interviews/resumes to the cloud. Your local data is still saved on this device."
+              );
+
+            }
+          );
 
       return saveQueue;
 
@@ -4439,17 +4981,19 @@
                         resumes.find(
                           r => r.id === app.resumeId
                         );
-                      return linkedResume
-                        ? `
-                          <p
-                            class="date-text"
-                            style="margin-top:4px;"
-                            title="Resume used"
-                          >
-                            📄 ${esc(linkedResume.name)}
-                          </p>
-                        `
-                        : "";
+                      const resumeName =
+                        linkedResume?.name ||
+                        app.resumeName ||
+                        "Resume used";
+                      return `
+                        <p
+                          class="date-text"
+                          style="margin-top:4px;"
+                          title="Resume used"
+                        >
+                          📄 ${esc(resumeName)}
+                        </p>
+                      `;
                     })()
                   : ""
               }
@@ -4603,10 +5147,23 @@
     }
 
 
-    function submitApplication(e) {
+    async function submitApplication(e) {
 
       e.preventDefault();
 
+      const selectedResumeId =
+        document.getElementById(
+          "f-resume"
+        ).value || null;
+
+      const selectedResume =
+        selectedResumeId
+          ? resumes.find(
+              resume =>
+                resume.id ===
+                selectedResumeId
+            )
+          : null;
 
       const data = {
 
@@ -4642,49 +5199,120 @@
           ).value.trim(),
 
         resumeId:
-          document.getElementById(
-            "f-resume"
-          ).value || null
+          selectedResumeId,
+
+        resumeName:
+          selectedResume?.name ||
+          "",
+
+        resumeUrl:
+          selectedResume?.url ||
+          ""
 
       };
 
+      try {
 
-      if(
-        editingApplicationId
-      ) {
+        if(
+          editingApplicationId
+        ) {
 
-        applications =
-          applications.map(
-            app =>
-              app.id ===
-              editingApplicationId
-                ? {
-                    ...app,
-                    ...data
-                  }
-                : app
+          const index =
+            applications.findIndex(
+              app =>
+                app.id ===
+                editingApplicationId
+            );
+
+          if(index === -1) {
+            return;
+          }
+
+          const current =
+            applications[index];
+
+          let updated = {
+            ...current,
+            ...data
+          };
+
+          /* Update the local UI first so it stays responsive. */
+          applications[index] =
+            updated;
+
+          if(cloudSyncReady) {
+            updated =
+              await saveApplicationToCloud(
+                updated
+              );
+            applications[index] =
+              updated;
+          }
+
+        } else {
+
+          const newApplication =
+            normalizeApplication({
+              ...data,
+              id:makeId(),
+              cloudId:null
+            });
+
+          applications.unshift(
+            newApplication
           );
 
-      } else {
+          if(cloudSyncReady) {
 
-        applications.unshift({
+            const saved =
+              await saveApplicationToCloud(
+                newApplication
+              );
 
-          id:makeId(),
+            const index =
+              applications.findIndex(
+                app =>
+                  app.id ===
+                  newApplication.id
+              );
 
-          ...data
+            if(index !== -1) {
+              applications[index] =
+                saved;
+            }
 
-        });
+          }
+
+        }
+
+        writeLocalBackup();
+
+        closeModal(
+          "application-modal"
+        );
+
+        renderAll();
+
+      } catch(error) {
+
+        console.error(
+          "Application cloud save failed:",
+          error
+        );
+
+        writeLocalBackup();
+
+        showError(
+          "Application saved on this device, but could not be synced to Supabase. Check the browser console for the database error."
+        );
+
+        closeModal(
+          "application-modal"
+        );
+
+        renderAll();
 
       }
-
-
-      saveAll();
-
-      closeModal(
-        "application-modal"
-      );
-
-      renderAll();
 
     }
 
@@ -4730,25 +5358,61 @@
     }
 
 
-    function confirmDeleteApplication() {
+    async function confirmDeleteApplication() {
 
-      if (!pendingDeleteApplicationId) {
+      if(!pendingDeleteApplicationId) {
         closeDeleteModal();
         return;
       }
 
-      const id = pendingDeleteApplicationId;
+      const id =
+        pendingDeleteApplicationId;
 
-      applications =
-        applications.filter(
-          a => a.id !== id
+      const app =
+        applications.find(
+          application =>
+            application.id === id
         );
 
-      saveAll();
+      if(!app) {
+        closeDeleteModal();
+        return;
+      }
 
-      closeDeleteModal();
+      try {
 
-      renderAll();
+        if(cloudSyncReady) {
+          await deleteApplicationFromCloud(
+            app
+          );
+        }
+
+        applications =
+          applications.filter(
+            application =>
+              application.id !== id
+          );
+
+        writeLocalBackup();
+
+        closeDeleteModal();
+
+        renderAll();
+
+      } catch(error) {
+
+        console.error(
+          "Application delete failed:",
+          error
+        );
+
+        showError(
+          "The application could not be deleted from Supabase. It was kept on this device."
+        );
+
+        closeDeleteModal();
+
+      }
 
     }
 
@@ -4877,6 +5541,51 @@
                 <div class="detail-value">
                   ${esc(app.jd)}
                 </div>
+
+              </div>
+            `
+            : ""
+        }
+
+
+        ${
+          app.resumeId
+            ? `
+              <div class="detail-block">
+
+                <div class="detail-label">
+                  Resume used
+                </div>
+
+                <div class="detail-value">
+                  ${esc(
+                    app.resumeName ||
+                    resumes.find(
+                      resume =>
+                        resume.id ===
+                        app.resumeId
+                    )?.name ||
+                    "Resume"
+                  )}
+                </div>
+
+                ${
+                  app.resumeUrl
+                    ? `
+                      <button
+                        class="secondary-btn"
+                        style="margin-top:8px;"
+                        onclick="
+                          openExternal(
+                            '${esc(app.resumeUrl)}'
+                          )
+                        "
+                      >
+                        Open resume ↗
+                      </button>
+                    `
+                    : ""
+                }
 
               </div>
             `
@@ -6046,16 +6755,50 @@
         );
 
 
+      const applicationsUsingResume =
+        applications.filter(
+          app =>
+            app.resumeId === id
+        );
+
       applications =
         applications.map(
           app =>
             app.resumeId === id
               ? {
                   ...app,
-                  resumeId:null
+                  resumeId:null,
+                  resumeName:"",
+                  resumeUrl:""
                 }
               : app
         );
+
+
+      /* Persist resume unlinking in public.applications. */
+      if(cloudSyncReady) {
+        applicationsUsingResume.forEach(
+          oldApp => {
+            const updatedApp =
+              applications.find(
+                app =>
+                  app.id === oldApp.id
+              );
+
+            if(updatedApp?.cloudId) {
+              saveApplicationToCloud(
+                updatedApp
+              ).catch(
+                error =>
+                  console.error(
+                    "Resume unlink sync failed:",
+                    error
+                  )
+              );
+            }
+          }
+        );
+      }
 
 
       saveAll();
@@ -6875,48 +7618,10 @@
 
 
         /*
-         * One-time migration of the old application key.
-         * This preserves applications created before user-scoped
-         * storage was introduced.
+         * The dedicated public.applications migration is handled by
+         * loadAll(). Keep the old device data available so it can be
+         * migrated safely after the user's cloud session is known.
          */
-
-        const migrationKey =
-          "glueful_storage_migrated_" + user.id;
-
-
-        if(
-          !localStorage.getItem(
-            migrationKey
-          )
-        ) {
-
-          const oldApplications =
-            localStorage.getItem(
-              "job_applications_v1"
-            );
-
-
-          if(
-            oldApplications &&
-            !localStorage.getItem(
-              APPLICATION_KEY
-            )
-          ) {
-
-            localStorage.setItem(
-              APPLICATION_KEY,
-              oldApplications
-            );
-
-          }
-
-
-          localStorage.setItem(
-            migrationKey,
-            "1"
-          );
-
-        }
 
 
         document.getElementById(
