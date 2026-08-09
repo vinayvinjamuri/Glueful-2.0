@@ -5,12 +5,6 @@ const SUPABASE_PUBLISHABLE_KEY =
     "sb_publishable_91SKh77UlMjhwIcTimKyAg_Nbb_uVIN";
 
 
-/*
- * ============================================================
- * SEND APPLICATION TO GLUEFUL
- * ============================================================
- */
-
 async function sendToGlueful(application, accessToken) {
 
     try {
@@ -82,12 +76,6 @@ async function sendToGlueful(application, accessToken) {
 }
 
 
-/*
- * ============================================================
- * RECEIVE APPLICATION FROM CONTENT SCRIPT
- * ============================================================
- */
-
 chrome.runtime.onMessage.addListener(
     (message, sender, sendResponse) => {
 
@@ -103,13 +91,6 @@ chrome.runtime.onMessage.addListener(
             message.application
         );
 
-
-        /*
-         * Get the Supabase access token from extension storage.
-         *
-         * content.js no longer handles authentication.
-         */
-
         chrome.storage.session.get(
             ["supabaseAccessToken"],
             async (result) => {
@@ -117,12 +98,10 @@ chrome.runtime.onMessage.addListener(
                 const accessToken =
                     result.supabaseAccessToken;
 
-
                 console.log(
                     "Glueful stored access token:",
                     accessToken ? "YES" : "NO"
                 );
-
 
                 if (!accessToken) {
 
@@ -135,7 +114,6 @@ chrome.runtime.onMessage.addListener(
                     return;
                 }
 
-
                 try {
 
                     const result =
@@ -143,7 +121,6 @@ chrome.runtime.onMessage.addListener(
                             message.application,
                             accessToken
                         );
-
 
                     sendResponse({
                         ok: true,
@@ -162,24 +139,10 @@ chrome.runtime.onMessage.addListener(
             }
         );
 
-
-        /*
-         * We respond asynchronously.
-         */
-
         return true;
     }
 );
 
-
-/*
- * ============================================================
- * RECEIVE AUTHENTICATION FROM GLUEFUL WEBSITE
- * ============================================================
- *
- * The Glueful website will send the user's current
- * Supabase access token to the extension.
- */
 
 chrome.runtime.onMessageExternal.addListener(
     (message, sender, sendResponse) => {
@@ -188,13 +151,6 @@ chrome.runtime.onMessageExternal.addListener(
             "Glueful external message received:",
             message
         );
-
-
-        /*
-         * Security check:
-         * Only accept authentication messages from
-         * our Glueful website.
-         */
 
         if (
             !sender.url ||
@@ -216,7 +172,6 @@ chrome.runtime.onMessageExternal.addListener(
             return;
         }
 
-
         if (
             !message ||
             message.type !== "GLUEFUL_AUTH"
@@ -224,10 +179,8 @@ chrome.runtime.onMessageExternal.addListener(
             return;
         }
 
-
         const accessToken =
             message.accessToken;
-
 
         if (!accessToken) {
 
@@ -242,11 +195,6 @@ chrome.runtime.onMessageExternal.addListener(
 
             return;
         }
-
-
-        /*
-         * Store the access token in extension session storage.
-         */
 
         chrome.storage.session.set(
             {
@@ -270,11 +218,9 @@ chrome.runtime.onMessageExternal.addListener(
                     return;
                 }
 
-
                 console.log(
                     "Glueful Supabase access token stored successfully."
                 );
-
 
                 sendResponse({
                     ok: true
@@ -282,7 +228,6 @@ chrome.runtime.onMessageExternal.addListener(
 
             }
         );
-
 
         return true;
     }
