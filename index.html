@@ -15,11 +15,6 @@
     const SUPABASE_KEY =
       "sb_publishable_91SKh77UlMjhwIcTimKyAg_Nbb_uVIN";
 
-    // Brandfetch Logo API client ID — used to fetch consistent,
-    // high-quality company logos for any company in the world.
-    const BRANDFETCH_CLIENT_ID =
-      "1id_c53sjhZ8vJteGbe";
-
     const supabaseClient =
       window.supabase.createClient(
         SUPABASE_URL,
@@ -822,73 +817,6 @@
     }
 
 
-    .company-logo {
-
-      width:44px;
-      height:44px;
-
-      border-radius:11px;
-
-      object-fit:contain;
-
-      background:#FFFFFF;
-
-      border:
-        1px solid
-        var(--border);
-
-      flex-shrink:0;
-
-      padding:7px;
-
-    }
-
-
-    .company-logo.company-logo-sm {
-
-      width:38px;
-      height:38px;
-
-      border-radius:9px;
-
-      padding:6px;
-
-    }
-
-
-    .company-logo-fallback {
-
-      display:flex;
-
-      align-items:center;
-
-      justify-content:center;
-
-      font-family:
-        'Space Grotesk',
-        sans-serif;
-
-      font-weight:700;
-
-      font-size:16px;
-
-      color:white;
-
-      background:var(--grad);
-
-      padding:0;
-
-    }
-
-
-    .company-logo.company-logo-sm.company-logo-fallback,
-    .company-logo-sm.company-logo-fallback {
-
-      font-size:14px;
-
-    }
-
-
     .company-name {
 
       font-family:
@@ -1151,6 +1079,204 @@
       gap:12px;
 
     }
+
+    /* =====================================================
+       RESUME MANAGER
+    ====================================================== */
+
+    .resume-search-wrap {
+      position:relative;
+      margin-bottom:.75rem;
+    }
+
+    .resume-search {
+      width:100%;
+      padding-left:42px !important;
+    }
+
+    .resume-search-icon {
+      position:absolute;
+      left:15px;
+      top:50%;
+      transform:translateY(-50%);
+      color:var(--text-faint);
+      font-size:22px;
+      z-index:2;
+      pointer-events:none;
+    }
+
+    .resume-info-banner {
+      padding:.8rem;
+      margin-bottom:1rem;
+      color:var(--text-mute);
+      font-size:11px;
+      line-height:1.5;
+    }
+
+    .resume-company-card {
+      border:1px solid var(--border);
+      background:#11161F;
+      border-radius:16px;
+      overflow:hidden;
+      margin-bottom:12px;
+    }
+
+    .resume-company-header {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:14px;
+      cursor:pointer;
+    }
+
+    .resume-company-left {
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:0;
+    }
+
+    .resume-company-logo-wrap {
+      width:46px;
+      height:46px;
+      flex:0 0 46px;
+      border-radius:13px;
+      background:#18202B;
+      border:1px solid var(--border);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+    }
+
+    .resume-company-logo {
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      padding:7px;
+      display:block;
+    }
+
+    .resume-company-fallback {
+      width:100%;
+      height:100%;
+      align-items:center;
+      justify-content:center;
+      font-size:20px;
+      font-weight:700;
+      color:#E8ECF2;
+    }
+
+    .resume-company-name {
+      font-family:'Space Grotesk',sans-serif;
+      font-size:15px;
+      font-weight:600;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .resume-count {
+      color:var(--text-faint);
+      font-family:'JetBrains Mono',monospace;
+      font-size:9px;
+      font-weight:500;
+      margin-left:5px;
+    }
+
+    .resume-chevron {
+      color:var(--text-mute);
+      font-size:20px;
+      flex-shrink:0;
+    }
+
+    .resume-company-body {
+      padding:0 10px 10px;
+    }
+
+    .resume-item {
+      border:1px solid var(--border);
+      background:#0E131B;
+      border-radius:13px;
+      padding:12px;
+      display:grid;
+      grid-template-columns:42px minmax(0,1fr);
+      gap:10px;
+      align-items:start;
+      margin-top:8px;
+    }
+
+    .resume-pdf-icon {
+      width:42px;
+      height:42px;
+      border-radius:10px;
+      background:linear-gradient(135deg,#7A42FF,#385CFF);
+      color:white;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:10px;
+      font-weight:700;
+      letter-spacing:.3px;
+    }
+
+    .resume-item-main {
+      min-width:0;
+    }
+
+    .resume-item-name {
+      font-family:'Space Grotesk',sans-serif;
+      font-size:14px;
+      font-weight:600;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    .resume-item-role {
+      color:#9C79FF;
+      font-size:12px;
+      margin-top:3px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    .resume-item-date {
+      color:var(--text-faint);
+      font-size:10px;
+      margin-top:4px;
+    }
+
+    .resume-item-actions {
+      grid-column:1 / -1;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+      margin-top:2px;
+    }
+
+    .resume-open-btn,
+    .resume-download-btn {
+      min-height:38px;
+      border-radius:10px;
+      background:#171D27;
+      font-family:'Space Grotesk',sans-serif;
+      font-size:12px;
+      font-weight:600;
+    }
+
+    .resume-open-btn {
+      border:1px solid #7045F4;
+      color:#B497FF;
+    }
+
+    .resume-download-btn {
+      border:1px solid #2A8B70;
+      color:#62DDB4;
+    }
+
 
 
     .resume-icon {
@@ -2264,44 +2390,31 @@
     >
 
       <div class="view-header">
-
         <div>
-
-          <h2 class="view-title">
-            Resumes
-          </h2>
-
+          <h2 class="view-title">Resumes</h2>
           <p class="view-subtitle">
-            Your resumes, stored in your own cloud
+            Your resumes, organized by company
           </p>
-
         </div>
-
-
-
       </div>
 
-
-      <div
-        class="card"
-        style="
-          padding:.8rem;
-          margin-bottom:1rem;
-          color:var(--text-mute);
-          font-size:11px;
-          line-height:1.5;
-        "
-      >
-        ☁️ Glueful stores the resume name and cloud
-        link. Your actual PDF stays in your own
-        Drive/cloud storage.
+      <div class="resume-search-wrap">
+        <span class="resume-search-icon">⌕</span>
+        <input
+          id="resume-search"
+          class="input resume-search"
+          placeholder="Search company or resume name..."
+          oninput="renderResumes()"
+          autocomplete="off"
+        />
       </div>
 
+      <div class="card resume-info-banner">
+        ☁️ Resumes are grouped by the companies where you used them.
+        Search by company or resume name.
+      </div>
 
-      <div
-        id="resume-list"
-        class="dashboard-list"
-      ></div>
+      <div id="resume-list" class="dashboard-list"></div>
 
     </section>
 
@@ -3311,6 +3424,7 @@
 
     let DATA_USER_ID = null;
     let cloudSyncReady = false;
+    let supportingCloudReady = false;
     let saveQueue = Promise.resolve();
 
     let APPLICATION_KEY =
@@ -3321,6 +3435,24 @@
 
     let RESUME_KEY =
       "glueful_resumes_v1";
+
+    /* Brandfetch logo integration */
+    const BRANDFETCH_CLIENT_ID =
+      "1id_c53sjhZ8vJteGbe";
+
+    const BRANDFETCH_CACHE_KEY =
+      "glueful_brand_domains_v1";
+
+    let brandDomainCache = {};
+
+    try {
+      brandDomainCache =
+        JSON.parse(
+          localStorage.getItem(BRANDFETCH_CACHE_KEY) || "{}"
+        ) || {};
+    } catch(e) {
+      brandDomainCache = {};
+    }
 
 
     let applications = [];
@@ -3518,142 +3650,6 @@
 
 
     /* =====================================================
-       COMPANY LOGOS (Brandfetch)
-    ====================================================== */
-
-    function companyDomainGuess(company) {
-
-      const key = String(company || "")
-        .trim()
-        .toLowerCase();
-
-      if(!key) return "";
-
-      /*
-       * Overrides for companies whose real domain doesn't match a
-       * simple "name + .com" guess. Extend this list any time a
-       * specific company's logo isn't resolving correctly.
-       */
-
-      const overrides = {
-        "google":"google.com",
-        "alphabet":"abc.xyz",
-        "microsoft":"microsoft.com",
-        "apple":"apple.com",
-        "nvidia":"nvidia.com",
-        "qualcomm":"qualcomm.com",
-        "amd":"amd.com",
-        "samsung":"samsung.com",
-        "intel":"intel.com",
-        "meta":"meta.com",
-        "facebook":"meta.com",
-        "amazon":"amazon.com",
-        "adobe":"adobe.com",
-        "tesla":"tesla.com",
-        "cisco":"cisco.com",
-        "dell":"dell.com",
-        "ibm":"ibm.com",
-        "goldman sachs":"goldmansachs.com",
-        "jpmorgan":"jpmorganchase.com",
-        "jp morgan":"jpmorganchase.com",
-        "jpmorgan chase":"jpmorganchase.com",
-        "procter & gamble":"pg.com",
-        "procter and gamble":"pg.com",
-        "general electric":"ge.com",
-        "general motors":"gm.com",
-        "hewlett packard":"hp.com",
-        "hp":"hp.com",
-        "at&t":"att.com",
-        "3m":"3m.com",
-        "pwc":"pwc.com",
-        "ey":"ey.com",
-        "kpmg":"kpmg.com",
-        "deloitte":"deloitte.com",
-        "mckinsey":"mckinsey.com",
-        "bcg":"bcg.com",
-        "boston consulting group":"bcg.com",
-        "x":"x.com",
-        "twitter":"x.com"
-      };
-
-      if(overrides[key]) {
-        return overrides[key];
-      }
-
-      /*
-       * Generic fallback: guess the domain from the company name so
-       * that logos can resolve for any company, not just a hardcoded
-       * list. Strips common legal suffixes and punctuation, e.g.
-       * "Acme Corp, Inc." -> "acme.com".
-       */
-
-      const cleaned = key
-        .replace(
-          /\b(inc|incorporated|llc|ltd|limited|corp|corporation|co|company|group|holdings|technologies|technology|labs|plc|gmbh)\b\.?/g,
-          ""
-        )
-        .replace(/[^a-z0-9]+/g, "");
-
-      if(!cleaned) return "";
-
-      return cleaned + ".com";
-
-    }
-
-
-    function brandfetchLogoUrl(domain) {
-
-      if(!domain) return "";
-
-      return (
-        "https://cdn.brandfetch.io/" +
-        encodeURIComponent(domain) +
-        "/w/128/h/128/fallback/404/icon" +
-        "?c=" +
-        BRANDFETCH_CLIENT_ID
-      );
-
-    }
-
-
-    function companyLogoMarkup(company, sizeClass) {
-
-      const name = String(company || "Company").trim() || "Company";
-      const domain = companyDomainGuess(name);
-      const initials = name
-        .split(/\s+/)
-        .filter(Boolean)
-        .slice(0,2)
-        .map(word => word[0])
-        .join("")
-        .toUpperCase();
-
-      const cls =
-        "company-logo" +
-        (sizeClass ? " " + sizeClass : "");
-
-      if(domain) {
-        return `
-          <img
-            class="${cls}"
-            src="${brandfetchLogoUrl(domain)}"
-            alt="${esc(name)} logo"
-            loading="lazy"
-            onerror="this.outerHTML='<div class=&quot;${cls} company-logo-fallback&quot;>${esc(initials || "C")}</div>'"
-          />
-        `;
-      }
-
-      return `
-        <div class="${cls} company-logo-fallback">
-          ${esc(initials || "C")}
-        </div>
-      `;
-
-    }
-
-
-    /* =====================================================
        LOAD / SAVE
     ====================================================== */
 
@@ -3680,6 +3676,11 @@
 
         jd:
           row?.jd || "",
+
+        createdAt:
+          row?.created_at ||
+          row?.createdAt ||
+          "",
 
         resumeId:
           row?.resume_id ||
@@ -3869,6 +3870,8 @@
 
       }
 
+      supportingCloudReady = true;
+
     }
 
 
@@ -4026,6 +4029,13 @@
 
     async function loadAll() {
 
+      /*
+       * IMPORTANT ARCHITECTURE:
+       * Applications are stored in public.applications and must not
+       * depend on the legacy glueful_data table.
+       * Interviews/resumes still use glueful_data for now.
+       */
+
       await loadLocalBackup();
 
       if(!DATA_USER_ID) {
@@ -4033,12 +4043,12 @@
         return;
       }
 
+      /* -----------------------------------------------------
+         1. LOAD APPLICATIONS FIRST
+         ----------------------------------------------------- */
+
       try {
 
-        /* Load interviews/resumes from the existing supporting table. */
-        await loadSupportingCloudData();
-
-        /* Applications are now loaded from public.applications. */
         const cloudApplications =
           await loadApplicationsFromCloud();
 
@@ -4047,7 +4057,6 @@
             cloudApplications
           );
 
-        /* The dedicated table is now authoritative. */
         applications.sort(
           (a,b) =>
             (b.date || "").localeCompare(
@@ -4055,26 +4064,64 @@
             )
         );
 
+        /*
+         * Application cloud sync is now independently ready.
+         * A failure in the old interviews/resumes storage must not
+         * prevent applications from being saved to public.applications.
+         */
         cloudSyncReady = true;
-        writeLocalBackup();
 
       } catch(error) {
 
         cloudSyncReady = false;
 
         console.error(
-          "Glueful cloud sync load failed:",
+          "Glueful applications cloud load failed:",
           error
         );
 
         showError(
-          "Cloud sync unavailable. Your local data is still safe on this device."
+          "Applications could not be loaded from the cloud. " +
+          (error?.message || "Please check your Supabase permissions.")
         );
+
+        /* Keep the local backup visible if the cloud query fails. */
+        writeLocalBackup();
+        return;
 
       }
 
-    }
+      /* -----------------------------------------------------
+         2. LOAD INTERVIEWS / RESUMES SEPARATELY
+         ----------------------------------------------------- */
 
+      try {
+
+        await loadSupportingCloudData();
+
+      } catch(error) {
+
+        /*
+         * Do NOT turn off application cloud sync here.
+         * The legacy glueful_data table is only supporting storage.
+         */
+        console.error(
+          "Glueful interviews/resumes cloud load failed:",
+          error
+        );
+
+        /*
+         * Do not downgrade the application UI. Resume Manager is built
+         * from public.applications, while interviews remain locally
+         * available until their dedicated cloud table is added.
+         */
+        supportingCloudReady = false;
+
+      }
+
+      writeLocalBackup();
+
+    }
 
     function writeLocalBackup() {
 
@@ -4366,7 +4413,8 @@
 
       if(
         !DATA_USER_ID ||
-        !cloudSyncReady
+        !cloudSyncReady ||
+        !supportingCloudReady
       ) {
         return Promise.resolve();
       }
@@ -5152,18 +5200,7 @@
             "
           >
 
-            <div
-              class="row"
-              style="
-                align-items:flex-start;
-                gap:10px;
-                min-width:0;
-              "
-            >
-
-              ${companyLogoMarkup(app.company)}
-
-              <div class="application-main">
+            <div class="application-main">
 
               <div class="company-row">
 
@@ -5216,8 +5253,6 @@
                     })()
                   : ""
               }
-
-              </div>
 
             </div>
 
@@ -6060,18 +6095,7 @@
             "
           >
 
-            <div
-              class="row"
-              style="
-                align-items:flex-start;
-                gap:9px;
-                min-width:0;
-              "
-            >
-
-              ${companyLogoMarkup(interview.company, "company-logo-sm")}
-
-              <div>
+            <div>
 
               <div
                 style="
@@ -6097,8 +6121,6 @@
                     "Interview"
                   )
                 }
-              </div>
-
               </div>
 
             </div>
@@ -6704,136 +6726,617 @@
     }
 
 
+    /* =====================================================
+       RESUME MANAGER
+       Applications are the source of truth for resumes used.
+    ====================================================== */
+
+    function resumeDownloadUrl(url) {
+
+      const value =
+        String(url || "").trim();
+
+      if(!value) return "";
+
+      const driveMatch =
+        value.match(
+          /drive\.google\.com\/file\/d\/([^/]+)/i
+        );
+
+      if(driveMatch?.[1]) {
+        return (
+          "https://drive.google.com/uc?export=download&id=" +
+          encodeURIComponent(driveMatch[1])
+        );
+      }
+
+      return value;
+
+    }
+
+
+    function resumeDateTime(value) {
+
+      const raw =
+        typeof value === "object"
+          ? value?.createdAt || ""
+          : value || "";
+
+      if(!raw) {
+        return "Date unavailable";
+      }
+
+      const date =
+        new Date(raw);
+
+      if(Number.isNaN(date.getTime())) {
+        return "Date unavailable";
+      }
+
+      return date.toLocaleString(
+        "en-IN",
+        {
+          day:"numeric",
+          month:"short",
+          year:"numeric",
+          hour:"numeric",
+          minute:"2-digit"
+        }
+      );
+
+    }
+
+
+    function buildResumeGroups() {
+
+      const groups = {};
+      const seen = {};
+
+      applications.forEach(app => {
+
+        const name =
+          String(app?.resumeName || "").trim();
+
+        const url =
+          String(app?.resumeUrl || "").trim();
+
+        if(!name && !url) return;
+
+        const company =
+          String(
+            app?.company || "Unknown company"
+          ).trim() ||
+          "Unknown company";
+
+        const companyKey =
+          company.toLowerCase();
+
+        const resumeKey =
+          String(
+            app?.resumeId ||
+            name ||
+            url
+          )
+            .trim()
+            .toLowerCase();
+
+        if(!groups[companyKey]) {
+          groups[companyKey] = {
+            company,
+            resumes:[]
+          };
+        }
+
+        const key =
+          companyKey + "|" + resumeKey;
+
+        if(!seen[key]) {
+
+          seen[key] = {
+            key,
+            name:name || "Resume",
+            url,
+            company,
+            createdAt:
+              app?.createdAt || "",
+            lastUsedAt:
+              app?.createdAt || "",
+            applicationCount:1
+          };
+
+          groups[companyKey]
+            .resumes
+            .push(
+              seen[key]
+            );
+
+        } else {
+
+          seen[key].applicationCount += 1;
+
+          if(
+            app?.createdAt &&
+            (
+              !seen[key].lastUsedAt ||
+              new Date(app.createdAt) >
+              new Date(seen[key].lastUsedAt)
+            )
+          ) {
+            seen[key].lastUsedAt =
+              app.createdAt;
+          }
+
+        }
+
+      });
+
+      /* Keep old locally saved resumes visible if they are not linked yet. */
+      resumes.forEach(resume => {
+
+        const name =
+          String(resume?.name || "").trim();
+
+        const url =
+          String(resume?.url || "").trim();
+
+        if(!name && !url) return;
+
+        const company =
+          "Other resumes";
+
+        const companyKey =
+          company.toLowerCase();
+
+        const key =
+          companyKey + "|" +
+          String(
+            resume?.id ||
+            name ||
+            url
+          )
+            .trim()
+            .toLowerCase();
+
+        if(!groups[companyKey]) {
+          groups[companyKey] = {
+            company,
+            resumes:[]
+          };
+        }
+
+        if(!seen[key]) {
+
+          groups[companyKey].resumes.push({
+            key,
+            name:name || "Resume",
+            url,
+            company,
+            createdAt:
+              resume?.createdAt || "",
+            lastUsedAt:"",
+            applicationCount:0
+          });
+
+          seen[key] = true;
+
+        }
+
+      });
+
+      return Object.values(groups)
+        .sort(
+          (a,b) =>
+            a.company.localeCompare(b.company)
+        );
+
+    }
+
+
     function renderResumes() {
 
       const container =
-        document.getElementById(
-          "resume-list"
-        );
+        document.getElementById("resume-list");
 
+      if(!container) return;
 
-      if(!resumes.length) {
+      const input =
+        document.getElementById("resume-search");
+
+      const query =
+        String(input?.value || "")
+          .trim()
+          .toLowerCase();
+
+      const groups =
+        buildResumeGroups();
+
+      const filtered =
+        groups
+          .map(group => {
+
+            if(
+              !query ||
+              group.company
+                .toLowerCase()
+                .includes(query)
+            ) {
+              return group;
+            }
+
+            return {
+              ...group,
+              resumes:
+                group.resumes.filter(
+                  resume =>
+                    resume.name
+                      .toLowerCase()
+                      .includes(query)
+                )
+            };
+
+          })
+          .filter(
+            group =>
+              group.resumes.length > 0
+          );
+
+      if(!filtered.length) {
 
         container.innerHTML = `
-
           <div class="empty-state">
-
-            <div class="empty-icon">
-              📄
-            </div>
-
-            <div>
-              No resumes added yet.
-            </div>
-
-            <div
-              style="
-                margin-top:6px;
-                font-size:11px;
-              "
-            >
-              Add a Drive or cloud link to your resume.
-            </div>
-
+            <div class="empty-icon">📄</div>
+            ${
+              groups.length
+                ? "Nothing matches your search."
+                : "No resumes used yet."
+            }
           </div>
-
         `;
 
         return;
 
       }
 
-
       container.innerHTML =
-        resumes
-          .map(
-            resume => `
+        filtered.map(group => {
+
+          const initial =
+            group.company
+              .charAt(0)
+              .toUpperCase() || "?";
+
+          const groupId =
+            "rg-" +
+            Math.random()
+              .toString(36)
+              .slice(2,9);
+
+          return `
+            <div class="resume-company-card">
 
               <div
-                class="card resume-card"
-                role="button"
-                tabindex="0"
-                title="Open resume"
-                onclick="openExternal('${esc(resume.url)}')"
-                onkeydown="if(event.key==='Enter' || event.key===' ') { event.preventDefault(); openExternal('${esc(resume.url)}'); }"
-                style="cursor:pointer;"
+                class="resume-company-header"
+                onclick="
+                  toggleResumeCompany('${groupId}')
+                "
               >
 
-                <div
-                  class="row"
-                  style="
-                    gap:10px;
-                    min-width:0;
-                    flex:1;
-                  "
-                >
+                <div class="resume-company-left">
 
-                  <div class="resume-icon">
-                    📄
+                  <div
+                    class="resume-company-logo-wrap"
+                    data-company-logo="${esc(group.company)}"
+                  >
+
+                    <img
+                      class="resume-company-logo"
+                      alt="${esc(group.company)} logo"
+                      style="display:none;"
+                      onload="
+                        this.style.display='block';
+                        this.parentElement
+                          .querySelector('.resume-company-fallback')
+                          .style.display='none';
+                      "
+                      onerror="
+                        this.style.display='none';
+                        this.parentElement
+                          .querySelector('.resume-company-fallback')
+                          .style.display='flex';
+                      "
+                    />
+
+                    <span
+                      class="resume-company-fallback"
+                    >
+                      ${initial}
+                    </span>
+
                   </div>
 
-                  <div class="resume-info">
-
-                    <div class="resume-name">
-                      ${esc(resume.name)}
-                    </div>
-
-                    ${
-                      resume.note
-                        ? `
-                          <div class="resume-note">
-                            ${esc(resume.note)}
-                          </div>
-                        `
-                        : `
-                          <div class="resume-note">
-                            Your cloud file
-                          </div>
-                        `
-                    }
-
+                  <div class="resume-company-name">
+                    ${esc(group.company)}
+                    <span class="resume-count">
+                      ${group.resumes.length}
+                      ${group.resumes.length === 1 ? "resume" : "resumes"}
+                    </span>
                   </div>
 
                 </div>
 
-
-                <div
-                  class="card-actions"
-                  onclick="event.stopPropagation()"
-                >
-
-                  <button
-                    class="icon-btn"
-                    title="Open resume"
-                    onclick="
-                      openExternal(
-                        '${esc(resume.url)}'
-                      )
-                    "
-                  >
-                    ↗
-                  </button>
-
-
-                  <button
-                    class="icon-btn danger"
-                    title="Delete"
-                    onclick="
-                      deleteResume(
-                        '${resume.id}'
-                      )
-                    "
-                  >
-                    🗑
-                  </button>
-
-                </div>
+                <span
+                  class="resume-chevron"
+                  id="${groupId}-chevron"
+                >⌄</span>
 
               </div>
 
-            `
+              <div
+                id="${groupId}"
+                class="resume-company-body"
+              >
+
+                ${
+                  group.resumes.map(resume => {
+
+                    const download =
+                      resumeDownloadUrl(
+                        resume.url
+                      );
+
+                    return `
+                      <div class="resume-item">
+
+                        <div class="resume-pdf-icon">
+                          PDF
+                        </div>
+
+                        <div class="resume-item-main">
+
+                          <div class="resume-item-name">
+                            ${esc(resume.name)}
+                          </div>
+
+                          <div class="resume-item-role">
+                            ${
+                              resume.applicationCount
+                                ? `Used in ${resume.applicationCount} ${resume.applicationCount === 1 ? "application" : "applications"}`
+                                : "Saved resume"
+                            }
+                          </div>
+
+                          <div class="resume-item-date">
+                            📅 Added:
+                            ${esc(
+                              resumeDateTime(
+                                resume.createdAt
+                              )
+                            )}
+                          </div>
+
+                          ${
+                            resume.lastUsedAt
+                              ? `
+                                <div class="resume-item-date">
+                                  ◷ Last used:
+                                  ${esc(
+                                    resumeDateTime(
+                                      resume.lastUsedAt
+                                    )
+                                  )}
+                                </div>
+                              `
+                              : ""
+                          }
+
+                        </div>
+
+                        ${
+                          resume.url
+                            ? `
+                              <div class="resume-item-actions">
+
+                                <button
+                                  class="resume-open-btn"
+                                  onclick="
+                                    event.stopPropagation();
+                                    openExternal(
+                                      '${esc(resume.url)}'
+                                    );
+                                  "
+                                >
+                                  ↗ Open
+                                </button>
+
+                                <button
+                                  class="resume-download-btn"
+                                  onclick="
+                                    event.stopPropagation();
+                                    openExternal(
+                                      '${esc(download)}'
+                                    );
+                                  "
+                                >
+                                  ↓ Download
+                                </button>
+
+                              </div>
+                            `
+                            : ""
+                        }
+
+                      </div>
+                    `;
+
+                  }).join("")
+                }
+
+              </div>
+
+            </div>
+          `;
+
+        }).join("");
+
+      loadResumeCompanyLogos();
+
+    }
+
+
+    function toggleResumeCompany(id) {
+
+      const body =
+        document.getElementById(id);
+
+      const chevron =
+        document.getElementById(
+          id + "-chevron"
+        );
+
+      if(!body) return;
+
+      const isHidden =
+        body.style.display === "none";
+
+      body.style.display =
+        isHidden
+          ? "block"
+          : "none";
+
+      if(chevron) {
+        chevron.textContent =
+          isHidden ? "⌄" : "›";
+      }
+
+    }
+
+
+    async function findBrandDomain(company) {
+
+      const key =
+        String(company || "")
+          .trim()
+          .toLowerCase();
+
+      if(!key) return "";
+
+      if(brandDomainCache[key]) {
+        return brandDomainCache[key];
+      }
+
+      try {
+
+        const response =
+          await fetch(
+            "https://api.brandfetch.io/v2/search/" +
+            encodeURIComponent(company) +
+            "?c=" +
+            encodeURIComponent(
+              BRANDFETCH_CLIENT_ID
+            )
+          );
+
+        if(!response.ok) {
+          throw new Error(
+            "Brand Search HTTP " +
+            response.status
+          );
+        }
+
+        const data =
+          await response.json();
+
+        const result =
+          Array.isArray(data)
+            ? data[0]
+            : data?.results?.[0] ||
+              data?.[0];
+
+        const domain =
+          String(
+            result?.domain || ""
           )
-          .join("");
+            .replace(
+              /^https?:\/\//i,
+              ""
+            )
+            .split("/")[0]
+            .replace(/^www\./i,"");
+
+        if(domain) {
+
+          brandDomainCache[key] =
+            domain;
+
+          localStorage.setItem(
+            BRANDFETCH_CACHE_KEY,
+            JSON.stringify(
+              brandDomainCache
+            )
+          );
+
+        }
+
+        return domain;
+
+      } catch(error) {
+
+        console.warn(
+          "Brandfetch lookup failed:",
+          company,
+          error
+        );
+
+        return "";
+
+      }
+
+    }
+
+
+    async function loadResumeCompanyLogos() {
+
+      const nodes =
+        Array.from(
+          document.querySelectorAll(
+            "[data-company-logo]"
+          )
+        );
+
+      await Promise.all(
+        nodes.map(
+          async node => {
+
+            const company =
+              node.getAttribute(
+                "data-company-logo"
+              );
+
+            const domain =
+              await findBrandDomain(
+                company
+              );
+
+            if(!domain) return;
+
+            const image =
+              node.querySelector(
+                ".resume-company-logo"
+              );
+
+            if(!image) return;
+
+            image.src =
+              "https://cdn.brandfetch.io/domain/" +
+              encodeURIComponent(domain) +
+              "?c=" +
+              encodeURIComponent(
+                BRANDFETCH_CLIENT_ID
+              );
+
+          }
+        )
+      );
 
     }
 
