@@ -75,56 +75,19 @@
         return document.title || "";
     }
 
-    function getSupabaseAccessToken() {
-        try {
-            const keys = Object.keys(localStorage);
-
-            console.log(
-                "Glueful localStorage keys:",
-                keys.filter((key) => key.includes("auth-token"))
-            );
-
-            for (const key of keys) {
-                if (!key.includes("auth-token")) {
-                    continue;
-                }
-
-                const stored = localStorage.getItem(key);
-
-                if (!stored) {
-                    continue;
-                }
-
-                try {
-                    const parsed = JSON.parse(stored);
-
-                    if (parsed?.access_token) {
-                        return parsed.access_token;
-                    }
-
-                    if (parsed?.currentSession?.access_token) {
-                        return parsed.currentSession.access_token;
-                    }
-
-                    if (parsed?.session?.access_token) {
-                        return parsed.session.access_token;
-                    }
-                } catch (parseError) {
-                    console.error(
-                        "Glueful could not parse auth token:",
-                        parseError
-                    );
-                }
-            }
-        } catch (error) {
-            console.error(
-                "Glueful auth token read error:",
-                error
-            );
-        }
-
-        return null;
-    }
+    /*
+     * Send the captured application to the extension
+     * background service worker.
+     *
+     * IMPORTANT:
+     * We do NOT try to read the Supabase access token here.
+     *
+     * This script runs inside LinkedIn/Naukri/Indeed,
+     * so localStorage belongs to that website.
+     *
+     * The background service worker will handle
+     * authentication separately.
+     */
 
     function sendApplication() {
         const application = getPageInfo();
@@ -134,20 +97,13 @@
             application
         );
 
-        const accessToken = getSupabaseAccessToken();
-
-        console.log(
-            "Glueful auth token found:",
-            accessToken ? "YES" : "NO"
-        );
-
         chrome.runtime.sendMessage(
             {
                 type: "GLUEFUL_CAPTURE_APPLICATION",
-                application: application,
-                accessToken: accessToken
+                application: application
             },
             (response) => {
+
                 if (chrome.runtime.lastError) {
                     console.error(
                         "Glueful extension error:",
@@ -160,6 +116,17 @@
                     "Glueful response:",
                     response
                 );
+
+                if (response && response.ok) {
+                    console.log(
+                        "Glueful application captured successfully."
+                    );
+                } else if (response) {
+                    console.error(
+                        "Glueful capture failed:",
+                        response.error
+                    );
+                }
             }
         );
     }
@@ -168,7 +135,12 @@
      * TEST MODE
      *
      * For now we do NOT automatically submit anything.
-     * This exposes a function so we can test the extension safely.
+     *
+     * Open the LinkedIn/Naukri/Indeed console and run:
+     *
+     *     gluefulCaptureTest()
+     *
+     * to test application capture.
      */
 
     window.gluefulCaptureTest = sendApplication;
