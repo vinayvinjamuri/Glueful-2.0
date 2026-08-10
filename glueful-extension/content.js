@@ -7,6 +7,17 @@
   let confirmationObserver = null;
   let confirmationCheckTimer = null;
 
+  /*
+   * IMPORTANT:
+   *
+   * We save the job information when the user clicks
+   * Apply/Easy Apply.
+   *
+   * LinkedIn may change/remove the job information from
+   * the DOM after the confirmation screen appears.
+   */
+  let pendingApplication = null;
+
 
   /*
    * ============================================================
@@ -19,11 +30,15 @@
 
     return {
       source_type: "browser_extension",
+
       source_name: getSourceName(),
+
       source_url: url,
 
       company: detectCompany(),
+
       role: detectJobTitle(),
+
       location: detectLocation(),
 
       job_url: url,
@@ -85,22 +100,13 @@
    * ============================================================
    * COMPANY DETECTION
    * ============================================================
-   *
-   * IMPORTANT:
-   *
-   * Do NOT use broad selectors such as:
-   *
-   * [class*="employer"]
-   *
-   * because LinkedIn can use those containers for other
-   * information such as location.
    */
 
   function detectCompany() {
 
     /*
      * ----------------------------------------------------------
-     * LinkedIn
+     * LinkedIn-specific selectors
      * ----------------------------------------------------------
      */
 
@@ -109,29 +115,51 @@
     ) {
 
       const linkedinSelectors = [
+
         ".job-details-jobs-unified-top-card__company-name a",
+
         ".job-details-jobs-unified-top-card__company-name",
+
         ".jobs-unified-top-card__company-name a",
-        ".jobs-unified-top-card__company-name"
+
+        ".jobs-unified-top-card__company-name",
+
+        '[data-testid="company-name"]'
       ];
+
 
       for (const selector of linkedinSelectors) {
 
-        const element =
-          document.querySelector(selector);
+        try {
 
-        if (element) {
+          const elements =
+            document.querySelectorAll(selector);
 
-          const text =
-            (element.innerText || "")
-              .trim();
+          for (const element of elements) {
 
-          if (
-            text &&
-            !looksLikeLocation(text)
-          ) {
-            return cleanText(text);
+            const text =
+              (
+                element.innerText ||
+                element.textContent ||
+                ""
+              ).trim();
+
+            if (
+              text &&
+              !looksLikeLocation(text)
+            ) {
+
+              return cleanText(text);
+            }
           }
+
+        } catch (error) {
+
+          console.warn(
+            "Glueful company selector failed:",
+            selector,
+            error
+          );
         }
       }
     }
@@ -144,48 +172,69 @@
      */
 
     const selectors = [
+
       '[data-testid="company-name"]',
+
       '[class*="company-name"]',
+
       '[class*="companyName"]'
     ];
 
+
     for (const selector of selectors) {
 
-      const element =
-        document.querySelector(selector);
+      try {
 
-      if (!element) {
-        continue;
-      }
+        const elements =
+          document.querySelectorAll(selector);
 
-      const text =
-        (element.innerText || "")
-          .trim();
+        for (const element of elements) {
 
-      if (
-        text &&
-        !looksLikeLocation(text)
-      ) {
-        return cleanText(text);
+          const text =
+            (
+              element.innerText ||
+              element.textContent ||
+              ""
+            ).trim();
+
+          if (
+            text &&
+            !looksLikeLocation(text)
+          ) {
+
+            return cleanText(text);
+          }
+        }
+
+      } catch (error) {
+
+        console.warn(
+          "Glueful generic company selector failed:",
+          selector,
+          error
+        );
       }
     }
 
 
     /*
      * ----------------------------------------------------------
-     * Fallback
+     * Page title fallback
      * ----------------------------------------------------------
      */
 
     const fallback =
       parseTitleParts().company;
 
+
     if (
       fallback &&
       !looksLikeLocation(fallback)
     ) {
+
       return cleanText(fallback);
     }
+
 
     return "";
   }
@@ -204,60 +253,101 @@
     ) {
 
       const linkedinSelectors = [
+
         ".job-details-jobs-unified-top-card__job-title h1",
+
         ".job-details-jobs-unified-top-card__job-title",
+
         ".jobs-unified-top-card__job-title h1",
+
         ".jobs-unified-top-card__job-title",
+
         "h1"
       ];
 
+
       for (const selector of linkedinSelectors) {
 
-        const element =
-          document.querySelector(selector);
+        try {
 
-        if (element) {
+          const elements =
+            document.querySelectorAll(selector);
 
-          const text =
-            (element.innerText || "")
-              .trim();
+          for (const element of elements) {
 
-          if (text) {
-            return cleanText(text);
+            const text =
+              (
+                element.innerText ||
+                element.textContent ||
+                ""
+              ).trim();
+
+            if (text) {
+
+              return cleanText(text);
+            }
           }
+
+        } catch (error) {
+
+          console.warn(
+            "Glueful job title selector failed:",
+            selector,
+            error
+          );
         }
       }
     }
 
 
     const selectors = [
+
       '[data-testid="job-title"]',
+
       '[class*="job-title"]',
+
       '[class*="jobTitle"]',
+
       "h1"
     ];
 
+
     for (const selector of selectors) {
 
-      const element =
-        document.querySelector(selector);
+      try {
 
-      if (!element) {
-        continue;
-      }
+        const elements =
+          document.querySelectorAll(selector);
 
-      const text =
-        (element.innerText || "")
-          .trim();
+        for (const element of elements) {
 
-      if (text) {
-        return cleanText(text);
+          const text =
+            (
+              element.innerText ||
+              element.textContent ||
+              ""
+            ).trim();
+
+          if (text) {
+
+            return cleanText(text);
+          }
+        }
+
+      } catch (error) {
+
+        console.warn(
+          "Glueful generic job title selector failed:",
+          selector,
+          error
+        );
       }
     }
 
 
     const fallbackRole =
       parseTitleParts().role;
+
 
     return (
       fallbackRole ||
@@ -280,56 +370,75 @@
     ) {
 
       const selectors = [
+
         ".job-details-jobs-unified-top-card__primary-description-container",
+
         ".jobs-unified-top-card__primary-description-container",
+
         ".job-details-jobs-unified-top-card__primary-description",
+
         ".jobs-unified-top-card__primary-description"
       ];
 
+
       for (const selector of selectors) {
 
-        const element =
-          document.querySelector(selector);
+        try {
 
-        if (!element) {
-          continue;
-        }
+          const elements =
+            document.querySelectorAll(selector);
 
-        const text =
-          (element.innerText || "")
-            .trim();
+          for (const element of elements) {
 
-        if (!text) {
-          continue;
-        }
+            const text =
+              (
+                element.innerText ||
+                element.textContent ||
+                ""
+              ).trim();
 
-        /*
-         * LinkedIn often displays something similar to:
-         *
-         * Company Name · Hyderabad, Telangana, India
-         *
-         * or:
-         *
-         * Hyderabad, Telangana, India · 1 day ago
-         *
-         */
+            if (!text) {
+              continue;
+            }
 
-        const parts =
-          text
-            .split("·")
-            .map((part) => part.trim())
-            .filter(Boolean);
 
-        for (const part of parts) {
+            /*
+             * LinkedIn may display:
+             *
+             * Company Name · Hyderabad, Telangana, India
+             *
+             * Hyderabad, Telangana, India · 1 day ago
+             */
 
-          if (
-            looksLikeLocation(part)
-          ) {
-            return cleanText(part);
+            const parts =
+              text
+                .split("·")
+                .map((part) => part.trim())
+                .filter(Boolean);
+
+
+            for (const part of parts) {
+
+              if (
+                looksLikeLocation(part)
+              ) {
+
+                return cleanText(part);
+              }
+            }
           }
+
+        } catch (error) {
+
+          console.warn(
+            "Glueful location selector failed:",
+            selector,
+            error
+          );
         }
       }
     }
+
 
     return "";
   }
@@ -346,38 +455,67 @@
     const text =
       cleanText(value).toLowerCase();
 
+
     if (!text) {
       return false;
     }
 
+
     const locationWords = [
+
       "india",
+
       "telangana",
+
       "hyderabad",
+
       "bangalore",
+
       "bengaluru",
+
       "mumbai",
+
       "pune",
+
       "delhi",
+
       "gurgaon",
+
       "gurugram",
+
       "noida",
+
       "chennai",
+
       "kolkata",
+
       "remote",
+
       "onsite",
+
       "on-site",
+
       "hybrid",
+
       "united states",
+
       "usa",
+
       "new york",
+
       "california",
+
       "texas",
+
       "washington",
+
       "canada",
+
       "uk",
+
       "london"
     ];
+
 
     return locationWords.some(
       (word) =>
@@ -403,6 +541,105 @@
 
   /*
    * ============================================================
+   * SAVE PENDING APPLICATION
+   * ============================================================
+   *
+   * Called immediately when Apply/Easy Apply is clicked.
+   */
+
+  function capturePendingApplication() {
+
+    const pageInfo =
+      getPageInfo();
+
+
+    pendingApplication = {
+      ...pageInfo
+    };
+
+
+    console.log(
+      "Glueful: job information saved before application confirmation:",
+      pendingApplication
+    );
+
+
+    /*
+     * Sometimes LinkedIn finishes rendering the company
+     * slightly after the Apply button is clicked.
+     *
+     * Try again shortly if company is missing.
+     */
+
+    if (!pendingApplication.company) {
+
+      setTimeout(() => {
+
+        if (
+          pendingApplication &&
+          !pendingApplication.company &&
+          !applicationSubmitted
+        ) {
+
+          const company =
+            detectCompany();
+
+
+          if (company) {
+
+            pendingApplication.company =
+              company;
+
+
+            console.log(
+              "Glueful: company detected on delayed check:",
+              company
+            );
+          }
+        }
+
+      }, 300);
+    }
+
+
+    /*
+     * Second delayed attempt.
+     */
+
+    if (!pendingApplication.company) {
+
+      setTimeout(() => {
+
+        if (
+          pendingApplication &&
+          !pendingApplication.company &&
+          !applicationSubmitted
+        ) {
+
+          const company =
+            detectCompany();
+
+
+          if (company) {
+
+            pendingApplication.company =
+              company;
+
+
+            console.log(
+              "Glueful: company detected on second delayed check:",
+              company
+            );
+          }
+        }
+
+      }, 1000);
+    }
+  }
+
+
+  /*
+   * ============================================================
    * SEND APPLICATION
    * ============================================================
    */
@@ -418,23 +655,137 @@
       return;
     }
 
+
+    /*
+     * ----------------------------------------------------------
+     * IMPORTANT FIX
+     * ----------------------------------------------------------
+     *
+     * Use the information captured when Apply was clicked.
+     *
+     * DO NOT depend on the confirmation screen for company.
+     */
+
+    let application;
+
+
+    if (pendingApplication) {
+
+      application = {
+        ...pendingApplication,
+
+        /*
+         * Actual confirmation/submission time.
+         */
+        applied_at:
+          new Date().toISOString(),
+
+        status:
+          "applied"
+      };
+
+    } else {
+
+      /*
+       * Fallback.
+       */
+      application =
+        getPageInfo();
+    }
+
+
+    /*
+     * ----------------------------------------------------------
+     * FINAL SAFETY CHECK
+     * ----------------------------------------------------------
+     *
+     * Never send an application with an empty company.
+     */
+
+    if (!application.company) {
+
+      console.error(
+        "Glueful: Company could not be detected. Application was NOT sent.",
+        application
+      );
+
+
+      /*
+       * Try one final detection.
+       */
+
+      const retryCompany =
+        detectCompany();
+
+
+      if (retryCompany) {
+
+        application.company =
+          retryCompany;
+
+
+        console.log(
+          "Glueful: final company retry succeeded:",
+          retryCompany
+        );
+
+      } else {
+
+        /*
+         * Keep watcher alive so another DOM mutation
+         * can trigger another check.
+         */
+
+        applicationSubmitted = false;
+
+        return;
+      }
+    }
+
+
+    /*
+     * Role is also required by Supabase.
+     */
+
+    if (!application.role) {
+
+      console.error(
+        "Glueful: Job role could not be detected. Application was NOT sent.",
+        application
+      );
+
+
+      applicationSubmitted = false;
+
+      return;
+    }
+
+
+    /*
+     * Mark as submitted only AFTER validation succeeds.
+     */
+
     applicationSubmitted = true;
+
 
     stopConfirmationWatcher();
 
-    const application =
-      getPageInfo();
 
     console.log(
       "Glueful confirmed application submission:",
       application
     );
 
+
     chrome.runtime.sendMessage(
       {
-        type: "GLUEFUL_CAPTURE_APPLICATION",
-        application: application
+        type:
+          "GLUEFUL_CAPTURE_APPLICATION",
+
+        application:
+          application
       },
+
       (response) => {
 
         if (chrome.runtime.lastError) {
@@ -444,8 +795,9 @@
             chrome.runtime.lastError.message
           );
 
+
           /*
-           * If sending failed, allow another attempt.
+           * Allow another attempt.
            */
 
           applicationSubmitted = false;
@@ -453,10 +805,56 @@
           return;
         }
 
+
         console.log(
           "Glueful response:",
           response
         );
+
+
+        /*
+         * If Supabase returned an error,
+         * allow another attempt.
+         */
+
+        if (
+          !response ||
+          response.ok === false
+        ) {
+
+          applicationSubmitted = false;
+
+
+          console.error(
+            "Glueful: application was not captured:",
+            response
+          );
+
+
+          /*
+           * Restart confirmation watcher.
+           */
+
+          startConfirmationWatcher();
+
+          return;
+        }
+
+
+        /*
+         * SUCCESS
+         */
+
+        console.log(
+          "Glueful: application successfully captured."
+        );
+
+
+        /*
+         * Clear pending data after success.
+         */
+
+        pendingApplication = null;
       }
     );
   }
@@ -476,17 +874,33 @@
         ""
       ).trim();
 
+
     if (!bodyText) {
       return false;
     }
+
+
+    /*
+     * Strong LinkedIn confirmation:
+     *
+     * "Your application was sent to ..."
+     */
 
     const sentConfirmation =
       /your application was sent to/i
         .test(bodyText);
 
+
+    /*
+     * Secondary confirmation:
+     *
+     * "Application submitted"
+     */
+
     const submittedConfirmation =
       /\bapplication submitted\b/i
         .test(bodyText);
+
 
     return (
       sentConfirmation ||
@@ -495,11 +909,18 @@
   }
 
 
+  /*
+   * ============================================================
+   * CHECK CONFIRMATION
+   * ============================================================
+   */
+
   function checkForApplicationConfirmation() {
 
     if (applicationSubmitted) {
       return;
     }
+
 
     if (
       !isApplicationConfirmationVisible()
@@ -507,25 +928,48 @@
       return;
     }
 
+
     console.log(
       "Glueful: LinkedIn application confirmation detected."
     );
+
 
     sendApplication();
   }
 
 
+  /*
+   * ============================================================
+   * START CONFIRMATION WATCHER
+   * ============================================================
+   */
+
   function startConfirmationWatcher() {
+
+    /*
+     * Don't create multiple observers.
+     */
 
     if (confirmationObserver) {
       return;
     }
 
+
     console.log(
       "Glueful: watching for LinkedIn application confirmation..."
     );
 
+
+    /*
+     * Check immediately.
+     */
+
     checkForApplicationConfirmation();
+
+
+    /*
+     * Watch LinkedIn React DOM changes.
+     */
 
     confirmationObserver =
       new MutationObserver(() => {
@@ -533,6 +977,7 @@
         clearTimeout(
           confirmationCheckTimer
         );
+
 
         confirmationCheckTimer =
           setTimeout(() => {
@@ -542,16 +987,28 @@
           }, 100);
       });
 
-    confirmationObserver.observe(
-      document.body,
-      {
-        childList: true,
-        subtree: true,
-        characterData: true
-      }
-    );
+
+    if (document.body) {
+
+      confirmationObserver.observe(
+        document.body,
+        {
+          childList: true,
+
+          subtree: true,
+
+          characterData: true
+        }
+      );
+    }
   }
 
+
+  /*
+   * ============================================================
+   * STOP CONFIRMATION WATCHER
+   * ============================================================
+   */
 
   function stopConfirmationWatcher() {
 
@@ -562,6 +1019,7 @@
       confirmationObserver = null;
     }
 
+
     if (confirmationCheckTimer) {
 
       clearTimeout(
@@ -570,6 +1028,7 @@
 
       confirmationCheckTimer = null;
     }
+
 
     console.log(
       "Glueful: confirmation watcher stopped."
@@ -585,10 +1044,12 @@
 
   document.addEventListener(
     "click",
+
     (event) => {
 
       const target =
         event.target;
+
 
       if (
         !(target instanceof Element)
@@ -596,27 +1057,49 @@
         return;
       }
 
+
+      /*
+       * Find the actual clickable element.
+       */
+
       const clickable =
         target.closest(
           'button, [role="button"], a'
         );
 
+
       if (!clickable) {
         return;
       }
+
+
+      /*
+       * Ignore disabled buttons.
+       */
 
       if (
         clickable instanceof HTMLButtonElement &&
         clickable.disabled
       ) {
+
         return;
       }
+
+
+      /*
+       * Button text.
+       */
 
       const text =
         (
           clickable.innerText ||
           ""
         ).trim();
+
+
+      /*
+       * aria-label.
+       */
 
       const ariaLabel =
         (
@@ -625,22 +1108,47 @@
           ) || ""
         ).trim();
 
+
+      /*
+       * Recognize:
+       *
+       * Apply
+       * Easy Apply
+       */
+
       const isApplyButton =
         /^apply$/i.test(text) ||
+
         /^easy\s+apply$/i.test(text) ||
+
         /^apply$/i.test(ariaLabel) ||
+
         /^easy\s+apply$/i.test(ariaLabel);
+
 
       if (!isApplyButton) {
         return;
       }
 
+
+      /*
+       * ========================================================
+       * APPLY DETECTED
+       * ========================================================
+       */
+
       console.log(
         "Glueful Apply button detected:",
         {
-          text: text,
-          ariaLabel: ariaLabel,
-          tagName: clickable.tagName,
+          text:
+            text,
+
+          ariaLabel:
+            ariaLabel,
+
+          tagName:
+            clickable.tagName,
+
           href:
             clickable.getAttribute(
               "href"
@@ -648,8 +1156,24 @@
         }
       );
 
+
+      /*
+       * IMPORTANT:
+       *
+       * Save company/role/location BEFORE waiting
+       * for LinkedIn confirmation.
+       */
+
+      capturePendingApplication();
+
+
+      /*
+       * Now start watching for successful submission.
+       */
+
       startConfirmationWatcher();
     },
+
     true
   );
 
@@ -658,6 +1182,10 @@
    * ============================================================
    * TEST MODE
    * ============================================================
+   *
+   * Run from browser console:
+   *
+   * gluefulCaptureTest()
    */
 
   window.gluefulCaptureTest =
