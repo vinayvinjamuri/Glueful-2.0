@@ -3,9 +3,6 @@
 
   console.log("Glueful Auto Capture loaded");
 
-  // Prevent duplicate captures for the same job during this page session
-  const capturedJobs = new Set();
-
   function getPageInfo() {
     const title = document.title || "";
     const url = window.location.href;
@@ -18,10 +15,7 @@
       role: detectJobTitle(),
       job_url: url,
       applied_at: new Date().toISOString(),
-
-      // Important:
-      // Clicking Apply does NOT mean the application is confirmed yet.
-      status: "Pending"
+      status: "Applied"
     };
   }
 
@@ -44,11 +38,14 @@
   }
 
   function parseTitleParts() {
+    // LinkedIn job titles usually look like:
+    // "Job Title | Company Name | LinkedIn"
+
     const title = document.title || "";
 
     const parts = title
       .split("|")
-      .map(p => p.trim())
+      .map((p) => p.trim())
       .filter(Boolean);
 
     return {
@@ -78,7 +75,7 @@
 
   function detectJobTitle() {
     const selectors = [
-      'h1',
+      "h1",
       '[data-testid="job-title"]',
       '[class*="job-title"]',
       '[class*="jobTitle"]'
@@ -121,74 +118,113 @@
     );
   }
 
+
   /*
-   * Detect LinkedIn Apply / Easy Apply clicks.
+   * APPLY BUTTON DETECTION
    *
-   * We use event delegation because LinkedIn dynamically
-   * creates and replaces buttons.
+   * For now this ONLY detects when the user clicks
+   * an Apply / Easy Apply button.
+   *
+   * It does NOT send anything to Glueful yet.
    */
 
   document.addEventListener(
     "click",
-    function (event) {
-      // Find the actual button/link that was clicked.
-      const applyElement = event.target.closest(
-        'button, a, [role="button"]'
+    (event) => {
+      const target = event.target;
+
+      // Make sure the clicked object is an HTML element.
+      if (!(target instanceof Element)) {
+        return;
+      }
+
+      /*
+       * The user may click on a <span>, <svg>, icon, etc.
+       * inside the actual Apply button.
+       *
+       * closest() walks upward and finds the real
+       * clickable element.
+       */
+      const clickable = target.closest(
+        'button, [role="button"], a'
       );
 
-      if (!applyElement) {
+      if (!clickable) {
         return;
       }
 
-      const text = (applyElement.innerText || "")
-        .trim()
-        .replace(/\s+/g, " ");
-
-      const className =
-        typeof applyElement.className === "string"
-          ? applyElement.className
-          : "";
-
-      const isLinkedInApplyButton =
-        className.includes("jobs-apply-button");
-
-      const isApplyText =
-        /^(apply|easy apply|apply now|apply on company website)$/i.test(
-          text
-        );
-
-      if (!isLinkedInApplyButton && !isApplyText) {
+      /*
+       * Ignore disabled buttons.
+       */
+      if (
+        clickable instanceof HTMLButtonElement &&
+        clickable.disabled
+      ) {
         return;
       }
 
-      const jobUrl = window.location.href;
+      /*
+       * Get visible text from the clicked element.
+       */
+      const text = (clickable.innerText || "").trim();
 
-      // Prevent duplicate capture on repeated clicks.
-      if (capturedJobs.has(jobUrl)) {
-        console.log(
-          "Glueful: application already captured for this job."
-        );
+      /*
+       * Also check aria-label.
+       */
+      const ariaLabel = (
+        clickable.getAttribute("aria-label") || ""
+      ).trim();
+
+      /*
+       * Only recognize exact Apply / Easy Apply labels.
+       *
+       * This prevents unrelated things such as:
+       * "See who's applied"
+       * "Applying filters"
+       * "Applications"
+       * etc.
+       */
+      const isApplyButton =
+        /^apply$/i.test(text) ||
+        /^easy\s+apply$/i.test(text) ||
+        /^apply$/i.test(ariaLabel) ||
+        /^easy\s+apply$/i.test(ariaLabel);
+
+      if (!isApplyButton) {
         return;
       }
 
-      capturedJobs.add(jobUrl);
-
+      /*
+       * APPLY DETECTED
+       *
+       * IMPORTANT:
+       * We are NOT calling sendApplication() yet.
+       */
       console.log(
-        "Glueful: Apply button detected:",
-        text
+        "Glueful Apply button detected:",
+        {
+          text: text,
+          ariaLabel: ariaLabel,
+          tagName: clickable.tagName,
+          href: clickable.getAttribute("href") || null
+        }
       );
-
-      // Capture immediately, before LinkedIn navigates away.
-      sendApplication();
     },
     true
   );
 
+
   /*
    * TEST MODE
    *
-   * Keeps the manual test function available.
+   * This allows manual testing from the browser console:
+   *
+   * gluefulCaptureTest()
+   *
+   * We are keeping this because the manual pipeline
+   * has already been tested successfully.
    */
+
   window.gluefulCaptureTest = sendApplication;
 
 })();
