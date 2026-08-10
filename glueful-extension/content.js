@@ -7,21 +7,39 @@
   let confirmationObserver = null;
   let confirmationCheckTimer = null;
 
+
+  /*
+   * ============================================================
+   * PAGE INFORMATION
+   * ============================================================
+   */
+
   function getPageInfo() {
-    const title = document.title || "";
     const url = window.location.href;
 
     return {
       source_type: "browser_extension",
       source_name: getSourceName(),
       source_url: url,
+
       company: detectCompany(),
       role: detectJobTitle(),
+      location: detectLocation(),
+
       job_url: url,
+
       applied_at: new Date().toISOString(),
-      status: "Applied"
+
+      status: "applied"
     };
   }
+
+
+  /*
+   * ============================================================
+   * SOURCE
+   * ============================================================
+   */
 
   function getSourceName() {
     const host = window.location.hostname;
@@ -41,10 +59,14 @@
     return "Unknown";
   }
 
-  function parseTitleParts() {
-    // LinkedIn job titles usually look like:
-    // "Job Title | Company Name | LinkedIn"
 
+  /*
+   * ============================================================
+   * LINKEDIN TITLE FALLBACK
+   * ============================================================
+   */
+
+  function parseTitleParts() {
     const title = document.title || "";
 
     const parts = title
@@ -58,51 +80,341 @@
     };
   }
 
+
+  /*
+   * ============================================================
+   * COMPANY DETECTION
+   * ============================================================
+   *
+   * IMPORTANT:
+   *
+   * Do NOT use broad selectors such as:
+   *
+   * [class*="employer"]
+   *
+   * because LinkedIn can use those containers for other
+   * information such as location.
+   */
+
   function detectCompany() {
+
+    /*
+     * ----------------------------------------------------------
+     * LinkedIn
+     * ----------------------------------------------------------
+     */
+
+    if (
+      window.location.hostname.includes("linkedin.com")
+    ) {
+
+      const linkedinSelectors = [
+        ".job-details-jobs-unified-top-card__company-name a",
+        ".job-details-jobs-unified-top-card__company-name",
+        ".jobs-unified-top-card__company-name a",
+        ".jobs-unified-top-card__company-name"
+      ];
+
+      for (const selector of linkedinSelectors) {
+
+        const element =
+          document.querySelector(selector);
+
+        if (element) {
+
+          const text =
+            (element.innerText || "")
+              .trim();
+
+          if (
+            text &&
+            !looksLikeLocation(text)
+          ) {
+            return cleanText(text);
+          }
+        }
+      }
+    }
+
+
+    /*
+     * ----------------------------------------------------------
+     * Generic company selectors
+     * ----------------------------------------------------------
+     */
+
     const selectors = [
       '[data-testid="company-name"]',
       '[class*="company-name"]',
-      '[class*="companyName"]',
-      '[class*="employer"]'
+      '[class*="companyName"]'
     ];
 
     for (const selector of selectors) {
-      const element = document.querySelector(selector);
 
-      if (element && element.innerText.trim()) {
-        return element.innerText.trim();
+      const element =
+        document.querySelector(selector);
+
+      if (!element) {
+        continue;
+      }
+
+      const text =
+        (element.innerText || "")
+          .trim();
+
+      if (
+        text &&
+        !looksLikeLocation(text)
+      ) {
+        return cleanText(text);
       }
     }
 
-    return parseTitleParts().company;
+
+    /*
+     * ----------------------------------------------------------
+     * Fallback
+     * ----------------------------------------------------------
+     */
+
+    const fallback =
+      parseTitleParts().company;
+
+    if (
+      fallback &&
+      !looksLikeLocation(fallback)
+    ) {
+      return cleanText(fallback);
+    }
+
+    return "";
   }
+
+
+  /*
+   * ============================================================
+   * JOB TITLE DETECTION
+   * ============================================================
+   */
 
   function detectJobTitle() {
-    const selectors = [
-      "h1",
-      '[data-testid="job-title"]',
-      '[class*="job-title"]',
-      '[class*="jobTitle"]'
-    ];
 
-    for (const selector of selectors) {
-      const element = document.querySelector(selector);
+    if (
+      window.location.hostname.includes("linkedin.com")
+    ) {
 
-      if (element && element.innerText.trim()) {
-        return element.innerText.trim();
+      const linkedinSelectors = [
+        ".job-details-jobs-unified-top-card__job-title h1",
+        ".job-details-jobs-unified-top-card__job-title",
+        ".jobs-unified-top-card__job-title h1",
+        ".jobs-unified-top-card__job-title",
+        "h1"
+      ];
+
+      for (const selector of linkedinSelectors) {
+
+        const element =
+          document.querySelector(selector);
+
+        if (element) {
+
+          const text =
+            (element.innerText || "")
+              .trim();
+
+          if (text) {
+            return cleanText(text);
+          }
+        }
       }
     }
 
-    const fallbackRole = parseTitleParts().role;
 
-    return fallbackRole || document.title || "";
+    const selectors = [
+      '[data-testid="job-title"]',
+      '[class*="job-title"]',
+      '[class*="jobTitle"]',
+      "h1"
+    ];
+
+    for (const selector of selectors) {
+
+      const element =
+        document.querySelector(selector);
+
+      if (!element) {
+        continue;
+      }
+
+      const text =
+        (element.innerText || "")
+          .trim();
+
+      if (text) {
+        return cleanText(text);
+      }
+    }
+
+
+    const fallbackRole =
+      parseTitleParts().role;
+
+    return (
+      fallbackRole ||
+      document.title ||
+      ""
+    );
   }
 
+
+  /*
+   * ============================================================
+   * LOCATION DETECTION
+   * ============================================================
+   */
+
+  function detectLocation() {
+
+    if (
+      window.location.hostname.includes("linkedin.com")
+    ) {
+
+      const selectors = [
+        ".job-details-jobs-unified-top-card__primary-description-container",
+        ".jobs-unified-top-card__primary-description-container",
+        ".job-details-jobs-unified-top-card__primary-description",
+        ".jobs-unified-top-card__primary-description"
+      ];
+
+      for (const selector of selectors) {
+
+        const element =
+          document.querySelector(selector);
+
+        if (!element) {
+          continue;
+        }
+
+        const text =
+          (element.innerText || "")
+            .trim();
+
+        if (!text) {
+          continue;
+        }
+
+        /*
+         * LinkedIn often displays something similar to:
+         *
+         * Company Name · Hyderabad, Telangana, India
+         *
+         * or:
+         *
+         * Hyderabad, Telangana, India · 1 day ago
+         *
+         */
+
+        const parts =
+          text
+            .split("·")
+            .map((part) => part.trim())
+            .filter(Boolean);
+
+        for (const part of parts) {
+
+          if (
+            looksLikeLocation(part)
+          ) {
+            return cleanText(part);
+          }
+        }
+      }
+    }
+
+    return "";
+  }
+
+
+  /*
+   * ============================================================
+   * LOCATION HEURISTIC
+   * ============================================================
+   */
+
+  function looksLikeLocation(value) {
+
+    const text =
+      cleanText(value).toLowerCase();
+
+    if (!text) {
+      return false;
+    }
+
+    const locationWords = [
+      "india",
+      "telangana",
+      "hyderabad",
+      "bangalore",
+      "bengaluru",
+      "mumbai",
+      "pune",
+      "delhi",
+      "gurgaon",
+      "gurugram",
+      "noida",
+      "chennai",
+      "kolkata",
+      "remote",
+      "onsite",
+      "on-site",
+      "hybrid",
+      "united states",
+      "usa",
+      "new york",
+      "california",
+      "texas",
+      "washington",
+      "canada",
+      "uk",
+      "london"
+    ];
+
+    return locationWords.some(
+      (word) =>
+        text === word ||
+        text.includes(word)
+    );
+  }
+
+
+  /*
+   * ============================================================
+   * TEXT CLEANING
+   * ============================================================
+   */
+
+  function cleanText(value) {
+
+    return String(value || "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+
+  /*
+   * ============================================================
+   * SEND APPLICATION
+   * ============================================================
+   */
+
   function sendApplication() {
+
     if (applicationSubmitted) {
+
       console.log(
         "Glueful: application already captured. Skipping duplicate."
       );
+
       return;
     }
 
@@ -110,7 +422,8 @@
 
     stopConfirmationWatcher();
 
-    const application = getPageInfo();
+    const application =
+      getPageInfo();
 
     console.log(
       "Glueful confirmed application submission:",
@@ -123,7 +436,9 @@
         application: application
       },
       (response) => {
+
         if (chrome.runtime.lastError) {
+
           console.error(
             "Glueful extension error:",
             chrome.runtime.lastError.message
@@ -132,6 +447,7 @@
           /*
            * If sending failed, allow another attempt.
            */
+
           applicationSubmitted = false;
 
           return;
@@ -150,47 +466,27 @@
    * ============================================================
    * LINKEDIN APPLICATION CONFIRMATION DETECTION
    * ============================================================
-   *
-   * We DO NOT capture an application when the user clicks
-   * Easy Apply.
-   *
-   * Instead, after Easy Apply is detected, we start watching
-   * the page for LinkedIn's successful submission message.
-   *
-   * Examples observed during testing:
-   *
-   * "Your application was sent to UST!"
-   *
-   * "Application submitted"
-   *
-   * Only after one of these confirmation messages appears
-   * do we send the application to Glueful.
    */
 
   function isApplicationConfirmationVisible() {
-    const bodyText = (
-      document.body?.innerText || ""
-    ).trim();
+
+    const bodyText =
+      (
+        document.body?.innerText ||
+        ""
+      ).trim();
 
     if (!bodyText) {
       return false;
     }
 
-    /*
-     * Strong confirmation:
-     *
-     * "Your application was sent to UST!"
-     */
     const sentConfirmation =
-      /your application was sent to/i.test(bodyText);
+      /your application was sent to/i
+        .test(bodyText);
 
-    /*
-     * Secondary confirmation:
-     *
-     * "Application submitted"
-     */
     const submittedConfirmation =
-      /\bapplication submitted\b/i.test(bodyText);
+      /\bapplication submitted\b/i
+        .test(bodyText);
 
     return (
       sentConfirmation ||
@@ -200,15 +496,14 @@
 
 
   function checkForApplicationConfirmation() {
-    /*
-     * Don't continue checking after we've already
-     * captured the application.
-     */
+
     if (applicationSubmitted) {
       return;
     }
 
-    if (!isApplicationConfirmationVisible()) {
+    if (
+      !isApplicationConfirmationVisible()
+    ) {
       return;
     }
 
@@ -221,10 +516,7 @@
 
 
   function startConfirmationWatcher() {
-    /*
-     * Don't create multiple observers for the same
-     * application process.
-     */
+
     if (confirmationObserver) {
       return;
     }
@@ -233,31 +525,22 @@
       "Glueful: watching for LinkedIn application confirmation..."
     );
 
-    /*
-     * Check once immediately in case the confirmation
-     * appeared extremely quickly.
-     */
     checkForApplicationConfirmation();
 
-    /*
-     * LinkedIn uses React and dynamically changes the DOM.
-     *
-     * MutationObserver allows us to detect text/UI changes
-     * without relying on LinkedIn's changing CSS classes.
-     */
-    confirmationObserver = new MutationObserver(() => {
-      /*
-       * Multiple DOM changes can happen very quickly.
-       *
-       * Debounce the confirmation check so we don't scan
-       * the entire page hundreds of times.
-       */
-      clearTimeout(confirmationCheckTimer);
+    confirmationObserver =
+      new MutationObserver(() => {
 
-      confirmationCheckTimer = setTimeout(() => {
-        checkForApplicationConfirmation();
-      }, 100);
-    });
+        clearTimeout(
+          confirmationCheckTimer
+        );
+
+        confirmationCheckTimer =
+          setTimeout(() => {
+
+            checkForApplicationConfirmation();
+
+          }, 100);
+      });
 
     confirmationObserver.observe(
       document.body,
@@ -271,13 +554,20 @@
 
 
   function stopConfirmationWatcher() {
+
     if (confirmationObserver) {
+
       confirmationObserver.disconnect();
+
       confirmationObserver = null;
     }
 
     if (confirmationCheckTimer) {
-      clearTimeout(confirmationCheckTimer);
+
+      clearTimeout(
+        confirmationCheckTimer
+      );
+
       confirmationCheckTimer = null;
     }
 
@@ -291,49 +581,30 @@
    * ============================================================
    * APPLY BUTTON DETECTION
    * ============================================================
-   *
-   * This part is based on the working code we already tested.
-   *
-   * It detects:
-   *
-   *   Apply
-   *   Easy Apply
-   *
-   * But it DOES NOT send the application.
-   *
-   * It only starts the confirmation watcher.
    */
 
   document.addEventListener(
     "click",
     (event) => {
-      const target = event.target;
 
-      /*
-       * Make sure the clicked object is an HTML element.
-       */
-      if (!(target instanceof Element)) {
+      const target =
+        event.target;
+
+      if (
+        !(target instanceof Element)
+      ) {
         return;
       }
 
-      /*
-       * The user may click a <span>, <svg>, icon, etc.
-       * inside the actual Apply button.
-       *
-       * closest() walks upward and finds the real
-       * clickable element.
-       */
-      const clickable = target.closest(
-        'button, [role="button"], a'
-      );
+      const clickable =
+        target.closest(
+          'button, [role="button"], a'
+        );
 
       if (!clickable) {
         return;
       }
 
-      /*
-       * Ignore disabled buttons.
-       */
       if (
         clickable instanceof HTMLButtonElement &&
         clickable.disabled
@@ -341,30 +612,19 @@
         return;
       }
 
-      /*
-       * Get visible text from the clicked element.
-       */
-      const text = (
-        clickable.innerText || ""
-      ).trim();
+      const text =
+        (
+          clickable.innerText ||
+          ""
+        ).trim();
 
-      /*
-       * Also check aria-label.
-       */
-      const ariaLabel = (
-        clickable.getAttribute("aria-label") || ""
-      ).trim();
+      const ariaLabel =
+        (
+          clickable.getAttribute(
+            "aria-label"
+          ) || ""
+        ).trim();
 
-      /*
-       * Only recognize exact Apply / Easy Apply labels.
-       *
-       * This prevents unrelated things such as:
-       *
-       * "See who's applied"
-       * "Applying filters"
-       * "Applications"
-       * etc.
-       */
       const isApplyButton =
         /^apply$/i.test(text) ||
         /^easy\s+apply$/i.test(text) ||
@@ -375,27 +635,19 @@
         return;
       }
 
-      /*
-       * APPLY DETECTED
-       */
       console.log(
         "Glueful Apply button detected:",
         {
           text: text,
           ariaLabel: ariaLabel,
           tagName: clickable.tagName,
-          href: clickable.getAttribute("href") || null
+          href:
+            clickable.getAttribute(
+              "href"
+            ) || null
         }
       );
 
-      /*
-       * IMPORTANT:
-       *
-       * We DO NOT call sendApplication() here.
-       *
-       * We only start watching for the successful
-       * LinkedIn submission confirmation.
-       */
       startConfirmationWatcher();
     },
     true
@@ -406,15 +658,9 @@
    * ============================================================
    * TEST MODE
    * ============================================================
-   *
-   * Manual testing from the browser console:
-   *
-   *     gluefulCaptureTest()
-   *
-   * This bypasses the Apply/confirmation detector and
-   * directly tests the existing send pipeline.
    */
 
-  window.gluefulCaptureTest = sendApplication;
+  window.gluefulCaptureTest =
+    sendApplication;
 
 })();
