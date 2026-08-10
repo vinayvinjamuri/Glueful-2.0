@@ -40,64 +40,210 @@
     const GLUEFUL_EXTENSION_ID =
       "mdmgapjgmkfnaafehabjoamdcnklikjf";
 
-    async function syncGluefulExtensionAuth(session) {
-      try {
-        if (!session || !session.access_token) {
-          console.log(
-            "Glueful extension auth: no active session to sync."
-          );
-          return;
-        }
+    /*
+       Extension authentication is automatic.
 
-        if (
-          GLUEFUL_EXTENSION_ID ===
-            "REPLACE_WITH_YOUR_GLUEFUL_EXTENSION_ID"
-        ) {
-          console.warn(
-            "Glueful extension auth: extension ID has not been configured yet."
-          );
-          return;
-        }
+       The web app never asks the user to copy a token or manually pair
+       the extension. Whenever a valid Glueful session exists, this bridge
+       sends the access token to the installed Glueful Auto Capture extension.
 
-        if (
-          !window.chrome ||
-          !chrome.runtime ||
-          typeof chrome.runtime.sendMessage !== "function"
-        ) {
-          console.warn(
-            "Glueful extension auth: Chrome extension messaging is unavailable on this page."
-          );
-          return;
-        }
+       If Chrome starts before the extension, the extension is temporarily
+       unavailable, or the page was opened before the extension loaded, the
+       bridge retries automatically. Focus/visibility changes also trigger
+       a fresh sync so the extension can recover without user action.
+    */
+    let gluefulAuthSession = null;
+    let gluefulAuthRetryTimer = null;
+    let gluefulAuthRetryAttempt = 0;
+    let gluefulAuthSyncInFlight = null;
 
-        chrome.runtime.sendMessage(
-          GLUEFUL_EXTENSION_ID,
-          {
-            type: "GLUEFUL_AUTH",
-            accessToken: session.access_token
-          },
-          (response) => {
-            if (chrome.runtime.lastError) {
-              console.error(
-                "Glueful extension auth sync error:",
-                chrome.runtime.lastError.message
-              );
-              return;
-            }
+    const GLUEFUL_AUTH_RETRY_DELAYS = [
+      3000,
+      10000,
+      30000,
+      60000
+    ];
 
-            console.log(
-              "Glueful extension auth sync response:",
-              response
+    function clearGluefulAuthRetry() {
+      if (gluefulAuthRetryTimer) {
+        clearTimeout(gluefulAuthRetryTimer);
+        gluefulAuthRetryTimer = null;
+      }
+      gluefulAuthRetryAttempt = 0;
+    }
+
+    function scheduleGluefulAuthRetry(session) {
+      if (!session || !session.access_token) return;
+      if (gluefulAuthRetryTimer) return;
+
+      const index = Math.min(
+        gluefulAuthRetryAttempt,
+        GLUEFUL_AUTH_RETRY_DELAYS.length - 1
+      );
+
+      const delay =
+        GLUEFUL_AUTH_RETRY_DELAYS[index];
+
+      gluefulAuthRetryAttempt += 1;
+
+      gluefulAuthRetryTimer = setTimeout(() => {
+        gluefulAuthRetryTimer = null;
+        syncGluefulExtensionAuth(session, true);
+      }, delay);
+    }
+
+    function sendGluefulExtensionMessage(message) {
+      return new Promise((resolve, reject) => {
+        try {
+          if (
+            !window.chrome ||
+            !chrome.runtime ||
+            typeof chrome.runtime.sendMessage !== "function"
+          ) {
+            reject(
+              new Error(
+                "Chrome extension messaging is unavailable on this page."
+              )
             );
+            return;
           }
+
+          chrome.runtime.sendMessage(
+            GLUEFUL_EXTENSION_ID,
+            message,
+            response => {
+              if (chrome.runtime.lastError) {
+                reject(
+                  new Error(
+                    chrome.runtime.lastError.message
+                  )
+                );
+                return;
+              }
+
+              resolve(response);
+            }
+          );
+        } catch (error) {
+          reject(error);
+        }
+      });
+    }
+
+    async function syncGluefulExtensionAuth(
+      session,
+      allowRetry = true
+    ) {
+      if (!session || !session.access_token) {
+        gluefulAuthSession = null;
+        clearGluefulAuthRetry();
+        console.log(
+          "Glueful extension auth: no active session to sync."
+        );
+        return false;
+      }
+
+      gluefulAuthSession = session;
+
+      if (
+        GLUEFUL_EXTENSION_ID ===
+          "REPLACE_WITH_YOUR_GLUEFUL_EXTENSION_ID"
+      ) {
+        console.warn(
+          "Glueful extension auth: extension ID has not been configured yet."
+        );
+        return false;
+      }
+
+      if (gluefulAuthSyncInFlight) {
+        return gluefulAuthSyncInFlight;
+      }
+
+      gluefulAuthSyncInFlight = (async () => {
+        try {
+          const response =
+            await sendGluefulExtensionMessage({
+              type: "GLUEFUL_AUTH",
+              accessToken: session.access_token
+            });
+
+          clearGluefulAuthRetry();
+
+          console.log(
+            "Glueful extension auth synced automatically:",
+            response
+          );
+
+          return true;
+        } catch (error) {
+          console.warn(
+            "Glueful extension auth sync unavailable:",
+            error?.message || error
+          );
+
+          if (allowRetry) {
+            scheduleGluefulAuthRetry(session);
+          }
+
+          return false;
+        } finally {
+          gluefulAuthSyncInFlight = null;
+        }
+      })();
+
+      return gluefulAuthSyncInFlight;
+    }
+
+    async function clearGluefulExtensionAuth() {
+      gluefulAuthSession = null;
+      clearGluefulAuthRetry();
+
+      if (
+        GLUEFUL_EXTENSION_ID ===
+          "REPLACE_WITH_YOUR_GLUEFUL_EXTENSION_ID"
+      ) {
+        return;
+      }
+
+      try {
+        await sendGluefulExtensionMessage({
+          type: "GLUEFUL_AUTH_LOGOUT"
+        });
+
+        console.log(
+          "Glueful extension logout synced automatically."
         );
       } catch (error) {
-        console.error(
-          "Glueful extension auth bridge error:",
-          error
+        console.warn(
+          "Glueful extension logout bridge error:",
+          error?.message || error
         );
       }
     }
+
+    /* Retry automatically when the user returns to the Glueful tab. */
+    function refreshGluefulExtensionAuth() {
+      if (gluefulAuthSession) {
+        syncGluefulExtensionAuth(
+          gluefulAuthSession,
+          false
+        );
+      }
+    }
+
+    window.addEventListener(
+      "focus",
+      refreshGluefulExtensionAuth
+    );
+
+    document.addEventListener(
+      "visibilitychange",
+      () => {
+        if (!document.hidden) {
+          refreshGluefulExtensionAuth();
+        }
+      }
+    );
   </script>
 
 
@@ -9072,36 +9218,7 @@
       cloudSyncReady = false;
       saveQueue = Promise.resolve();
 
-      try {
-        if (
-          GLUEFUL_EXTENSION_ID &&
-          GLUEFUL_EXTENSION_ID !==
-            "REPLACE_WITH_YOUR_GLUEFUL_EXTENSION_ID" &&
-          window.chrome &&
-          chrome.runtime &&
-          typeof chrome.runtime.sendMessage === "function"
-        ) {
-          chrome.runtime.sendMessage(
-            GLUEFUL_EXTENSION_ID,
-            {
-              type: "GLUEFUL_AUTH_LOGOUT"
-            },
-            () => {
-              if (chrome.runtime.lastError) {
-                console.warn(
-                  "Glueful extension logout sync:",
-                  chrome.runtime.lastError.message
-                );
-              }
-            }
-          );
-        }
-      } catch(error) {
-        console.warn(
-          "Glueful extension logout bridge error:",
-          error
-        );
-      }
+      await clearGluefulExtensionAuth();
 
 
       showLoginScreen();
