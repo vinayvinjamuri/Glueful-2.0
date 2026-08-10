@@ -3,6 +3,9 @@
 
   console.log("Glueful Auto Capture loaded");
 
+  // Prevent duplicate captures for the same job during this page session
+  const capturedJobs = new Set();
+
   function getPageInfo() {
     const title = document.title || "";
     const url = window.location.href;
@@ -15,7 +18,10 @@
       role: detectJobTitle(),
       job_url: url,
       applied_at: new Date().toISOString(),
-      status: "Applied"
+
+      // Important:
+      // Clicking Apply does NOT mean the application is confirmed yet.
+      status: "Pending"
     };
   }
 
@@ -38,10 +44,12 @@
   }
 
   function parseTitleParts() {
-    // LinkedIn job titles usually look like:
-    // "Job Title | Company Name | LinkedIn"
     const title = document.title || "";
-    const parts = title.split("|").map(p => p.trim()).filter(Boolean);
+
+    const parts = title
+      .split("|")
+      .map(p => p.trim())
+      .filter(Boolean);
 
     return {
       role: parts.length > 0 ? parts[0] : "",
@@ -114,12 +122,73 @@
   }
 
   /*
-   * TEST MODE
+   * Detect LinkedIn Apply / Easy Apply clicks.
    *
-   * For now we do NOT automatically submit anything.
-   * This only exposes a function so we can test the extension safely.
+   * We use event delegation because LinkedIn dynamically
+   * creates and replaces buttons.
    */
 
+  document.addEventListener(
+    "click",
+    function (event) {
+      // Find the actual button/link that was clicked.
+      const applyElement = event.target.closest(
+        'button, a, [role="button"]'
+      );
+
+      if (!applyElement) {
+        return;
+      }
+
+      const text = (applyElement.innerText || "")
+        .trim()
+        .replace(/\s+/g, " ");
+
+      const className =
+        typeof applyElement.className === "string"
+          ? applyElement.className
+          : "";
+
+      const isLinkedInApplyButton =
+        className.includes("jobs-apply-button");
+
+      const isApplyText =
+        /^(apply|easy apply|apply now|apply on company website)$/i.test(
+          text
+        );
+
+      if (!isLinkedInApplyButton && !isApplyText) {
+        return;
+      }
+
+      const jobUrl = window.location.href;
+
+      // Prevent duplicate capture on repeated clicks.
+      if (capturedJobs.has(jobUrl)) {
+        console.log(
+          "Glueful: application already captured for this job."
+        );
+        return;
+      }
+
+      capturedJobs.add(jobUrl);
+
+      console.log(
+        "Glueful: Apply button detected:",
+        text
+      );
+
+      // Capture immediately, before LinkedIn navigates away.
+      sendApplication();
+    },
+    true
+  );
+
+  /*
+   * TEST MODE
+   *
+   * Keeps the manual test function available.
+   */
   window.gluefulCaptureTest = sendApplication;
 
 })();
