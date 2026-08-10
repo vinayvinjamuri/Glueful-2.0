@@ -1,95 +1,273 @@
 const GLUEFUL_AUTO_CAPTURE_URL =
     "https://xztbhheexianejsvwpva.supabase.co/functions/v1/auto-capture";
 
+const GLUEFUL_DEVICE_LINK_URL =
+    "https://xztbhheexianejsvwpva.supabase.co/functions/v1/dynamic-handler";
+
 const SUPABASE_PUBLISHABLE_KEY =
     "sb_publishable_91SKh77UlMjhwIcTimKyAg_Nbb_uVIN";
 
 const PENDING_APPLICATIONS_KEY =
     "pendingGluefulApplications";
 
+const DEVICE_TOKEN_KEY =
+    "gluefulDeviceToken";
 
-/*
- * ============================================================
- * SEND APPLICATION TO SUPABASE
- * ============================================================
- */
 
-async function sendToGlueful(application, accessToken) {
+function generateDeviceToken() {
 
-    if (!accessToken) {
-        throw new Error(
-            "No Supabase access token available."
+    const bytes =
+        new Uint8Array(32);
+
+    crypto.getRandomValues(bytes);
+
+    return Array.from(bytes)
+        .map(
+            byte =>
+                byte
+                    .toString(16)
+                    .padStart(2, "0")
+        )
+        .join("");
+}
+
+
+async function getDeviceToken() {
+
+    const result =
+        await chrome.storage.local.get(
+            [DEVICE_TOKEN_KEY]
         );
+
+    if (
+        result[DEVICE_TOKEN_KEY]
+    ) {
+
+        return result[DEVICE_TOKEN_KEY];
     }
 
+    const deviceToken =
+        generateDeviceToken();
+
+    await chrome.storage.local.set({
+        [DEVICE_TOKEN_KEY]:
+            deviceToken
+    });
+
     console.log(
-        "Glueful: sending application to Supabase..."
+        "Glueful: device token created."
     );
 
-    const response = await fetch(
-        GLUEFUL_AUTO_CAPTURE_URL,
+    return deviceToken;
+}
+
+
+async function sendToGlueful(
+    application,
+    accessToken
+) {
+
+    const deviceToken =
+        await getDeviceToken();
+
+    const payload = {
+        ...application,
+
+        device_token:
+            deviceToken
+    };
+
+    const headers = {
+
+        "apikey":
+            SUPABASE_PUBLISHABLE_KEY,
+
+        "Content-Type":
+            "application/json"
+    };
+
+
+    if (accessToken) {
+
+        headers.Authorization =
+            `Bearer ${accessToken}`;
+    }
+
+
+    console.log(
+        "Glueful: sending application to Supabase...",
         {
-            method: "POST",
+            loggedIn:
+                Boolean(accessToken),
 
-            headers: {
-                "apikey": SUPABASE_PUBLISHABLE_KEY,
-                "Authorization": `Bearer ${accessToken}`,
-                "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify(application)
+            deviceToken:
+                "AVAILABLE"
         }
     );
 
-    const text = await response.text();
+
+    const response =
+        await fetch(
+            GLUEFUL_AUTO_CAPTURE_URL,
+            {
+                method: "POST",
+
+                headers:
+
+                    headers,
+
+                body:
+                    JSON.stringify(
+                        payload
+                    )
+            }
+        );
+
+
+    const text =
+        await response.text();
+
 
     let data;
 
+
     try {
-        data = JSON.parse(text);
+
+        data =
+            JSON.parse(text);
+
     } catch {
+
         data = {
             raw: text
         };
     }
+
 
     console.log(
         "Glueful auto-capture HTTP status:",
         response.status
     );
 
+
     console.log(
         "Glueful auto-capture response:",
         data
     );
 
+
     if (!response.ok) {
+
         throw new Error(
             `Supabase returned ${response.status}: ${text}`
         );
     }
 
+
     return data;
 }
 
 
-/*
- * ============================================================
- * LOCAL QUEUE
- * ============================================================
- *
- * Applications are stored locally when the user is not
- * logged into Glueful.
- *
- * chrome.storage.local is intentionally used instead of
- * chrome.storage.session because the queue must survive:
- *
- * - browser restart
- * - extension reload
- * - computer restart
- * - LinkedIn tab closing
- *
- */
+async function linkDevice(
+    accessToken
+) {
+
+    if (!accessToken) {
+        return null;
+    }
+
+
+    const deviceToken =
+        await getDeviceToken();
+
+
+    try {
+
+        const response =
+            await fetch(
+                GLUEFUL_DEVICE_LINK_URL,
+                {
+                    method: "POST",
+
+                    headers: {
+
+                        "apikey":
+                            SUPABASE_PUBLISHABLE_KEY,
+
+                        "Authorization":
+                            `Bearer ${accessToken}`,
+
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            device_token:
+                                deviceToken,
+
+                            device_name:
+                                "Glueful Chrome Extension"
+
+                        })
+                }
+            );
+
+
+        const text =
+            await response.text();
+
+
+        let data;
+
+
+        try {
+
+            data =
+                JSON.parse(text);
+
+        } catch {
+
+            data = {
+                raw: text
+            };
+        }
+
+
+        console.log(
+            "Glueful device link status:",
+            response.status
+        );
+
+
+        console.log(
+            "Glueful device link response:",
+            data
+        );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                `Device linking failed: ${text}`
+            );
+        }
+
+
+        return data;
+
+    } catch (error) {
+
+        console.error(
+            "Glueful device linking error:",
+            error
+        );
+
+        return null;
+    }
+}
+
 
 async function getPendingApplications() {
 
@@ -98,9 +276,12 @@ async function getPendingApplications() {
             [PENDING_APPLICATIONS_KEY]
         );
 
-    return (
-        result[PENDING_APPLICATIONS_KEY] || []
-    );
+
+    return Array.isArray(
+        result[PENDING_APPLICATIONS_KEY]
+    )
+        ? result[PENDING_APPLICATIONS_KEY]
+        : [];
 }
 
 
@@ -109,17 +290,13 @@ async function savePendingApplications(
 ) {
 
     await chrome.storage.local.set({
+
         [PENDING_APPLICATIONS_KEY]:
             applications
+
     });
 }
 
-
-/*
- * ============================================================
- * CREATE LOCAL QUEUE ENTRY
- * ============================================================
- */
 
 async function queueApplication(
     application
@@ -128,40 +305,59 @@ async function queueApplication(
     const pending =
         await getPendingApplications();
 
-    /*
-     * Prevent the same application from being
-     * queued repeatedly.
-     */
 
     const duplicate =
-        pending.some((item) => {
+        pending.some(
+            item => {
 
-            const sameCompany =
-                String(item.company || "")
-                    .trim()
-                    .toLowerCase() ===
-                String(application.company || "")
-                    .trim()
-                    .toLowerCase();
+                const sameCompany =
+                    String(
+                        item.company || ""
+                    )
+                        .trim()
+                        .toLowerCase()
+                        ===
+                    String(
+                        application.company || ""
+                    )
+                        .trim()
+                        .toLowerCase();
 
-            const sameRole =
-                String(item.role || "")
-                    .trim()
-                    .toLowerCase() ===
-                String(application.role || "")
-                    .trim()
-                    .toLowerCase();
 
-            const sameJobUrl =
-                String(item.job_url || "") ===
-                String(application.job_url || "");
+                const sameRole =
+                    String(
+                        item.role || ""
+                    )
+                        .trim()
+                        .toLowerCase()
+                        ===
+                    String(
+                        application.role || ""
+                    )
+                        .trim()
+                        .toLowerCase();
 
-            return (
-                sameCompany &&
-                sameRole &&
-                sameJobUrl
-            );
-        });
+
+                const sameJobUrl =
+                    String(
+                        item.job_url || ""
+                    )
+                        .trim()
+                        ===
+                    String(
+                        application.job_url || ""
+                    )
+                        .trim();
+
+
+                return (
+                    sameCompany &&
+                    sameRole &&
+                    sameJobUrl
+                );
+            }
+        );
+
 
     if (duplicate) {
 
@@ -169,9 +365,15 @@ async function queueApplication(
             "Glueful: application already exists in local queue."
         );
 
+
         return {
-            duplicate: true,
-            queued: true
+
+            duplicate:
+                true,
+
+            queued:
+                true
+
         };
     }
 
@@ -181,10 +383,12 @@ async function queueApplication(
         ...application,
 
         queued_at:
-            new Date().toISOString(),
+            new Date()
+                .toISOString(),
 
         queue_status:
             "pending"
+
     };
 
 
@@ -205,17 +409,16 @@ async function queueApplication(
 
 
     return {
-        duplicate: false,
-        queued: true
+
+        duplicate:
+            false,
+
+        queued:
+            true
+
     };
 }
 
-
-/*
- * ============================================================
- * SYNC PENDING APPLICATIONS
- * ============================================================
- */
 
 async function syncPendingApplications(
     accessToken
@@ -238,7 +441,7 @@ async function syncPendingApplications(
     if (!pending.length) {
 
         console.log(
-            "Glueful: no pending applications to sync."
+            "Glueful: no local pending applications to sync."
         );
 
         return;
@@ -246,14 +449,17 @@ async function syncPendingApplications(
 
 
     console.log(
-        `Glueful: syncing ${pending.length} pending application(s)...`
+        `Glueful: syncing ${pending.length} local pending application(s)...`
     );
 
 
     const remaining = [];
 
 
-    for (const application of pending) {
+    for (
+        const application
+        of pending
+    ) {
 
         try {
 
@@ -270,16 +476,23 @@ async function syncPendingApplications(
                 );
 
 
-            console.log(
-                "Glueful: queued application synced successfully.",
-                result
+            if (
+                result &&
+                result.ok
+            ) {
+
+                console.log(
+                    "Glueful: queued application synced successfully.",
+                    result
+                );
+
+                continue;
+            }
+
+
+            remaining.push(
+                application
             );
-
-
-            /*
-             * Do NOT put this application back into
-             * the queue because Supabase accepted it.
-             */
 
         } catch (error) {
 
@@ -288,13 +501,6 @@ async function syncPendingApplications(
                 error
             );
 
-
-            /*
-             * Keep failed applications in the queue.
-             *
-             * They will be retried the next time the user
-             * logs in / the extension starts.
-             */
 
             remaining.push(
                 application
@@ -309,25 +515,24 @@ async function syncPendingApplications(
 
 
     console.log(
-        `Glueful: queue sync complete. ${remaining.length} application(s) remaining.`
+        `Glueful: local queue sync complete. ${remaining.length} application(s) remaining.`
     );
 }
 
 
-/*
- * ============================================================
- * CAPTURE APPLICATION MESSAGE
- * ============================================================
- */
-
 chrome.runtime.onMessage.addListener(
-    (message, sender, sendResponse) => {
+    (
+        message,
+        sender,
+        sendResponse
+    ) => {
 
         if (
             !message ||
             message.type !==
                 "GLUEFUL_CAPTURE_APPLICATION"
         ) {
+
             return;
         }
 
@@ -340,7 +545,7 @@ chrome.runtime.onMessage.addListener(
 
         chrome.storage.local.get(
             ["supabaseAccessToken"],
-            async (result) => {
+            async result => {
 
                 const accessToken =
                     result.supabaseAccessToken;
@@ -354,84 +559,6 @@ chrome.runtime.onMessage.addListener(
                 );
 
 
-                /*
-                 * =================================================
-                 * NO LOGIN SESSION
-                 * =================================================
-                 *
-                 * IMPORTANT:
-                 *
-                 * We DO NOT reject the application anymore.
-                 *
-                 * Instead we save it locally.
-                 */
-
-                if (!accessToken) {
-
-                    try {
-
-                        const queueResult =
-                            await queueApplication(
-                                message.application
-                            );
-
-
-                        console.log(
-                            "Glueful: application queued because user is not logged in."
-                        );
-
-
-                        sendResponse({
-
-                            ok: true,
-
-                            queued: true,
-
-                            synced: false,
-
-                            duplicate:
-                                queueResult.duplicate,
-
-                            message:
-                                "Application captured and saved locally. It will sync when you sign in to Glueful."
-
-                        });
-
-                    } catch (error) {
-
-                        console.error(
-                            "Glueful: failed to queue application:",
-                            error
-                        );
-
-
-                        sendResponse({
-
-                            ok: false,
-
-                            queued: false,
-
-                            error:
-                                error instanceof Error
-                                    ? error.message
-                                    : String(error)
-
-                        });
-                    }
-
-
-                    return;
-                }
-
-
-                /*
-                 * =================================================
-                 * USER IS LOGGED IN
-                 * =================================================
-                 *
-                 * Existing functionality continues normally.
-                 */
-
                 try {
 
                     const result =
@@ -441,103 +568,130 @@ chrome.runtime.onMessage.addListener(
                         );
 
 
-                    sendResponse({
+                    if (
+                        result &&
+                        result.ok
+                    ) {
 
-                        ok: true,
+                        sendResponse({
 
-                        queued: false,
+                            ok:
+                                true,
 
-                        synced: true,
+                            queued:
+                                result.queued
+                                === true,
 
-                        result:
-                            result
+                            synced:
+                                result.synced
+                                === true,
 
-                    });
+                            duplicate:
+                                result.duplicate
+                                === true,
+
+                            result:
+                                result
+
+                        });
+
+                        return;
+                    }
+
+
+                    throw new Error(
+                        "Supabase did not confirm the application."
+                    );
 
 
                 } catch (error) {
 
                     console.error(
-                        "Glueful: application sync failed:",
+                        "Glueful: application send failed:",
                         error
                     );
 
 
-                    /*
-                     * If Supabase temporarily fails,
-                     * don't lose the application.
-                     */
-
                     try {
 
-                        await queueApplication(
-                            message.application
-                        );
+                        const queueResult =
+                            await queueApplication(
+                                message.application
+                            );
+
+
+                        sendResponse({
+
+                            ok:
+                                true,
+
+                            queued:
+                                true,
+
+                            synced:
+                                false,
+
+                            localFallback:
+                                true,
+
+                            duplicate:
+                                queueResult.duplicate,
+
+                            result:
+                                queueResult
+
+                        });
+
 
                     } catch (queueError) {
 
                         console.error(
-                            "Glueful: could not queue failed application:",
+                            "Glueful: local queue failed:",
                             queueError
                         );
+
+
+                        sendResponse({
+
+                            ok:
+                                false,
+
+                            queued:
+                                false,
+
+                            synced:
+                                false,
+
+                            error:
+                                error instanceof Error
+                                    ? error.message
+                                    : String(error)
+
+                        });
                     }
-
-
-                    sendResponse({
-
-                        ok: false,
-
-                        queued: true,
-
-                        synced: false,
-
-                        error:
-                            error instanceof Error
-                                ? error.message
-                                : String(error)
-
-                    });
                 }
 
             }
         );
 
 
-        /*
-         * Required because we respond asynchronously.
-         */
-
         return true;
     }
 );
 
 
-/*
- * ============================================================
- * GLUEFUL AUTH MESSAGE
- * ============================================================
- *
- * Glueful website sends the Supabase access token here after
- * the user signs in.
- *
- * We store the token and immediately attempt to sync all
- * applications captured while the user was logged out.
- *
- */
-
 chrome.runtime.onMessageExternal.addListener(
-    (message, sender, sendResponse) => {
+    (
+        message,
+        sender,
+        sendResponse
+    ) => {
 
         console.log(
             "Glueful external message received:",
             message
         );
 
-
-        /*
-         * Only allow messages from the official
-         * Glueful GitHub Pages application.
-         */
 
         if (
             !sender.url ||
@@ -554,7 +708,8 @@ chrome.runtime.onMessageExternal.addListener(
 
             sendResponse({
 
-                ok: false,
+                ok:
+                    false,
 
                 error:
                     "Unauthorized sender"
@@ -589,7 +744,8 @@ chrome.runtime.onMessageExternal.addListener(
 
             sendResponse({
 
-                ok: false,
+                ok:
+                    false,
 
                 error:
                     "No access token received."
@@ -620,7 +776,8 @@ chrome.runtime.onMessageExternal.addListener(
 
                     sendResponse({
 
-                        ok: false,
+                        ok:
+                            false,
 
                         error:
                             chrome.runtime.lastError.message
@@ -637,13 +794,19 @@ chrome.runtime.onMessageExternal.addListener(
                 );
 
 
-                /*
-                 * =================================================
-                 * AUTOMATIC QUEUE SYNC
-                 * =================================================
-                 */
-
                 try {
+
+                    const deviceResult =
+                        await linkDevice(
+                            accessToken
+                        );
+
+
+                    console.log(
+                        "Glueful: device linking completed:",
+                        deviceResult
+                    );
+
 
                     await syncPendingApplications(
                         accessToken
@@ -652,24 +815,36 @@ chrome.runtime.onMessageExternal.addListener(
 
                     sendResponse({
 
-                        ok: true,
+                        ok:
+                            true,
+
+                        deviceLinked:
+                            Boolean(
+                                deviceResult &&
+                                deviceResult.ok
+                            ),
 
                         syncedPending:
                             true
 
                     });
 
+
                 } catch (error) {
 
                     console.error(
-                        "Glueful: pending queue sync failed:",
+                        "Glueful: login synchronization failed:",
                         error
                     );
 
 
                     sendResponse({
 
-                        ok: true,
+                        ok:
+                            true,
+
+                        deviceLinked:
+                            false,
 
                         syncedPending:
                             false,
@@ -691,22 +866,15 @@ chrome.runtime.onMessageExternal.addListener(
 );
 
 
-/*
- * ============================================================
- * EXTENSION STARTUP
- * ============================================================
- *
- * If the extension starts and the user is already logged in,
- * attempt to sync any applications that are still queued.
- *
- */
-
 chrome.runtime.onStartup.addListener(
     async () => {
 
         console.log(
             "Glueful: extension startup detected."
         );
+
+
+        await getDeviceToken();
 
 
         const result =
@@ -718,6 +886,11 @@ chrome.runtime.onStartup.addListener(
         if (
             result.supabaseAccessToken
         ) {
+
+            await linkDevice(
+                result.supabaseAccessToken
+            );
+
 
             await syncPendingApplications(
                 result.supabaseAccessToken
@@ -733,18 +906,15 @@ chrome.runtime.onStartup.addListener(
 );
 
 
-/*
- * ============================================================
- * EXTENSION INSTALLED / UPDATED
- * ============================================================
- */
-
 chrome.runtime.onInstalled.addListener(
     async () => {
 
         console.log(
             "Glueful: extension installed/updated."
         );
+
+
+        await getDeviceToken();
 
 
         const result =
@@ -756,6 +926,11 @@ chrome.runtime.onInstalled.addListener(
         if (
             result.supabaseAccessToken
         ) {
+
+            await linkDevice(
+                result.supabaseAccessToken
+            );
+
 
             await syncPendingApplications(
                 result.supabaseAccessToken
