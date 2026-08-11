@@ -2662,6 +2662,18 @@
       </p>
 
 
+      <p
+        id="auth-message"
+        style="
+          display:none;
+          font-size:13px;
+          font-weight:500;
+          color:#F27272;
+          margin:0 0 1rem;
+        "
+      ></p>
+
+
       <div class="field">
 
         <label>Email</label>
@@ -2777,14 +2789,7 @@
       </button>
 
 
-      <p
-        id="auth-message"
-        style="
-          font-size:12px;
-          color:var(--text-mute);
-          margin:1rem 0 0;
-        "
-      ></p>
+
 
     </div>
 
@@ -9623,13 +9628,39 @@
     ====================================================== */
 
     function showAuthMessage(
-      message
+      message,
+      type = "error"
     ) {
 
-      document.getElementById(
-        "auth-message"
-      ).textContent =
-        message;
+      const messageElement =
+        document.getElementById(
+          "auth-message"
+        );
+
+      messageElement.textContent =
+        message || "";
+
+      messageElement.style.display =
+        message
+          ? "block"
+          : "none";
+
+      if(type === "success") {
+
+        messageElement.style.color =
+          "#6EE7A8";
+
+      } else if(type === "info") {
+
+        messageElement.style.color =
+          "var(--text-mute)";
+
+      } else {
+
+        messageElement.style.color =
+          "#F27272";
+
+      }
 
     }
 
@@ -9683,7 +9714,8 @@
 
 
       showAuthMessage(
-        "Creating your Glueful account..."
+        "Creating your Glueful account...",
+        "info"
       );
 
 
@@ -9730,7 +9762,8 @@
         } else {
 
           showAuthMessage(
-            "Account created! Check your email to verify your account."
+            "Account created! Check your email to verify your account.",
+            "success"
           );
 
         }
@@ -9820,8 +9853,19 @@
 
         if(error) {
 
+          const invalidCredentials =
+            error?.status === 400 ||
+            /invalid login credentials/i.test(
+              error?.message || ""
+            );
+
           showAuthMessage(
-            error.message
+            invalidCredentials
+              ? "Invalid login credentials."
+              : (
+                  error?.message ||
+                  "Unable to sign in. Please try again."
+                )
           );
 
           button.disabled =
@@ -9994,7 +10038,8 @@
 
 
       showAuthMessage(
-        "Password reset email sent. Check your inbox."
+        "Password reset email sent. Check your inbox.",
+        "success"
       );
 
     }
