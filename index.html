@@ -15,6 +15,17 @@
     const SUPABASE_KEY =
       "sb_publishable_91SKh77UlMjhwIcTimKyAg_Nbb_uVIN";
 
+    /*
+     * Canonical Glueful URLs used by authentication flows.
+     * The reset URL is registered in Supabase Authentication >
+     * URL Configuration > Redirect URLs.
+     */
+    const GLUEFUL_APP_URL =
+      "https://vinayvinjamuri.github.io/Glueful-2.0/";
+
+    const GLUEFUL_RESET_PASSWORD_URL =
+      "https://vinayvinjamuri.github.io/Glueful-2.0/reset-password.html";
+
     const supabaseClient =
       window.supabase.createClient(
         SUPABASE_URL,
@@ -9940,7 +9951,7 @@
 
               options: {
                 redirectTo:
-                  "https://vinayvinjamuri.github.io/Glueful-2.0/"
+                  GLUEFUL_APP_URL
               }
 
             });
@@ -9998,12 +10009,15 @@
 
     async function resetPassword() {
 
-      const email =
+      const emailInput =
         document.getElementById(
           "auth-email"
-        )
-        .value
-        .trim();
+        );
+
+      const email =
+        emailInput
+          .value
+          .trim();
 
 
       if(!email) {
@@ -10012,35 +10026,115 @@
           "Enter your email address first."
         );
 
+        emailInput.focus();
+
         return;
 
       }
 
 
-      const {
-        error
-      } =
-        await supabaseClient.auth
-          .resetPasswordForEmail(
-            email
-          );
+      /*
+       * Basic client-side email validation prevents an obviously
+       * malformed address from being sent to Supabase.
+       */
+      const emailPattern =
+        /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
 
-
-      if(error) {
+      if(!emailPattern.test(email)) {
 
         showAuthMessage(
-          error.message
+          "Enter a valid email address."
         );
+
+        emailInput.focus();
 
         return;
 
       }
 
 
-      showAuthMessage(
-        "Password reset email sent. Check your inbox.",
-        "success"
-      );
+      /*
+       * Tell Supabase exactly where the password-reset link must
+       * return the user. This URL is also allow-listed in the
+       * Supabase Authentication URL Configuration.
+       */
+      try {
+
+        const {
+          error
+        } =
+          await supabaseClient.auth
+            .resetPasswordForEmail(
+              email,
+              {
+                redirectTo:
+                  GLUEFUL_RESET_PASSWORD_URL
+              }
+            );
+
+
+        if(error) {
+
+          console.error(
+            "Password reset error:",
+            error
+          );
+
+          const errorMessage =
+            error?.message || "";
+
+
+          if(
+            /rate limit|too many requests/i.test(
+              errorMessage
+            )
+          ) {
+
+            showAuthMessage(
+              "Too many reset requests. Please wait a while and try again."
+            );
+
+          } else if(
+            /invalid email/i.test(
+              errorMessage
+            )
+          ) {
+
+            showAuthMessage(
+              "Enter a valid email address."
+            );
+
+          } else {
+
+            showAuthMessage(
+              errorMessage ||
+              "Unable to send the password reset email. Please try again."
+            );
+
+          }
+
+          return;
+
+        }
+
+
+        showAuthMessage(
+          "Password reset email sent. Check your inbox.",
+          "success"
+        );
+
+      } catch(error) {
+
+        console.error(
+          "Password reset exception:",
+          error
+        );
+
+        showAuthMessage(
+          "Unable to send the password reset email. Please try again."
+        );
+
+      }
 
     }
 
