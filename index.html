@@ -914,66 +914,137 @@
 
 
     /* =====================================================
-       HEATMAP
+       MONTHLY ACTIVITY HEATMAP
     ====================================================== */
 
     .heat-card {
-
       padding:1rem;
-
       margin-bottom:1.2rem;
-
+      overflow:hidden;
     }
 
+    .activity-header {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:.85rem;
+    }
+
+    .activity-title-wrap {
+      min-width:0;
+      flex:1;
+      text-align:center;
+    }
+
+    .activity-kicker {
+      margin:0;
+      font-family:'JetBrains Mono',monospace;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+      font-size:10px;
+      color:var(--text-faint);
+    }
+
+    .activity-month {
+      margin:3px 0 0;
+      color:var(--text);
+      font-family:'Space Grotesk',sans-serif;
+      font-size:13px;
+      font-weight:600;
+    }
+
+    .activity-nav {
+      width:34px;
+      height:34px;
+      flex:0 0 34px;
+      border-radius:50%;
+      background:#1A2029;
+      border:1px solid var(--border);
+      color:var(--text-dim);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:18px;
+      line-height:1;
+    }
+
+    .activity-nav:hover:not(:disabled) {
+      background:#222936;
+      border-color:#3A4351;
+      color:white;
+    }
+
+    .activity-nav:disabled {
+      opacity:.35;
+    }
 
     .heat-scroll {
-
-      overflow-x:auto;
-
+      width:100%;
+      overflow:hidden;
+      touch-action:pan-y;
+      user-select:none;
+      -webkit-user-select:none;
     }
 
-
+    .heat-weekdays,
     .heatmap {
-
-      display:flex;
-
-      gap:4px;
-
-      min-width:560px;
-
+      display:grid;
+      grid-template-columns:repeat(7,minmax(0,1fr));
+      gap:6px;
+      width:100%;
     }
 
-
-    .heat-week {
-
-      display:flex;
-
-      flex-direction:column;
-
-      gap:4px;
-
+    .heat-weekdays {
+      margin-bottom:6px;
     }
 
+    .heat-weekday {
+      text-align:center;
+      color:var(--text-faint);
+      font-family:'JetBrains Mono',monospace;
+      font-size:9px;
+      font-weight:500;
+      text-transform:uppercase;
+    }
 
     .heat-cell {
-
-      width:13px;
-      height:13px;
-
-      border-radius:3px;
-
+      width:100%;
+      aspect-ratio:1 / .72;
+      min-height:28px;
+      border-radius:6px;
       cursor:pointer;
-
-      transition:
-        transform .08s ease;
-
+      position:relative;
+      transition:transform .12s ease, filter .12s ease, box-shadow .12s ease;
     }
 
+    .heat-cell.empty {
+      background:#0F131A !important;
+      border:1px solid #1A2029;
+      cursor:default;
+    }
 
-    .heat-cell:hover {
+    .heat-cell.future {
+      opacity:.28;
+      cursor:default;
+    }
 
-      transform:scale(1.25);
+    .heat-cell:not(.empty):not(.future):hover {
+      transform:translateY(-1px) scale(1.02);
+      filter:brightness(1.12);
+      box-shadow:0 4px 12px rgba(0,0,0,.24);
+      z-index:2;
+    }
 
+    .heat-cell.today {
+      box-shadow:0 0 0 2px rgba(169,139,255,.9), 0 0 14px rgba(139,47,224,.18);
+    }
+
+    .activity-swipe-hint {
+      margin:.55rem 0 0;
+      text-align:center;
+      color:var(--text-faint);
+      font-size:9px;
     }
 
 
@@ -2847,24 +2918,52 @@
 
       <div class="card heat-card">
 
-        <div
-          class="section-title"
-          style="
-            margin:0 0 .7rem;
-          "
-        >
-          Activity · Last 12 weeks
+        <div class="activity-header">
+          <button
+            id="activity-prev"
+            class="activity-nav"
+            type="button"
+            onclick="shiftActivityMonth(-1)"
+            aria-label="Previous month"
+          >
+            ‹
+          </button>
+
+          <div class="activity-title-wrap">
+            <p class="activity-kicker">Activity · This month</p>
+            <p id="activity-month-label" class="activity-month">This month</p>
+          </div>
+
+          <button
+            id="activity-next"
+            class="activity-nav"
+            type="button"
+            onclick="shiftActivityMonth(1)"
+            aria-label="Next month"
+          >
+            ›
+          </button>
         </div>
 
-
-        <div class="heat-scroll">
+        <div class="heat-scroll" id="activity-swipe-area">
+          <div class="heat-weekdays" aria-hidden="true">
+            <span class="heat-weekday">Sun</span>
+            <span class="heat-weekday">Mon</span>
+            <span class="heat-weekday">Tue</span>
+            <span class="heat-weekday">Wed</span>
+            <span class="heat-weekday">Thu</span>
+            <span class="heat-weekday">Fri</span>
+            <span class="heat-weekday">Sat</span>
+          </div>
 
           <div
             id="heatmap"
             class="heatmap"
+            aria-label="Monthly career activity"
           ></div>
-
         </div>
+
+        <div class="activity-swipe-hint">Swipe to browse months</div>
 
 
         <div
@@ -4255,6 +4354,11 @@
 
     let resumes = [];
 
+    // Dashboard activity month. Defaults to the current month and can be
+    // changed with the arrows or a horizontal swipe on the activity grid.
+    let activityMonthCursor = new Date();
+    let activitySwipeStartX = null;
+
 
     let currentView =
       "dashboard";
@@ -5570,7 +5674,7 @@
 
 
     /* =====================================================
-       HEATMAP
+       MONTHLY ACTIVITY HEATMAP
     ====================================================== */
 
     function heatColor(count) {
@@ -5588,7 +5692,29 @@
         return "#1D9E75";
 
       return "#4FD1C5";
+    }
 
+
+    function localISODate(year, monthIndex, day) {
+      const month = String(monthIndex + 1).padStart(2, "0");
+      const date = String(day).padStart(2, "0");
+      return `${year}-${month}-${date}`;
+    }
+
+
+    function activityMonthLabel(date) {
+      return date.toLocaleDateString(undefined, {
+        month: "long",
+        year: "numeric"
+      });
+    }
+
+
+    function isSameMonth(a, b) {
+      return (
+        a.getFullYear() === b.getFullYear() &&
+        a.getMonth() === b.getMonth()
+      );
     }
 
 
@@ -5598,169 +5724,226 @@
 
       applications.forEach(
         app => {
+          if(!app.date) return;
 
           counts[app.date] =
-            (
-              counts[app.date] || 0
-            ) + 1;
-
+            (counts[app.date] || 0) + 1;
         }
       );
-
 
       interviews.forEach(
         interview => {
+          if(!interview.date) return;
 
           counts[interview.date] =
-            (
-              counts[
-                interview.date
-              ] || 0
-            ) + 1;
-
+            (counts[interview.date] || 0) + 1;
         }
       );
 
+      const selected = new Date(
+        activityMonthCursor.getFullYear(),
+        activityMonthCursor.getMonth(),
+        1
+      );
 
-      const days = [];
-
-
-      for(
-        let i=83;
-        i>=0;
-        i--
-      ) {
-
-        const date =
-          daysAgoISO(i);
-
-        days.push({
-          date,
-          count:
-            counts[date] || 0
-        });
-
-      }
-
+      const year = selected.getFullYear();
+      const month = selected.getMonth();
+      const daysInMonth =
+        new Date(year, month + 1, 0).getDate();
 
       const firstDay =
-        new Date(
-          days[0].date +
-          "T00:00:00"
-        ).getDay();
+        new Date(year, month, 1).getDay();
 
+      const today = new Date();
+      const currentMonth = isSameMonth(selected, today);
+      const todayDate = currentMonth
+        ? today.getDate()
+        : -1;
 
-      const padding =
-        firstDay === 0
-          ? 6
-          : firstDay - 1;
+      const cells = [];
 
-
-      const padded =
-        Array(padding)
-          .fill(null)
-          .concat(days);
-
-
-      const weeks = [];
-
-
-      for(
-        let i=0;
-        i<padded.length;
-        i+=7
-      ) {
-
-        weeks.push(
-          padded.slice(
-            i,
-            i+7
-          )
-        );
-
+      // Sunday-first layout. Add leading empty cells so the first day
+      // appears under the correct weekday.
+      for(let i=0; i<firstDay; i++) {
+        cells.push(null);
       }
 
+      for(let day=1; day<=daysInMonth; day++) {
+        const date = localISODate(year, month, day);
+        const isFuture = currentMonth && day > todayDate;
 
-      document.getElementById(
-        "heatmap"
-      ).innerHTML =
+        cells.push({
+          date,
+          day,
+          count:counts[date] || 0,
+          future:isFuture,
+          today:day === todayDate
+        });
+      }
 
-        weeks
-          .map(
-            week => `
+      // Complete the final row so every month has a balanced 7-column grid.
+      while(cells.length % 7 !== 0) {
+        cells.push(null);
+      }
 
-              <div class="heat-week">
+      const heatmap =
+        document.getElementById("heatmap");
 
-                ${week
-                  .map(
-                    day => {
+      if(!heatmap) return;
 
-                      if(!day) {
+      heatmap.innerHTML = cells
+        .map(day => {
+          if(!day) {
+            return `<div class="heat-cell empty" aria-hidden="true"></div>`;
+          }
 
-                        return `
-                          <div
-                            class="heat-cell"
-                          ></div>
-                        `;
+          const futureClass =
+            day.future ? " future" : "";
 
-                      }
+          const todayClass =
+            day.today ? " today" : "";
+
+          const disabled = day.future
+            ? "true"
+            : "false";
+
+          const interactionAttrs = day.future
+            ? ""
+            : `onclick="openDayActivity('${day.date}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openDayActivity('${day.date}')}"`;
+
+          return `
+            <div
+              class="heat-cell${futureClass}${todayClass}"
+              role="button"
+              tabindex="${day.future ? -1 : 0}"
+              aria-disabled="${disabled}"
+              aria-label="${day.date} · ${day.count} career activities"
+              title="${day.date} · ${day.count} activity"
+              style="background:${heatColor(day.count)};${day.count === 0 ? "border:1px solid #1E242E;" : ""}"
+              ${interactionAttrs}
+            ></div>
+          `;
+        })
+        .join("");
+
+      const monthLabel =
+        document.getElementById("activity-month-label");
+
+      if(monthLabel) {
+        monthLabel.textContent =
+          activityMonthLabel(selected);
+      }
+
+      const nextButton =
+        document.getElementById("activity-next");
+
+      if(nextButton) {
+        nextButton.disabled = currentMonth;
+      }
+
+      const previousButton =
+        document.getElementById("activity-prev");
+
+      if(previousButton) {
+        previousButton.disabled = false;
+      }
+
+      renderActivityLegend();
+      bindActivitySwipe();
+    }
 
 
-                      return `
+    function renderActivityLegend() {
+      const legend =
+        document.getElementById("legend");
 
-                        <div
-                          class="heat-cell"
-                          title="${day.date} · ${day.count} activity"
-                          onclick="openDayActivity('${day.date}')"
-                          style="
-                            background:${heatColor(day.count)};
-                            ${
-                              day.count === 0
-                                ? "border:1px solid #1E242E;"
-                                : ""
-                            }
-                          "
-                        ></div>
+      if(!legend) return;
 
-                      `;
-
-                    }
-                  )
-                  .join("")}
-
-              </div>
-
-            `
-          )
-          .join("");
-
-
-      document.getElementById(
-        "legend"
-      ).innerHTML =
-
+      legend.innerHTML =
         [0,1,2,3,5]
           .map(
             c => `
-
               <div
                 style="
                   width:11px;
                   height:11px;
-                  border-radius:2px;
+                  border-radius:3px;
                   background:${heatColor(c)};
-                  ${
-                    c === 0
-                      ? "border:1px solid #1E242E;"
-                      : ""
-                  }
+                  ${c === 0 ? "border:1px solid #1E242E;" : ""}
                 "
+                aria-hidden="true"
               ></div>
-
             `
           )
           .join("");
+    }
 
+
+    function shiftActivityMonth(direction) {
+      const current = new Date();
+      const target = new Date(
+        activityMonthCursor.getFullYear(),
+        activityMonthCursor.getMonth() + direction,
+        1
+      );
+
+      // Never navigate into a future month.
+      if(
+        target.getFullYear() > current.getFullYear() ||
+        (
+          target.getFullYear() === current.getFullYear() &&
+          target.getMonth() > current.getMonth()
+        )
+      ) {
+        return;
+      }
+
+      activityMonthCursor = target;
+      renderHeatmap();
+    }
+
+
+    function bindActivitySwipe() {
+      const area =
+        document.getElementById("activity-swipe-area");
+
+      if(!area || area.dataset.swipeBound === "true") {
+        return;
+      }
+
+      area.dataset.swipeBound = "true";
+
+      area.addEventListener(
+        "touchstart",
+        event => {
+          if(event.touches.length !== 1) return;
+          activitySwipeStartX =
+            event.touches[0].clientX;
+        },
+        { passive:true }
+      );
+
+      area.addEventListener(
+        "touchend",
+        event => {
+          if(activitySwipeStartX === null) return;
+
+          const endX =
+            event.changedTouches[0].clientX;
+          const deltaX =
+            endX - activitySwipeStartX;
+
+          activitySwipeStartX = null;
+
+          if(Math.abs(deltaX) < 55) return;
+
+          // Swipe left = next month, swipe right = previous month.
+          shiftActivityMonth(
+            deltaX < 0 ? 1 : -1
+          );
+        },
+        { passive:true }
+      );
     }
 
 
