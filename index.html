@@ -10034,26 +10034,6 @@
 
 
       /*
-       * Basic client-side email validation prevents an obviously
-       * malformed address from being sent to Supabase.
-       */
-      const emailPattern =
-        /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
-
-      if(!emailPattern.test(email)) {
-
-        showAuthMessage(
-          "Enter a valid email address."
-        );
-
-        emailInput.focus();
-
-        return;
-
-      }
-
-
-      /*
        * Tell Supabase exactly where the password-reset link must
        * return the user. This URL is also allow-listed in the
        * Supabase Authentication URL Configuration.
