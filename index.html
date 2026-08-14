@@ -5322,56 +5322,60 @@
 
   <style id="glueful-settings-premium-css">
     .settings-icon-sprite{position:absolute;width:0;height:0;overflow:hidden}
-    .settings-overlay{padding:0;align-items:stretch;justify-content:center}
-    .settings-panel-premium{width:min(760px,100%);max-width:none;height:min(94vh,920px);padding:0;overflow:hidden;border-radius:22px;display:flex;flex-direction:column}
-    .settings-topbar{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:10px;padding:18px 20px 16px;border-bottom:1px solid var(--border);background:var(--card);flex-shrink:0}
-    .settings-back,.settings-help{width:40px;height:40px;border-radius:13px;background:var(--card2);border:1px solid var(--border);color:var(--text);display:flex;align-items:center;justify-content:center}
-    .settings-back span{font-size:30px;line-height:1;margin-top:-3px}
+    .settings-overlay{padding:0;align-items:stretch;justify-content:center;inset:0}
+    .settings-panel-premium{width:min(760px,100%);max-width:none;height:100dvh;max-height:100dvh;padding:0;overflow:hidden;border-radius:0;display:flex;flex-direction:column}
+    .settings-topbar{display:grid;grid-template-columns:46px minmax(0,1fr) 46px;align-items:center;gap:12px;padding:calc(14px + env(safe-area-inset-top)) 20px 14px;border-bottom:1px solid var(--border);background:var(--card);flex-shrink:0;min-height:82px}
+    .settings-back,.settings-help{width:42px;height:42px;border-radius:14px;background:var(--card2);border:1px solid var(--border);color:var(--text);display:flex;align-items:center;justify-content:center;box-shadow:0 1px 0 rgba(255,255,255,.04) inset}
+    .settings-back span{font-size:32px;line-height:1;margin-top:-4px;font-family:Inter,sans-serif;font-weight:300}
     .settings-help svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-    .settings-page-title{margin:0;font:700 22px 'Space Grotesk',sans-serif;letter-spacing:-.02em}
-    .settings-page-subtitle{margin-top:3px;color:var(--text-mute);font-size:11px}
-    .settings-scroll{overflow:auto;padding:18px 20px 28px;scrollbar-width:thin}
-    .settings-section{margin:0 0 22px}
-    .settings-section h3{margin:0 0 8px 2px;color:var(--text-mute);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
-    .settings-list{border:1px solid var(--border);border-radius:16px;overflow:hidden;background:var(--card)}
-    .settings-item{width:100%;min-height:68px;display:flex;align-items:center;gap:13px;text-align:left;padding:12px 14px;background:var(--card);color:var(--text);border-bottom:1px solid var(--border-soft);transition:background .16s ease}
+    .settings-page-title{margin:0;font-family:'Space Grotesk','Inter',sans-serif;font-size:25px;font-weight:700;line-height:1.08;letter-spacing:-.035em;color:var(--text)}
+    .settings-page-subtitle{margin-top:5px;color:var(--text-mute);font-size:12px;font-weight:500;line-height:1.35}
+    .settings-scroll{overflow:auto;overscroll-behavior:contain;padding:22px 20px calc(38px + env(safe-area-inset-bottom));scrollbar-width:thin}
+    .settings-section{margin:0 0 25px}
+    .settings-section h3{margin:0 0 10px 3px;color:var(--text-mute);font-family:'Space Grotesk','Inter',sans-serif;font-size:12px;font-weight:700;line-height:1;letter-spacing:.17em;text-transform:uppercase}
+    .settings-list{border:1px solid var(--border);border-radius:18px;overflow:hidden;background:var(--card);box-shadow:0 1px 0 rgba(255,255,255,.035) inset}
+    .settings-item{width:100%;min-height:76px;display:flex;align-items:center;gap:14px;text-align:left;padding:14px 16px;background:var(--card);color:var(--text);border-bottom:1px solid var(--border-soft);transition:background .16s ease,transform .08s ease}
     .settings-item:last-child{border-bottom:0}
     .settings-item:hover{background:var(--card2)}
+    .settings-item:active{transform:scale(.995)}
     .settings-item-feature{background:linear-gradient(90deg,rgba(139,47,224,.09),transparent)}
-    .settings-item-icon{width:40px;height:40px;flex:0 0 40px;border-radius:12px;background:var(--card2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:#9B7CFF}
-    .settings-item-icon svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-    .settings-letter{font:700 17px 'Space Grotesk',sans-serif}
+    .settings-item-icon{width:44px;height:44px;flex:0 0 44px;border-radius:13px;background:var(--card2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:#9B7CFF}
+    .settings-item-icon svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+    .settings-letter{font:700 18px 'Space Grotesk',sans-serif}
     .settings-item-copy{min-width:0;flex:1}
-    .settings-item-copy strong{display:block;font-size:14px;font-weight:600;line-height:1.3}
-    .settings-item-copy small{display:block;margin-top:3px;color:var(--text-mute);font-size:11px;line-height:1.4}
-    .settings-chevron{color:var(--text-mute);font-size:27px;line-height:1;margin-left:5px}
-    .settings-status{font-size:10px;color:var(--text-mute);white-space:nowrap}
+    .settings-item-copy strong{display:block;font-family:'Inter',sans-serif;font-size:15px;font-weight:650;line-height:1.3;letter-spacing:-.01em;color:var(--text)}
+    .settings-item-copy small{display:block;margin-top:4px;color:var(--text-mute);font-family:'Inter',sans-serif;font-size:12px;font-weight:450;line-height:1.42}
+    .settings-chevron{color:var(--text-mute);font-family:Inter,sans-serif;font-size:31px;font-weight:300;line-height:1;margin-left:4px}
+    .settings-status{font-size:11px;color:var(--text-mute);white-space:nowrap}
     .settings-item-toggle{cursor:default}
-    .settings-switch{position:relative;width:46px;height:27px;flex:0 0 46px;border-radius:20px;background:var(--border);border:1px solid var(--border);padding:3px}
+    .settings-switch{position:relative;width:50px;height:29px;flex:0 0 50px;border-radius:20px;background:var(--border);border:1px solid var(--border);padding:4px}
     .settings-switch span{display:block;width:19px;height:19px;border-radius:50%;background:var(--text-mute);transition:transform .18s ease,background .18s ease}
     .settings-switch.is-on{background:linear-gradient(135deg,#8B2FE0,#2F6FFF);border-color:transparent}
-    .settings-switch.is-on span{transform:translateX(18px);background:#fff}
-    .settings-danger-zone{display:flex;flex-direction:column;gap:8px;margin-top:4px;padding:4px 0}
-    .settings-danger{background:transparent;color:#F27272;text-align:left;padding:12px 2px;font-size:12px;font-weight:600}
-    .settings-danger svg{width:15px;height:15px;vertical-align:-3px;fill:none;stroke:currentColor;stroke-width:1.7}
+    .settings-switch.is-on span{transform:translateX(20px);background:#fff}
+    .settings-danger-zone{display:flex;flex-direction:column;gap:8px;margin-top:4px;padding:4px 2px}
+    .settings-danger{background:transparent;color:#F27272;text-align:left;padding:12px 2px;font-family:Inter,sans-serif;font-size:13px;font-weight:650}
+    .settings-danger svg{width:16px;height:16px;vertical-align:-3px;fill:none;stroke:currentColor;stroke-width:1.7}
     .muted-danger{color:var(--text-mute)}
-    .settings-version{text-align:center;color:var(--text-faint);font-size:10px;padding:8px 0 4px}
+    .settings-version{text-align:center;color:var(--text-faint);font-size:10px;padding:12px 0 4px}
     .job-pref-panel{width:min(560px,100%);max-height:92vh;padding:0;overflow:hidden}
     .job-pref-body{padding:20px;overflow:auto}
     .job-pref-body label{display:block;color:var(--text-mute);font-size:11px;font-weight:600;margin:0 0 15px}
     .job-pref-body .input{margin-top:6px}
     .job-pref-note{padding:12px 13px;margin-bottom:18px;border-radius:13px;background:rgba(139,47,224,.08);border:1px solid rgba(139,47,224,.22);color:var(--text-dim);font-size:11px;line-height:1.5}
     .settings-save-pref{width:100%;margin-top:4px}
-    html[data-theme="light"] .settings-panel-premium,html[data-theme="light"] .job-pref-panel{box-shadow:0 25px 70px rgba(20,28,45,.16)}
+    html[data-theme="light"] .settings-panel-premium,html[data-theme="light"] .job-pref-panel{box-shadow:none}
+    html[data-theme="light"] .settings-topbar{box-shadow:0 1px 0 rgba(20,28,45,.03)}
+    html[data-theme="light"] .settings-list{box-shadow:0 1px 3px rgba(20,28,45,.035)}
     @media(max-width:700px){
-      .settings-panel-premium{height:100dvh;border-radius:0}
-      .settings-scroll{padding:16px 14px 30px}
-      .settings-topbar{padding:14px 14px 13px}
-      .settings-page-title{font-size:20px}
-      .settings-item{min-height:72px;padding:12px 10px}
-      .settings-item-copy strong{font-size:13px}
-      .settings-item-copy small{font-size:10.5px}
-      .settings-status{font-size:9px}
+      .settings-panel-premium{height:100dvh;max-height:100dvh;border-radius:0}
+      .settings-scroll{padding:20px 14px calc(42px + env(safe-area-inset-bottom))}
+      .settings-topbar{padding-left:14px;padding-right:14px;grid-template-columns:44px minmax(0,1fr) 44px}
+      .settings-page-title{font-size:23px}
+      .settings-page-subtitle{font-size:11.5px}
+      .settings-item{min-height:78px;padding:14px 12px}
+      .settings-item-copy strong{font-size:14.5px}
+      .settings-item-copy small{font-size:11.5px}
+      .settings-status{font-size:10px}
       .job-pref-panel{max-height:100dvh;border-radius:0}
     }
   </style>
@@ -5921,6 +5925,8 @@
 
     function openSettings() {
       closeProfile();
+      closeModal('candidate-profile-modal', true);
+      closeModal('job-search-preferences-modal', true);
       applyTheme(document.documentElement.dataset.theme || 'dark', false);
       openModal('settings-modal');
       requestAnimationFrame(refreshSettingsSwitches);
@@ -7095,7 +7101,11 @@
       });
     }
 
-    function switchView(view) {
+    function switchView(view, fromHistory=false) {
+
+      if (!fromHistory && view !== currentView) {
+        pushGluefulState('view', null, view);
+      }
 
       currentView =
         view;
@@ -11243,6 +11253,8 @@
 
     async function openCandidateProfile() {
       closeProfile();
+      closeModal('settings-modal', true);
+      closeModal('job-search-preferences-modal', true);
 
       try {
         const profile =
@@ -11519,26 +11531,71 @@
        MODALS
     ====================================================== */
 
+    /* =====================================================
+       MOBILE BACK / SCREEN HISTORY
+       Back closes the current Glueful screen first.
+    ====================================================== */
+    let gluefulHistoryReady = false;
+
+    function initGluefulHistory() {
+      if (gluefulHistoryReady) return;
+      if (!history.state || history.state.glueful !== true) {
+        history.replaceState({glueful:true, layer:'root', view:currentView || 'dashboard'}, '', location.href);
+      }
+      gluefulHistoryReady = true;
+    }
+
+    function pushGluefulState(layer, id=null, view=currentView || 'dashboard') {
+      initGluefulHistory();
+      history.pushState({glueful:true, layer, id, view}, '', location.href);
+    }
+
+    function getOpenGluefulModal() {
+      const open = Array.from(document.querySelectorAll('.modal-overlay.open'));
+      return open.length ? open[open.length - 1] : null;
+    }
+
     function openModal(id) {
-
-      document.getElementById(
-        id
-      ).classList.add(
-        "open"
-      );
-
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.classList.add('open');
+      if (history.state?.glueful && history.state.layer === 'modal' && history.state.id === id) return;
+      pushGluefulState('modal', id);
     }
 
-
-    function closeModal(id) {
-
-      document.getElementById(
-        id
-      ).classList.remove(
-        "open"
-      );
-
+    function closeModal(id, suppressHistory=false) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.classList.remove('open');
+      if (!suppressHistory && history.state?.glueful && history.state.layer === 'modal' && history.state.id === id) {
+        history.back();
+      }
     }
+
+    window.addEventListener('popstate', function(event) {
+      const state = event.state;
+      const openModal = getOpenGluefulModal();
+      if (openModal && state?.glueful && state.layer !== 'modal') {
+        openModal.classList.remove('open');
+        return;
+      }
+      if (state?.glueful && state.layer === 'modal') {
+        document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+        const modal = document.getElementById(state.id);
+        if (modal) modal.classList.add('open');
+        return;
+      }
+      if (state?.glueful && state.layer === 'view') {
+        switchView(state.view, true);
+        return;
+      }
+      // Keep the first Android back action inside Glueful instead of unloading the app.
+      if (!state || state.glueful !== true) {
+        history.pushState({glueful:true, layer:'root', view:currentView || 'dashboard'}, '', location.href);
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', initGluefulHistory);
 
 
     /* =====================================================
