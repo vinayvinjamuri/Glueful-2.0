@@ -256,6 +256,11 @@
 
   <title>Glueful</title>
 
+  <!-- Resume parsing libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js"></script>
+
+
 <!-- Critical first-paint styling: prevents a white flash before the page CSS loads. -->
 <style id="glueful-critical-paint">
   html, body {
@@ -532,6 +537,24 @@
 
     }
 
+    /* =====================================================
+       LIGHT THEME
+    ====================================================== */
+    html[data-theme="light"] {
+      --bg:#F4F6FA;
+      --card:#FFFFFF;
+      --card2:#F8F9FC;
+      --border:#DDE2EA;
+      --border-soft:#E8EBF1;
+      --text:#151A23;
+      --text-dim:#4D5868;
+      --text-mute:#687486;
+      --text-faint:#8A95A5;
+    }
+
+    html, body, .card, .profile-panel, .modal, .profile-row, .input, .modern-select-button, .modern-select-menu, .settings-panel {
+      transition:background-color .22s ease, color .22s ease, border-color .22s ease;
+    }
 
     * {
       box-sizing:border-box;
@@ -2553,6 +2576,234 @@
 
 
     /* =====================================================
+       MODERN PROFILE SELECTS
+    ====================================================== */
+
+    function closeAllModernSelects(exceptId=null) {
+      document.querySelectorAll('.modern-select.open').forEach(el => {
+        if(el.id !== exceptId) el.classList.remove('open');
+      });
+    }
+
+    function toggleModernSelect(id) {
+      const el = document.getElementById(id);
+      if(!el) return;
+      const wasOpen = el.classList.contains('open');
+      closeAllModernSelects(id);
+      el.classList.toggle('open', !wasOpen);
+    }
+
+    function chooseModernSelect(id, value, label) {
+      const el = document.getElementById(id);
+      if(!el) return;
+      const hidden = el.querySelector('input[type="hidden"]');
+      const labelEl = el.querySelector('[id$="-label"]');
+      if(hidden) hidden.value = value;
+      if(labelEl) labelEl.textContent = label;
+      el.querySelectorAll('.modern-select-option').forEach(option => {
+        option.classList.toggle('selected', option.dataset.value === value);
+      });
+      el.classList.remove('open');
+    }
+
+    function setModernSelect(id, value, fallbackLabel='Select') {
+      const el = document.getElementById(id);
+      if(!el) return;
+      const option = [...el.querySelectorAll('.modern-select-option')]
+        .find(item => item.dataset.value === String(value ?? ''));
+      chooseModernSelect(id, String(value ?? ''), option?.textContent.trim() || fallbackLabel);
+    }
+
+    document.addEventListener('click', event => {
+      if(!event.target.closest('.modern-select')) closeAllModernSelects();
+    });
+
+    /* =====================================================
+       RESUME → CANDIDATE PROFILE IMPORT
+    ====================================================== */
+
+    let candidateResumeFile = null;
+    let candidateResumeText = '';
+
+    function setCandidateResumeStatus(message, show=true) {
+      const el = document.getElementById('cp-resume-status');
+      if(!el) return;
+      el.textContent = message;
+      el.classList.toggle('show', show);
+    }
+
+    function clearCandidateResume() {
+      candidateResumeFile = null;
+      candidateResumeText = '';
+      const input = document.getElementById('cp-resume-file');
+      const name = document.getElementById('cp-resume-file-name');
+      const button = document.getElementById('cp-resume-import-btn');
+      if(input) input.value = '';
+      if(name) { name.textContent = ''; name.style.display = 'none'; }
+      if(button) button.disabled = true;
+      setCandidateResumeStatus('', false);
+    }
+
+    async function handleCandidateResumeUpload(event) {
+      const file = event.target.files?.[0];
+      if(!file) return;
+      candidateResumeFile = file;
+      const name = document.getElementById('cp-resume-file-name');
+      const button = document.getElementById('cp-resume-import-btn');
+      if(name) {
+        name.textContent = `${file.name} · ${(file.size / 1024 / 1024).toFixed(2)} MB`;
+        name.style.display = 'block';
+      }
+      if(button) button.disabled = true;
+      setCandidateResumeStatus('Reading your resume…', true);
+      try {
+        candidateResumeText = await extractResumeText(file);
+        if(!candidateResumeText.trim()) throw new Error('No readable text found.');
+        if(button) button.disabled = false;
+        setCandidateResumeStatus('Resume read successfully. Tap Import info to fill your profile.', true);
+      } catch(error) {
+        console.error('Resume parsing failed:', error);
+        candidateResumeText = '';
+        if(button) button.disabled = true;
+        setCandidateResumeStatus('Could not read this resume. Try a text-based PDF, DOCX or TXT file.', true);
+      }
+    }
+
+    async function extractResumeText(file) {
+      const type = file.type || '';
+      const name = file.name.toLowerCase();
+      if(type === 'text/plain' || name.endsWith('.txt')) return await file.text();
+      if(type === 'application/pdf' || name.endsWith('.pdf')) {
+        if(!window.pdfjsLib) throw new Error('PDF parser is still loading.');
+        if(window.pdfjsLib.GlobalWorkerOptions) {
+          window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+        const buffer = await file.arrayBuffer();
+        const pdf = await window.pdfjsLib.getDocument({data:buffer}).promise;
+        let text = '';
+        for(let pageNo=1; pageNo<=pdf.numPages; pageNo++) {
+          const page = await pdf.getPage(pageNo);
+          const content = await page.getTextContent();
+          text += content.items.map(item => item.str || '').join(' ') + '\n';
+        }
+        return text;
+      }
+      if(type.includes('wordprocessingml') || name.endsWith('.docx')) {
+        if(!window.mammoth) throw new Error('DOCX parser is still loading.');
+        const buffer = await file.arrayBuffer();
+        const result = await window.mammoth.extractRawText({arrayBuffer:buffer});
+        return result.value || '';
+      }
+      throw new Error('Unsupported resume format.');
+    }
+
+    function firstMatch(text, patterns) {
+      for(const pattern of patterns) {
+        const match = text.match(pattern);
+        if(match?.[1]) return match[1].trim();
+      }
+      return '';
+    }
+
+    function guessResumeProfile(text) {
+      const clean = text.replace(/\r/g,'\n').replace(/[ \t]+/g,' ').trim();
+      const lines = text.split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+      const email = firstMatch(clean, [/([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/i]);
+      const phone = firstMatch(clean, [/((?:\+91[ -]?)?[6-9]\d{9})/]);
+      const linkedin = firstMatch(clean, [/(https?:\/\/(?:www\.)?linkedin\.com\/[^\s]+)/i]);
+      const github = firstMatch(clean, [/(https?:\/\/(?:www\.)?github\.com\/[^\s]+)/i]);
+
+      let name = '';
+      if(lines[0] && lines[0].length < 60 && !/@/.test(lines[0]) && !/resume|curriculum vitae|cv/i.test(lines[0])) name = lines[0];
+
+      const headline = firstMatch(clean, [
+        /(?:headline|professional headline|title)\s*[:\-]\s*([^\n]{3,100})/i
+      ]);
+      const summary = firstMatch(clean, [
+        /(?:professional summary|summary|profile|about me)\s*[:\-]?\s*([\s\S]{30,600}?)(?=\n\s*(?:experience|education|skills|projects|work experience|employment)\b)/i
+      ]);
+      const skills = firstMatch(clean, [
+        /(?:technical skills|skills|core skills|technologies)\s*[:\-]?\s*([\s\S]{10,500}?)(?=\n\s*(?:experience|education|projects|certifications|achievements)\b)/i
+      ]);
+      const degree = firstMatch(clean, [/(\b(?:M\.?Tech|M\.?S\.?|MBA|B\.?Tech|B\.?E\.?|B\.?S\.?|BCA|MCA)\b[^\n]{0,80})/i]);
+      const institution = firstMatch(clean, [/(?:education|university|college|institute)\s*[:\-]\s*([^\n]{3,120})/i]);
+      const experience = firstMatch(clean, [/(\d+(?:\.\d+)?)\+?\s*(?:years?|yrs?)\s+(?:of\s+)?experience/i]);
+
+      const lower = clean.toLowerCase();
+      const roleKeywords = ['embedded','soc validation','post-silicon','software engineer','hardware engineer','validation engineer','test engineer','firmware'];
+      const inferredRole = roleKeywords.find(k => lower.includes(k)) || '';
+
+      return {
+        name, headline: headline || inferredRole, about: summary,
+        targetRole: inferredRole, experience, skills, degree, institution,
+        linkedin, github, portfolio:'', email, phone
+      };
+    }
+
+    function mergeImportedProfile(imported) {
+      const current = collectCandidateProfile();
+      const merged = {...current};
+      const keys = ['name','headline','about','targetRole','experience','skills','degree','institution','linkedin','github'];
+      keys.forEach(key => {
+        if(imported[key] && !current[key]) merged[key] = imported[key];
+      });
+      fillCandidateProfile(merged);
+      setModernSelect('cp-experience-select', merged.experience);
+      setModernSelect('cp-work-mode-select', merged.workMode);
+      return merged;
+    }
+
+    function importCandidateResume() {
+      if(!candidateResumeText.trim()) return;
+      const imported = guessResumeProfile(candidateResumeText);
+      mergeImportedProfile(imported);
+      const detected = Object.entries(imported).filter(([key,value]) => value && !['email','phone'].includes(key)).length;
+      setCandidateResumeStatus(`Imported ${detected} profile fields. Please review them before saving.`, true);
+    }
+
+    /* =====================================================
+       THEME / SETTINGS
+    ====================================================== */
+
+    const GLUEFUL_THEME_META_KEY = 'glueful_theme';
+
+    function applyTheme(theme, persist=true) {
+      const normalized = theme === 'light' ? 'light' : 'dark';
+      document.documentElement.dataset.theme = normalized;
+      localStorage.setItem(GLUEFUL_THEME_META_KEY, normalized);
+      const toggle = document.getElementById('theme-toggle');
+      const thumb = document.getElementById('theme-toggle-thumb');
+      if(toggle) toggle.setAttribute('aria-checked', normalized === 'light' ? 'true' : 'false');
+      if(thumb) thumb.textContent = normalized === 'light' ? '☀' : '☾';
+      if(persist) syncThemeToAccount(normalized);
+    }
+
+    async function syncThemeToAccount(theme) {
+      try {
+        await supabaseClient.auth.updateUser({data:{[GLUEFUL_THEME_META_KEY]:theme}});
+      } catch(error) {
+        console.warn('Theme cloud sync unavailable:', error);
+      }
+    }
+
+    async function loadThemePreference(user=null) {
+      const stored = localStorage.getItem(GLUEFUL_THEME_META_KEY);
+      const accountTheme = user?.user_metadata?.[GLUEFUL_THEME_META_KEY];
+      applyTheme(accountTheme || stored || 'dark', false);
+    }
+
+    function toggleTheme() {
+      const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+      applyTheme(next, true);
+    }
+
+    function openSettings() {
+      closeProfile();
+      applyTheme(document.documentElement.dataset.theme || 'dark', false);
+      openModal('settings-modal');
+    }
+
+    /* =====================================================
        CANDIDATE PROFILE
     ====================================================== */
 
@@ -2576,6 +2827,146 @@
     .candidate-profile-grid .full {
       grid-column:1 / -1;
     }
+
+    /* =====================================================
+       MODERN PROFILE SELECTS
+    ====================================================== */
+    .modern-select {
+      position:relative;
+    }
+    .modern-select-button {
+      width:100%;
+      min-height:42px;
+      padding:.65rem .75rem;
+      border:1px solid var(--border);
+      border-radius:10px;
+      background:var(--bg);
+      color:var(--text);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      font-size:14px;
+      text-align:left;
+    }
+    .modern-select-button:hover {
+      border-color:#8B6BF0;
+    }
+    .modern-select-button .select-chevron {
+      color:var(--text-faint);
+      font-size:15px;
+      transition:transform .18s ease;
+    }
+    .modern-select.open .select-chevron {
+      transform:rotate(180deg);
+    }
+    .modern-select-menu {
+      position:absolute;
+      left:0;
+      right:0;
+      top:calc(100% + 7px);
+      z-index:120;
+      display:none;
+      padding:6px;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:var(--card);
+      box-shadow:0 18px 45px rgba(0,0,0,.28);
+    }
+    .modern-select.open .modern-select-menu {
+      display:block;
+      animation:modernSelectIn .16s ease both;
+    }
+    .modern-select-option {
+      width:100%;
+      min-height:40px;
+      padding:.65rem .75rem;
+      border-radius:9px;
+      background:transparent;
+      color:var(--text-dim);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      font-size:13px;
+      text-align:left;
+    }
+    .modern-select-option:hover,
+    .modern-select-option.selected {
+      background:rgba(139,47,224,.12);
+      color:var(--text);
+    }
+    .modern-select-option.selected::after {
+      content:"✓";
+      color:#A98BFF;
+      font-weight:700;
+    }
+    @keyframes modernSelectIn {
+      from {opacity:0;transform:translateY(-4px) scale(.985)}
+      to {opacity:1;transform:translateY(0) scale(1)}
+    }
+
+    /* =====================================================
+       RESUME IMPORT
+    ====================================================== */
+    .resume-import-card {
+      padding:12px;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:var(--card2);
+      margin-bottom:1rem;
+    }
+    .resume-import-drop {
+      border:1px dashed #7045F4;
+      border-radius:12px;
+      padding:16px 12px;
+      text-align:center;
+      cursor:pointer;
+      background:rgba(139,47,224,.06);
+    }
+    .resume-import-drop:hover {
+      background:rgba(139,47,224,.11);
+    }
+    .resume-import-icon {
+      width:40px;height:40px;margin:0 auto 8px;border-radius:12px;
+      display:flex;align-items:center;justify-content:center;
+      background:var(--grad);color:#fff;font-size:18px;
+      box-shadow:0 8px 22px rgba(112,61,255,.18);
+    }
+    .resume-import-title {font-size:13px;font-weight:700;color:var(--text);}
+    .resume-import-sub {font-size:10px;color:var(--text-mute);margin-top:4px;line-height:1.5;}
+    .resume-import-file {
+      margin-top:9px;padding:8px 10px;border-radius:9px;
+      background:var(--bg);border:1px solid var(--border);
+      color:var(--text-dim);font-size:10px;display:none;
+    }
+    .resume-import-status {
+      display:none;margin-top:8px;font-size:10px;color:#62DDB4;
+    }
+    .resume-import-status.show {display:block;}
+    .resume-import-actions {display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:9px;}
+
+    /* =====================================================
+       SETTINGS / THEME TOGGLE
+    ====================================================== */
+    .settings-panel {max-width:430px;}
+    .settings-row {
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      padding:12px;border:1px solid var(--border);border-radius:13px;background:var(--card2);
+    }
+    .settings-row-copy strong {display:block;font-size:13px;color:var(--text);}
+    .settings-row-copy span {display:block;margin-top:3px;font-size:10px;color:var(--text-mute);}
+    .theme-toggle {
+      position:relative;width:52px;height:30px;border-radius:18px;flex:0 0 52px;
+      background:#252C38;border:1px solid var(--border);padding:3px;
+    }
+    .theme-toggle-thumb {
+      width:22px;height:22px;border-radius:50%;background:#fff;
+      display:flex;align-items:center;justify-content:center;font-size:12px;
+      transition:transform .2s ease;
+      box-shadow:0 2px 8px rgba(0,0,0,.2);
+    }
+    html[data-theme="light"] .theme-toggle {background:linear-gradient(135deg,#8B2FE0,#2F6FFF);}
+    html[data-theme="light"] .theme-toggle-thumb {transform:translateX(22px);}
 
     .candidate-profile-section {
       margin-top:1rem;
@@ -4489,6 +4880,22 @@
       onsubmit="saveCandidateProfile(event)"
     >
 
+      <div class="resume-import-card">
+        <div class="candidate-profile-section" style="margin-top:0;">Resume Import</div>
+        <div class="resume-import-drop" onclick="document.getElementById('cp-resume-file').click()">
+          <div class="resume-import-icon">↥</div>
+          <div class="resume-import-title">Upload your resume</div>
+          <div class="resume-import-sub">PDF, DOCX or TXT · Glueful will read it and fill your profile automatically.</div>
+          <input id="cp-resume-file" type="file" accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" style="display:none" onchange="handleCandidateResumeUpload(event)" />
+        </div>
+        <div id="cp-resume-file-name" class="resume-import-file"></div>
+        <div id="cp-resume-status" class="resume-import-status"></div>
+        <div class="resume-import-actions">
+          <button type="button" class="secondary-btn" onclick="clearCandidateResume()">Clear</button>
+          <button type="button" class="primary-btn" id="cp-resume-import-btn" onclick="importCandidateResume()" disabled>Import info</button>
+        </div>
+      </div>
+
       <div class="modal-header">
         <div>
           <h3 class="modal-title">Candidate Profile</h3>
@@ -4543,15 +4950,21 @@
         </div>
 
         <div class="field">
-          <label for="cp-experience">Experience</label>
-          <select id="cp-experience" class="input">
-            <option value="">Select</option>
-            <option value="0">0–1 years</option>
-            <option value="1">1–2 years</option>
-            <option value="2">2–3 years</option>
-            <option value="3">3–5 years</option>
-            <option value="5">5+ years</option>
-          </select>
+          <label>Experience</label>
+          <div class="modern-select" id="cp-experience-select">
+            <button type="button" class="modern-select-button" onclick="toggleModernSelect('cp-experience-select')">
+              <span id="cp-experience-label">Select</span><span class="select-chevron">⌄</span>
+            </button>
+            <input type="hidden" id="cp-experience" value="" />
+            <div class="modern-select-menu">
+              <button type="button" class="modern-select-option" data-value="" onclick="chooseModernSelect('cp-experience-select','', 'Select')">Select</button>
+              <button type="button" class="modern-select-option" data-value="0" onclick="chooseModernSelect('cp-experience-select','0','0–1 years')">0–1 years</button>
+              <button type="button" class="modern-select-option" data-value="1" onclick="chooseModernSelect('cp-experience-select','1','1–2 years')">1–2 years</button>
+              <button type="button" class="modern-select-option" data-value="2" onclick="chooseModernSelect('cp-experience-select','2','2–3 years')">2–3 years</button>
+              <button type="button" class="modern-select-option" data-value="3" onclick="chooseModernSelect('cp-experience-select','3','3–5 years')">3–5 years</button>
+              <button type="button" class="modern-select-option" data-value="5" onclick="chooseModernSelect('cp-experience-select','5','5+ years')">5+ years</button>
+            </div>
+          </div>
         </div>
 
         <div class="field">
@@ -4561,14 +4974,20 @@
         </div>
 
         <div class="field">
-          <label for="cp-work-mode">Work preference</label>
-          <select id="cp-work-mode" class="input">
-            <option value="">Select</option>
-            <option value="Any">Any</option>
-            <option value="On-site">On-site</option>
-            <option value="Hybrid">Hybrid</option>
-            <option value="Remote">Remote</option>
-          </select>
+          <label>Work preference</label>
+          <div class="modern-select" id="cp-work-mode-select">
+            <button type="button" class="modern-select-button" onclick="toggleModernSelect('cp-work-mode-select')">
+              <span id="cp-work-mode-label">Select</span><span class="select-chevron">⌄</span>
+            </button>
+            <input type="hidden" id="cp-work-mode" value="" />
+            <div class="modern-select-menu">
+              <button type="button" class="modern-select-option" data-value="" onclick="chooseModernSelect('cp-work-mode-select','', 'Select')">Select</button>
+              <button type="button" class="modern-select-option" data-value="Any" onclick="chooseModernSelect('cp-work-mode-select','Any','Any')">Any</button>
+              <button type="button" class="modern-select-option" data-value="On-site" onclick="chooseModernSelect('cp-work-mode-select','On-site','On-site')">On-site</button>
+              <button type="button" class="modern-select-option" data-value="Hybrid" onclick="chooseModernSelect('cp-work-mode-select','Hybrid','Hybrid')">Hybrid</button>
+              <button type="button" class="modern-select-option" data-value="Remote" onclick="chooseModernSelect('cp-work-mode-select','Remote','Remote')">Remote</button>
+            </div>
+          </div>
         </div>
 
         <div class="field">
@@ -4664,6 +5083,28 @@
 
 
   <!-- =====================================================
+       SETTINGS MODAL
+  ====================================================== -->
+
+  <div id="settings-modal" class="modal-overlay" onclick="if(event.target===this) closeModal('settings-modal')">
+    <div class="modal settings-panel">
+      <div class="modal-header">
+        <h3 class="modal-title">Settings</h3>
+        <button type="button" class="icon-btn" onclick="closeModal('settings-modal')">✕</button>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-copy">
+          <strong>Appearance</strong>
+          <span>Switch between dark and light mode</span>
+        </div>
+        <button id="theme-toggle" class="theme-toggle" type="button" role="switch" aria-checked="false" aria-label="Toggle theme" onclick="toggleTheme()">
+          <span id="theme-toggle-thumb" class="theme-toggle-thumb">☾</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================
        PROFILE SHEET
   ====================================================== -->
 
@@ -4749,7 +5190,7 @@
       <div
         class="profile-row"
         style="cursor:pointer;"
-        onclick="showComingSoon('Account settings')"
+        onclick="openSettings()"
       >
         <span aria-hidden="true">⚙</span>
         <span>Account settings</span>
@@ -4795,6 +5236,13 @@
 
   <script>
 
+
+    applyInitialThemeFromDevice();
+
+    function applyInitialThemeFromDevice() {
+      const stored = localStorage.getItem('glueful_theme') || 'dark';
+      document.documentElement.dataset.theme = stored === 'light' ? 'light' : 'dark';
+    }
 
     /* =====================================================
        STATUS
@@ -10003,7 +10451,9 @@
       institution:"",
       linkedin:"",
       github:"",
-      portfolio:""
+      portfolio:"",
+      resumeSource:"",
+      resumeImportedAt:""
     };
 
     function normalizeCandidateProfile(profile) {
@@ -10070,6 +10520,9 @@
             normalized[key];
         }
       });
+
+      setModernSelect('cp-experience-select', normalized.experience);
+      setModernSelect('cp-work-mode-select', normalized.workMode);
     }
 
     async function loadCandidateProfile() {
@@ -10205,7 +10658,11 @@
 
         metadata[
           GLUEFUL_CANDIDATE_PROFILE_META_KEY
-        ] = profile;
+        ] = {
+          ...profile,
+          resumeSource: candidateResumeFile?.name || profile.resumeSource || '',
+          resumeImportedAt: candidateResumeFile ? new Date().toISOString() : (profile.resumeImportedAt || '')
+        };
 
         const {
           error:updateError
@@ -10283,6 +10740,8 @@
       ).textContent =
         data?.user?.email ||
         "Signed in user";
+
+      await loadThemePreference(data?.user);
 
 
       document.getElementById(
@@ -10764,6 +11223,7 @@
             data.session
           );
 
+          await loadThemePreference(data.session.user);
           await showMainApp(
             data.session
           );
@@ -11267,6 +11727,7 @@
             session
           );
 
+          loadThemePreference(session.user);
           showMainApp(
             session
           );
