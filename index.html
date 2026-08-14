@@ -2551,6 +2551,78 @@
     }
 
 
+
+    /* =====================================================
+       CANDIDATE PROFILE
+    ====================================================== */
+
+    .candidate-profile-modal {
+      max-width:560px;
+    }
+
+    .candidate-profile-intro {
+      color:var(--text-mute);
+      font-size:11px;
+      line-height:1.55;
+      margin:-.35rem 0 1rem;
+    }
+
+    .candidate-profile-grid {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+
+    .candidate-profile-grid .full {
+      grid-column:1 / -1;
+    }
+
+    .candidate-profile-section {
+      margin-top:1rem;
+      margin-bottom:.55rem;
+      font-family:'JetBrains Mono',monospace;
+      font-size:9px;
+      text-transform:uppercase;
+      letter-spacing:.07em;
+      color:var(--text-faint);
+    }
+
+    .candidate-profile-hint {
+      margin-top:4px;
+      color:var(--text-faint);
+      font-size:9px;
+      line-height:1.4;
+    }
+
+    .candidate-profile-saved {
+      display:none;
+      margin-top:10px;
+      padding:9px 10px;
+      border-radius:9px;
+      border:1px solid rgba(79,209,197,.25);
+      background:rgba(15,42,40,.35);
+      color:#62DDB4;
+      font-size:10px;
+    }
+
+    .candidate-profile-saved.show {
+      display:block;
+    }
+
+    @media(max-width:600px) {
+      .candidate-profile-grid {
+        grid-template-columns:1fr;
+      }
+
+      .candidate-profile-grid .full {
+        grid-column:auto;
+      }
+
+      .candidate-profile-modal {
+        max-height:90vh;
+      }
+    }
+
     /* =====================================================
        PROFILE SHEET
     ====================================================== */
@@ -4404,6 +4476,194 @@
 
 
   <!-- =====================================================
+       CANDIDATE PROFILE
+  ====================================================== -->
+
+  <div
+    id="candidate-profile-modal"
+    class="modal-overlay"
+    onclick="if(event.target===this) closeCandidateProfile()"
+  >
+    <form
+      class="modal candidate-profile-modal"
+      onsubmit="saveCandidateProfile(event)"
+    >
+
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title">Candidate Profile</h3>
+          <div class="view-subtitle">
+            Build your career profile once. Glueful will use it for job recommendations later.
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="icon-btn"
+          onclick="closeCandidateProfile()"
+          aria-label="Close"
+        >
+          <span aria-hidden="true">×</span>
+        </button>
+      </div>
+
+      <p class="candidate-profile-intro">
+        Keep this information up to date. Your profile will become the foundation
+        for personalized job recommendations and match scores.
+      </p>
+
+      <div class="candidate-profile-section">Identity</div>
+
+      <div class="candidate-profile-grid">
+
+        <div class="field">
+          <label for="cp-name">Full name</label>
+          <input id="cp-name" class="input" autocomplete="name" placeholder="Your full name" />
+        </div>
+
+        <div class="field">
+          <label for="cp-headline">Professional headline</label>
+          <input id="cp-headline" class="input" placeholder="Embedded / SoC Validation Engineer" />
+        </div>
+
+        <div class="field full">
+          <label for="cp-about">About</label>
+          <textarea id="cp-about" class="input" rows="3" placeholder="A short professional introduction"></textarea>
+        </div>
+
+      </div>
+
+      <div class="candidate-profile-section">Career Preferences</div>
+
+      <div class="candidate-profile-grid">
+
+        <div class="field">
+          <label for="cp-target-role">Target role</label>
+          <input id="cp-target-role" class="input" placeholder="SoC Validation Engineer" />
+        </div>
+
+        <div class="field">
+          <label for="cp-experience">Experience</label>
+          <select id="cp-experience" class="input">
+            <option value="">Select</option>
+            <option value="0">0–1 years</option>
+            <option value="1">1–2 years</option>
+            <option value="2">2–3 years</option>
+            <option value="3">3–5 years</option>
+            <option value="5">5+ years</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="cp-locations">Preferred locations</label>
+          <input id="cp-locations" class="input" placeholder="Hyderabad, Bengaluru, Pune" />
+          <div class="candidate-profile-hint">Separate multiple locations with commas.</div>
+        </div>
+
+        <div class="field">
+          <label for="cp-work-mode">Work preference</label>
+          <select id="cp-work-mode" class="input">
+            <option value="">Select</option>
+            <option value="Any">Any</option>
+            <option value="On-site">On-site</option>
+            <option value="Hybrid">Hybrid</option>
+            <option value="Remote">Remote</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="cp-salary">Expected salary</label>
+          <input id="cp-salary" class="input" placeholder="e.g. ₹12–15 LPA" />
+        </div>
+
+        <div class="field">
+          <label for="cp-notice">Notice period</label>
+          <input id="cp-notice" class="input" placeholder="e.g. 30 days" />
+        </div>
+
+      </div>
+
+      <div class="candidate-profile-section">Skills</div>
+
+      <div class="field">
+        <label for="cp-skills">Skills & technologies</label>
+        <textarea
+          id="cp-skills"
+          class="input"
+          rows="3"
+          placeholder="Embedded C, Python, ARM, SoC Validation, I2C, SPI, UART, Linux"
+        ></textarea>
+        <div class="candidate-profile-hint">Separate skills with commas. These will later drive job matching.</div>
+      </div>
+
+      <div class="candidate-profile-section">Education</div>
+
+      <div class="candidate-profile-grid">
+
+        <div class="field">
+          <label for="cp-degree">Highest degree</label>
+          <input id="cp-degree" class="input" placeholder="M.Tech / B.Tech / M.S." />
+        </div>
+
+        <div class="field">
+          <label for="cp-field">Field of study</label>
+          <input id="cp-field" class="input" placeholder="ECE / CSE / Computer Engineering" />
+        </div>
+
+        <div class="field full">
+          <label for="cp-institution">Institution</label>
+          <input id="cp-institution" class="input" placeholder="University / College" />
+        </div>
+
+      </div>
+
+      <div class="candidate-profile-section">Links</div>
+
+      <div class="candidate-profile-grid">
+
+        <div class="field">
+          <label for="cp-linkedin">LinkedIn</label>
+          <input id="cp-linkedin" class="input" type="url" placeholder="https://linkedin.com/in/..." />
+        </div>
+
+        <div class="field">
+          <label for="cp-github">GitHub</label>
+          <input id="cp-github" class="input" type="url" placeholder="https://github.com/..." />
+        </div>
+
+        <div class="field full">
+          <label for="cp-portfolio">Portfolio</label>
+          <input id="cp-portfolio" class="input" type="url" placeholder="https://yourportfolio.com" />
+        </div>
+
+      </div>
+
+      <div id="candidate-profile-saved" class="candidate-profile-saved">
+        Profile saved to your Glueful account.
+      </div>
+
+      <div class="modal-actions">
+        <button
+          type="button"
+          class="secondary-btn"
+          onclick="closeCandidateProfile()"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="submit"
+          class="primary-btn"
+        >
+          Save profile
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+
+  <!-- =====================================================
        PROFILE SHEET
   ====================================================== -->
 
@@ -4475,9 +4735,23 @@
       <div
         class="profile-row"
         style="cursor:pointer;"
+        onclick="openCandidateProfile()"
+      >
+        <span aria-hidden="true">◎</span>
+        <span>
+          <strong style="font-size:12px;">Candidate Profile</strong>
+          <span style="display:block;color:var(--text-faint);font-size:9px;margin-top:2px;">
+            Personalize your future job recommendations
+          </span>
+        </span>
+      </div>
+
+      <div
+        class="profile-row"
+        style="cursor:pointer;"
         onclick="showComingSoon('Account settings')"
       >
-        ⚙️
+        <span aria-hidden="true">⚙</span>
         <span>Account settings</span>
       </div>
 
@@ -9705,6 +9979,291 @@
 
     }
 
+
+    /* =====================================================
+       CANDIDATE PROFILE
+    ====================================================== */
+
+    const GLUEFUL_CANDIDATE_PROFILE_META_KEY =
+      "glueful_candidate_profile";
+
+    const candidateProfileDefaults = {
+      name:"",
+      headline:"",
+      about:"",
+      targetRole:"",
+      experience:"",
+      locations:"",
+      workMode:"",
+      salary:"",
+      notice:"",
+      skills:"",
+      degree:"",
+      field:"",
+      institution:"",
+      linkedin:"",
+      github:"",
+      portfolio:""
+    };
+
+    function normalizeCandidateProfile(profile) {
+      const source =
+        profile && typeof profile === "object"
+          ? profile
+          : {};
+
+      return {
+        ...candidateProfileDefaults,
+        ...Object.fromEntries(
+          Object.keys(candidateProfileDefaults).map(
+            key => [
+              key,
+              String(source[key] ?? "").trim()
+            ]
+          )
+        )
+      };
+    }
+
+    function getCandidateProfileFromUser(user) {
+      return normalizeCandidateProfile(
+        user?.user_metadata?.[
+          GLUEFUL_CANDIDATE_PROFILE_META_KEY
+        ]
+      );
+    }
+
+    function candidateProfileFieldMap() {
+      return {
+        name:"cp-name",
+        headline:"cp-headline",
+        about:"cp-about",
+        targetRole:"cp-target-role",
+        experience:"cp-experience",
+        locations:"cp-locations",
+        workMode:"cp-work-mode",
+        salary:"cp-salary",
+        notice:"cp-notice",
+        skills:"cp-skills",
+        degree:"cp-degree",
+        field:"cp-field",
+        institution:"cp-institution",
+        linkedin:"cp-linkedin",
+        github:"cp-github",
+        portfolio:"cp-portfolio"
+      };
+    }
+
+    function fillCandidateProfile(profile) {
+      const normalized =
+        normalizeCandidateProfile(profile);
+
+      const map =
+        candidateProfileFieldMap();
+
+      Object.keys(map).forEach(key => {
+        const input =
+          document.getElementById(map[key]);
+
+        if(input) {
+          input.value =
+            normalized[key];
+        }
+      });
+    }
+
+    async function loadCandidateProfile() {
+      const {
+        data,
+        error
+      } =
+        await supabaseClient.auth.getUser();
+
+      if(error) {
+        throw error;
+      }
+
+      return getCandidateProfileFromUser(
+        data?.user
+      );
+    }
+
+    async function openCandidateProfile() {
+      closeProfile();
+
+      try {
+        const profile =
+          await loadCandidateProfile();
+
+        fillCandidateProfile(profile);
+
+        const saved =
+          document.getElementById(
+            "candidate-profile-saved"
+          );
+
+        if(saved) {
+          saved.classList.remove("show");
+        }
+
+        openModal(
+          "candidate-profile-modal"
+        );
+
+      } catch(error) {
+        console.error(
+          "Candidate profile load failed:",
+          error
+        );
+
+        showError(
+          "Couldn't load your candidate profile. Please try again."
+        );
+      }
+    }
+
+    function closeCandidateProfile() {
+      closeModal(
+        "candidate-profile-modal"
+      );
+    }
+
+    function collectCandidateProfile() {
+      const map =
+        candidateProfileFieldMap();
+
+      const profile = {};
+
+      Object.keys(map).forEach(key => {
+        const input =
+          document.getElementById(map[key]);
+
+        profile[key] =
+          String(input?.value || "").trim();
+      });
+
+      return normalizeCandidateProfile(
+        profile
+      );
+    }
+
+    async function saveCandidateProfile(event) {
+      event.preventDefault();
+
+      const profile =
+        collectCandidateProfile();
+
+      if(!profile.name) {
+        const input =
+          document.getElementById("cp-name");
+
+        input?.focus();
+
+        showError(
+          "Please enter your full name."
+        );
+
+        return;
+      }
+
+      const button =
+        event.submitter ||
+        document.querySelector(
+          "#candidate-profile-modal button[type='submit']"
+        );
+
+      const originalText =
+        button?.textContent ||
+        "Save profile";
+
+      if(button) {
+        button.disabled = true;
+        button.textContent =
+          "Saving...";
+      }
+
+      try {
+        const {
+          data,
+          error
+        } =
+          await supabaseClient.auth.getUser();
+
+        if(error) {
+          throw error;
+        }
+
+        if(!data?.user) {
+          throw new Error(
+            "No authenticated user."
+          );
+        }
+
+        const metadata = {
+          ...(data.user.user_metadata || {})
+        };
+
+        metadata[
+          GLUEFUL_CANDIDATE_PROFILE_META_KEY
+        ] = profile;
+
+        const {
+          error:updateError
+        } =
+          await supabaseClient.auth.updateUser({
+            data:metadata
+          });
+
+        if(updateError) {
+          throw updateError;
+        }
+
+        const saved =
+          document.getElementById(
+            "candidate-profile-saved"
+          );
+
+        if(saved) {
+          saved.textContent =
+            "Profile saved to your Glueful account.";
+          saved.classList.add("show");
+        }
+
+        // Keep the account's local copy ready for the next screen.
+        window.gluefulCandidateProfile =
+          profile;
+
+        if(button) {
+          button.textContent =
+            "Saved ✓";
+        }
+
+        setTimeout(() => {
+          closeCandidateProfile();
+          if(button) {
+            button.disabled = false;
+            button.textContent =
+              originalText;
+          }
+        }, 450);
+
+      } catch(error) {
+        console.error(
+          "Candidate profile save failed:",
+          error
+        );
+
+        showError(
+          "Couldn't save your profile. Please try again."
+        );
+
+        if(button) {
+          button.disabled = false;
+          button.textContent =
+            originalText;
+        }
+      }
+    }
 
     /* =====================================================
        PROFILE
