@@ -2230,9 +2230,8 @@
     /* Two-item bottom navigation after Jobs launch */
     .bottom-nav .nav-btn[data-view="dashboard"],
     .bottom-nav .nav-btn[data-view="jobs"]{min-width:90px}
-
     /* =====================================================
-       GLUEFUL LOADING SCREEN — MOVING STARS
+       GLUEFUL LOADING SCREEN — VISIBLE PASSING STARS
     ====================================================== */
     #loading-screen{
       position:fixed;
@@ -2240,48 +2239,73 @@
       z-index:99999;
       overflow:hidden;
       background:
-        radial-gradient(circle at 50% 46%, rgba(109,59,232,.16), transparent 30%),
-        radial-gradient(circle at 25% 70%, rgba(48,194,214,.08), transparent 26%),
-        #05070d;
+        radial-gradient(circle at 50% 45%, rgba(103,63,255,.22), transparent 30%),
+        radial-gradient(circle at 50% 50%, rgba(20,150,220,.08), transparent 48%),
+        #04060d;
     }
     #loading-screen .loading-stars{
       position:absolute;
       inset:0;
+      z-index:1;
       pointer-events:none;
       overflow:hidden;
     }
-    #loading-screen .loading-stars::before,
+    #loading-screen .loading-stars::before{
+      content:"";
+      position:absolute;
+      inset:-30%;
+      background-image:
+        radial-gradient(circle, rgba(255,255,255,.95) 0 1.4px, transparent 2px),
+        radial-gradient(circle, rgba(190,160,255,.9) 0 1.2px, transparent 2px),
+        radial-gradient(circle, rgba(80,225,255,.85) 0 1.2px, transparent 2px);
+      background-size:71px 83px, 113px 127px, 167px 151px;
+      background-position:12px 19px, 31px 67px, 91px 41px;
+      animation: gluefulStarTravel 5.5s linear infinite;
+      opacity:.92;
+    }
     #loading-screen .loading-stars::after{
       content:"";
       position:absolute;
-      inset:-20%;
-      background-image:
-        radial-gradient(circle, rgba(255,255,255,.95) 0 1px, transparent 1.7px),
-        radial-gradient(circle, rgba(157,132,255,.75) 0 1px, transparent 1.8px),
-        radial-gradient(circle, rgba(91,220,229,.72) 0 1px, transparent 1.7px);
-      background-size:83px 91px, 137px 149px, 181px 173px;
-      background-position:10px 20px, 45px 5px, 80px 65px;
-      animation: gluefulStarsDrift 13s linear infinite;
-      opacity:.72;
+      inset:-10%;
+      background:
+        radial-gradient(ellipse at 15% 30%, rgba(255,255,255,.95) 0 1px, transparent 2px),
+        radial-gradient(ellipse at 67% 18%, rgba(150,220,255,.95) 0 1px, transparent 2px),
+        radial-gradient(ellipse at 38% 72%, rgba(210,150,255,.95) 0 1px, transparent 2px),
+        radial-gradient(ellipse at 84% 67%, rgba(255,255,255,.9) 0 1px, transparent 2px);
+      background-size:220px 180px, 310px 240px, 260px 210px, 370px 290px;
+      animation: gluefulStarTravelReverse 8s linear infinite;
+      opacity:.78;
+      filter:blur(.15px);
     }
-    #loading-screen .loading-stars::after{
-      transform:scale(1.35);
-      opacity:.38;
-      filter:blur(.35px);
-      animation-duration:21s;
-      animation-direction:reverse;
+    /* Additional streak layer makes the movement obvious on both mobile and desktop. */
+    #loading-screen .loading-stars{
+      background:
+        linear-gradient(112deg, transparent 0 46%, rgba(255,255,255,.55) 46.2%, transparent 46.5%) 0 0/310px 210px,
+        linear-gradient(112deg, transparent 0 52%, rgba(110,220,255,.45) 52.2%, transparent 52.6%) 90px 70px/430px 300px,
+        linear-gradient(112deg, transparent 0 38%, rgba(195,130,255,.42) 38.2%, transparent 38.6%) 160px 20px/520px 350px;
+      animation: gluefulStreaks 4.2s linear infinite;
     }
     #loading-screen .loading-content{
       position:relative;
-      z-index:2;
+      z-index:3;
     }
-    @keyframes gluefulStarsDrift{
-      from{transform:translate3d(0,0,0) rotate(0deg)}
-      to{transform:translate3d(-90px,70px,0) rotate(.5deg)}
+    @keyframes gluefulStarTravel{
+      from{transform:translate3d(0,-35px,0) scale(1)}
+      to{transform:translate3d(-180px,180px,0) scale(1.08)}
+    }
+    @keyframes gluefulStarTravelReverse{
+      from{transform:translate3d(120px,80px,0)}
+      to{transform:translate3d(-220px,-150px,0)}
+    }
+    @keyframes gluefulStreaks{
+      from{background-position:0 0,90px 70px,160px 20px}
+      to{background-position:-620px 420px,-520px 520px,-760px 620px}
     }
     @media (prefers-reduced-motion:reduce){
       #loading-screen .loading-stars::before,
-      #loading-screen .loading-stars::after{animation:none}
+      #loading-screen .loading-stars::after,
+      #loading-screen .loading-stars{animation:none}
+    }
     }
 
     /* =====================================================
@@ -6514,6 +6538,15 @@
         </article>`;
     }
 
+
+    function closeJobsPanels(){
+      document.querySelectorAll(".job-details-modal,.jobs-filter-sheet,.jobs-filter-overlay").forEach(el=>{
+        el.classList.remove("open","active");
+        el.setAttribute("aria-hidden","true");
+      });
+      document.body.classList.remove("modal-open");
+    }
+
     function handleJobCardClick(event,id){
       if(event.target.closest("button,a,input,select,textarea")) return;
       gluefulExpandedJobId = gluefulExpandedJobId === id ? null : id;
@@ -6652,7 +6685,16 @@
       renderJobs();
     });
 
-    document.addEventListener("click", (event)=>{
+    
+    document.addEventListener("click",(event)=>{
+      const dashboardBtn = event.target.closest('.nav-btn[data-view="dashboard"]');
+      if(dashboardBtn){
+        event.preventDefault();
+        event.stopPropagation();
+        switchView("dashboard");
+      }
+    });
+document.addEventListener("click", (event)=>{
       const jobsBtn = event.target.closest('.nav-btn[data-view="jobs"]');
       if(jobsBtn){
         event.preventDefault();
@@ -13391,7 +13433,24 @@
 
     }
 
-  </script>
+  
+    /* gluefulDashboardBackFix — view navigation fallback */
+    window.addEventListener("popstate", ()=>{
+      const dashboardView = document.getElementById("dashboard-view");
+      const jobsView = document.getElementById("jobs-view");
+      if(currentView === "dashboard"){
+        if(dashboardView){
+          dashboardView.hidden = false;
+          dashboardView.style.display = "block";
+        }
+        if(jobsView) jobsView.style.display = "none";
+        document.querySelectorAll(".nav-btn").forEach(btn=>{
+          btn.classList.toggle("active", btn.dataset.view === "dashboard");
+        });
+      }
+    });
+
+</script>
 
 </body>
 </html>
