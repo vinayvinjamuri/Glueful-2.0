@@ -513,16 +513,17 @@
 
 
     /* =====================================================
-       GLUEFUL SPLASH — SHOOTING STAR FIELD
-       Sparse individual shooting stars.
-       They cross the screen one at a time instead of creating
-       a continuous wall of diagonal streaks.
+       GLUEFUL SPLASH — PREMIUM DIAGONAL METEORS
+       Realistic sparse shooting-star motion:
+       corner-to-corner diagonal travel, bright head,
+       tapered fading tail and subtle glow.
     ====================================================== */
 
     #glueful-splash {
       isolation:isolate;
     }
 
+    /* Quiet deep-space background stars. */
     #glueful-splash::before {
       z-index:0;
       pointer-events:none;
@@ -530,17 +531,17 @@
       position:absolute;
       inset:0;
       background-image:
-        radial-gradient(circle at 8% 15%, rgba(255,255,255,.85) 0 1px, transparent 1.8px),
-        radial-gradient(circle at 19% 72%, rgba(120,210,255,.65) 0 1px, transparent 1.8px),
-        radial-gradient(circle at 31% 27%, rgba(205,150,255,.75) 0 1px, transparent 1.8px),
-        radial-gradient(circle at 43% 84%, rgba(255,255,255,.55) 0 1px, transparent 1.8px),
-        radial-gradient(circle at 57% 13%, rgba(100,225,255,.65) 0 1px, transparent 1.8px),
-        radial-gradient(circle at 69% 63%, rgba(255,255,255,.65) 0 1px, transparent 1.8px),
-        radial-gradient(circle at 82% 22%, rgba(205,150,255,.75) 0 1px, transparent 1.8px),
-        radial-gradient(circle at 93% 78%, rgba(100,220,255,.55) 0 1px, transparent 1.8px),
-        radial-gradient(circle at 74% 90%, rgba(255,255,255,.55) 0 1px, transparent 1.8px),
-        radial-gradient(circle at 12% 92%, rgba(190,150,255,.5) 0 1px, transparent 1.8px);
-      opacity:.72;
+        radial-gradient(circle at 8% 12%, rgba(255,255,255,.72) 0 1px, transparent 1.8px),
+        radial-gradient(circle at 18% 64%, rgba(255,255,255,.38) 0 1px, transparent 1.7px),
+        radial-gradient(circle at 29% 23%, rgba(190,165,255,.55) 0 1px, transparent 1.8px),
+        radial-gradient(circle at 41% 82%, rgba(255,255,255,.42) 0 1px, transparent 1.7px),
+        radial-gradient(circle at 54% 14%, rgba(130,220,255,.48) 0 1px, transparent 1.8px),
+        radial-gradient(circle at 67% 57%, rgba(255,255,255,.42) 0 1px, transparent 1.7px),
+        radial-gradient(circle at 79% 18%, rgba(205,170,255,.52) 0 1px, transparent 1.8px),
+        radial-gradient(circle at 91% 72%, rgba(255,255,255,.36) 0 1px, transparent 1.7px),
+        radial-gradient(circle at 73% 91%, rgba(130,220,255,.35) 0 1px, transparent 1.8px),
+        radial-gradient(circle at 13% 91%, rgba(205,170,255,.35) 0 1px, transparent 1.8px);
+      opacity:.68;
     }
 
     .glueful-splash-starfield {
@@ -551,67 +552,105 @@
       pointer-events:none;
     }
 
-    /* Each shooting star is created independently by JavaScript. */
+    /* The meteor is a tiny luminous head. Its tail is deliberately
+       short and tapered so it looks like a real fast-moving meteor,
+       not a large diagonal light beam. */
     .glueful-shooting-star {
       position:absolute;
-      left:var(--star-x);
-      top:var(--star-y);
-      width:var(--star-length);
-      height:2px;
-      border-radius:999px;
-      opacity:0;
-      transform-origin:right center;
-      transform:rotate(115deg) translate3d(0,0,0) scaleX(.08);
-      background:linear-gradient(
-        90deg,
-        transparent 0%,
-        rgba(255,255,255,.05) 12%,
-        var(--star-color) 72%,
-        rgba(255,255,255,1) 100%
-      );
-      box-shadow:
-        0 0 5px var(--star-color),
-        0 0 12px var(--star-color);
-      animation:gluefulShootingStar var(--star-duration) cubic-bezier(.2,.65,.3,1) forwards;
-      will-change:transform,opacity;
-    }
-
-    .glueful-shooting-star::after {
-      content:"";
-      position:absolute;
-      right:-2px;
-      top:50%;
+      left:0;
+      top:0;
       width:5px;
       height:5px;
       border-radius:50%;
-      transform:translateY(-50%);
       background:#fff;
+      opacity:0;
       box-shadow:
-        0 0 5px #fff,
-        0 0 12px var(--star-color),
+        0 0 4px rgba(255,255,255,.95),
+        0 0 10px var(--star-color),
         0 0 20px var(--star-color);
+      transform:translate3d(var(--star-start-x),var(--star-start-y),0);
+      animation:gluefulMeteorTravel var(--star-duration) cubic-bezier(.18,.62,.25,1) forwards;
+      will-change:transform,opacity;
     }
 
-    @keyframes gluefulShootingStar {
+    /* Tail points behind the meteor's direction of travel. */
+    .glueful-shooting-star::before {
+      content:"";
+      position:absolute;
+      width:var(--star-tail);
+      height:2px;
+      right:2px;
+      top:50%;
+      transform-origin:right center;
+      transform:translateY(-50%) rotate(var(--star-angle));
+      border-radius:999px;
+      background:linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255,255,255,.04) 8%,
+        color-mix(in srgb, var(--star-color) 38%, transparent) 35%,
+        var(--star-color) 76%,
+        rgba(255,255,255,.96) 100%
+      );
+      filter:blur(.25px);
+      opacity:.92;
+    }
+
+    /* Tiny hot core at the leading edge. */
+    .glueful-shooting-star::after {
+      content:"";
+      position:absolute;
+      width:3px;
+      height:3px;
+      right:0;
+      top:1px;
+      border-radius:50%;
+      background:#fff;
+      box-shadow:
+        0 0 4px #fff,
+        0 0 8px var(--star-color);
+    }
+
+    @keyframes gluefulMeteorTravel {
       0% {
         opacity:0;
-        transform:rotate(115deg) translate3d(-20px,-20px,0) scaleX(.04);
+        transform:translate3d(var(--star-start-x),var(--star-start-y),0) scale(.45);
       }
-      8% {
-        opacity:.95;
-        transform:rotate(115deg) translate3d(0,0,0) scaleX(.35);
+      5% {
+        opacity:.96;
+        transform:translate3d(
+          calc(var(--star-start-x) + 4vw),
+          calc(var(--star-start-y) + 3.5vh),
+          0
+        ) scale(.85);
       }
-      20% {
+      13% {
         opacity:1;
-        transform:rotate(115deg) translate3d(65px,65px,0) scaleX(1);
+        transform:translate3d(
+          calc(var(--star-start-x) + 12vw),
+          calc(var(--star-start-y) + 10vh),
+          0
+        ) scale(1);
       }
       72% {
-        opacity:.9;
-        transform:rotate(115deg) translate3d(420px,420px,0) scaleX(1);
+        opacity:.96;
+        transform:translate3d(
+          calc(var(--star-end-x) - 10vw),
+          calc(var(--star-end-y) - 9vh),
+          0
+        ) scale(1);
+      }
+      91% {
+        opacity:.55;
+        transform:translate3d(
+          calc(var(--star-end-x) - 2vw),
+          calc(var(--star-end-y) - 2vh),
+          0
+        ) scale(.88);
       }
       100% {
         opacity:0;
-        transform:rotate(115deg) translate3d(620px,620px,0) scaleX(.72);
+        transform:translate3d(var(--star-end-x),var(--star-end-y),0) scale(.55);
       }
     }
 
@@ -621,30 +660,17 @@
 
     @media (max-width:600px) {
       .glueful-shooting-star {
-        width:var(--star-length-mobile,120px);
+        width:4px;
+        height:4px;
       }
 
-      @keyframes gluefulShootingStar {
-        0% {
-          opacity:0;
-          transform:rotate(115deg) translate3d(-14px,-14px,0) scaleX(.04);
-        }
-        8% {
-          opacity:.95;
-          transform:rotate(115deg) translate3d(0,0,0) scaleX(.35);
-        }
-        20% {
-          opacity:1;
-          transform:rotate(115deg) translate3d(45px,45px,0) scaleX(1);
-        }
-        72% {
-          opacity:.9;
-          transform:rotate(115deg) translate3d(300px,300px,0) scaleX(1);
-        }
-        100% {
-          opacity:0;
-          transform:rotate(115deg) translate3d(450px,450px,0) scaleX(.72);
-        }
+      .glueful-shooting-star::before {
+        height:1.5px;
+      }
+
+      .glueful-shooting-star::after {
+        width:2.5px;
+        height:2.5px;
       }
     }
 
@@ -3530,11 +3556,13 @@
   <script>
     /*
      * =====================================================
-     * GLUEFUL SPLASH — INDIVIDUAL SHOOTING STARS
+     * GLUEFUL SPLASH — PREMIUM CORNER-TO-CORNER METEORS
      *
-     * Stars are deliberately sparse. A new star is spawned
-     * after a short random pause, crosses the screen quickly,
-     * then disappears. This avoids the "space rain" look.
+     * The meteors do not wander randomly through the screen.
+     * Each one is given a clean diagonal trajectory that starts
+     * outside one corner and exits through the opposite side.
+     * This creates the natural "meteor crossing the night sky"
+     * look rather than a wall of streaks.
      * =====================================================
      */
     (function initGluefulShootingStars() {
@@ -3546,7 +3574,7 @@
 
       if (reduceMotion) return;
 
-      const colors = ["#FFFFFF", "#B58CFF", "#72DFFF", "#D9B8FF"];
+      const colors = ["#FFFFFF", "#B9A0FF", "#83E4FF", "#D8C7FF"];
       let spawnTimer = null;
       let stopped = false;
 
@@ -3560,25 +3588,62 @@
         const star = document.createElement("span");
         star.className = "glueful-shooting-star";
 
-        const isMobile = window.innerWidth <= 600;
-        const x = random(-5, 88);
-        const y = random(4, 70);
-        const length = isMobile ? random(82, 125) : random(105, 175);
-        const duration = random(1.25, 2.05);
-        const color = colors[Math.floor(Math.random() * colors.length)];
+        /*
+         * Three premium trajectories:
+         * 1. top-left -> bottom-right
+         * 2. top-right -> bottom-left
+         * 3. slightly offset upper-edge -> opposite lower-edge
+         *
+         * The majority use the classic top-right -> bottom-left
+         * direction because that reads most naturally as a meteor.
+         */
+        const routes = [
+          {
+            startX: random(-18, 8) + "vw",
+            startY: random(-18, 8) + "vh",
+            endX: random(78, 118) + "vw",
+            endY: random(78, 118) + "vh",
+            angle: "35deg"
+          },
+          {
+            startX: random(78, 118) + "vw",
+            startY: random(-18, 18) + "vh",
+            endX: random(-18, 18) + "vw",
+            endY: random(78, 118) + "vh",
+            angle: "145deg"
+          },
+          {
+            startX: random(35, 105) + "vw",
+            startY: random(-18, 5) + "vh",
+            endX: random(-15, 55) + "vw",
+            endY: random(82, 118) + "vh",
+            angle: "145deg"
+          }
+        ];
 
-        star.style.setProperty("--star-x", x + "%");
-        star.style.setProperty("--star-y", y + "%");
-        star.style.setProperty("--star-length", length + "px");
-        star.style.setProperty("--star-length-mobile", Math.min(length, 125) + "px");
-        star.style.setProperty("--star-color", color);
-        star.style.setProperty("--star-duration", duration + "s");
+        const route = routes[Math.floor(Math.random() * routes.length)];
+        const length = window.innerWidth <= 600
+          ? random(75, 115)
+          : random(95, 145);
+
+        star.style.setProperty("--star-start-x", route.startX);
+        star.style.setProperty("--star-start-y", route.startY);
+        star.style.setProperty("--star-end-x", route.endX);
+        star.style.setProperty("--star-end-y", route.endY);
+        star.style.setProperty("--star-angle", route.angle);
+        star.style.setProperty("--star-tail", length + "px");
+        star.style.setProperty(
+          "--star-color",
+          colors[Math.floor(Math.random() * colors.length)]
+        );
+        star.style.setProperty(
+          "--star-duration",
+          random(1.35, 2.25) + "s"
+        );
 
         field.appendChild(star);
 
-        window.setTimeout(() => {
-          star.remove();
-        }, (duration + .2) * 1000);
+        window.setTimeout(() => star.remove(), 2600);
       }
 
       function scheduleNextStar() {
@@ -3587,11 +3652,14 @@
         spawnTimer = window.setTimeout(() => {
           spawnShootingStar();
           scheduleNextStar();
-        }, random(850, 1900));
+        }, random(950, 2200));
       }
 
-      // Let the first two seeded stars establish the effect,
-      // then continue with independently timed stars.
+      /*
+       * One initial meteor after the splash appears, then the
+       * animation becomes sparse and organic.
+       */
+      window.setTimeout(spawnShootingStar, 650);
       scheduleNextStar();
 
       const splash = document.getElementById("glueful-splash");
@@ -3603,7 +3671,11 @@
             observer.disconnect();
           }
         });
-        observer.observe(splash, { attributes:true, attributeFilter:["class"] });
+
+        observer.observe(splash, {
+          attributes:true,
+          attributeFilter:["class"]
+        });
       }
     })();
   </script>
