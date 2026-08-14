@@ -270,10 +270,23 @@
     background: #070A10;
     color-scheme: dark;
   }
+  html[data-theme="light"], html[data-theme="light"] body {
+    background:#F5F7FB;
+    color-scheme:light;
+  }
   body {
     min-height: 100vh;
   }
 </style>
+
+<script>
+  (function(){
+    try {
+      var storedTheme = localStorage.getItem('glueful_theme');
+      if(storedTheme === 'light') document.documentElement.dataset.theme = 'light';
+    } catch(e) {}
+  })();
+</script>
 
   <meta
     name="apple-mobile-web-app-capable"
@@ -3063,6 +3076,114 @@
     .drawer-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 2px 18px}.drawer-brand{display:flex;align-items:center;gap:10px}.drawer-brand-mark{width:38px;height:38px;border-radius:11px;background:var(--grad);display:flex;align-items:center;justify-content:center}.drawer-brand-mark svg{width:21px;height:21px}.drawer-brand-name{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700}.drawer-close{width:36px;height:36px;border-radius:10px;background:#171D27;border:1px solid var(--border);color:var(--text-dim);display:flex;align-items:center;justify-content:center}
     .drawer-section-label{padding:8px 10px 6px;color:var(--text-faint);font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.08em}.drawer-nav{display:flex;flex-direction:column;gap:4px}.drawer-item{width:100%;min-height:48px;padding:8px 10px;border-radius:11px;background:transparent;color:var(--text-dim);display:flex;align-items:center;gap:12px;text-align:left;font-size:13px;font-weight:600}.drawer-item:hover{background:#171D27;color:white}.drawer-item.active{background:linear-gradient(90deg,rgba(139,47,224,.18),rgba(47,111,255,.10));color:#C3AEFF;border:1px solid rgba(139,111,255,.18)}.drawer-item-icon{width:34px;height:34px;border-radius:9px;background:#171D27;border:1px solid var(--border);color:#A98BFF;display:flex;align-items:center;justify-content:center;flex:0 0 34px}.drawer-item-copy{min-width:0;flex:1}.drawer-item-title{display:block;color:inherit}.drawer-item-subtitle{display:block;margin-top:3px;color:var(--text-faint);font-size:10px;font-weight:500}.drawer-item-chevron{color:var(--text-faint);font-size:18px}.drawer-divider{height:1px;background:var(--border-soft);margin:12px 8px}.premium-svg-icon{width:18px;height:18px;display:block;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.placement-status{margin:10px 2px 0;padding:11px 12px;border-radius:11px;border:1px solid var(--border);background:#0E131B;color:var(--text-mute);font-size:10px;line-height:1.45}.placement-status.has-link{border-color:rgba(79,209,197,.28);background:rgba(15,42,40,.34)}.placement-modal-note{color:var(--text-mute);font-size:11px;line-height:1.55;margin:-.35rem 0 1rem}.placement-url-preview{display:none;margin-top:7px;color:var(--text-faint);font-size:9px;word-break:break-all}.placement-url-preview.show{display:block}
     @media(max-width:700px){.header-left-group{gap:8px}.menu-button{width:38px;height:38px;flex-basis:38px}}
+
+
+    /* =====================================================
+       RESUME PREVIEW + SKILL PRESENTATION
+       Added for the resume-first candidate profile flow.
+    ====================================================== */
+    .resume-import-primary-actions{display:grid;grid-template-columns:auto auto;gap:8px;min-width:0}
+    .resume-view-btn:disabled{opacity:.42;cursor:not-allowed}
+    .skills-preview{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+    .skill-chip{display:inline-flex;align-items:center;min-height:28px;padding:5px 9px;border-radius:999px;border:1px solid rgba(139,111,240,.28);background:rgba(139,47,224,.08);color:var(--text-dim);font-size:10px;font-weight:600;line-height:1.2}
+    .resume-viewer-overlay{z-index:150}
+    .resume-viewer-modal{width:min(900px,96vw);max-width:900px;height:min(88vh,900px);display:flex;flex-direction:column}
+    .resume-viewer-body{flex:1;min-height:0;border:1px solid var(--border);border-radius:14px;background:var(--card2);overflow:auto}
+    .resume-viewer-body iframe{width:100%;height:100%;min-height:60vh;border:0;display:block;background:#fff}
+    .resume-text-preview{margin:0;padding:18px;white-space:pre-wrap;word-break:break-word;color:var(--text-dim);font:12px/1.65 'Inter',sans-serif}
+    .resume-docx-preview{padding:22px;color:var(--text);font-size:13px;line-height:1.7}
+    .resume-docx-preview h1,.resume-docx-preview h2,.resume-docx-preview h3{color:var(--text);margin-top:1em}
+    .resume-docx-preview p{margin:.55em 0}
+
+    /* =====================================================
+       LIGHT MODE — COMPLETE SURFACE OVERRIDES
+       Keep the same premium visual language, but remove dark
+       surfaces from the light experience.
+    ====================================================== */
+    html[data-theme="light"] body{background:#F5F7FB !important;color:#172033 !important}
+    html[data-theme="light"] .card,
+    html[data-theme="light"] .heat-card,
+    html[data-theme="light"] .stat-card,
+    html[data-theme="light"] .application-card,
+    html[data-theme="light"] .resume-company-card,
+    html[data-theme="light"] .resume-filter-panel,
+    html[data-theme="light"] .modal,
+    html[data-theme="light"] .profile-panel,
+    html[data-theme="light"] .settings-panel,
+    html[data-theme="light"] .candidate-profile-modal{background:var(--card) !important;color:var(--text) !important;border-color:var(--border) !important}
+    html[data-theme="light"] .card .input,
+    html[data-theme="light"] .input,
+    html[data-theme="light"] .modern-select-button,
+    html[data-theme="light"] .modern-select-menu{background:#FFFFFF !important;color:#172033 !important;border-color:#D9DFE8 !important}
+    html[data-theme="light"] .secondary-btn,
+    html[data-theme="light"] .icon-btn,
+    html[data-theme="light"] .profile-button,
+    html[data-theme="light"] .activity-nav,
+    html[data-theme="light"] .nav-icon,
+    html[data-theme="light"] .menu-button,
+    html[data-theme="light"] .drawer-close,
+    html[data-theme="light"] .drawer-item-icon{background:#FFFFFF !important;color:#4B5870 !important;border-color:#D9DFE8 !important}
+    html[data-theme="light"] .secondary-btn:hover,
+    html[data-theme="light"] .icon-btn:hover,
+    html[data-theme="light"] .profile-button:hover,
+    html[data-theme="light"] .activity-nav:hover:not(:disabled),
+    html[data-theme="light"] .menu-button:hover,
+    html[data-theme="light"] .drawer-close:hover{background:#F0F3F8 !important;color:#172033 !important}
+    html[data-theme="light"] .bottom-nav{background:rgba(255,255,255,.96) !important;border-color:#D9DFE8 !important;box-shadow:0 -10px 30px rgba(31,41,55,.08)}
+    html[data-theme="light"] .nav-btn{color:#687486 !important}
+    html[data-theme="light"] .nav-btn.active{color:#6D3BE8 !important}
+    html[data-theme="light"] .nav-btn.active .nav-icon{color:#fff !important;background:var(--grad) !important}
+    html[data-theme="light"] .heat-cell.empty{background:#EEF2F7 !important;border-color:#E0E5ED !important}
+    html[data-theme="light"] .resume-company-card{background:#FFFFFF !important}
+    html[data-theme="light"] .resume-company-logo-wrap,
+    html[data-theme="light"] .company-logo-wrap{background:#F0F3F8 !important}
+    html[data-theme="light"] .drawer-backdrop,
+    html[data-theme="light"] .glueful-drawer-backdrop{background:rgba(22,31,46,.20) !important}
+    html[data-theme="light"] .glueful-drawer{background:linear-gradient(180deg,#FFFFFF,#F6F8FC) !important;border-right-color:#D9DFE8 !important;box-shadow:22px 0 70px rgba(31,41,55,.16)}
+    html[data-theme="light"] .drawer-item{color:#4F5D73 !important}
+    html[data-theme="light"] .drawer-item:hover{background:#EEF2F7 !important;color:#172033 !important}
+    html[data-theme="light"] .drawer-item.active{background:linear-gradient(90deg,rgba(139,47,224,.12),rgba(47,111,255,.08)) !important;color:#6335D8 !important;border-color:rgba(109,59,232,.18) !important}
+    html[data-theme="light"] .drawer-item-icon{color:#7146E8 !important}
+    html[data-theme="light"] .placement-status{background:#F7F9FC !important;color:#5D6A7D !important}
+    html[data-theme="light"] .placement-status.has-link{background:#ECFBF7 !important;border-color:#B8E8DC !important;color:#286C61 !important}
+    html[data-theme="light"] .stat-value{filter:none !important}
+    html[data-theme="light"] .stat-label{color:#59667A !important}
+    html[data-theme="light"] .stat-hint{color:#7A8798 !important}
+    html[data-theme="light"] .section-title,
+    html[data-theme="light"] .activity-kicker,
+    html[data-theme="light"] .candidate-profile-section{color:#718096 !important}
+    html[data-theme="light"] .activity-month,
+    html[data-theme="light"] .view-title,
+    html[data-theme="light"] .modal-title,
+    html[data-theme="light"] .drawer-brand-name,
+    html[data-theme="light"] .candidate-profile-modal label{color:#172033 !important}
+    html[data-theme="light"] .view-subtitle,
+    html[data-theme="light"] .candidate-profile-intro,
+    html[data-theme="light"] .candidate-profile-hint{color:#6B778A !important}
+    html[data-theme="light"] .resume-import-card{background:#F8FAFD !important;border-color:#DCE2EB !important}
+    html[data-theme="light"] .resume-import-drop{background:rgba(139,47,224,.045) !important}
+    html[data-theme="light"] .resume-import-file{background:#FFFFFF !important;color:#536177 !important}
+    html[data-theme="light"] .modern-select-option{color:#536177 !important}
+    html[data-theme="light"] .modern-select-option:hover,
+    html[data-theme="light"] .modern-select-option.selected{background:rgba(109,59,232,.08) !important;color:#172033 !important}
+    html[data-theme="light"] .resume-viewer-body{background:#F7F9FC !important}
+    html[data-theme="light"] .resume-text-preview{color:#273449 !important}
+    html[data-theme="light"] .resume-docx-preview{color:#273449 !important}
+
+    @media(max-width:600px){
+      .resume-import-primary-actions{grid-template-columns:1fr 1fr}
+      .resume-viewer-modal{width:96vw;height:88vh}
+    }
+
+    html[data-theme="light"] .brand-logo,
+    html[data-theme="light"] .drawer-brand-mark{background:var(--grad) !important}
+    html[data-theme="light"] .glueful-splash{background:#F5F7FB !important}
+    html[data-theme="light"] .glueful-splash-name{color:#172033 !important}
+    html[data-theme="light"] .profile-panel .profile-row{background:#FFFFFF !important;border-color:#D9DFE8 !important;color:#273449 !important}
+    html[data-theme="light"] .profile-panel .profile-row span{color:#273449 !important}
+    html[data-theme="light"] .profile-panel .logout-row{color:#B42335 !important}
+
+    html[data-theme="light"] .stat-value{font-weight:800;text-shadow:0 1px 0 rgba(255,255,255,.55)}
 </style>
 
 </head>
@@ -4669,7 +4790,10 @@
         <div id="cp-resume-status" class="resume-import-status"></div>
         <div class="resume-import-actions">
           <button type="button" class="secondary-btn" onclick="clearCandidateResume()">Clear</button>
-          <button type="button" class="primary-btn" id="cp-resume-import-btn" onclick="importCandidateResume()" disabled>Import info</button>
+          <div class="resume-import-primary-actions">
+            <button type="button" class="secondary-btn resume-view-btn" id="cp-resume-view-btn" onclick="openCandidateResumeViewer()" disabled>View resume</button>
+            <button type="button" class="primary-btn" id="cp-resume-import-btn" onclick="importCandidateResume()" disabled>Import info</button>
+          </div>
         </div>
       </div>
 
@@ -4790,6 +4914,7 @@
           placeholder="Embedded C, Python, ARM, SoC Validation, I2C, SPI, UART, Linux"
         ></textarea>
         <div class="candidate-profile-hint">Separate skills with commas. These will later drive job matching.</div>
+        <div id="cp-skills-preview" class="skills-preview" aria-label="Detected skills"></div>
       </div>
 
       <div class="candidate-profile-section">Education</div>
@@ -4858,6 +4983,23 @@
     </form>
   </div>
 
+
+  <!-- =====================================================
+       RESUME VIEWER
+  ====================================================== -->
+
+  <div id="candidate-resume-viewer" class="modal-overlay resume-viewer-overlay" onclick="if(event.target===this) closeCandidateResumeViewer()">
+    <div class="modal resume-viewer-modal">
+      <div class="modal-header">
+        <div>
+          <h3 id="candidate-resume-viewer-title" class="modal-title">Resume</h3>
+          <div class="view-subtitle">Preview the resume you uploaded before importing it.</div>
+        </div>
+        <button type="button" class="icon-btn" onclick="closeCandidateResumeViewer()" aria-label="Close resume viewer">×</button>
+      </div>
+      <div id="candidate-resume-viewer-body" class="resume-viewer-body"></div>
+    </div>
+  </div>
 
   <!-- =====================================================
        SETTINGS MODAL
@@ -5062,6 +5204,8 @@
 
     let candidateResumeFile = null;
     let candidateResumeText = '';
+    let candidateResumeObjectUrl = '';
+    let candidateResumePreviewHtml = '';
 
     function setCandidateResumeStatus(message, show=true) {
       const el = document.getElementById('cp-resume-status');
@@ -5070,15 +5214,26 @@
       el.classList.toggle('show', show);
     }
 
+    function revokeCandidateResumePreviewUrl() {
+      if(candidateResumeObjectUrl) {
+        URL.revokeObjectURL(candidateResumeObjectUrl);
+        candidateResumeObjectUrl = '';
+      }
+    }
+
     function clearCandidateResume() {
       candidateResumeFile = null;
       candidateResumeText = '';
+      candidateResumePreviewHtml = '';
+      revokeCandidateResumePreviewUrl();
       const input = document.getElementById('cp-resume-file');
       const name = document.getElementById('cp-resume-file-name');
-      const button = document.getElementById('cp-resume-import-btn');
+      const importButton = document.getElementById('cp-resume-import-btn');
+      const viewButton = document.getElementById('cp-resume-view-btn');
       if(input) input.value = '';
       if(name) { name.textContent = ''; name.style.display = 'none'; }
-      if(button) button.disabled = true;
+      if(importButton) importButton.disabled = true;
+      if(viewButton) viewButton.disabled = true;
       setCandidateResumeStatus('', false);
     }
 
@@ -5086,23 +5241,44 @@
       const file = event.target.files?.[0];
       if(!file) return;
       candidateResumeFile = file;
+      candidateResumeText = '';
+      candidateResumePreviewHtml = '';
+      revokeCandidateResumePreviewUrl();
+      candidateResumeObjectUrl = URL.createObjectURL(file);
+
       const name = document.getElementById('cp-resume-file-name');
-      const button = document.getElementById('cp-resume-import-btn');
+      const importButton = document.getElementById('cp-resume-import-btn');
+      const viewButton = document.getElementById('cp-resume-view-btn');
       if(name) {
         name.textContent = `${file.name} · ${(file.size / 1024 / 1024).toFixed(2)} MB`;
         name.style.display = 'block';
       }
-      if(button) button.disabled = true;
+      if(importButton) importButton.disabled = true;
+      if(viewButton) viewButton.disabled = true;
       setCandidateResumeStatus('Reading your resume…', true);
+
       try {
         candidateResumeText = await extractResumeText(file);
         if(!candidateResumeText.trim()) throw new Error('No readable text found.');
-        if(button) button.disabled = false;
-        setCandidateResumeStatus('Resume read successfully. Tap Import info to fill your profile.', true);
+        if(file.name.toLowerCase().endsWith('.docx') && window.mammoth) {
+          try {
+            const previewBuffer = await file.arrayBuffer();
+            const htmlResult = await window.mammoth.convertToHtml({arrayBuffer:previewBuffer});
+            candidateResumePreviewHtml = htmlResult.value || '';
+          } catch(previewError) {
+            console.warn('DOCX visual preview unavailable:', previewError);
+            candidateResumePreviewHtml = '';
+          }
+        }
+        if(viewButton) viewButton.disabled = false;
+        if(importButton) importButton.disabled = false;
+        setCandidateResumeStatus('Resume read successfully. Review it with View resume, then import the profile information.', true);
       } catch(error) {
         console.error('Resume parsing failed:', error);
         candidateResumeText = '';
-        if(button) button.disabled = true;
+        candidateResumePreviewHtml = '';
+        if(importButton) importButton.disabled = true;
+        if(viewButton) viewButton.disabled = false; // The original file can still be opened for inspection.
         setCandidateResumeStatus('Could not read this resume. Try a text-based PDF, DOCX or TXT file.', true);
       }
     }
@@ -5111,6 +5287,7 @@
       const type = file.type || '';
       const name = file.name.toLowerCase();
       if(type === 'text/plain' || name.endsWith('.txt')) return await file.text();
+
       if(type === 'application/pdf' || name.endsWith('.pdf')) {
         if(!window.pdfjsLib) throw new Error('PDF parser is still loading.');
         if(window.pdfjsLib.GlobalWorkerOptions) {
@@ -5118,14 +5295,34 @@
         }
         const buffer = await file.arrayBuffer();
         const pdf = await window.pdfjsLib.getDocument({data:buffer}).promise;
-        let text = '';
+        const pages = [];
         for(let pageNo=1; pageNo<=pdf.numPages; pageNo++) {
           const page = await pdf.getPage(pageNo);
           const content = await page.getTextContent();
-          text += content.items.map(item => item.str || '').join(' ') + '\n';
+          const positioned = content.items
+            .filter(item => String(item.str || '').trim())
+            .map(item => ({
+              text:String(item.str || '').trim(),
+              x:Number(item.transform?.[4] || 0),
+              y:Number(item.transform?.[5] || 0)
+            }))
+            .sort((a,b) => Math.abs(a.y-b.y) > 3 ? b.y-a.y : a.x-b.x);
+
+          const lines = [];
+          for(const item of positioned) {
+            let line = lines.find(row => Math.abs(row.y - item.y) <= 3);
+            if(!line) {
+              line = {y:item.y, items:[]};
+              lines.push(line);
+            }
+            line.items.push(item);
+          }
+          lines.sort((a,b) => b.y-a.y);
+          pages.push(lines.map(row => row.items.sort((a,b)=>a.x-b.x).map(x=>x.text).join(' ')).join('\n'));
         }
-        return text;
+        return pages.join('\n\n');
       }
+
       if(type.includes('wordprocessingml') || name.endsWith('.docx')) {
         if(!window.mammoth) throw new Error('DOCX parser is still loading.');
         const buffer = await file.arrayBuffer();
@@ -5143,40 +5340,223 @@
       return '';
     }
 
+    function stripResumeNoise(value='') {
+      return String(value)
+        .replace(/[\u{1F300}-\u{1FAFF}]/gu,' ')
+        .replace(/[\u{2600}-\u{27BF}]/gu,' ')
+        .replace(/^[\s•●○▪▫◦·*|>→↗↳-]+/,'')
+        .replace(/[ \t]+/g,' ')
+        .trim();
+    }
+
+    function normalizeResumeText(text='') {
+      return String(text)
+        .replace(/\u00a0/g,' ')
+        .replace(/\r/g,'\n')
+        .split('\n')
+        .map(stripResumeNoise)
+        .filter(Boolean)
+        .join('\n')
+        .replace(/\n{3,}/g,'\n\n')
+        .trim();
+    }
+
+    function capitalizeResumeRole(value='') {
+      let text = stripResumeNoise(value)
+        .replace(/\s*[/|]\s*/g,' / ')
+        .replace(/\s+/g,' ')
+        .trim();
+      if(!text) return '';
+      const acronyms = {
+        soc:'SoC', arm:'ARM', bms:'BMS', pmic:'PMIC', asic:'ASIC', fpga:'FPGA',
+        i2c:'I2C', spi:'SPI', uart:'UART', usb:'USB', iot:'IoT', ai:'AI', ml:'ML',
+        api:'API', cpu:'CPU', gpu:'GPU', pcb:'PCB', can:'CAN', ble:'BLE',
+        rtos:'RTOS', linux:'Linux', python:'Python', c:'C', cpp:'C++'
+      };
+      return text.split(/(\s+|\/)/).map(token => {
+        const key = token.toLowerCase();
+        if(acronyms[key]) return acronyms[key];
+        if(/^\s+$/.test(token) || token === '/') return token;
+        return token.charAt(0).toUpperCase() + token.slice(1);
+      }).join('');
+    }
+
+    function sectionLines(lines, headingRegex) {
+      const index = lines.findIndex(line => headingRegex.test(line));
+      if(index < 0) return [];
+      const out = [];
+      for(let i=index+1;i<lines.length;i++) {
+        if(/^(professional summary|summary|profile|about(?: me)?|experience|work experience|employment|education|academic|skills|technical skills|core skills|technologies|projects|certifications|achievements|awards|languages|interests|references|contact)\s*:?$/i.test(lines[i])) break;
+        out.push(lines[i]);
+      }
+      return out;
+    }
+
+    function cleanSectionText(lines) {
+      return lines.map(stripResumeNoise).filter(Boolean).join(' ').replace(/\s+/g,' ').trim();
+    }
+
+    function normalizeSkillList(raw='') {
+      const text = stripResumeNoise(raw)
+        .replace(/[•●○▪▫◦·]/g, ',')
+        .replace(/\s*[;|]\s*/g, ',')
+        .replace(/\s*,\s*/g, ',')
+        .replace(/\s*\n\s*/g, ',');
+      const tokens = text.split(',').map(x => stripResumeNoise(x)).filter(Boolean);
+      const excluded = /^(skills?|technical skills|core skills|technologies|tools|experience|education|projects|certifications|achievements|languages)$/i;
+      const seen = new Set();
+      const result = [];
+      for(let token of tokens) {
+        token = token.replace(/\s+/g,' ').trim();
+        if(excluded.test(token)) continue;
+        if(token.length > 60) continue;
+        if(/^[\d\W_]+$/.test(token)) continue;
+        token = token.split(' ').map(word => {
+          const key=word.toLowerCase();
+          const map={soc:'SoC',arm:'ARM',bms:'BMS',pmic:'PMIC',asic:'ASIC',fpga:'FPGA',i2c:'I2C',spi:'SPI',uart:'UART',usb:'USB',iot:'IoT',ai:'AI',ml:'ML',api:'API',cpu:'CPU',gpu:'GPU',pcb:'PCB',can:'CAN',ble:'BLE',rtos:'RTOS',linux:'Linux',python:'Python',c:'C',cpp:'C++'};
+          return map[key] || word;
+        }).join(' ');
+        const key=token.toLowerCase();
+        if(!seen.has(key)) { seen.add(key); result.push(token); }
+      }
+      return result.join(', ');
+    }
+
+    function findLikelyName(lines) {
+      const blocked = /^(resume|curriculum vitae|cv|profile|summary|professional summary|contact|objective|experience|education|skills)$/i;
+      for(let i=0;i<Math.min(lines.length,10);i++) {
+        const line=stripResumeNoise(lines[i]);
+        if(!line || blocked.test(line) || /@|https?:\/\//i.test(line)) continue;
+        if(/\d{6,}/.test(line)) continue;
+        const words=line.split(/\s+/);
+        if(words.length>=2 && words.length<=5 && /^[A-Za-z][A-Za-z .'-]+$/.test(line)) return line;
+      }
+      return '';
+    }
+
+    function findLikelyHeadline(lines, name) {
+      const rolePattern = /(embedded|firmware|validation|software|hardware|developer|engineer|tester|test|verification|systems|data|cloud|frontend|backend|full.?stack|devops|security|network|qa|quality|analog|digital|vlsi|soc|post.?silicon|mobile|android|ios)/i;
+      const explicit = firstMatch(lines.join('\n'), [
+        /(?:professional headline|headline|title)\s*[:\-]\s*([^\n]{3,120})/i
+      ]);
+      if(explicit) return capitalizeResumeRole(explicit);
+      for(let i=0;i<Math.min(lines.length,12);i++) {
+        const line=stripResumeNoise(lines[i]);
+        if(!line || line===name || /@|https?:\/\//i.test(line)) continue;
+        if(rolePattern.test(line) && line.length<=120) return capitalizeResumeRole(line);
+      }
+      return '';
+    }
+
     function guessResumeProfile(text) {
-      const clean = text.replace(/\r/g,'\n').replace(/[ \t]+/g,' ').trim();
-      const lines = text.split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+      const normalized = normalizeResumeText(text);
+      const lines = normalized.split('\n').map(stripResumeNoise).filter(Boolean);
+      const structured = lines.join('\n');
+      const clean = lines.join(' ');
       const email = firstMatch(clean, [/([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/i]);
       const phone = firstMatch(clean, [/((?:\+91[ -]?)?[6-9]\d{9})/]);
-      const linkedin = firstMatch(clean, [/(https?:\/\/(?:www\.)?linkedin\.com\/[^\s]+)/i]);
-      const github = firstMatch(clean, [/(https?:\/\/(?:www\.)?github\.com\/[^\s]+)/i]);
+      const linkedin = firstMatch(clean, [/(https?:\/\/(?:www\.)?linkedin\.com\/[\w\-./?%=&]+)/i]);
+      const github = firstMatch(clean, [/(https?:\/\/(?:www\.)?github\.com\/[\w\-./?%=&]+)/i]);
 
-      let name = '';
-      if(lines[0] && lines[0].length < 60 && !/@/.test(lines[0]) && !/resume|curriculum vitae|cv/i.test(lines[0])) name = lines[0];
+      const name = findLikelyName(lines);
+      const headline = findLikelyHeadline(lines, name);
 
-      const headline = firstMatch(clean, [
-        /(?:headline|professional headline|title)\s*[:\-]\s*([^\n]{3,100})/i
-      ]);
-      const summary = firstMatch(clean, [
-        /(?:professional summary|summary|profile|about me)\s*[:\-]?\s*([\s\S]{30,600}?)(?=\n\s*(?:experience|education|skills|projects|work experience|employment)\b)/i
-      ]);
-      const skills = firstMatch(clean, [
-        /(?:technical skills|skills|core skills|technologies)\s*[:\-]?\s*([\s\S]{10,500}?)(?=\n\s*(?:experience|education|projects|certifications|achievements)\b)/i
-      ]);
-      const degree = firstMatch(clean, [/(\b(?:M\.?Tech|M\.?S\.?|MBA|B\.?Tech|B\.?E\.?|B\.?S\.?|BCA|MCA)\b[^\n]{0,80})/i]);
-      const institution = firstMatch(clean, [/(?:education|university|college|institute)\s*[:\-]\s*([^\n]{3,120})/i]);
-      const experience = firstMatch(clean, [/(\d+(?:\.\d+)?)\+?\s*(?:years?|yrs?)\s+(?:of\s+)?experience/i]);
+      let summary = cleanSectionText(sectionLines(lines, /^(professional summary|summary|profile|about(?: me)?)\s*:??$/i));
+      if(!summary) {
+        const explicit = firstMatch(structured, [
+          /(?:professional summary|summary|profile|about(?: me)?)\s*[:\-]\s*([\s\S]{40,900}?)(?=\n\s*(?:experience|education|skills|projects|work experience|employment|certifications)\b)/i
+        ]);
+        summary = stripResumeNoise(explicit);
+      }
+      if(!summary && name) {
+        const nameIndex = lines.findIndex(x => x === name);
+        const candidate = [];
+        for(let i=nameIndex+1;i<Math.min(lines.length,nameIndex+6);i++) {
+          const line=lines[i];
+          if(/^(experience|education|skills|projects|certifications|achievements)\b/i.test(line)) break;
+          if(line.length>=45 && !/@|https?:\/\//i.test(line)) candidate.push(line);
+        }
+        if(candidate.length) summary = candidate.join(' ');
+      }
+
+      const skillSection = sectionLines(lines, /^(technical skills|skills|core skills|technologies|technical expertise|tools)\s*:??$/i);
+      let skills = normalizeSkillList(skillSection.join(', '));
+      if(!skills) {
+        const explicitSkills = firstMatch(structured, [
+          /(?:technical skills|skills|core skills|technologies|technical expertise|tools)\s*[:\-]\s*([\s\S]{10,1000}?)(?=\n\s*(?:experience|education|projects|certifications|achievements|languages)\b)/i
+        ]);
+        skills = normalizeSkillList(explicitSkills);
+      }
 
       const lower = clean.toLowerCase();
-      const roleKeywords = ['embedded','soc validation','post-silicon','software engineer','hardware engineer','validation engineer','test engineer','firmware'];
-      const inferredRole = roleKeywords.find(k => lower.includes(k)) || '';
+      const rolePhrases = [
+        'embedded systems engineer','embedded software engineer','soc validation engineer','post-silicon validation engineer',
+        'validation engineer','firmware engineer','software engineer','hardware engineer','test engineer','qa engineer',
+        'vlsi engineer','verification engineer','developer','embedded'
+      ];
+      let inferredRole = rolePhrases.find(k => lower.includes(k)) || '';
+      if(!inferredRole && headline) inferredRole = headline;
+      inferredRole = capitalizeResumeRole(inferredRole);
+
+      const degree = firstMatch(clean, [/\b((?:M\.?Tech|M\.?S\.?|MBA|B\.?Tech|B\.?E\.?|B\.?S\.?|BCA|MCA)\b[^\n]{0,100})/i]);
+      const institution = firstMatch(structured, [/(?:education|university|college|institute)\s*[:\-]\s*([^\n]{3,140})/i]);
+      const experience = firstMatch(clean, [/((?:\d+(?:\.\d+)?)\+?\s*(?:years?|yrs?)(?:\s+of\s+experience)?)/i]);
 
       return {
-        name, headline: headline || inferredRole, about: summary,
-        targetRole: inferredRole, experience, skills, degree, institution,
-        linkedin, github, portfolio:'', email, phone
+        name,
+        headline: headline || inferredRole,
+        about: summary,
+        targetRole: capitalizeResumeRole(inferredRole || headline),
+        experience,
+        skills,
+        degree:stripResumeNoise(degree),
+        institution:stripResumeNoise(institution),
+        linkedin,
+        github,
+        portfolio:'',
+        email,
+        phone
       };
     }
+
+    function renderSkillsPreview(skills='') {
+      const container=document.getElementById('cp-skills-preview');
+      if(!container) return;
+      const normalized=normalizeSkillList(skills);
+      container.innerHTML = normalized
+        ? normalized.split(', ').map(skill => `<span class="skill-chip">${esc(skill)}</span>`).join('')
+        : '';
+    }
+
+    function openCandidateResumeViewer() {
+      if(!candidateResumeFile) return;
+      const overlay=document.getElementById('candidate-resume-viewer');
+      const body=document.getElementById('candidate-resume-viewer-body');
+      const title=document.getElementById('candidate-resume-viewer-title');
+      if(!overlay || !body) return;
+      title.textContent = candidateResumeFile.name || 'Resume';
+      const name=candidateResumeFile.name.toLowerCase();
+      if(name.endsWith('.pdf') && candidateResumeObjectUrl) {
+        body.innerHTML=`<iframe title="Resume preview" src="${candidateResumeObjectUrl}"></iframe>`;
+      } else if(name.endsWith('.docx')) {
+        if(!candidateResumePreviewHtml) {
+          body.innerHTML=`<div class="resume-text-preview">${esc(candidateResumeText || 'This DOCX could not be parsed in the browser. Please download/open the original file to inspect it.')}</div>`;
+        } else {
+          body.innerHTML=`<div class="resume-docx-preview">${candidateResumePreviewHtml}</div>`;
+        }
+      } else {
+        body.innerHTML=`<pre class="resume-text-preview">${esc(candidateResumeText || 'No readable text was found in this file.')}</pre>`;
+      }
+      openModal('candidate-resume-viewer');
+    }
+
+    function closeCandidateResumeViewer() {
+      const body=document.getElementById('candidate-resume-viewer-body');
+      if(body) body.innerHTML='';
+      closeModal('candidate-resume-viewer');
+    }
+
+    window.addEventListener('beforeunload', revokeCandidateResumePreviewUrl);
 
     function mergeImportedProfile(imported) {
       const current = collectCandidateProfile();
@@ -5185,9 +5565,13 @@
       keys.forEach(key => {
         if(imported[key] && !current[key]) merged[key] = imported[key];
       });
+      merged.headline = capitalizeResumeRole(merged.headline);
+      merged.targetRole = capitalizeResumeRole(merged.targetRole);
+      merged.skills = normalizeSkillList(merged.skills);
       fillCandidateProfile(merged);
       setModernSelect('cp-experience-select', merged.experience);
       setModernSelect('cp-work-mode-select', merged.workMode);
+      renderSkillsPreview(merged.skills);
       return merged;
     }
 
@@ -5196,7 +5580,7 @@
       const imported = guessResumeProfile(candidateResumeText);
       mergeImportedProfile(imported);
       const detected = Object.entries(imported).filter(([key,value]) => value && !['email','phone'].includes(key)).length;
-      setCandidateResumeStatus(`Imported ${detected} profile fields. Please review them before saving.`, true);
+      setCandidateResumeStatus(`Detected ${detected} profile fields. Review the imported information before saving.`, true);
     }
 
     /* =====================================================
@@ -10467,7 +10851,7 @@
           ? profile
           : {};
 
-      return {
+      const normalized = {
         ...candidateProfileDefaults,
         ...Object.fromEntries(
           Object.keys(candidateProfileDefaults).map(
@@ -10478,6 +10862,10 @@
           )
         )
       };
+      normalized.headline = capitalizeResumeRole(normalized.headline);
+      normalized.targetRole = capitalizeResumeRole(normalized.targetRole);
+      normalized.skills = normalizeSkillList(normalized.skills);
+      return normalized;
     }
 
     function getCandidateProfileFromUser(user) {
@@ -10528,6 +10916,7 @@
 
       setModernSelect('cp-experience-select', normalized.experience);
       setModernSelect('cp-work-mode-select', normalized.workMode);
+      renderSkillsPreview(normalized.skills);
     }
 
     async function loadCandidateProfile() {
@@ -10610,6 +10999,11 @@
 
       const profile =
         collectCandidateProfile();
+
+      profile.headline = capitalizeResumeRole(profile.headline);
+      profile.targetRole = capitalizeResumeRole(profile.targetRole);
+      profile.skills = normalizeSkillList(profile.skills);
+      renderSkillsPreview(profile.skills);
 
       if(!profile.name) {
         const input =
