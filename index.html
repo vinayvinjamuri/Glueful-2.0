@@ -2302,26 +2302,45 @@
     .jobs-section-title{font-size:15px;font-weight:800;color:var(--text)}
     .jobs-section-note{font-size:11px;color:var(--text-faint)}
     .jobs-list{display:grid;gap:10px}
-    .job-card{background:var(--surface);border:1px solid var(--border);border-radius:17px;padding:14px;box-shadow:0 7px 22px rgba(0,0,0,.055);transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
-    .job-card:active{transform:scale(.992)}
-    .job-card-top{display:flex;gap:11px;align-items:flex-start}
-    .job-logo{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,#7c4dff,#4f46e5);color:#fff;font-weight:850;font-size:14px;flex:0 0 auto;overflow:hidden}
+    /* Compact job feed — collapsed cards show more jobs; tapping expands actions/details */
+    .jobs-list{display:grid;gap:7px}
+    .job-card{
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:11px 12px;
+      box-shadow:0 5px 16px rgba(0,0,0,.045);
+      transition:border-color .18s ease,box-shadow .18s ease,background .18s ease;
+      cursor:pointer;
+    }
+    .job-card:active{transform:scale(.998)}
+    .job-card.expanded{
+      border-color:rgba(109,59,232,.48);
+      box-shadow:0 8px 24px rgba(109,59,232,.10);
+    }
+    .job-card-top{display:flex;gap:10px;align-items:flex-start}
+    .job-logo{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;background:linear-gradient(135deg,#7c4dff,#4f46e5);color:#fff;font-weight:850;font-size:13px;flex:0 0 auto;overflow:hidden}
     .job-logo img{width:100%;height:100%;object-fit:cover}
     .job-main{min-width:0;flex:1}
-    .job-title{font-size:14px;line-height:1.3;font-weight:800;color:var(--text)}
-    .job-company{margin-top:3px;font-size:12px;font-weight:650;color:var(--text-muted)}
-    .job-meta{display:flex;flex-wrap:wrap;gap:6px 9px;margin-top:9px;font-size:11px;color:var(--text-muted)}
-    .job-meta span{display:inline-flex;align-items:center;gap:4px}
-    .job-meta svg{width:13px;height:13px}
-    .job-match{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:5px 8px;background:rgba(109,59,232,.11);color:#6d3be8;font-size:10px;font-weight:850;white-space:nowrap}
-    .job-description{margin-top:10px;color:var(--text-muted);font-size:11.5px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-    .job-skills{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
-    .job-skill{border:1px solid var(--border);background:var(--surface-2,var(--surface));border-radius:999px;padding:4px 7px;font-size:10px;color:var(--text-muted);font-weight:650}
-    .job-actions{display:flex;gap:8px;margin-top:13px}
-    .job-action{flex:1;border-radius:11px;padding:9px 10px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:11px;font-weight:800}
+    .job-title{font-size:14px;line-height:1.28;font-weight:820;color:var(--text);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .job-company{margin-top:2px;font-size:11.5px;font-weight:650;color:var(--text-muted)}
+    .job-meta{display:flex;flex-wrap:wrap;gap:4px 8px;margin-top:6px;font-size:10.5px;color:var(--text-muted)}
+    .job-meta span{display:inline-flex;align-items:center;gap:3px}
+    .job-meta svg{width:12px;height:12px}
+    .job-match{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:4px 7px;background:rgba(109,59,232,.11);color:#6d3be8;font-size:9.5px;font-weight:850;white-space:nowrap}
+    .job-expand-hint{margin-top:8px;color:var(--text-faint);font-size:10px;font-weight:700}
+    .job-expanded-content{display:none;margin-top:11px;padding-top:11px;border-top:1px solid var(--border)}
+    .job-card.expanded .job-expanded-content{display:block}
+    .job-description{margin:0;color:var(--text-muted);font-size:11px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+    .job-skills{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+    .job-skill{border:1px solid var(--border);background:var(--surface-2,var(--surface));border-radius:999px;padding:4px 7px;font-size:9.5px;color:var(--text-muted);font-weight:650}
+    .job-actions{display:flex;gap:7px;margin-top:11px}
+    .job-action{flex:1;border-radius:10px;padding:8px 9px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:10.5px;font-weight:800}
     .job-action.primary{border:0;background:var(--grad);color:#fff}
     .job-save{width:38px;flex:0 0 38px}
     .job-save.saved{color:#6d3be8;border-color:rgba(109,59,232,.3);background:rgba(109,59,232,.08)}
+    .jobs-empty{padding:28px 18px;text-align:center;color:var(--text-muted);border:1px dashed var(--border);border-radius:16px}
+    .jobs-empty strong{display:block;color:var(--text);margin-bottom:5px}
     .jobs-empty{padding:32px 18px;text-align:center;color:var(--text-muted);border:1px dashed var(--border);border-radius:16px}
     .jobs-empty strong{display:block;color:var(--text);margin-bottom:5px}
     .job-filter-sheet .modal-card{max-height:88vh;overflow:auto}
@@ -2344,7 +2363,7 @@
     html[data-theme="light"] .jobs-filter-btn{box-shadow:0 7px 22px rgba(31,41,55,.06)}
     @media(min-width:701px){
       .jobs-page{padding:26px 24px 50px}
-      .jobs-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .jobs-list{grid-template-columns:minmax(0,1fr)}
       .job-card{padding:16px}
     }
 
@@ -4142,7 +4161,7 @@
       <section class="jobs-section">
         <div class="jobs-section-head">
           <div class="jobs-section-title">Recommended for you</div>
-          <div class="jobs-section-note" id="jobs-profile-note">Based on your profile</div>
+          <div class="jobs-section-note" id="jobs-profile-note">Tap a job to expand</div>
         </div>
         <div id="jobs-recommended-list" class="jobs-list"></div>
       </section>
@@ -6396,6 +6415,7 @@
     };
 
     let gluefulSavedJobs = new Set();
+    let gluefulExpandedJobId = null;
 
     function loadJobUIState(){
       try{
@@ -6451,9 +6471,11 @@
 
     function jobCard(job){
       const saved = gluefulSavedJobs.has(job.id);
-      const skills = job.skills.slice(0,5).map(skill=>`<span class="job-skill">${esc(skill)}</span>`).join("");
+      const skills = job.skills.slice(0,8).map(skill=>`<span class="job-skill">${esc(skill)}</span>`).join("");
+      const expanded = gluefulExpandedJobId === job.id;
       return `
-        <article class="job-card">
+        <article class="job-card ${expanded ? "expanded" : ""}" data-job-id="${esc(job.id)}"
+                 onclick="handleJobCardClick(event,'${job.id}')">
           <div class="job-card-top">
             <div class="job-logo">${esc(jobInitials(job.company))}</div>
             <div class="job-main">
@@ -6462,24 +6484,46 @@
               <div class="job-meta">
                 <span>${esc(job.location)}</span>
                 <span>${esc(job.workMode)}</span>
-                <span>${esc(job.experience)}</span>
                 <span>${esc(jobDaysLabel(job.postedDays))}</span>
               </div>
             </div>
-            <span class="job-match">${job.match}% Match</span>
+            <span class="job-match">${job.match}%</span>
           </div>
-          <div class="job-description">${esc(job.description)}</div>
-          <div class="job-skills">${skills}</div>
-          <div class="job-actions">
-            <button class="job-action" type="button" onclick="openJobDetails('${job.id}')">View job</button>
-            <button class="job-action ${saved ? "saved" : ""} job-save" type="button" onclick="toggleSavedJob('${job.id}')" aria-label="${saved ? "Unsave" : "Save"} job">
-              <svg viewBox="0 0 24 24" fill="${saved ? "currentColor" : "none"}" stroke="currentColor" stroke-width="1.8" width="16" height="16">
-                <path d="M6 4.5A2.5 2.5 0 0 1 8.5 2h7A2.5 2.5 0 0 1 18 4.5V21l-6-3.5L6 21V4.5Z"/>
-              </svg>
-            </button>
-            <button class="job-action primary" type="button" onclick="startMockJobApply('${job.id}')">Apply</button>
+
+          <div class="job-expand-hint">
+            ${expanded ? "Tap to collapse" : "Tap to view job"}
+          </div>
+
+          <div class="job-expanded-content">
+            <div class="job-description">${esc(job.description)}</div>
+            <div class="job-skills">${skills}</div>
+            <div class="job-actions">
+              <button class="job-action primary" type="button"
+                      onclick="event.stopPropagation();openJobDetails('${job.id}')">View job</button>
+              <button class="job-action ${saved ? "saved" : ""} job-save" type="button"
+                      onclick="event.stopPropagation();toggleSavedJob('${job.id}')"
+                      aria-label="${saved ? "Unsave" : "Save"} job">
+                <svg viewBox="0 0 24 24" fill="${saved ? "currentColor" : "none"}" stroke="currentColor" stroke-width="1.8" width="16" height="16">
+                  <path d="M6 4.5A2.5 2.5 0 0 1 8.5 2h7A2.5 2.5 0 0 1 18 4.5V21l-6-3.5L6 21V4.5Z"/>
+                </svg>
+              </button>
+              <button class="job-action" type="button"
+                      onclick="event.stopPropagation();startMockJobApply('${job.id}')">Apply</button>
+            </div>
           </div>
         </article>`;
+    }
+
+    function handleJobCardClick(event,id){
+      if(event.target.closest("button,a,input,select,textarea")) return;
+      gluefulExpandedJobId = gluefulExpandedJobId === id ? null : id;
+      renderJobs();
+      requestAnimationFrame(()=>{
+        const card = document.querySelector(`.job-card[data-job-id="${CSS.escape(id)}"]`);
+        if(card && gluefulExpandedJobId === id){
+          card.scrollIntoView({behavior:"smooth",block:"nearest"});
+        }
+      });
     }
 
     function renderJobs(){
@@ -6559,6 +6603,7 @@
     function toggleSavedJob(id){
       if(gluefulSavedJobs.has(id)) gluefulSavedJobs.delete(id);
       else gluefulSavedJobs.add(id);
+      gluefulExpandedJobId = id;
       saveJobUIState();
       renderJobs();
     }
