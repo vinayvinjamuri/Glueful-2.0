@@ -1,3 +1,400 @@
+
+Tuesday 2:17 PM
+
+Pasted text(10).txt
+Document
+
+
+Glueful_latest_monthly_activity_dashboard(1).txt
+Document
+THIS IS THE latest index.html code
+
+25021.jpg
+My login page shld looks like this when user enters Invalid credentials . Messed shld come in top in red that Invalid credentials.  I already shared the latest index.html file make changes that code and share me the full code in txt file. Before that give me a demo
+
+Edit
+
+Yes — this is the demo of the exact behavior I understand you want:
+
+When login succeeds → normal Glueful dashboard opens.
+
+When Supabase returns an invalid-login error → stay on the login page.
+
+Show Invalid login credentials. in red at the top of the form, immediately above the Email field.
+
+Do not show the raw Supabase error such as Invalid login credentials: ....
+
+Keep the entered email/password fields visible.
+
+Reset the Login button back to its normal state.
+
+The error disappears/replaces itself when the user tries another login.
+
+Your current code already has an auth-message element, but it is currently positioned below the Forgot Password button and loginUser() simply displays error.message. 
+
+
+The change I will make
+Current:
+
+Welcome to Glueful
+Sign in to manage your career journey
+
+Email
+[................]
+
+Password
+[................]
+
+[ Login ]
+[ Continue with Google ]
+[ Create account ]
+[ Forgot password? ]
+
+error message  ← currently here
+New:
+
+Welcome to Glueful
+Sign in to manage your career journey
+
+🔴 Invalid login credentials.
+
+Email
+[ invalid@not-real.lol ]
+
+Password
+[ ••••••••••• ]
+
+             Forgot password?
+
+[        Login        ]
+
+[ Continue with Google ]
+[ Create account ]
+[ Forgot password? ]
+And importantly, I'll make the message specifically red, rather than inheriting the current muted text color. The existing showAuthMessage() function can continue to be the central mechanism for displaying authentication messages. 
+
+
+I have not modified your full file yet. Once you confirm this demo is what you want, I'll modify the complete 10,428-line latest index.html, preserving the rest of Glueful exactly as-is, and give you the complete updated code as a .txt file. 
+
+
+
+25125.jpg
+Current one .now update this
+
+1786439132688.jpeg
+25131.jpg
+When I'm trying to reset my password i got this. When user try to rest his password plan that thing and tell . 
+
+image-1786442618982.jpg
+Still same
+
+image-1786442757741.jpg
+
+image-1786442817655.jpg
+
+
+Document from Vinjamuri Vinay
+File
+This is the latest code i think do changes here and add any missing functionality. Give full code in txt file
+
+1786443607400.jpeg
+Still same
+
+25150.jpg
+Still same issue
+
+image-1786445241547.jpg
+
+image-1786445374023.jpg
+image-1786445399601.jpg
+
+image-1786445443684.jpg
+Now it showing like this
+
+25178.jpg
+Now its working fine
+
+image-1786449932865.jpg
+I got this 
+
+image-1786451218152.jpg
+
+image-1786451722632.jpg
+
+Today 4:44 PM
+image-1786706057576.jpg
+Same issue again
+
+image-1786706919624.jpg
+Working 
+
+Edit
+
+Yes bro — this is the kind of experience I mean.
+
+
+https://images.openai.com/static-rsc-4/s7q7vUyQUV2-ScIiG1ornvnTpjcuWe4mP4UUdAHmddW0qPabboqHebh85u4V9mQDRo4MGtLglkkeF_3_EMFGCoAaSZQXRqP0a85eAGqnIo1AzlE6lSnB6FwZWkjq83qR0lqiD5vEz4aEyjSi4M91Qp972xVTzql5b0tLRujfU976wur6pYK79OMSjRV9QNHQ?purpose=fullsize
+
+https://images.openai.com/static-rsc-4/kTNhIdbfIv_mCMa9JKYozUhcbCV7b4wX1cD7jRTWgnMJTOuYJJZkt962l48NvwtodkXbaja7tD9Dqs8srMEwLZuBmuru7QvCxHLmdnlzEtts6oA-oMpfNgZVaUwVOkpkJpn216VAIWuosXuOVApZCLnXP013qewQHI78EpTKQ3LtVB5yoASpw-omuKXjT4l6?purpose=fullsize
+
+https://images.openai.com/static-rsc-4/F0W_qcCUFMWNQjDk4HBX5UBl1YeKMKLFymuPOiFzwGB3Hxf59g1FeEBl1WTmQAehoCWIc7iOx9fqe4JKt51a3F6rflO640lsSDMwPa27IWleBNFQn_DqaEZ5LnaXtlPqFuXcu0QWxe0gbP3_LkV5dIFajUB5ojO_L177qW5UJVXEsmal_GjkKp3Mz5FXqxhm?purpose=fullsize
+5
+My preferred Glueful design
+Screen 1 — Instant launch
+
+G
+Glueful
+
+Minimal dark background with the purple/blue Glow.
+
+↓
+
+Screen 2 — Loading
+
+G
+Glueful
+Loading your workspace...
+● ● ●
+
+While this is displayed, we load the actual app data.
+
+↓
+
+Screen 3 — Fully ready
+
+The user sees the complete dashboard immediately, rather than watching cards/data appear one by one.
+
+The key behavior
+I don't want to make it:
+
+Logo → wait exactly 3 seconds → dashboard
+
+Instead:
+
+Logo → load everything → when ready → dashboard
+
+So if everything loads in 700 ms, the splash lasts ~700 ms. If it takes 2 seconds, it stays for ~2 seconds.
+
+I would choose Option 1 from the mockup for Glueful: dark, simple, professional, with the glowing G and subtle animated loading dots. It fits the current Glueful login design very well.
+
+We can also make the transition fade smoothly rather than suddenly switching screens.
+
+
+25991.jpg
+When i open app in mobile I'm getting this for 200ms to 300ms then splash screen is popping up there is no issue with splash screen that is totally fine but I don't want this
+
+1786709839477.jpeg
+I got apk but why my app logo is not visible
+
+Edit
+
+
+image-1786712053392.jpg
+
+image-1786712098704.jpg
+
+image-1786712150698.jpg
+This is old icon
+
+Edit
+
+
+26009.png
+I liked this one first this wat to do
+
+image-1786712385950.jpg
+Is this ok
+
+image-1786712508759.jpg
+
+image-1786712540416.jpg
+
+image-1786712773919.jpg
+Wat to do after this
+
+image-1786712906618.jpg
+
+image-1786712960238.jpg
+
+image-1786712993584.jpg
+
+26062.jpg
+Can u see those areas it not perfectly into the app icon shape
+
+Edit
+
+
+Perfect bro. We’ll do it step by step and make sure the final APK users download gets the clean icon.
+
+Step 1 — Use this clean icon file
+I cropped the previous image so the “Glueful” text is completely removed and only the proper app-icon artwork remains.
+
+
+On your computer
+Download the PNG above.
+
+Save it somewhere easy, such as Downloads.
+
+Don't put it into the Android project manually yet.
+
+Once you've downloaded it, tell me “done”.
+
+Then I'll give you Step 2 only. 
+
+
+
+image-1786713920888.jpg
+
+26076.jpg
+Enhance this pic and make it look premium 
+
+Edit
+
+
+Edit
+
+
+26090.jpg
+26092.jpg
+So I'm thinking at top left corner we add hamburger option like chatgpt so students can access easily 
+
+Edit
+
+Here bro — this is the demo concept. The left screen shows the hamburger button, and the right screen shows what happens when the student taps it.
+
+I especially like putting 🎓 Placement Portal near the top with a New badge. It makes the student feature immediately visible without making the main dashboard crowded.
+
+
+Edit
+
+
+26077.png
+Perfect and one more thing at that glueful logo g I want this to be there. Understood 
+
+Edit
+
+
+
+
+Edit
+
+
+Yes bro. Logo alignment is locked in — no compromise. We’ll use the exact same logo asset, centered and consistently sized everywhere.
+
+For the tagline, we’ll leave it blank for now.
+
+Next step
+Before adding more features, we should finish the hamburger menu implementation:
+
+☰ Hamburger button at top-left
+
+Tap → smooth side drawer opens
+
+Glueful logo perfectly aligned at the top
+
+Dashboard
+
+Placement Portal
+
+Applications
+
+Interviews
+
+Resumes
+
+Placement Drives
+
+Saved Companies
+
+Settings
+
+Profile
+
+Help & Support
+
+Sign out
+
+Tap outside → drawer closes
+
+Smooth animation, no visual flashing
+
+And importantly, no emojis — we'll use clean professional line icons.
+
+Once this is working, we'll move to the Placement Portal feature where students can save their college placement-portal URL and open it directly from Glueful.
+
+Step 1: We should first add the hamburger button + drawer UI.
+
+
+Ok if u want i will give latest index.html code do changes in that and give me txt file 
+
+Absolutely bro. 👍
+
+Send me the latest index.html file — preferably the actual file, not screenshots.
+
+I'll work directly from that version and:
+
+Add the hamburger menu
+
+Add the professional line icons (no emojis)
+
+Add the Placement Portal menu item
+
+Keep your existing dashboard/features unchanged
+
+Keep the new Glueful logo perfectly aligned
+
+Make the drawer smooth and mobile-friendly
+
+Make sure it doesn't introduce the 200–300 ms loading/flash issue we fixed earlier
+
+Keep the design consistent with the current dark/purple/blue theme
+
+Return the complete updated code as a .txt file, so you can copy it directly into your project.
+
+Upload the latest index.html now. Then we'll do it step-by-step from that exact version.
+
+
+
+!DOCTYPE html(1).txt
+Document
+
+Done bro. I used your latest index.html as the base and made the changes without replacing the existing app structure. The current file already has the Glueful header/navigation and existing Dashboard/Applications/Interviews/Resumes structure. 
+
+
+Added
+☰ Premium hamburger menu at top-left
+
+Professional SVG icons instead of the typical emoji icons
+
+Dashboard / Applications / Interviews / Resumes inside the drawer
+
+Students → Placement Portal
+
+Student can enter their placement portal URL once
+
+After saving, clicking Placement Portal opens that portal directly
+
+Portal link is remembered on that device
+
+Profile & Settings inside the drawer
+
+Existing bottom navigation remains functional
+
+Existing Supabase/auth/data logic left intact
+
+JavaScript syntax checked successfully
+
+Updated file
+
+Next step: replace your current index.html code with this updated code, run the app, and send me a screenshot of the hamburger menu. Then we'll perfect the UI before adding the next feature. 
+
+
+
+Library
+/
+Glueful_updated_hamburger_placement_portal.txt
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2771,7 +3168,19 @@
 
     }
 
-  </style>
+  
+    /* GLUEFUL PREMIUM MENU + STUDENT TOOLS */
+    .header-left-group{display:flex;align-items:center;gap:10px;min-width:0}
+    .menu-button{width:40px;height:40px;flex:0 0 40px;border-radius:11px;background:#151A23;border:1px solid var(--border);color:var(--text-dim);display:flex;align-items:center;justify-content:center}
+    .menu-button:hover{background:#1C2330;border-color:#3A4351;color:white}
+    .glueful-drawer-backdrop{position:fixed;inset:0;z-index:80;background:rgba(3,5,9,.68);backdrop-filter:blur(3px);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .2s ease,visibility .2s ease}
+    .glueful-drawer-backdrop.open{opacity:1;visibility:visible;pointer-events:auto}
+    .glueful-drawer{position:fixed;top:0;left:0;bottom:0;z-index:81;width:min(330px,88vw);padding:calc(12px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(180deg,#10141C,#0B0E14);border-right:1px solid var(--border);box-shadow:22px 0 70px rgba(0,0,0,.48);transform:translateX(-105%);transition:transform .24s cubic-bezier(.2,.75,.2,1);overflow-y:auto}
+    .glueful-drawer.open{transform:translateX(0)}
+    .drawer-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 2px 18px}.drawer-brand{display:flex;align-items:center;gap:10px}.drawer-brand-mark{width:38px;height:38px;border-radius:11px;background:var(--grad);display:flex;align-items:center;justify-content:center}.drawer-brand-mark svg{width:21px;height:21px}.drawer-brand-name{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700}.drawer-close{width:36px;height:36px;border-radius:10px;background:#171D27;border:1px solid var(--border);color:var(--text-dim);display:flex;align-items:center;justify-content:center}
+    .drawer-section-label{padding:8px 10px 6px;color:var(--text-faint);font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.08em}.drawer-nav{display:flex;flex-direction:column;gap:4px}.drawer-item{width:100%;min-height:48px;padding:8px 10px;border-radius:11px;background:transparent;color:var(--text-dim);display:flex;align-items:center;gap:12px;text-align:left;font-size:13px;font-weight:600}.drawer-item:hover{background:#171D27;color:white}.drawer-item.active{background:linear-gradient(90deg,rgba(139,47,224,.18),rgba(47,111,255,.10));color:#C3AEFF;border:1px solid rgba(139,111,255,.18)}.drawer-item-icon{width:34px;height:34px;border-radius:9px;background:#171D27;border:1px solid var(--border);color:#A98BFF;display:flex;align-items:center;justify-content:center;flex:0 0 34px}.drawer-item-copy{min-width:0;flex:1}.drawer-item-title{display:block;color:inherit}.drawer-item-subtitle{display:block;margin-top:3px;color:var(--text-faint);font-size:10px;font-weight:500}.drawer-item-chevron{color:var(--text-faint);font-size:18px}.drawer-divider{height:1px;background:var(--border-soft);margin:12px 8px}.premium-svg-icon{width:18px;height:18px;display:block;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.placement-status{margin:10px 2px 0;padding:11px 12px;border-radius:11px;border:1px solid var(--border);background:#0E131B;color:var(--text-mute);font-size:10px;line-height:1.45}.placement-status.has-link{border-color:rgba(79,209,197,.28);background:rgba(15,42,40,.34)}.placement-modal-note{color:var(--text-mute);font-size:11px;line-height:1.55;margin:-.35rem 0 1rem}.placement-url-preview{display:none;margin-top:7px;color:var(--text-faint);font-size:9px;word-break:break-all}.placement-url-preview.show{display:block}
+    @media(max-width:700px){.header-left-group{gap:8px}.menu-button{width:38px;height:38px;flex-basis:38px}}
+</style>
 
 </head>
 
@@ -3005,14 +3414,36 @@
        MAIN APPLICATION
   ====================================================== -->
 
-  <div class="wrap" id="main-app">
+  <div id="glueful-drawer-backdrop" class="glueful-drawer-backdrop" onclick="toggleGluefulDrawer(false)" aria-hidden="true"></div>
+
+<aside id="glueful-drawer" class="glueful-drawer" aria-label="Glueful navigation" aria-hidden="true">
+  <div class="drawer-top"><div class="drawer-brand"><div class="drawer-brand-mark"><svg viewBox="0 0 100 100"><path d="M64,30 A24,24 0 1,0 64,70" stroke="white" stroke-width="11" fill="none" stroke-linecap="round"/><path d="M50,50 L70,50 L70,63 A13,13 0 0,1 57,63 Z" fill="white"/></svg></div><span class="drawer-brand-name">Glueful</span></div><button class="drawer-close" type="button" onclick="toggleGluefulDrawer(false)" aria-label="Close menu"><svg class="premium-svg-icon" viewBox="0 0 24 24"><path d="M6 6l12 12"></path><path d="M18 6L6 18"></path></svg></button></div>
+  <div class="drawer-section-label">Career</div><nav class="drawer-nav">
+    <button class="drawer-item active" data-drawer-view="dashboard" onclick="drawerNavigate('dashboard')"><span class="drawer-item-icon"><svg class="premium-svg-icon" viewBox="0 0 24 24"><path d="M4 10.5L12 4l8 6.5"></path><path d="M6.5 9.5V20h11V9.5"></path><path d="M10 20v-5h4v5"></path></svg></span><span class="drawer-item-copy"><span class="drawer-item-title">Dashboard</span><span class="drawer-item-subtitle">Your career overview</span></span><span class="drawer-item-chevron">›</span></button>
+    <button class="drawer-item" data-drawer-view="applications" onclick="drawerNavigate('applications')"><span class="drawer-item-icon"><svg class="premium-svg-icon" viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="14" rx="2"></rect><path d="M9 6V4h6v2"></path><path d="M8 11h8"></path></svg></span><span class="drawer-item-copy"><span class="drawer-item-title">Applications</span><span class="drawer-item-subtitle">Track every application</span></span><span class="drawer-item-chevron">›</span></button>
+    <button class="drawer-item" data-drawer-view="interviews" onclick="drawerNavigate('interviews')"><span class="drawer-item-icon"><svg class="premium-svg-icon" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"></rect><path d="M8 3v4"></path><path d="M16 3v4"></path><path d="M4 9h16"></path></svg></span><span class="drawer-item-copy"><span class="drawer-item-title">Interviews</span><span class="drawer-item-subtitle">Upcoming and past rounds</span></span><span class="drawer-item-chevron">›</span></button>
+    <button class="drawer-item" data-drawer-view="resumes" onclick="drawerNavigate('resumes')"><span class="drawer-item-icon"><svg class="premium-svg-icon" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"></path><path d="M14 3v5h5"></path><path d="M10 13h5"></path></svg></span><span class="drawer-item-copy"><span class="drawer-item-title">Resumes</span><span class="drawer-item-subtitle">Manage your resume library</span></span><span class="drawer-item-chevron">›</span></button>
+  </nav>
+  <div class="drawer-divider"></div><div class="drawer-section-label">Students</div>
+  <button class="drawer-item" id="placement-portal-menu" onclick="openPlacementPortal()"><span class="drawer-item-icon"><svg class="premium-svg-icon" viewBox="0 0 24 24"><path d="M4 10.5L12 4l8 6.5"></path><path d="M6.5 9.5V20h11V9.5"></path><path d="M9 20v-6h6v6"></path></svg></span><span class="drawer-item-copy"><span class="drawer-item-title">Placement Portal</span><span class="drawer-item-subtitle" id="placement-menu-subtitle">Add your college portal</span></span><span class="drawer-item-chevron">›</span></button>
+  <div id="placement-status" class="placement-status"><strong>Placement Portal</strong><br>No portal link saved yet. Add it once and Glueful will remember it on this device.</div>
+  <div class="drawer-divider"></div><div class="drawer-section-label">Account</div>
+  <button class="drawer-item" onclick="toggleGluefulDrawer(false);openProfile()"><span class="drawer-item-icon"><svg class="premium-svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"></circle><path d="M5.5 19c.7-3.1 3.1-5 6.5-5s5.8 1.9 6.5 5"></path></svg></span><span class="drawer-item-copy"><span class="drawer-item-title">Profile & Settings</span><span class="drawer-item-subtitle">Account and preferences</span></span><span class="drawer-item-chevron">›</span></button>
+</aside>
+
+<div class="wrap" id="main-app">
 
 
     <!-- HEADER -->
 
     <header class="top-header">
 
-      <div class="brand">
+      <div class="header-left-group">
+        <button class="menu-button" type="button" onclick="toggleGluefulDrawer(true)" aria-label="Open menu" title="Menu">
+          <svg class="premium-svg-icon" viewBox="0 0 24 24"><path d="M4 7h16"></path><path d="M4 12h16"></path><path d="M4 17h16"></path></svg>
+        </button>
+
+        <div class="brand">
 
         <div class="brand-logo">
 
@@ -3065,15 +3496,11 @@
 
         </div>
 
+        </div>
       </div>
 
-
-      <button
-        class="profile-button"
-        onclick="openProfile()"
-        title="Profile & settings"
-      >
-        👤
+      <button class="profile-button" onclick="openProfile()" title="Profile & settings" aria-label="Profile & settings">
+        <svg class="premium-svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"></circle><path d="M5.5 19c.7-3.1 3.1-5 6.5-5s5.8 1.9 6.5 5"></path></svg>
       </button>
 
     </header>
@@ -3524,6 +3951,16 @@
   </div>
 
 
+  <!-- STUDENT PLACEMENT PORTAL -->
+  <div id="placement-portal-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="placement-portal-title" onclick="if(event.target===this) closePlacementPortalModal()">
+    <div class="modal">
+      <div class="modal-header"><h3 id="placement-portal-title" class="modal-title">Placement Portal</h3><button class="icon-btn" type="button" onclick="closePlacementPortalModal()" aria-label="Close"><svg class="premium-svg-icon" viewBox="0 0 24 24"><path d="M6 6l12 12"></path><path d="M18 6L6 18"></path></svg></button></div>
+      <p class="placement-modal-note">Add your college or university placement portal once. After saving, tapping <strong>Placement Portal</strong> in the menu will take you directly there.</p>
+      <div class="field"><label for="placement-portal-url">Placement portal link</label><input id="placement-portal-url" class="input" type="url" inputmode="url" autocomplete="url" placeholder="https://your-college-placement-portal.com" oninput="previewPlacementUrl()" /><div id="placement-url-preview" class="placement-url-preview"></div></div>
+      <div class="modal-actions"><button type="button" class="secondary-btn" onclick="clearPlacementPortal()">Clear</button><button type="button" class="primary-btn" onclick="savePlacementPortal()">Save portal</button></div>
+    </div>
+  </div>
+
   <!-- =====================================================
        BOTTOM NAVIGATION
   ====================================================== -->
@@ -3539,9 +3976,7 @@
       onclick="switchView('dashboard')"
     >
 
-      <span class="nav-icon">
-        🏠
-      </span>
+      <span class="nav-icon" aria-hidden="true"><svg class="premium-svg-icon" viewBox="0 0 24 24"><path d="M4 10.5L12 4l8 6.5"></path><path d="M6.5 9.5V20h11V9.5"></path><path d="M10 20v-5h4v5"></path></svg></span>
 
       Dashboard
 
@@ -3554,9 +3989,7 @@
       onclick="switchView('applications')"
     >
 
-      <span class="nav-icon">
-        💼
-      </span>
+      <span class="nav-icon" aria-hidden="true"><svg class="premium-svg-icon" viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="14" rx="2"></rect><path d="M9 6V4h6v2"></path><path d="M8 11h8"></path></svg></span>
 
       Applications
 
@@ -3569,9 +4002,7 @@
       onclick="switchView('interviews')"
     >
 
-      <span class="nav-icon">
-        📅
-      </span>
+      <span class="nav-icon" aria-hidden="true"><svg class="premium-svg-icon" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"></rect><path d="M8 3v4"></path><path d="M16 3v4"></path><path d="M4 9h16"></path></svg></span>
 
       Interviews
 
@@ -3584,9 +4015,7 @@
       onclick="switchView('resumes')"
     >
 
-      <span class="nav-icon">
-        📄
-      </span>
+      <span class="nav-icon" aria-hidden="true"><svg class="premium-svg-icon" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"></path><path d="M14 3v5h5"></path><path d="M10 13h5"></path></svg></span>
 
       Resumes
 
@@ -5562,6 +5991,21 @@
 
     }
 
+
+    /* GLUEFUL MENU + STUDENT PLACEMENT PORTAL */
+    const GLUEFUL_PLACEMENT_PORTAL_KEY="glueful_placement_portal_url";
+    function toggleGluefulDrawer(open){const d=document.getElementById("glueful-drawer"),b=document.getElementById("glueful-drawer-backdrop");if(!d||!b)return;d.classList.toggle("open",!!open);b.classList.toggle("open",!!open);d.setAttribute("aria-hidden",open?"false":"true");document.body.style.overflow=open?"hidden":"";}
+    function drawerNavigate(view){toggleGluefulDrawer(false);switchView(view);}
+    function normalizePlacementPortalUrl(value){const raw=String(value||"").trim();if(!raw)return "";try{const u=new URL(/^https?:\/\//i.test(raw)?raw:"https://"+raw);return (u.protocol==="http:"||u.protocol==="https:")?u.href:"";}catch(e){return "";}}
+    function getPlacementPortalUrl(){return normalizePlacementPortalUrl(localStorage.getItem(GLUEFUL_PLACEMENT_PORTAL_KEY)||"");}
+    function updatePlacementPortalUI(){const url=getPlacementPortalUrl(),s=document.getElementById("placement-menu-subtitle"),st=document.getElementById("placement-status");if(!s||!st)return;if(url){s.textContent="Open your saved placement portal";st.classList.add("has-link");st.innerHTML="<strong>Placement Portal connected</strong><br>"+esc(url);}else{s.textContent="Add your college portal";st.classList.remove("has-link");st.innerHTML="<strong>Placement Portal</strong><br>No portal link saved yet. Add it once and Glueful will remember it on this device.";}}
+    function openPlacementPortal(){const url=getPlacementPortalUrl();if(url){toggleGluefulDrawer(false);window.open(url,"_blank","noopener,noreferrer");return;}const i=document.getElementById("placement-portal-url");if(i)i.value="";toggleGluefulDrawer(false);openModal("placement-portal-modal");}
+    function closePlacementPortalModal(){closeModal("placement-portal-modal");}
+    function previewPlacementUrl(){const i=document.getElementById("placement-portal-url"),p=document.getElementById("placement-url-preview");if(!i||!p)return;const u=normalizePlacementPortalUrl(i.value);p.textContent=u?"Will open: "+u:"";p.classList.toggle("show",!!u);}
+    function savePlacementPortal(){const i=document.getElementById("placement-portal-url");if(!i)return;const u=normalizePlacementPortalUrl(i.value);if(!u){i.focus();showError("Please enter a valid placement portal link, for example https://your-college-portal.com");return;}localStorage.setItem(GLUEFUL_PLACEMENT_PORTAL_KEY,u);updatePlacementPortalUI();closePlacementPortalModal();toggleGluefulDrawer(true);}
+    function clearPlacementPortal(){localStorage.removeItem(GLUEFUL_PLACEMENT_PORTAL_KEY);const i=document.getElementById("placement-portal-url");if(i)i.value="";previewPlacementUrl();updatePlacementPortalUI();closePlacementPortalModal();toggleGluefulDrawer(true);}
+    document.addEventListener("keydown",e=>{if(e.key==="Escape")toggleGluefulDrawer(false);});
+    window.addEventListener("DOMContentLoaded",updatePlacementPortalUI);
 
     /* =====================================================
        NAVIGATION
