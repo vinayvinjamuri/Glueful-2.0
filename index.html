@@ -2601,6 +2601,37 @@
       max-width:560px;
     }
 
+    /* Candidate Profile is a real destination, not a transparent sheet over Settings. */
+    #candidate-profile-modal {
+      z-index:320 !important;
+      background:rgba(4,7,12,.985) !important;
+    }
+    .profile-completeness-card {
+      margin:0 0 1rem;
+      padding:14px;
+      border:1px solid var(--border);
+      border-radius:15px;
+      background:linear-gradient(135deg,rgba(139,47,224,.10),rgba(47,111,255,.07));
+    }
+    .profile-completeness-head {
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+    }
+    .profile-completeness-title {font-size:12px;font-weight:700;color:var(--text);}
+    .profile-completeness-percent {font-size:18px;font-weight:800;color:#8F7BFF;}
+    .profile-completeness-bar {
+      height:7px;margin-top:10px;border-radius:99px;background:var(--bg);overflow:hidden;
+    }
+    .profile-completeness-fill {
+      width:0%;height:100%;border-radius:99px;background:var(--grad);transition:width .25s ease;
+    }
+    .profile-completeness-copy {margin-top:7px;font-size:10px;color:var(--text-mute);line-height:1.45;}
+    .resume-delete-btn {
+      display:none;width:100%;margin-top:8px;padding:.62rem .8rem;border-radius:10px;
+      border:1px solid rgba(242,114,114,.25);background:rgba(242,114,114,.07);
+      color:#F27272;font-size:11px;font-weight:700;cursor:pointer;
+    }
+    .resume-delete-btn.show {display:block;}
+
     .candidate-profile-intro {
       color:var(--text-mute);
       font-size:11px;
@@ -2799,8 +2830,21 @@
         grid-column:auto;
       }
 
+      #candidate-profile-modal {
+        padding:0 !important;
+        align-items:stretch !important;
+        justify-content:stretch !important;
+      }
+
       .candidate-profile-modal {
-        max-height:90vh;
+        width:100vw !important;
+        max-width:none !important;
+        height:100dvh !important;
+        max-height:none !important;
+        border-radius:0 !important;
+        border-left:0 !important;
+        border-right:0 !important;
+        padding:calc(1rem + env(safe-area-inset-top)) 1rem calc(1.2rem + env(safe-area-inset-bottom)) !important;
       }
     }
 
@@ -4795,6 +4839,7 @@
             <button type="button" class="primary-btn" id="cp-resume-import-btn" onclick="importCandidateResume()" disabled>Import info</button>
           </div>
         </div>
+        <button type="button" id="cp-resume-delete-btn" class="resume-delete-btn" onclick="deleteSavedCandidateResume()">Delete saved resume</button>
       </div>
 
       <div class="modal-header">
@@ -4819,6 +4864,15 @@
         Keep this information up to date. Your profile will become the foundation
         for personalized job recommendations and match scores.
       </p>
+
+      <div class="profile-completeness-card" aria-live="polite">
+        <div class="profile-completeness-head">
+          <span class="profile-completeness-title">Profile completeness</span>
+          <span id="cp-profile-percent" class="profile-completeness-percent">0%</span>
+        </div>
+        <div class="profile-completeness-bar"><div id="cp-profile-fill" class="profile-completeness-fill"></div></div>
+        <div id="cp-profile-completeness-copy" class="profile-completeness-copy">Complete your profile to improve job recommendations.</div>
+      </div>
 
       <div class="candidate-profile-section">Identity</div>
 
@@ -5411,6 +5465,7 @@
         option.classList.toggle('selected', option.dataset.value === value);
       });
       el.classList.remove('open');
+      if(typeof refreshCandidateProfileCompleteness === 'function') refreshCandidateProfileCompleteness();
     }
 
     function setModernSelect(id, value, fallbackLabel='Select') {
@@ -5427,7 +5482,97 @@
 
     /* =====================================================
        RESUME → CANDIDATE PROFILE IMPORT
+       Persist the uploaded resume in IndexedDB so it survives
+       app/tab restarts and remains until the user explicitly deletes it.
     ====================================================== */
+
+    const GLUEFUL_RESUME_DB_NAME = 'glueful_resume_store';
+    const GLUEFUL_RESUME_DB_VERSION = 1;
+    const GLUEFUL_RESUME_STORE = 'resumes';
+    let candidateResumePersisted = null;
+
+    function openGluefulResumeDB() {
+      return new Promise((resolve, reject) => {
+        if(!window.indexedDB) { reject(new Error('IndexedDB unavailable')); return; }
+        const request = indexedDB.open(GLUEFUL_RESUME_DB_NAME, GLUEFUL_RESUME_DB_VERSION);
+        request.onupgradeneeded = () => {
+          const db = request.result;
+          if(!db.objectStoreNames.contains(GLUEFUL_RESUME_STORE)) {
+            db.createObjectStore(GLUEFUL_RESUME_STORE);
+          }
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error || new Error('Resume database unavailable'));
+      });
+    }
+
+    async function getCurrentUserId() {
+      try {
+        const {data} = await supabaseClient.auth.getUser();
+        return data?.user?.id || data?.user?.email || 'default-user';
+      } catch(error) {
+        return 'default-user';
+      }
+    }
+
+    async function saveCandidateResumeToDevice(file) {
+      const userId = await getCurrentUserId();
+      const db = await openGluefulResumeDB();
+      return new Promise((resolve,reject) => {
+        const tx = db.transaction(GLUEFUL_RESUME_STORE, 'readwrite');
+        tx.objectStore(GLUEFUL_RESUME_STORE).put({
+          userId, name:file.name, type:file.type || 'application/octet-stream',
+          size:file.size, lastModified:file.lastModified || Date.now(),
+          blob:file, savedAt:new Date().toISOString()
+        }, userId);
+        tx.oncomplete = () => { db.close(); resolve(true); };
+        tx.onerror = () => { db.close(); reject(tx.error || new Error('Could not save resume')); };
+      });
+    }
+
+    async function loadCandidateResumeFromDevice() {
+      try {
+        const userId = await getCurrentUserId();
+        const db = await openGluefulResumeDB();
+        const record = await new Promise((resolve,reject) => {
+          const tx = db.transaction(GLUEFUL_RESUME_STORE, 'readonly');
+          const req = tx.objectStore(GLUEFUL_RESUME_STORE).get(userId);
+          req.onsuccess = () => resolve(req.result || null);
+          req.onerror = () => reject(req.error);
+        });
+        db.close();
+        if(!record?.blob) { candidateResumePersisted = null; return null; }
+        const file = new File([record.blob], record.name || 'Resume', {
+          type:record.type || record.blob.type || 'application/octet-stream',
+          lastModified:record.lastModified || Date.now()
+        });
+        candidateResumePersisted = {name:file.name,size:file.size,savedAt:record.savedAt || ''};
+        return file;
+      } catch(error) {
+        console.warn('Saved resume could not be loaded:', error);
+        candidateResumePersisted = null;
+        return null;
+      }
+    }
+
+    async function deleteCandidateResumeFromDevice() {
+      const userId = await getCurrentUserId();
+      const db = await openGluefulResumeDB();
+      return new Promise((resolve,reject) => {
+        const tx = db.transaction(GLUEFUL_RESUME_STORE, 'readwrite');
+        tx.objectStore(GLUEFUL_RESUME_STORE).delete(userId);
+        tx.oncomplete = () => { db.close(); candidateResumePersisted=null; resolve(true); };
+        tx.onerror = () => { db.close(); reject(tx.error || new Error('Could not delete resume')); };
+      });
+    }
+
+    function updateCandidateResumeControls() {
+      const viewButton = document.getElementById('cp-resume-view-btn');
+      const deleteButton = document.getElementById('cp-resume-delete-btn');
+      const hasResume = !!candidateResumeFile || !!candidateResumePersisted;
+      if(viewButton) viewButton.disabled = !hasResume;
+      if(deleteButton) deleteButton.classList.toggle('show', !!candidateResumePersisted);
+    }
 
     let candidateResumeFile = null;
     let candidateResumeText = '';
@@ -5456,12 +5601,54 @@
       const input = document.getElementById('cp-resume-file');
       const name = document.getElementById('cp-resume-file-name');
       const importButton = document.getElementById('cp-resume-import-btn');
-      const viewButton = document.getElementById('cp-resume-view-btn');
       if(input) input.value = '';
-      if(name) { name.textContent = ''; name.style.display = 'none'; }
+      if(name) {
+        if(candidateResumePersisted) {
+          name.textContent = `${candidateResumePersisted.name} · saved on this device`;
+          name.style.display = 'block';
+        } else {
+          name.textContent = ''; name.style.display = 'none';
+        }
+      }
       if(importButton) importButton.disabled = true;
-      if(viewButton) viewButton.disabled = true;
-      setCandidateResumeStatus('', false);
+      updateCandidateResumeControls();
+      setCandidateResumeStatus(candidateResumePersisted ? 'Saved resume is available on this device until you delete it.' : '', !!candidateResumePersisted);
+      refreshCandidateProfileCompleteness();
+    }
+
+    async function deleteSavedCandidateResume() {
+      const confirmed = window.confirm('Delete the saved resume from this device? Your profile information will not be deleted.');
+      if(!confirmed) return;
+      try {
+        await deleteCandidateResumeFromDevice();
+        try {
+          const {data} = await supabaseClient.auth.getUser();
+          if(data?.user) {
+            const metadata = {...(data.user.user_metadata || {})};
+            const savedProfile = normalizeCandidateProfile(metadata[GLUEFUL_CANDIDATE_PROFILE_META_KEY]);
+            metadata[GLUEFUL_CANDIDATE_PROFILE_META_KEY] = {...savedProfile, resumeSource:'', resumeImportedAt:''};
+            await supabaseClient.auth.updateUser({data:metadata});
+          }
+        } catch(metaError) {
+          console.warn('Resume metadata cleanup unavailable:', metaError);
+        }
+        candidateResumeFile = null;
+        candidateResumeText = '';
+        candidateResumePreviewHtml = '';
+        revokeCandidateResumePreviewUrl();
+        const input=document.getElementById('cp-resume-file');
+        const name=document.getElementById('cp-resume-file-name');
+        const importButton=document.getElementById('cp-resume-import-btn');
+        if(input) input.value='';
+        if(name){name.textContent='';name.style.display='none';}
+        if(importButton) importButton.disabled=true;
+        updateCandidateResumeControls();
+        setCandidateResumeStatus('Saved resume deleted. Your profile information is still safe.', true);
+        refreshCandidateProfileCompleteness();
+      } catch(error) {
+        console.error('Resume deletion failed:', error);
+        setCandidateResumeStatus('Could not delete the saved resume. Please try again.', true);
+      }
     }
 
     async function handleCandidateResumeUpload(event) {
@@ -5499,7 +5686,16 @@
         }
         if(viewButton) viewButton.disabled = false;
         if(importButton) importButton.disabled = false;
-        setCandidateResumeStatus('Resume read successfully. Review it with View resume, then import the profile information.', true);
+        try {
+          await saveCandidateResumeToDevice(file);
+          candidateResumePersisted = {name:file.name,size:file.size,savedAt:new Date().toISOString()};
+          updateCandidateResumeControls();
+          setCandidateResumeStatus('Resume saved on this device. It will remain here until you delete it.', true);
+        } catch(storageError) {
+          console.warn('Resume persistence failed:', storageError);
+          setCandidateResumeStatus('Resume read successfully, but it could not be saved on this device.', true);
+        }
+        refreshCandidateProfileCompleteness();
       } catch(error) {
         console.error('Resume parsing failed:', error);
         candidateResumeText = '';
@@ -5943,6 +6139,7 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       refreshSettingsSwitches();
+      bindCandidateProfileCompleteness();
     });
 
     /* =====================================================
@@ -11213,6 +11410,56 @@
       };
     }
 
+    function refreshCandidateProfileCompleteness(profileOverride=null) {
+      const profile = profileOverride ? normalizeCandidateProfile(profileOverride) : collectCandidateProfileSafe();
+      const fields = [
+        ['Full name',profile.name],
+        ['Professional headline',profile.headline],
+        ['About',profile.about],
+        ['Target role',profile.targetRole],
+        ['Experience',profile.experience],
+        ['Preferred locations',profile.locations],
+        ['Work preference',profile.workMode],
+        ['Expected salary',profile.salary],
+        ['Notice period',profile.notice],
+        ['Skills',profile.skills],
+        ['Degree',profile.degree],
+        ['Field of study',profile.field],
+        ['Institution',profile.institution],
+        ['LinkedIn',profile.linkedin],
+        ['GitHub',profile.github],
+        ['Portfolio',profile.portfolio],
+        ['Resume',candidateResumeFile || candidateResumePersisted ? 'saved' : '']
+      ];
+      const complete = fields.filter(([,value]) => String(value || '').trim()).length;
+      const total = fields.length;
+      const percent = Math.round((complete / total) * 100);
+      const missing = fields.filter(([,value]) => !String(value || '').trim()).map(([label]) => label);
+      const percentEl=document.getElementById('cp-profile-percent');
+      const fillEl=document.getElementById('cp-profile-fill');
+      const copyEl=document.getElementById('cp-profile-completeness-copy');
+      if(percentEl) percentEl.textContent=`${percent}%`;
+      if(fillEl) fillEl.style.width=`${percent}%`;
+      if(copyEl) {
+        if(percent >= 100) copyEl.textContent='Your profile is complete and ready for personalized job matching.';
+        else if(missing.length <= 3) copyEl.textContent=`${complete} of ${total} profile items complete. Add ${missing.join(', ')} to reach 100%.`;
+        else copyEl.textContent=`${complete} of ${total} profile items complete. Add the remaining details to improve job recommendations.`;
+      }
+    }
+
+    function collectCandidateProfileSafe() {
+      try { return collectCandidateProfile(); }
+      catch(error) { return normalizeCandidateProfile({}); }
+    }
+
+    function bindCandidateProfileCompleteness() {
+      const modal=document.getElementById('candidate-profile-modal');
+      if(!modal || modal.dataset.completenessBound==='true') return;
+      modal.dataset.completenessBound='true';
+      modal.addEventListener('input', () => refreshCandidateProfileCompleteness());
+      modal.addEventListener('change', () => refreshCandidateProfileCompleteness());
+    }
+
     function fillCandidateProfile(profile) {
       const normalized =
         normalizeCandidateProfile(profile);
@@ -11233,6 +11480,7 @@
       setModernSelect('cp-experience-select', normalized.experience);
       setModernSelect('cp-work-mode-select', normalized.workMode);
       renderSkillsPreview(normalized.skills);
+      refreshCandidateProfileCompleteness(normalized);
     }
 
     async function loadCandidateProfile() {
@@ -11253,27 +11501,51 @@
 
     async function openCandidateProfile() {
       closeProfile();
+      // Hide every other Glueful layer before opening Profile Information.
+      document.querySelectorAll('.modal-overlay.open').forEach(modal => {
+        if(modal.id !== 'candidate-profile-modal') modal.classList.remove('open');
+      });
       closeModal('settings-modal', true);
       closeModal('job-search-preferences-modal', true);
+      bindCandidateProfileCompleteness();
 
       try {
-        const profile =
-          await loadCandidateProfile();
-
+        const profile = await loadCandidateProfile();
         fillCandidateProfile(profile);
 
-        const saved =
-          document.getElementById(
-            "candidate-profile-saved"
-          );
+        const saved = document.getElementById('candidate-profile-saved');
+        if(saved) saved.classList.remove('show');
 
-        if(saved) {
-          saved.classList.remove("show");
+        // Restore the actual resume file from IndexedDB if it exists.
+        const savedResume = await loadCandidateResumeFromDevice();
+        if(savedResume) {
+          candidateResumeFile = savedResume;
+          candidateResumeText = '';
+          candidateResumePreviewHtml = '';
+          revokeCandidateResumePreviewUrl();
+          candidateResumeObjectUrl = URL.createObjectURL(savedResume);
+          const name=document.getElementById('cp-resume-file-name');
+          if(name) { name.textContent=`${savedResume.name} · saved on this device`; name.style.display='block'; }
+          setCandidateResumeStatus('Saved resume restored. It will remain until you delete it.', true);
+          // Re-extract in the background so View resume and Import info work after restart.
+          try {
+            candidateResumeText = await extractResumeText(savedResume);
+            if(savedResume.name.toLowerCase().endsWith('.docx') && window.mammoth) {
+              const previewBuffer=await savedResume.arrayBuffer();
+              const htmlResult=await window.mammoth.convertToHtml({arrayBuffer:previewBuffer});
+              candidateResumePreviewHtml=htmlResult.value || '';
+            }
+            const restoredImportButton=document.getElementById('cp-resume-import-btn');
+            if(restoredImportButton && candidateResumeText.trim()) restoredImportButton.disabled=false;
+          } catch(parseError) {
+            console.warn('Restored resume parsing failed:', parseError);
+          }
+        } else {
+          clearCandidateResume();
         }
-
-        openModal(
-          "candidate-profile-modal"
-        );
+        updateCandidateResumeControls();
+        refreshCandidateProfileCompleteness();
+        openModal('candidate-profile-modal');
 
       } catch(error) {
         console.error(
