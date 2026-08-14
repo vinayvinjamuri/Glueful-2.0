@@ -2224,6 +2224,71 @@
     }
 
 
+
+    /* =====================================================
+       JOB SEARCH V1 — UI ONLY / MOCK DATA
+    ====================================================== */
+    .jobs-page{padding:18px 16px 110px;max-width:980px;margin:0 auto}
+    .jobs-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px}
+    .jobs-title{font-size:27px;line-height:1.08;font-weight:800;letter-spacing:-.7px;color:var(--text)}
+    .jobs-subtitle{margin-top:6px;color:var(--text-muted);font-size:13px;line-height:1.45}
+    .jobs-filter-btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:12px;padding:10px 12px;font-weight:750;font-size:12px;box-shadow:0 5px 16px rgba(0,0,0,.08);white-space:nowrap}
+    .jobs-filter-btn svg{width:16px;height:16px}
+    .jobs-searchbar{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:15px;padding:4px 5px 4px 13px;box-shadow:0 7px 22px rgba(0,0,0,.07);margin-bottom:18px}
+    .jobs-searchbar svg{width:19px;height:19px;color:var(--text-faint);flex:0 0 auto}
+    .jobs-searchbar input{border:0!important;outline:0!important;background:transparent!important;box-shadow:none!important;min-width:0;width:100%;padding:11px 4px!important;color:var(--text);font-size:14px}
+    .jobs-searchbar input::placeholder{color:var(--text-faint)}
+    .jobs-section{margin:20px 0 0}
+    .jobs-section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+    .jobs-section-title{font-size:15px;font-weight:800;color:var(--text)}
+    .jobs-section-note{font-size:11px;color:var(--text-faint)}
+    .jobs-list{display:grid;gap:10px}
+    .job-card{background:var(--surface);border:1px solid var(--border);border-radius:17px;padding:14px;box-shadow:0 7px 22px rgba(0,0,0,.055);transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
+    .job-card:active{transform:scale(.992)}
+    .job-card-top{display:flex;gap:11px;align-items:flex-start}
+    .job-logo{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,#7c4dff,#4f46e5);color:#fff;font-weight:850;font-size:14px;flex:0 0 auto;overflow:hidden}
+    .job-logo img{width:100%;height:100%;object-fit:cover}
+    .job-main{min-width:0;flex:1}
+    .job-title{font-size:14px;line-height:1.3;font-weight:800;color:var(--text)}
+    .job-company{margin-top:3px;font-size:12px;font-weight:650;color:var(--text-muted)}
+    .job-meta{display:flex;flex-wrap:wrap;gap:6px 9px;margin-top:9px;font-size:11px;color:var(--text-muted)}
+    .job-meta span{display:inline-flex;align-items:center;gap:4px}
+    .job-meta svg{width:13px;height:13px}
+    .job-match{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:5px 8px;background:rgba(109,59,232,.11);color:#6d3be8;font-size:10px;font-weight:850;white-space:nowrap}
+    .job-description{margin-top:10px;color:var(--text-muted);font-size:11.5px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .job-skills{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+    .job-skill{border:1px solid var(--border);background:var(--surface-2,var(--surface));border-radius:999px;padding:4px 7px;font-size:10px;color:var(--text-muted);font-weight:650}
+    .job-actions{display:flex;gap:8px;margin-top:13px}
+    .job-action{flex:1;border-radius:11px;padding:9px 10px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:11px;font-weight:800}
+    .job-action.primary{border:0;background:var(--grad);color:#fff}
+    .job-save{width:38px;flex:0 0 38px}
+    .job-save.saved{color:#6d3be8;border-color:rgba(109,59,232,.3);background:rgba(109,59,232,.08)}
+    .jobs-empty{padding:32px 18px;text-align:center;color:var(--text-muted);border:1px dashed var(--border);border-radius:16px}
+    .jobs-empty strong{display:block;color:var(--text);margin-bottom:5px}
+    .job-filter-sheet .modal-card{max-height:88vh;overflow:auto}
+    .job-filter-grid{display:grid;gap:13px}
+    .job-filter-label{font-size:11px;font-weight:800;color:var(--text);margin-bottom:6px}
+    .job-filter-options{display:flex;flex-wrap:wrap;gap:7px}
+    .job-filter-chip{border:1px solid var(--border);background:var(--surface);color:var(--text-muted);border-radius:999px;padding:8px 10px;font-size:11px;font-weight:700}
+    .job-filter-chip.active{border-color:#6d3be8;background:rgba(109,59,232,.1);color:#6d3be8}
+    .job-detail-card{max-height:90vh;overflow:auto}
+    .job-detail-header{display:flex;gap:12px;align-items:flex-start}
+    .job-detail-title{font-size:21px;line-height:1.2;font-weight:850;color:var(--text)}
+    .job-detail-company{margin-top:4px;color:var(--text-muted);font-size:13px}
+    .job-detail-block{margin-top:18px}
+    .job-detail-block h4{margin:0 0 7px;font-size:13px;color:var(--text)}
+    .job-detail-block p{margin:0;color:var(--text-muted);font-size:12px;line-height:1.65;white-space:pre-line}
+    .job-match-panel{margin-top:15px;padding:12px;border-radius:14px;background:rgba(109,59,232,.08);border:1px solid rgba(109,59,232,.16)}
+    .job-match-panel strong{color:#6d3be8}
+    html[data-theme="light"] .job-card,
+    html[data-theme="light"] .jobs-searchbar,
+    html[data-theme="light"] .jobs-filter-btn{box-shadow:0 7px 22px rgba(31,41,55,.06)}
+    @media(min-width:701px){
+      .jobs-page{padding:26px 24px 50px}
+      .jobs-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .job-card{padding:16px}
+    }
+
     /* =====================================================
        BOTTOM NAV
     ====================================================== */
@@ -3986,7 +4051,109 @@
     </div>
   </div>
 
+  
   <!-- =====================================================
+       JOB SEARCH VIEW — UI ONLY / MOCK DATA
+  ====================================================== -->
+  <section id="jobs-view" class="app-view" style="display:none;">
+    <div class="jobs-page">
+      <div class="jobs-head">
+        <div>
+          <div class="jobs-title">Jobs</div>
+          <div class="jobs-subtitle">Discover opportunities matched to your profile.</div>
+        </div>
+        <button class="jobs-filter-btn" type="button" onclick="openJobFilters()" aria-label="Filter jobs">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M4 6h16M7 12h10M10 18h4"/>
+          </svg>
+          <span id="jobs-filter-label">Filter</span>
+        </button>
+      </div>
+
+      <div class="jobs-searchbar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="11" cy="11" r="6.5"/>
+          <path d="m16 16 4.5 4.5"/>
+        </svg>
+        <input id="jobs-search-input" type="search" autocomplete="off"
+               placeholder="Search jobs, skills or companies..."
+               oninput="renderJobs()">
+      </div>
+
+      <section class="jobs-section">
+        <div class="jobs-section-head">
+          <div class="jobs-section-title">Recommended for you</div>
+          <div class="jobs-section-note" id="jobs-profile-note">Based on your profile</div>
+        </div>
+        <div id="jobs-recommended-list" class="jobs-list"></div>
+      </section>
+
+      <section class="jobs-section">
+        <div class="jobs-section-head">
+          <div class="jobs-section-title">Recently posted</div>
+          <div class="jobs-section-note">Mock data for UI testing</div>
+        </div>
+        <div id="jobs-recent-list" class="jobs-list"></div>
+      </section>
+    </div>
+  </section>
+
+  <!-- Job filters -->
+  <div id="job-filter-modal" class="modal-overlay job-filter-sheet" onclick="if(event.target===this) closeJobFilters()">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">Filter jobs</div>
+          <div class="modal-subtitle">Tune your job search preferences.</div>
+        </div>
+        <button class="icon-btn" type="button" onclick="closeJobFilters()" aria-label="Close">×</button>
+      </div>
+      <div class="job-filter-grid">
+        <div>
+          <div class="job-filter-label">Date posted</div>
+          <div class="job-filter-options" id="job-date-options"></div>
+        </div>
+        <div>
+          <div class="job-filter-label">Work mode</div>
+          <div class="job-filter-options" id="job-mode-options"></div>
+        </div>
+        <div>
+          <div class="job-filter-label">Experience</div>
+          <div class="job-filter-options" id="job-experience-options"></div>
+        </div>
+        <div>
+          <div class="job-filter-label">Employment</div>
+          <div class="job-filter-options" id="job-employment-options"></div>
+        </div>
+        <div>
+          <div class="job-filter-label">Company</div>
+          <input id="job-company-filter" class="input" placeholder="Preferred company...">
+        </div>
+        <div>
+          <div class="job-filter-label">Location</div>
+          <input id="job-location-filter" class="input" placeholder="Preferred location...">
+        </div>
+      </div>
+      <div class="modal-actions" style="margin-top:18px;">
+        <button class="secondary-btn" type="button" onclick="resetJobFilters()">Reset</button>
+        <button class="primary-btn" type="button" onclick="applyJobFilters()">Apply filters</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Job details -->
+  <div id="job-detail-modal" class="modal-overlay" onclick="if(event.target===this) closeJobDetails()">
+    <div class="modal-card job-detail-card">
+      <div class="modal-header">
+        <div class="modal-title">Job details</div>
+        <button class="icon-btn" type="button" onclick="closeJobDetails()" aria-label="Close">×</button>
+      </div>
+      <div id="job-detail-content"></div>
+    </div>
+  </div>
+
+
+<!-- =====================================================
        BOTTOM NAVIGATION
   ====================================================== -->
 
@@ -4006,6 +4173,15 @@
       Dashboard
 
     </button>
+      <button class="nav-btn" data-view="jobs" type="button">
+        <span class="nav-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <circle cx="11" cy="11" r="6.5"></circle>
+            <path d="m16 16 4.5 4.5"></path>
+          </svg>
+        </span>
+        <span class="nav-label">Jobs</span>
+      </button>
 
 
     <button
@@ -6142,6 +6318,269 @@
       bindCandidateProfileCompleteness();
     });
 
+
+    /* =====================================================
+       JOB SEARCH V1 — MOCK UI ONLY
+       No Supabase job table, no provider calls.
+    ====================================================== */
+
+    const GLUEFUL_JOB_FILTERS_KEY = "glueful_job_filters_v1";
+    const GLUEFUL_SAVED_JOBS_KEY = "glueful_saved_jobs_v1";
+
+    const JOB_MOCK_DATA = [
+      {
+        id:"mock-1", title:"Post-Silicon Validation Engineer", company:"Qualcomm",
+        location:"Hyderabad", workMode:"Hybrid", employment:"Full-time",
+        experience:"2–5 years", postedDays:1, match:92,
+        skills:["C","Python","ARM","SoC Validation","PMIC"],
+        description:"Validate SoC features across silicon, debug failures, automate validation and work with low-level hardware and software teams.",
+        url:"https://www.qualcomm.com/jobs"
+      },
+      {
+        id:"mock-2", title:"Embedded Software Engineer", company:"NVIDIA",
+        location:"Bengaluru", workMode:"On-site", employment:"Full-time",
+        experience:"2–4 years", postedDays:2, match:88,
+        skills:["C","Embedded C","ARM","Python","Linux"],
+        description:"Develop and validate embedded software for next-generation platforms with a focus on low-level debugging and system integration.",
+        url:"https://www.nvidia.com/en-us/about-nvidia/careers/"
+      },
+      {
+        id:"mock-3", title:"SoC Validation Engineer", company:"AMD",
+        location:"Hyderabad", workMode:"On-site", employment:"Full-time",
+        experience:"2–6 years", postedDays:4, match:85,
+        skills:["SoC","Python","C","JTAG","Validation"],
+        description:"Create validation plans, execute post-silicon tests and debug hardware/software interaction issues.",
+        url:"https://careers.amd.com/"
+      },
+      {
+        id:"mock-4", title:"Embedded Test Engineer", company:"Microsoft",
+        location:"Bengaluru", workMode:"Hybrid", employment:"Full-time",
+        experience:"1–4 years", postedDays:6, match:82,
+        skills:["Python","Automation","Embedded","Testing","Linux"],
+        description:"Build automated validation workflows for devices and embedded systems and collaborate with hardware and firmware teams.",
+        url:"https://jobs.careers.microsoft.com/"
+      },
+      {
+        id:"mock-5", title:"Firmware Validation Engineer", company:"Intel",
+        location:"Bengaluru", workMode:"Hybrid", employment:"Full-time",
+        experience:"2–5 years", postedDays:8, match:79,
+        skills:["C","Firmware","SPI","I2C","Python"],
+        description:"Validate firmware features, interfaces and platform behavior using automation and lab-based debug tools.",
+        url:"https://jobs.intel.com/"
+      }
+    ];
+
+    let gluefulJobFilters = {
+      date:"any", mode:"any", experience:"any", employment:"any",
+      company:"", location:""
+    };
+
+    let gluefulSavedJobs = new Set();
+
+    function loadJobUIState(){
+      try{
+        const filters = JSON.parse(localStorage.getItem(GLUEFUL_JOB_FILTERS_KEY) || "{}");
+        gluefulJobFilters = {...gluefulJobFilters, ...filters};
+        const saved = JSON.parse(localStorage.getItem(GLUEFUL_SAVED_JOBS_KEY) || "[]");
+        gluefulSavedJobs = new Set(Array.isArray(saved) ? saved : []);
+      }catch(e){}
+    }
+
+    function saveJobUIState(){
+      try{
+        localStorage.setItem(GLUEFUL_JOB_FILTERS_KEY, JSON.stringify(gluefulJobFilters));
+        localStorage.setItem(GLUEFUL_SAVED_JOBS_KEY, JSON.stringify([...gluefulSavedJobs]));
+      }catch(e){}
+    }
+
+    function jobInitials(company){
+      return String(company || "?").trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase();
+    }
+
+    function jobDaysLabel(days){
+      if(days === 0) return "Today";
+      if(days === 1) return "1 day ago";
+      return `${days} days ago`;
+    }
+
+    function getJobSearchProfile(){
+      try{
+        return getCandidateProfileFromUser(window.__gluefulCurrentUser || null);
+      }catch(e){
+        return normalizeCandidateProfile({});
+      }
+    }
+
+    function jobMatchesFilters(job){
+      const f = gluefulJobFilters;
+      const q = String(document.getElementById("jobs-search-input")?.value || "").trim().toLowerCase();
+      const hay = `${job.title} ${job.company} ${job.location} ${job.skills.join(" ")}`.toLowerCase();
+
+      if(q && !hay.includes(q)) return false;
+      if(f.company && !job.company.toLowerCase().includes(f.company.toLowerCase())) return false;
+      if(f.location && !job.location.toLowerCase().includes(f.location.toLowerCase())) return false;
+      if(f.mode !== "any" && job.workMode.toLowerCase() !== f.mode.toLowerCase()) return false;
+      if(f.employment !== "any" && job.employment.toLowerCase() !== f.employment.toLowerCase()) return false;
+
+      if(f.date !== "any"){
+        const limit = Number(f.date);
+        if(job.postedDays > limit) return false;
+      }
+      return true;
+    }
+
+    function jobCard(job){
+      const saved = gluefulSavedJobs.has(job.id);
+      const skills = job.skills.slice(0,5).map(skill=>`<span class="job-skill">${esc(skill)}</span>`).join("");
+      return `
+        <article class="job-card">
+          <div class="job-card-top">
+            <div class="job-logo">${esc(jobInitials(job.company))}</div>
+            <div class="job-main">
+              <div class="job-title">${esc(job.title)}</div>
+              <div class="job-company">${esc(job.company)}</div>
+              <div class="job-meta">
+                <span>${esc(job.location)}</span>
+                <span>${esc(job.workMode)}</span>
+                <span>${esc(job.experience)}</span>
+                <span>${esc(jobDaysLabel(job.postedDays))}</span>
+              </div>
+            </div>
+            <span class="job-match">${job.match}% Match</span>
+          </div>
+          <div class="job-description">${esc(job.description)}</div>
+          <div class="job-skills">${skills}</div>
+          <div class="job-actions">
+            <button class="job-action" type="button" onclick="openJobDetails('${job.id}')">View job</button>
+            <button class="job-action ${saved ? "saved" : ""} job-save" type="button" onclick="toggleSavedJob('${job.id}')" aria-label="${saved ? "Unsave" : "Save"} job">
+              <svg viewBox="0 0 24 24" fill="${saved ? "currentColor" : "none"}" stroke="currentColor" stroke-width="1.8" width="16" height="16">
+                <path d="M6 4.5A2.5 2.5 0 0 1 8.5 2h7A2.5 2.5 0 0 1 18 4.5V21l-6-3.5L6 21V4.5Z"/>
+              </svg>
+            </button>
+            <button class="job-action primary" type="button" onclick="startMockJobApply('${job.id}')">Apply</button>
+          </div>
+        </article>`;
+    }
+
+    function renderJobs(){
+      const filtered = JOB_MOCK_DATA.filter(jobMatchesFilters);
+      const sorted = [...filtered].sort((a,b)=>b.match-a.match);
+      const recent = [...filtered].sort((a,b)=>a.postedDays-b.postedDays);
+
+      const recEl = document.getElementById("jobs-recommended-list");
+      const recentEl = document.getElementById("jobs-recent-list");
+      if(!recEl || !recentEl) return;
+
+      recEl.innerHTML = sorted.length
+        ? sorted.map(jobCard).join("")
+        : `<div class="jobs-empty"><strong>No matching jobs</strong>Try changing your search or filters.</div>`;
+
+      recentEl.innerHTML = recent.length
+        ? recent.map(jobCard).join("")
+        : `<div class="jobs-empty"><strong>No recent jobs match your filters</strong>Try another date range.</div>`;
+
+      const active = Object.values(gluefulJobFilters).filter(v=>v && v !== "any").length;
+      const label = document.getElementById("jobs-filter-label");
+      if(label) label.textContent = active ? `Filter ${active}` : "Filter";
+    }
+
+    function openJobsView(){
+      closeProfile();
+      document.querySelectorAll(".modal-overlay.open").forEach(m=>m.classList.remove("open"));
+      loadJobUIState();
+      renderJobs();
+      const view = document.getElementById("jobs-view");
+      if(view) view.style.display = "block";
+      document.querySelectorAll(".app-view").forEach(v=>{
+        if(v.id !== "jobs-view") v.style.display = "none";
+      });
+    }
+
+    function openJobFilters(){
+      loadJobUIState();
+      const options = {
+        "job-date-options":[["any","Any time"],["1","Past 24 hours"],["3","Past 3 days"],["7","Past 7 days"],["14","Past 14 days"],["30","Past 30 days"]],
+        "job-mode-options":[["any","Any"],["remote","Remote"],["hybrid","Hybrid"],["on-site","On-site"]],
+        "job-experience-options":[["any","Any"],["0–1","0–1 years"],["1–3","1–3 years"],["3–5","3–5 years"],["5–10","5–10 years"]],
+        "job-employment-options":[["any","Any"],["full-time","Full-time"],["part-time","Part-time"],["contract","Contract"],["internship","Internship"]]
+      };
+      Object.entries(options).forEach(([id,items])=>{
+        const el=document.getElementById(id);
+        if(!el) return;
+        const key = id.replace("job-","").replace("-options","");
+        const value = gluefulJobFilters[key] || "any";
+        el.innerHTML = items.map(([v,label])=>`<button type="button" class="job-filter-chip ${value===v?"active":""}" onclick="selectJobFilter('${key}','${v}',this)">${esc(label)}</button>`).join("");
+      });
+      document.getElementById("job-company-filter").value = gluefulJobFilters.company || "";
+      document.getElementById("job-location-filter").value = gluefulJobFilters.location || "";
+      openModal("job-filter-modal");
+    }
+
+    function selectJobFilter(key,value,button){
+      gluefulJobFilters[key] = value;
+      button.parentElement.querySelectorAll(".job-filter-chip").forEach(b=>b.classList.remove("active"));
+      button.classList.add("active");
+    }
+
+    function applyJobFilters(){
+      gluefulJobFilters.company = document.getElementById("job-company-filter")?.value.trim() || "";
+      gluefulJobFilters.location = document.getElementById("job-location-filter")?.value.trim() || "";
+      saveJobUIState();
+      closeModal("job-filter-modal");
+      renderJobs();
+    }
+
+    function resetJobFilters(){
+      gluefulJobFilters = {date:"any",mode:"any",experience:"any",employment:"any",company:"",location:""};
+      saveJobUIState();
+      openJobFilters();
+    }
+
+    function toggleSavedJob(id){
+      if(gluefulSavedJobs.has(id)) gluefulSavedJobs.delete(id);
+      else gluefulSavedJobs.add(id);
+      saveJobUIState();
+      renderJobs();
+    }
+
+    function openJobDetails(id){
+      const job = JOB_MOCK_DATA.find(j=>j.id===id);
+      if(!job) return;
+      document.getElementById("job-detail-content").innerHTML = `
+        <div class="job-detail-header">
+          <div class="job-logo">${esc(jobInitials(job.company))}</div>
+          <div>
+            <div class="job-detail-title">${esc(job.title)}</div>
+            <div class="job-detail-company">${esc(job.company)} · ${esc(job.location)}</div>
+          </div>
+        </div>
+        <div class="job-match-panel"><strong>${job.match}% Match</strong> — based on your current profile. This is a UI preview; live matching comes after the job provider is connected.</div>
+        <div class="job-detail-block"><h4>Job overview</h4><p>${esc(job.description)}</p></div>
+        <div class="job-detail-block"><h4>Details</h4><p>${esc(job.workMode)} · ${esc(job.employment)} · ${esc(job.experience)} · ${esc(jobDaysLabel(job.postedDays))}</p></div>
+        <div class="job-detail-block"><h4>Skills</h4><p>${esc(job.skills.join(" · "))}</p></div>
+        <div class="modal-actions" style="margin-top:18px;">
+          <button class="secondary-btn" type="button" onclick="toggleSavedJob('${job.id}');openJobDetails('${job.id}')">${gluefulSavedJobs.has(job.id) ? "Saved" : "Save job"}</button>
+          <button class="primary-btn" type="button" onclick="startMockJobApply('${job.id}')">Apply</button>
+        </div>`;
+      openModal("job-detail-modal");
+    }
+
+    function closeJobDetails(){
+      closeModal("job-detail-modal");
+    }
+
+    function startMockJobApply(id){
+      const job = JOB_MOCK_DATA.find(j=>j.id===id);
+      if(!job) return;
+      closeJobDetails();
+      showError(`Apply flow preview: ${job.company} — ${job.title}. External application + confirmation will be connected after the live job API.`);
+    }
+
+    document.addEventListener("DOMContentLoaded", ()=>{
+      loadJobUIState();
+    });
+
+
     /* =====================================================
        STATUS
     ====================================================== */
@@ -7299,6 +7738,18 @@
     }
 
     function switchView(view, fromHistory=false) {
+
+      if(view === "jobs"){
+        if(!fromHistory) pushGluefulState('view', null, 'jobs');
+        currentView = "jobs";
+        document.querySelectorAll(".app-view").forEach(v=>v.style.display = "none");
+        openJobsView();
+        document.querySelectorAll(".nav-btn").forEach(btn=>{
+          btn.classList.toggle("active", btn.dataset.view === "jobs");
+        });
+        return;
+      }
+
 
       if (!fromHistory && view !== currentView) {
         pushGluefulState('view', null, view);
