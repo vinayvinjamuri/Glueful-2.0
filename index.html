@@ -5002,23 +5002,190 @@
   </div>
 
   <!-- =====================================================
-       SETTINGS MODAL
+       SETTINGS — PREMIUM CAREER APP PREFERENCES
+       Inspired by the clarity of major professional platforms.
+       No emoji icons: all navigation icons are SVG line icons.
   ====================================================== -->
 
-  <div id="settings-modal" class="modal-overlay" onclick="if(event.target===this) closeModal('settings-modal')">
-    <div class="modal settings-panel">
-      <div class="modal-header">
-        <h3 class="modal-title">Settings</h3>
-        <button type="button" class="icon-btn" onclick="closeModal('settings-modal')">✕</button>
-      </div>
-      <div class="settings-row">
-        <div class="settings-row-copy">
-          <strong>Appearance</strong>
-          <span>Switch between dark and light mode</span>
-        </div>
-        <button id="theme-toggle" class="theme-toggle" type="button" role="switch" aria-checked="false" aria-label="Toggle theme" onclick="toggleTheme()">
-          <span id="theme-toggle-thumb" class="theme-toggle-thumb">☾</span>
+  <svg class="settings-icon-sprite" aria-hidden="true">
+    <symbol id="si-profile" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.5 3.1-5.2 7-5.2s6.2 1.7 7 5.2"/></symbol>
+    <symbol id="si-briefcase" viewBox="0 0 24 24"><rect x="3.5" y="6.5" width="17" height="13" rx="2"/><path d="M8 6.5V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1.5M3.5 11.5h17M10 11.5v2h4v-2"/></symbol>
+    <symbol id="si-location" viewBox="0 0 24 24"><path d="M19 10c0 5-7 10-7 10S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2.3"/></symbol>
+    <symbol id="si-bell" viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 8h18c0-1-3-1-3-8ZM10 21h4"/></symbol>
+    <symbol id="si-shield" viewBox="0 0 24 24"><path d="M12 3 19 6v5c0 4.6-2.7 7.8-7 10-4.3-2.2-7-5.4-7-10V6l7-3Z"/><path d="m9.5 12 1.7 1.7 3.6-3.8"/></symbol>
+    <symbol id="si-monitor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></symbol>
+    <symbol id="si-link" viewBox="0 0 24 24"><path d="M10 13.5 14 10M8 16l-1.5 1.5a3.5 3.5 0 0 1-5-5L5 9a3.5 3.5 0 0 1 5 0M16 8l1.5-1.5a3.5 3.5 0 0 1 5 5L19 15a3.5 3.5 0 0 1-5 0"/></symbol>
+    <symbol id="si-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="7" ry="3"/><path d="M5 5v7c0 1.7 3.1 3 7 3s7-1.3 7-3V5M5 12v7c0 1.7 3.1 3 7 3s7-1.3 7-3v-7"/></symbol>
+    <symbol id="si-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.6 2.6 0 1 1 4.3 2c-1.3 1-1.8 1.4-1.8 3M12 17h.01"/></symbol>
+    <symbol id="si-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="si-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.3"/><path d="m16 16 5 5"/></symbol>
+    <symbol id="si-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></symbol>
+  </svg>
+
+  <div id="settings-modal" class="modal-overlay settings-overlay" onclick="if(event.target===this) closeModal('settings-modal')">
+    <div class="modal settings-panel settings-panel-premium">
+      <div class="settings-topbar">
+        <button type="button" class="settings-back" onclick="closeModal('settings-modal')" aria-label="Close settings">
+          <span>‹</span>
         </button>
+        <div>
+          <h2 class="settings-page-title">Settings</h2>
+          <div class="settings-page-subtitle">Account, job search and app preferences</div>
+        </div>
+        <button type="button" class="settings-help" aria-label="Settings help" onclick="showComingSoon('Settings help')">
+          <svg><use href="#si-help"></use></svg>
+        </button>
+      </div>
+
+      <div class="settings-scroll">
+        <section class="settings-section">
+          <h3>Account</h3>
+          <div class="settings-list">
+            <button class="settings-item" onclick="openCandidateProfile()">
+              <span class="settings-item-icon"><svg><use href="#si-profile"></use></svg></span>
+              <span class="settings-item-copy"><strong>Profile information</strong><small>Name, headline, experience and professional profile</small></span>
+              <span class="settings-chevron">›</span>
+            </button>
+            <button class="settings-item" onclick="openCandidateProfile()">
+              <span class="settings-item-icon"><svg><use href="#si-briefcase"></use></svg></span>
+              <span class="settings-item-copy"><strong>Career profile</strong><small>Skills, education, resume and career preferences</small></span>
+              <span class="settings-chevron">›</span>
+            </button>
+            <button class="settings-item" onclick="showComingSoon('Sign in & security')">
+              <span class="settings-item-icon"><svg><use href="#si-lock"></use></svg></span>
+              <span class="settings-item-copy"><strong>Sign in & security</strong><small>Password, sessions and account security</small></span>
+              <span class="settings-chevron">›</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="settings-section">
+          <h3>Job search</h3>
+          <div class="settings-list">
+            <button class="settings-item settings-item-feature" onclick="openJobSearchPreferences()">
+              <span class="settings-item-icon"><svg><use href="#si-search"></use></svg></span>
+              <span class="settings-item-copy"><strong>Job search preferences</strong><small>Roles, locations, work mode, salary and employment type</small></span>
+              <span class="settings-chevron">›</span>
+            </button>
+            <button class="settings-item" onclick="openJobSearchPreferences()">
+              <span class="settings-item-icon"><svg><use href="#si-location"></use></svg></span>
+              <span class="settings-item-copy"><strong>Preferred locations</strong><small>Where you want Glueful to find opportunities</small></span>
+              <span class="settings-chevron">›</span>
+            </button>
+            <div class="settings-item settings-item-toggle">
+              <span class="settings-item-icon"><svg><use href="#si-bell"></use></svg></span>
+              <span class="settings-item-copy"><strong>Job alerts</strong><small>Notify me about relevant new opportunities</small></span>
+              <button id="job-alert-toggle" class="settings-switch" role="switch" aria-checked="true" onclick="togglePreference('glueful_job_alerts', this);event.stopPropagation()"><span></span></button>
+            </div>
+            <div class="settings-item settings-item-toggle">
+              <span class="settings-item-icon"><svg><use href="#si-briefcase"></use></svg></span>
+              <span class="settings-item-copy"><strong>Personalized recommendations</strong><small>Use your profile to rank the most relevant jobs</small></span>
+              <button id="job-reco-toggle" class="settings-switch" role="switch" aria-checked="true" onclick="togglePreference('glueful_job_recommendations', this);event.stopPropagation()"><span></span></button>
+            </div>
+          </div>
+        </section>
+
+        <section class="settings-section">
+          <h3>Notifications</h3>
+          <div class="settings-list">
+            <div class="settings-item settings-item-toggle">
+              <span class="settings-item-icon"><svg><use href="#si-bell"></use></svg></span>
+              <span class="settings-item-copy"><strong>Application updates</strong><small>Interview, rejection, offer and status updates</small></span>
+              <button id="application-notify-toggle" class="settings-switch" role="switch" aria-checked="true" onclick="togglePreference('glueful_application_notifications', this);event.stopPropagation()"><span></span></button>
+            </div>
+            <div class="settings-item settings-item-toggle">
+              <span class="settings-item-icon"><svg><use href="#si-bell"></use></svg></span>
+              <span class="settings-item-copy"><strong>Interview reminders</strong><small>Reminders before upcoming interviews</small></span>
+              <button id="interview-notify-toggle" class="settings-switch" role="switch" aria-checked="true" onclick="togglePreference('glueful_interview_reminders', this);event.stopPropagation()"><span></span></button>
+            </div>
+            <div class="settings-item settings-item-toggle">
+              <span class="settings-item-icon"><svg><use href="#si-link"></use></svg></span>
+              <span class="settings-item-copy"><strong>Email notifications</strong><small>Important Glueful updates sent to your email</small></span>
+              <button id="email-notify-toggle" class="settings-switch" role="switch" aria-checked="true" onclick="togglePreference('glueful_email_notifications', this);event.stopPropagation()"><span></span></button>
+            </div>
+          </div>
+        </section>
+
+        <section class="settings-section">
+          <h3>Display</h3>
+          <div class="settings-list">
+            <div class="settings-item settings-item-toggle">
+              <span class="settings-item-icon"><svg><use href="#si-monitor"></use></svg></span>
+              <span class="settings-item-copy"><strong>Appearance</strong><small>Switch between dark and light mode</small></span>
+              <button id="theme-toggle" class="settings-switch" type="button" role="switch" aria-checked="false" aria-label="Toggle theme" onclick="toggleTheme();event.stopPropagation()"><span id="theme-toggle-thumb"></span></button>
+            </div>
+            <button class="settings-item" onclick="showComingSoon('Language settings')">
+              <span class="settings-item-icon"><span class="settings-letter">A</span></span>
+              <span class="settings-item-copy"><strong>Language</strong><small>English (India)</small></span>
+              <span class="settings-chevron">›</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="settings-section">
+          <h3>Privacy & data</h3>
+          <div class="settings-list">
+            <button class="settings-item" onclick="showComingSoon('Privacy controls')">
+              <span class="settings-item-icon"><svg><use href="#si-shield"></use></svg></span>
+              <span class="settings-item-copy"><strong>Privacy</strong><small>Control how your profile and activity are used</small></span>
+              <span class="settings-chevron">›</span>
+            </button>
+            <button class="settings-item" onclick="showComingSoon('Data controls')">
+              <span class="settings-item-icon"><svg><use href="#si-database"></use></svg></span>
+              <span class="settings-item-copy"><strong>Data & storage</strong><small>Manage saved data and account information</small></span>
+              <span class="settings-chevron">›</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="settings-section">
+          <h3>Connected services</h3>
+          <div class="settings-list">
+            <button class="settings-item" onclick="showComingSoon('Gmail integration')">
+              <span class="settings-item-icon"><svg><use href="#si-link"></use></svg></span>
+              <span class="settings-item-copy"><strong>Gmail integration</strong><small>Connect Gmail to detect career-related emails</small></span>
+              <span class="settings-status">Not connected</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="settings-section">
+          <h3>Support</h3>
+          <div class="settings-list">
+            <button class="settings-item" onclick="showComingSoon('Help Center')">
+              <span class="settings-item-icon"><svg><use href="#si-help"></use></svg></span>
+              <span class="settings-item-copy"><strong>Help Center</strong><small>Get help using Glueful</small></span>
+              <span class="settings-chevron">›</span>
+            </button>
+          </div>
+        </section>
+
+        <div class="settings-danger-zone">
+          <button class="settings-danger" onclick="openLogoutConfirmation()">Sign out</button>
+          <button class="settings-danger muted-danger" onclick="showComingSoon('Delete account')"><svg><use href="#si-trash"></use></svg> Delete account</button>
+        </div>
+        <div class="settings-version">Glueful · Career workspace</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JOB SEARCH PREFERENCES -->
+  <div id="job-search-preferences-modal" class="modal-overlay" onclick="if(event.target===this) closeModal('job-search-preferences-modal')">
+    <div class="modal job-pref-panel">
+      <div class="settings-topbar">
+        <button type="button" class="settings-back" onclick="closeModal('job-search-preferences-modal')"><span>‹</span></button>
+        <div><h2 class="settings-page-title">Job search preferences</h2><div class="settings-page-subtitle">Used to personalize your job feed</div></div>
+        <span style="width:40px"></span>
+      </div>
+      <div class="job-pref-body">
+        <div class="job-pref-note">Your candidate profile remains the source of truth. These preferences fine-tune the jobs Glueful recommends.</div>
+        <label>Target roles<input id="jsp-roles" class="input" placeholder="e.g. Embedded Engineer, SoC Validation Engineer"></label>
+        <label>Preferred locations<input id="jsp-locations" class="input" placeholder="e.g. Hyderabad, Bengaluru, Pune, Remote"></label>
+        <label>Work mode<select id="jsp-workmode" class="input"><option>Any</option><option>On-site</option><option>Hybrid</option><option>Remote</option></select></label>
+        <label>Employment type<select id="jsp-employment" class="input"><option>Any</option><option>Full-time</option><option>Part-time</option><option>Contract</option><option>Internship</option></select></label>
+        <label>Minimum salary<input id="jsp-salary" class="input" placeholder="e.g. ₹12 LPA"></label>
+        <label>Maximum distance<input id="jsp-distance" class="input" placeholder="e.g. 25 km (for on-site/hybrid)"></label>
+        <button class="primary-btn settings-save-pref" onclick="saveJobSearchPreferences()">Save preferences</button>
       </div>
     </div>
   </div>
@@ -5062,7 +5229,7 @@
             font-size:20px;
           "
         >
-          👤
+          <svg style="width:23px;height:23px;fill:none;stroke:#fff;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round"><use href="#si-profile"></use></svg>
         </div>
 
 
@@ -5097,7 +5264,7 @@
         style="cursor:pointer;"
         onclick="openCandidateProfile()"
       >
-        <span aria-hidden="true">◎</span>
+        <span class="settings-item-icon"><svg><use href="#si-profile"></use></svg></span>
         <span>
           <strong style="font-size:12px;">Candidate Profile</strong>
           <span style="display:block;color:var(--text-faint);font-size:9px;margin-top:2px;">
@@ -5111,7 +5278,7 @@
         style="cursor:pointer;"
         onclick="openSettings()"
       >
-        <span aria-hidden="true">⚙</span>
+        <span class="settings-item-icon"><svg><use href="#si-monitor"></use></svg></span>
         <span>Account settings</span>
       </div>
 
@@ -5121,7 +5288,7 @@
         style="cursor:pointer;"
         onclick="showComingSoon('Gmail integration')"
       >
-        📧
+        <span class="settings-item-icon"><svg><use href="#si-link"></use></svg></span>
         <span>Connected services</span>
       </div>
 
@@ -5131,7 +5298,7 @@
         style="cursor:pointer;"
         onclick="showComingSoon('AI features')"
       >
-        ✨
+        <span class="settings-item-icon"><svg><use href="#si-search"></use></svg></span>
         <span>AI preferences</span>
       </div>
 
@@ -5140,7 +5307,7 @@
         class="profile-row logout-row"
         onclick="openLogoutConfirmation()"
       >
-        🚪
+        <span class="settings-item-icon"><svg><use href="#si-lock"></use></svg></span>
         <span>Log out</span>
       </div>
 
@@ -5152,6 +5319,62 @@
   <!-- =====================================================
        JAVASCRIPT
   ====================================================== -->
+
+  <style id="glueful-settings-premium-css">
+    .settings-icon-sprite{position:absolute;width:0;height:0;overflow:hidden}
+    .settings-overlay{padding:0;align-items:stretch;justify-content:center}
+    .settings-panel-premium{width:min(760px,100%);max-width:none;height:min(94vh,920px);padding:0;overflow:hidden;border-radius:22px;display:flex;flex-direction:column}
+    .settings-topbar{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:10px;padding:18px 20px 16px;border-bottom:1px solid var(--border);background:var(--card);flex-shrink:0}
+    .settings-back,.settings-help{width:40px;height:40px;border-radius:13px;background:var(--card2);border:1px solid var(--border);color:var(--text);display:flex;align-items:center;justify-content:center}
+    .settings-back span{font-size:30px;line-height:1;margin-top:-3px}
+    .settings-help svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    .settings-page-title{margin:0;font:700 22px 'Space Grotesk',sans-serif;letter-spacing:-.02em}
+    .settings-page-subtitle{margin-top:3px;color:var(--text-mute);font-size:11px}
+    .settings-scroll{overflow:auto;padding:18px 20px 28px;scrollbar-width:thin}
+    .settings-section{margin:0 0 22px}
+    .settings-section h3{margin:0 0 8px 2px;color:var(--text-mute);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+    .settings-list{border:1px solid var(--border);border-radius:16px;overflow:hidden;background:var(--card)}
+    .settings-item{width:100%;min-height:68px;display:flex;align-items:center;gap:13px;text-align:left;padding:12px 14px;background:var(--card);color:var(--text);border-bottom:1px solid var(--border-soft);transition:background .16s ease}
+    .settings-item:last-child{border-bottom:0}
+    .settings-item:hover{background:var(--card2)}
+    .settings-item-feature{background:linear-gradient(90deg,rgba(139,47,224,.09),transparent)}
+    .settings-item-icon{width:40px;height:40px;flex:0 0 40px;border-radius:12px;background:var(--card2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:#9B7CFF}
+    .settings-item-icon svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+    .settings-letter{font:700 17px 'Space Grotesk',sans-serif}
+    .settings-item-copy{min-width:0;flex:1}
+    .settings-item-copy strong{display:block;font-size:14px;font-weight:600;line-height:1.3}
+    .settings-item-copy small{display:block;margin-top:3px;color:var(--text-mute);font-size:11px;line-height:1.4}
+    .settings-chevron{color:var(--text-mute);font-size:27px;line-height:1;margin-left:5px}
+    .settings-status{font-size:10px;color:var(--text-mute);white-space:nowrap}
+    .settings-item-toggle{cursor:default}
+    .settings-switch{position:relative;width:46px;height:27px;flex:0 0 46px;border-radius:20px;background:var(--border);border:1px solid var(--border);padding:3px}
+    .settings-switch span{display:block;width:19px;height:19px;border-radius:50%;background:var(--text-mute);transition:transform .18s ease,background .18s ease}
+    .settings-switch.is-on{background:linear-gradient(135deg,#8B2FE0,#2F6FFF);border-color:transparent}
+    .settings-switch.is-on span{transform:translateX(18px);background:#fff}
+    .settings-danger-zone{display:flex;flex-direction:column;gap:8px;margin-top:4px;padding:4px 0}
+    .settings-danger{background:transparent;color:#F27272;text-align:left;padding:12px 2px;font-size:12px;font-weight:600}
+    .settings-danger svg{width:15px;height:15px;vertical-align:-3px;fill:none;stroke:currentColor;stroke-width:1.7}
+    .muted-danger{color:var(--text-mute)}
+    .settings-version{text-align:center;color:var(--text-faint);font-size:10px;padding:8px 0 4px}
+    .job-pref-panel{width:min(560px,100%);max-height:92vh;padding:0;overflow:hidden}
+    .job-pref-body{padding:20px;overflow:auto}
+    .job-pref-body label{display:block;color:var(--text-mute);font-size:11px;font-weight:600;margin:0 0 15px}
+    .job-pref-body .input{margin-top:6px}
+    .job-pref-note{padding:12px 13px;margin-bottom:18px;border-radius:13px;background:rgba(139,47,224,.08);border:1px solid rgba(139,47,224,.22);color:var(--text-dim);font-size:11px;line-height:1.5}
+    .settings-save-pref{width:100%;margin-top:4px}
+    html[data-theme="light"] .settings-panel-premium,html[data-theme="light"] .job-pref-panel{box-shadow:0 25px 70px rgba(20,28,45,.16)}
+    @media(max-width:700px){
+      .settings-panel-premium{height:100dvh;border-radius:0}
+      .settings-scroll{padding:16px 14px 30px}
+      .settings-topbar{padding:14px 14px 13px}
+      .settings-page-title{font-size:20px}
+      .settings-item{min-height:72px;padding:12px 10px}
+      .settings-item-copy strong{font-size:13px}
+      .settings-item-copy small{font-size:10.5px}
+      .settings-status{font-size:9px}
+      .job-pref-panel{max-height:100dvh;border-radius:0}
+    }
+  </style>
 
   <script>
 
@@ -5617,12 +5840,90 @@
     function toggleTheme() {
       const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
       applyTheme(next, true);
+      refreshSettingsSwitches();
+    }
+
+    function preferenceValue(key, fallback=true) {
+      const stored = localStorage.getItem(key);
+      if(stored === null) return fallback;
+      return stored === 'true';
+    }
+
+    function togglePreference(key, button) {
+      const next = !preferenceValue(key, true);
+      localStorage.setItem(key, String(next));
+      if(button) {
+        button.setAttribute('aria-checked', next ? 'true' : 'false');
+        button.classList.toggle('is-on', next);
+      }
+    }
+
+    function refreshSettingsSwitches() {
+      const theme = document.documentElement.dataset.theme === 'light';
+      const themeToggle = document.getElementById('theme-toggle');
+      if(themeToggle) {
+        themeToggle.setAttribute('aria-checked', theme ? 'true' : 'false');
+        themeToggle.classList.toggle('is-on', theme);
+      }
+      [
+        ['job-alert-toggle','glueful_job_alerts'],
+        ['job-reco-toggle','glueful_job_recommendations'],
+        ['application-notify-toggle','glueful_application_notifications'],
+        ['interview-notify-toggle','glueful_interview_reminders'],
+        ['email-notify-toggle','glueful_email_notifications']
+      ].forEach(([id,key])=>{
+        const el=document.getElementById(id);
+        if(!el) return;
+        const on=preferenceValue(key,true);
+        el.setAttribute('aria-checked',on?'true':'false');
+        el.classList.toggle('is-on',on);
+      });
+    }
+
+    function loadJobSearchPreferences() {
+      const keys = {
+        'jsp-roles':'glueful_jsp_roles',
+        'jsp-locations':'glueful_jsp_locations',
+        'jsp-workmode':'glueful_jsp_workmode',
+        'jsp-employment':'glueful_jsp_employment',
+        'jsp-salary':'glueful_jsp_salary',
+        'jsp-distance':'glueful_jsp_distance'
+      };
+      Object.entries(keys).forEach(([id,key])=>{
+        const el=document.getElementById(id);
+        if(el) el.value=localStorage.getItem(key)||'';
+      });
+    }
+
+    function openJobSearchPreferences() {
+      closeProfile();
+      closeModal('settings-modal');
+      loadJobSearchPreferences();
+      openModal('job-search-preferences-modal');
+    }
+
+    function saveJobSearchPreferences() {
+      const pairs = [
+        ['jsp-roles','glueful_jsp_roles'],
+        ['jsp-locations','glueful_jsp_locations'],
+        ['jsp-workmode','glueful_jsp_workmode'],
+        ['jsp-employment','glueful_jsp_employment'],
+        ['jsp-salary','glueful_jsp_salary'],
+        ['jsp-distance','glueful_jsp_distance']
+      ];
+      pairs.forEach(([id,key])=>{
+        const el=document.getElementById(id);
+        if(el) localStorage.setItem(key, el.value.trim());
+      });
+      closeModal('job-search-preferences-modal');
+      openSettings();
     }
 
     function openSettings() {
       closeProfile();
       applyTheme(document.documentElement.dataset.theme || 'dark', false);
       openModal('settings-modal');
+      requestAnimationFrame(refreshSettingsSwitches);
     }
 
 
@@ -5632,6 +5933,11 @@
       const stored = localStorage.getItem('glueful_theme') || 'dark';
       document.documentElement.dataset.theme = stored === 'light' ? 'light' : 'dark';
     }
+
+
+    document.addEventListener('DOMContentLoaded', () => {
+      refreshSettingsSwitches();
+    });
 
     /* =====================================================
        STATUS
