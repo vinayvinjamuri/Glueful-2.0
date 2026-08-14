@@ -2225,6 +2225,65 @@
 
 
 
+
+
+    /* Two-item bottom navigation after Jobs launch */
+    .bottom-nav .nav-btn[data-view="dashboard"],
+    .bottom-nav .nav-btn[data-view="jobs"]{min-width:90px}
+
+    /* =====================================================
+       GLUEFUL LOADING SCREEN — MOVING STARS
+    ====================================================== */
+    #loading-screen{
+      position:fixed;
+      inset:0;
+      z-index:99999;
+      overflow:hidden;
+      background:
+        radial-gradient(circle at 50% 46%, rgba(109,59,232,.16), transparent 30%),
+        radial-gradient(circle at 25% 70%, rgba(48,194,214,.08), transparent 26%),
+        #05070d;
+    }
+    #loading-screen .loading-stars{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      overflow:hidden;
+    }
+    #loading-screen .loading-stars::before,
+    #loading-screen .loading-stars::after{
+      content:"";
+      position:absolute;
+      inset:-20%;
+      background-image:
+        radial-gradient(circle, rgba(255,255,255,.95) 0 1px, transparent 1.7px),
+        radial-gradient(circle, rgba(157,132,255,.75) 0 1px, transparent 1.8px),
+        radial-gradient(circle, rgba(91,220,229,.72) 0 1px, transparent 1.7px);
+      background-size:83px 91px, 137px 149px, 181px 173px;
+      background-position:10px 20px, 45px 5px, 80px 65px;
+      animation: gluefulStarsDrift 13s linear infinite;
+      opacity:.72;
+    }
+    #loading-screen .loading-stars::after{
+      transform:scale(1.35);
+      opacity:.38;
+      filter:blur(.35px);
+      animation-duration:21s;
+      animation-direction:reverse;
+    }
+    #loading-screen .loading-content{
+      position:relative;
+      z-index:2;
+    }
+    @keyframes gluefulStarsDrift{
+      from{transform:translate3d(0,0,0) rotate(0deg)}
+      to{transform:translate3d(-90px,70px,0) rotate(.5deg)}
+    }
+    @media (prefers-reduced-motion:reduce){
+      #loading-screen .loading-stars::before,
+      #loading-screen .loading-stars::after{animation:none}
+    }
+
     /* =====================================================
        JOB SEARCH V1 — UI ONLY / MOCK DATA
     ====================================================== */
@@ -4182,45 +4241,6 @@
         </span>
         <span class="nav-label">Jobs</span>
       </button>
-
-
-    <button
-      class="nav-btn"
-      data-view="applications"
-      onclick="switchView('applications')"
-    >
-
-      <span class="nav-icon" aria-hidden="true"><svg class="premium-svg-icon" viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="14" rx="2"></rect><path d="M9 6V4h6v2"></path><path d="M8 11h8"></path></svg></span>
-
-      Applications
-
-    </button>
-
-
-    <button
-      class="nav-btn"
-      data-view="interviews"
-      onclick="switchView('interviews')"
-    >
-
-      <span class="nav-icon" aria-hidden="true"><svg class="premium-svg-icon" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"></rect><path d="M8 3v4"></path><path d="M16 3v4"></path><path d="M4 9h16"></path></svg></span>
-
-      Interviews
-
-    </button>
-
-
-    <button
-      class="nav-btn"
-      data-view="resumes"
-      onclick="switchView('resumes')"
-    >
-
-      <span class="nav-icon" aria-hidden="true"><svg class="premium-svg-icon" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"></path><path d="M14 3v5h5"></path><path d="M10 13h5"></path></svg></span>
-
-      Resumes
-
-    </button>
 
   </nav>
 
@@ -6578,7 +6598,23 @@
 
     document.addEventListener("DOMContentLoaded", ()=>{
       loadJobUIState();
+      const searchInput = document.getElementById("jobs-search-input");
+      if(searchInput){
+        searchInput.addEventListener("input", renderJobs);
+        searchInput.addEventListener("search", renderJobs);
+        searchInput.addEventListener("change", renderJobs);
+      }
+      renderJobs();
     });
+
+    document.addEventListener("click", (event)=>{
+      const jobsBtn = event.target.closest('.nav-btn[data-view="jobs"]');
+      if(jobsBtn){
+        event.preventDefault();
+        switchView("jobs");
+      }
+    });
+
 
 
     /* =====================================================
@@ -7743,10 +7779,13 @@
         if(!fromHistory) pushGluefulState('view', null, 'jobs');
         currentView = "jobs";
         document.querySelectorAll(".app-view").forEach(v=>v.style.display = "none");
-        openJobsView();
+        const jobsView = document.getElementById("jobs-view");
+        if(jobsView) jobsView.style.display = "block";
         document.querySelectorAll(".nav-btn").forEach(btn=>{
           btn.classList.toggle("active", btn.dataset.view === "jobs");
         });
+        loadJobUIState();
+        renderJobs();
         return;
       }
 
