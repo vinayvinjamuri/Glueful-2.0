@@ -2767,7 +2767,7 @@
 
   <!-- =====================================================
        GLUEFUL SPLASH SCREEN — OPTION 6
-       STEP 1 VISUAL DEMO
+       STEP 2 — REAL APP READINESS SPLASH
   ====================================================== -->
   <div id="glueful-splash" aria-label="Loading Glueful">
     <div class="glueful-splash-content">
@@ -2783,21 +2783,46 @@
 
   <script>
     /*
-     * STEP 1 ONLY:
-     * Short visual test. In Step 2 this timer will be
-     * replaced by real authentication/app-readiness logic.
+     * =====================================================
+     * GLUEFUL SPLASH — REAL APP READINESS CONTROL
+     * STEP 2
+     *
+     * No fixed timer is used now.
+     * The splash stays visible while Glueful checks the
+     * session, loads the user's data and renders the app.
+     * showMainApp() / showLoginScreen() will hide it when
+     * the correct screen is actually ready.
+     * =====================================================
      */
-    window.setTimeout(() => {
-      const splash = document.getElementById("glueful-splash");
 
-      if (splash) {
-        splash.classList.add("splash-hidden");
+    let gluefulSplashHidden = false;
 
-        window.setTimeout(() => {
-          splash.remove();
-        }, 500);
+    function hideGluefulSplash() {
+
+      if (gluefulSplashHidden) {
+        return;
       }
-    }, 2200);
+
+      const splash =
+        document.getElementById("glueful-splash");
+
+      if (!splash) {
+        gluefulSplashHidden = true;
+        return;
+      }
+
+      gluefulSplashHidden = true;
+
+      splash.classList.add("splash-hidden");
+
+      window.setTimeout(() => {
+
+        if (splash && splash.parentNode) {
+          splash.remove();
+        }
+
+      }, 500);
+    }
   </script>
 
 
@@ -10318,6 +10343,12 @@
 
         renderAll();
 
+        /*
+         * The authenticated app is now ready:
+         * session + user data + rendering are complete.
+         */
+        hideGluefulSplash();
+
 
         /*
          * Reset the login button in case the user returns to
@@ -10364,6 +10395,12 @@
 
 
     function showLoginScreen() {
+
+      /*
+       * Authentication has determined that the login screen
+       * is the correct screen to reveal.
+       */
+      hideGluefulSplash();
 
       document.getElementById(
         "auth-screen"
