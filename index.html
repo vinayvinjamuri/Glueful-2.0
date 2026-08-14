@@ -2577,231 +2577,8 @@
 
     /* =====================================================
        MODERN PROFILE SELECTS
+       Resume import/theme behavior is defined in the bottom JS block.
     ====================================================== */
-
-    function closeAllModernSelects(exceptId=null) {
-      document.querySelectorAll('.modern-select.open').forEach(el => {
-        if(el.id !== exceptId) el.classList.remove('open');
-      });
-    }
-
-    function toggleModernSelect(id) {
-      const el = document.getElementById(id);
-      if(!el) return;
-      const wasOpen = el.classList.contains('open');
-      closeAllModernSelects(id);
-      el.classList.toggle('open', !wasOpen);
-    }
-
-    function chooseModernSelect(id, value, label) {
-      const el = document.getElementById(id);
-      if(!el) return;
-      const hidden = el.querySelector('input[type="hidden"]');
-      const labelEl = el.querySelector('[id$="-label"]');
-      if(hidden) hidden.value = value;
-      if(labelEl) labelEl.textContent = label;
-      el.querySelectorAll('.modern-select-option').forEach(option => {
-        option.classList.toggle('selected', option.dataset.value === value);
-      });
-      el.classList.remove('open');
-    }
-
-    function setModernSelect(id, value, fallbackLabel='Select') {
-      const el = document.getElementById(id);
-      if(!el) return;
-      const option = [...el.querySelectorAll('.modern-select-option')]
-        .find(item => item.dataset.value === String(value ?? ''));
-      chooseModernSelect(id, String(value ?? ''), option?.textContent.trim() || fallbackLabel);
-    }
-
-    document.addEventListener('click', event => {
-      if(!event.target.closest('.modern-select')) closeAllModernSelects();
-    });
-
-    /* =====================================================
-       RESUME → CANDIDATE PROFILE IMPORT
-    ====================================================== */
-
-    let candidateResumeFile = null;
-    let candidateResumeText = '';
-
-    function setCandidateResumeStatus(message, show=true) {
-      const el = document.getElementById('cp-resume-status');
-      if(!el) return;
-      el.textContent = message;
-      el.classList.toggle('show', show);
-    }
-
-    function clearCandidateResume() {
-      candidateResumeFile = null;
-      candidateResumeText = '';
-      const input = document.getElementById('cp-resume-file');
-      const name = document.getElementById('cp-resume-file-name');
-      const button = document.getElementById('cp-resume-import-btn');
-      if(input) input.value = '';
-      if(name) { name.textContent = ''; name.style.display = 'none'; }
-      if(button) button.disabled = true;
-      setCandidateResumeStatus('', false);
-    }
-
-    async function handleCandidateResumeUpload(event) {
-      const file = event.target.files?.[0];
-      if(!file) return;
-      candidateResumeFile = file;
-      const name = document.getElementById('cp-resume-file-name');
-      const button = document.getElementById('cp-resume-import-btn');
-      if(name) {
-        name.textContent = `${file.name} · ${(file.size / 1024 / 1024).toFixed(2)} MB`;
-        name.style.display = 'block';
-      }
-      if(button) button.disabled = true;
-      setCandidateResumeStatus('Reading your resume…', true);
-      try {
-        candidateResumeText = await extractResumeText(file);
-        if(!candidateResumeText.trim()) throw new Error('No readable text found.');
-        if(button) button.disabled = false;
-        setCandidateResumeStatus('Resume read successfully. Tap Import info to fill your profile.', true);
-      } catch(error) {
-        console.error('Resume parsing failed:', error);
-        candidateResumeText = '';
-        if(button) button.disabled = true;
-        setCandidateResumeStatus('Could not read this resume. Try a text-based PDF, DOCX or TXT file.', true);
-      }
-    }
-
-    async function extractResumeText(file) {
-      const type = file.type || '';
-      const name = file.name.toLowerCase();
-      if(type === 'text/plain' || name.endsWith('.txt')) return await file.text();
-      if(type === 'application/pdf' || name.endsWith('.pdf')) {
-        if(!window.pdfjsLib) throw new Error('PDF parser is still loading.');
-        if(window.pdfjsLib.GlobalWorkerOptions) {
-          window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-        }
-        const buffer = await file.arrayBuffer();
-        const pdf = await window.pdfjsLib.getDocument({data:buffer}).promise;
-        let text = '';
-        for(let pageNo=1; pageNo<=pdf.numPages; pageNo++) {
-          const page = await pdf.getPage(pageNo);
-          const content = await page.getTextContent();
-          text += content.items.map(item => item.str || '').join(' ') + '\n';
-        }
-        return text;
-      }
-      if(type.includes('wordprocessingml') || name.endsWith('.docx')) {
-        if(!window.mammoth) throw new Error('DOCX parser is still loading.');
-        const buffer = await file.arrayBuffer();
-        const result = await window.mammoth.extractRawText({arrayBuffer:buffer});
-        return result.value || '';
-      }
-      throw new Error('Unsupported resume format.');
-    }
-
-    function firstMatch(text, patterns) {
-      for(const pattern of patterns) {
-        const match = text.match(pattern);
-        if(match?.[1]) return match[1].trim();
-      }
-      return '';
-    }
-
-    function guessResumeProfile(text) {
-      const clean = text.replace(/\r/g,'\n').replace(/[ \t]+/g,' ').trim();
-      const lines = text.split(/\r?\n/).map(x => x.trim()).filter(Boolean);
-      const email = firstMatch(clean, [/([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/i]);
-      const phone = firstMatch(clean, [/((?:\+91[ -]?)?[6-9]\d{9})/]);
-      const linkedin = firstMatch(clean, [/(https?:\/\/(?:www\.)?linkedin\.com\/[^\s]+)/i]);
-      const github = firstMatch(clean, [/(https?:\/\/(?:www\.)?github\.com\/[^\s]+)/i]);
-
-      let name = '';
-      if(lines[0] && lines[0].length < 60 && !/@/.test(lines[0]) && !/resume|curriculum vitae|cv/i.test(lines[0])) name = lines[0];
-
-      const headline = firstMatch(clean, [
-        /(?:headline|professional headline|title)\s*[:\-]\s*([^\n]{3,100})/i
-      ]);
-      const summary = firstMatch(clean, [
-        /(?:professional summary|summary|profile|about me)\s*[:\-]?\s*([\s\S]{30,600}?)(?=\n\s*(?:experience|education|skills|projects|work experience|employment)\b)/i
-      ]);
-      const skills = firstMatch(clean, [
-        /(?:technical skills|skills|core skills|technologies)\s*[:\-]?\s*([\s\S]{10,500}?)(?=\n\s*(?:experience|education|projects|certifications|achievements)\b)/i
-      ]);
-      const degree = firstMatch(clean, [/(\b(?:M\.?Tech|M\.?S\.?|MBA|B\.?Tech|B\.?E\.?|B\.?S\.?|BCA|MCA)\b[^\n]{0,80})/i]);
-      const institution = firstMatch(clean, [/(?:education|university|college|institute)\s*[:\-]\s*([^\n]{3,120})/i]);
-      const experience = firstMatch(clean, [/(\d+(?:\.\d+)?)\+?\s*(?:years?|yrs?)\s+(?:of\s+)?experience/i]);
-
-      const lower = clean.toLowerCase();
-      const roleKeywords = ['embedded','soc validation','post-silicon','software engineer','hardware engineer','validation engineer','test engineer','firmware'];
-      const inferredRole = roleKeywords.find(k => lower.includes(k)) || '';
-
-      return {
-        name, headline: headline || inferredRole, about: summary,
-        targetRole: inferredRole, experience, skills, degree, institution,
-        linkedin, github, portfolio:'', email, phone
-      };
-    }
-
-    function mergeImportedProfile(imported) {
-      const current = collectCandidateProfile();
-      const merged = {...current};
-      const keys = ['name','headline','about','targetRole','experience','skills','degree','institution','linkedin','github'];
-      keys.forEach(key => {
-        if(imported[key] && !current[key]) merged[key] = imported[key];
-      });
-      fillCandidateProfile(merged);
-      setModernSelect('cp-experience-select', merged.experience);
-      setModernSelect('cp-work-mode-select', merged.workMode);
-      return merged;
-    }
-
-    function importCandidateResume() {
-      if(!candidateResumeText.trim()) return;
-      const imported = guessResumeProfile(candidateResumeText);
-      mergeImportedProfile(imported);
-      const detected = Object.entries(imported).filter(([key,value]) => value && !['email','phone'].includes(key)).length;
-      setCandidateResumeStatus(`Imported ${detected} profile fields. Please review them before saving.`, true);
-    }
-
-    /* =====================================================
-       THEME / SETTINGS
-    ====================================================== */
-
-    const GLUEFUL_THEME_META_KEY = 'glueful_theme';
-
-    function applyTheme(theme, persist=true) {
-      const normalized = theme === 'light' ? 'light' : 'dark';
-      document.documentElement.dataset.theme = normalized;
-      localStorage.setItem(GLUEFUL_THEME_META_KEY, normalized);
-      const toggle = document.getElementById('theme-toggle');
-      const thumb = document.getElementById('theme-toggle-thumb');
-      if(toggle) toggle.setAttribute('aria-checked', normalized === 'light' ? 'true' : 'false');
-      if(thumb) thumb.textContent = normalized === 'light' ? '☀' : '☾';
-      if(persist) syncThemeToAccount(normalized);
-    }
-
-    async function syncThemeToAccount(theme) {
-      try {
-        await supabaseClient.auth.updateUser({data:{[GLUEFUL_THEME_META_KEY]:theme}});
-      } catch(error) {
-        console.warn('Theme cloud sync unavailable:', error);
-      }
-    }
-
-    async function loadThemePreference(user=null) {
-      const stored = localStorage.getItem(GLUEFUL_THEME_META_KEY);
-      const accountTheme = user?.user_metadata?.[GLUEFUL_THEME_META_KEY];
-      applyTheme(accountTheme || stored || 'dark', false);
-    }
-
-    function toggleTheme() {
-      const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
-      applyTheme(next, true);
-    }
-
-    function openSettings() {
-      closeProfile();
-      applyTheme(document.documentElement.dataset.theme || 'dark', false);
-      openModal('settings-modal');
-    }
 
     /* =====================================================
        CANDIDATE PROFILE
@@ -4881,7 +4658,7 @@
     >
 
       <div class="resume-import-card">
-        <div class="candidate-profile-section" style="margin-top:0;">Resume Import</div>
+        <div class="candidate-profile-section" style="margin-top:0;">Resume → Profile</div>
         <div class="resume-import-drop" onclick="document.getElementById('cp-resume-file').click()">
           <div class="resume-import-icon">↥</div>
           <div class="resume-import-title">Upload your resume</div>
@@ -5235,6 +5012,234 @@
   ====================================================== -->
 
   <script>
+
+    /* =====================================================
+       MODERN PROFILE SELECTS
+    ====================================================== */
+
+    function closeAllModernSelects(exceptId=null) {
+      document.querySelectorAll('.modern-select.open').forEach(el => {
+        if(el.id !== exceptId) el.classList.remove('open');
+      });
+    }
+
+    function toggleModernSelect(id) {
+      const el = document.getElementById(id);
+      if(!el) return;
+      const wasOpen = el.classList.contains('open');
+      closeAllModernSelects(id);
+      el.classList.toggle('open', !wasOpen);
+    }
+
+    function chooseModernSelect(id, value, label) {
+      const el = document.getElementById(id);
+      if(!el) return;
+      const hidden = el.querySelector('input[type="hidden"]');
+      const labelEl = el.querySelector('[id$="-label"]');
+      if(hidden) hidden.value = value;
+      if(labelEl) labelEl.textContent = label;
+      el.querySelectorAll('.modern-select-option').forEach(option => {
+        option.classList.toggle('selected', option.dataset.value === value);
+      });
+      el.classList.remove('open');
+    }
+
+    function setModernSelect(id, value, fallbackLabel='Select') {
+      const el = document.getElementById(id);
+      if(!el) return;
+      const option = [...el.querySelectorAll('.modern-select-option')]
+        .find(item => item.dataset.value === String(value ?? ''));
+      chooseModernSelect(id, String(value ?? ''), option?.textContent.trim() || fallbackLabel);
+    }
+
+    document.addEventListener('click', event => {
+      if(!event.target.closest('.modern-select')) closeAllModernSelects();
+    });
+
+    /* =====================================================
+       RESUME → CANDIDATE PROFILE IMPORT
+    ====================================================== */
+
+    let candidateResumeFile = null;
+    let candidateResumeText = '';
+
+    function setCandidateResumeStatus(message, show=true) {
+      const el = document.getElementById('cp-resume-status');
+      if(!el) return;
+      el.textContent = message;
+      el.classList.toggle('show', show);
+    }
+
+    function clearCandidateResume() {
+      candidateResumeFile = null;
+      candidateResumeText = '';
+      const input = document.getElementById('cp-resume-file');
+      const name = document.getElementById('cp-resume-file-name');
+      const button = document.getElementById('cp-resume-import-btn');
+      if(input) input.value = '';
+      if(name) { name.textContent = ''; name.style.display = 'none'; }
+      if(button) button.disabled = true;
+      setCandidateResumeStatus('', false);
+    }
+
+    async function handleCandidateResumeUpload(event) {
+      const file = event.target.files?.[0];
+      if(!file) return;
+      candidateResumeFile = file;
+      const name = document.getElementById('cp-resume-file-name');
+      const button = document.getElementById('cp-resume-import-btn');
+      if(name) {
+        name.textContent = `${file.name} · ${(file.size / 1024 / 1024).toFixed(2)} MB`;
+        name.style.display = 'block';
+      }
+      if(button) button.disabled = true;
+      setCandidateResumeStatus('Reading your resume…', true);
+      try {
+        candidateResumeText = await extractResumeText(file);
+        if(!candidateResumeText.trim()) throw new Error('No readable text found.');
+        if(button) button.disabled = false;
+        setCandidateResumeStatus('Resume read successfully. Tap Import info to fill your profile.', true);
+      } catch(error) {
+        console.error('Resume parsing failed:', error);
+        candidateResumeText = '';
+        if(button) button.disabled = true;
+        setCandidateResumeStatus('Could not read this resume. Try a text-based PDF, DOCX or TXT file.', true);
+      }
+    }
+
+    async function extractResumeText(file) {
+      const type = file.type || '';
+      const name = file.name.toLowerCase();
+      if(type === 'text/plain' || name.endsWith('.txt')) return await file.text();
+      if(type === 'application/pdf' || name.endsWith('.pdf')) {
+        if(!window.pdfjsLib) throw new Error('PDF parser is still loading.');
+        if(window.pdfjsLib.GlobalWorkerOptions) {
+          window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+        const buffer = await file.arrayBuffer();
+        const pdf = await window.pdfjsLib.getDocument({data:buffer}).promise;
+        let text = '';
+        for(let pageNo=1; pageNo<=pdf.numPages; pageNo++) {
+          const page = await pdf.getPage(pageNo);
+          const content = await page.getTextContent();
+          text += content.items.map(item => item.str || '').join(' ') + '\n';
+        }
+        return text;
+      }
+      if(type.includes('wordprocessingml') || name.endsWith('.docx')) {
+        if(!window.mammoth) throw new Error('DOCX parser is still loading.');
+        const buffer = await file.arrayBuffer();
+        const result = await window.mammoth.extractRawText({arrayBuffer:buffer});
+        return result.value || '';
+      }
+      throw new Error('Unsupported resume format.');
+    }
+
+    function firstMatch(text, patterns) {
+      for(const pattern of patterns) {
+        const match = text.match(pattern);
+        if(match?.[1]) return match[1].trim();
+      }
+      return '';
+    }
+
+    function guessResumeProfile(text) {
+      const clean = text.replace(/\r/g,'\n').replace(/[ \t]+/g,' ').trim();
+      const lines = text.split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+      const email = firstMatch(clean, [/([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/i]);
+      const phone = firstMatch(clean, [/((?:\+91[ -]?)?[6-9]\d{9})/]);
+      const linkedin = firstMatch(clean, [/(https?:\/\/(?:www\.)?linkedin\.com\/[^\s]+)/i]);
+      const github = firstMatch(clean, [/(https?:\/\/(?:www\.)?github\.com\/[^\s]+)/i]);
+
+      let name = '';
+      if(lines[0] && lines[0].length < 60 && !/@/.test(lines[0]) && !/resume|curriculum vitae|cv/i.test(lines[0])) name = lines[0];
+
+      const headline = firstMatch(clean, [
+        /(?:headline|professional headline|title)\s*[:\-]\s*([^\n]{3,100})/i
+      ]);
+      const summary = firstMatch(clean, [
+        /(?:professional summary|summary|profile|about me)\s*[:\-]?\s*([\s\S]{30,600}?)(?=\n\s*(?:experience|education|skills|projects|work experience|employment)\b)/i
+      ]);
+      const skills = firstMatch(clean, [
+        /(?:technical skills|skills|core skills|technologies)\s*[:\-]?\s*([\s\S]{10,500}?)(?=\n\s*(?:experience|education|projects|certifications|achievements)\b)/i
+      ]);
+      const degree = firstMatch(clean, [/(\b(?:M\.?Tech|M\.?S\.?|MBA|B\.?Tech|B\.?E\.?|B\.?S\.?|BCA|MCA)\b[^\n]{0,80})/i]);
+      const institution = firstMatch(clean, [/(?:education|university|college|institute)\s*[:\-]\s*([^\n]{3,120})/i]);
+      const experience = firstMatch(clean, [/(\d+(?:\.\d+)?)\+?\s*(?:years?|yrs?)\s+(?:of\s+)?experience/i]);
+
+      const lower = clean.toLowerCase();
+      const roleKeywords = ['embedded','soc validation','post-silicon','software engineer','hardware engineer','validation engineer','test engineer','firmware'];
+      const inferredRole = roleKeywords.find(k => lower.includes(k)) || '';
+
+      return {
+        name, headline: headline || inferredRole, about: summary,
+        targetRole: inferredRole, experience, skills, degree, institution,
+        linkedin, github, portfolio:'', email, phone
+      };
+    }
+
+    function mergeImportedProfile(imported) {
+      const current = collectCandidateProfile();
+      const merged = {...current};
+      const keys = ['name','headline','about','targetRole','experience','skills','degree','institution','linkedin','github'];
+      keys.forEach(key => {
+        if(imported[key] && !current[key]) merged[key] = imported[key];
+      });
+      fillCandidateProfile(merged);
+      setModernSelect('cp-experience-select', merged.experience);
+      setModernSelect('cp-work-mode-select', merged.workMode);
+      return merged;
+    }
+
+    function importCandidateResume() {
+      if(!candidateResumeText.trim()) return;
+      const imported = guessResumeProfile(candidateResumeText);
+      mergeImportedProfile(imported);
+      const detected = Object.entries(imported).filter(([key,value]) => value && !['email','phone'].includes(key)).length;
+      setCandidateResumeStatus(`Imported ${detected} profile fields. Please review them before saving.`, true);
+    }
+
+    /* =====================================================
+       THEME / SETTINGS
+    ====================================================== */
+
+    const GLUEFUL_THEME_META_KEY = 'glueful_theme';
+
+    function applyTheme(theme, persist=true) {
+      const normalized = theme === 'light' ? 'light' : 'dark';
+      document.documentElement.dataset.theme = normalized;
+      localStorage.setItem(GLUEFUL_THEME_META_KEY, normalized);
+      const toggle = document.getElementById('theme-toggle');
+      const thumb = document.getElementById('theme-toggle-thumb');
+      if(toggle) toggle.setAttribute('aria-checked', normalized === 'light' ? 'true' : 'false');
+      if(thumb) thumb.textContent = normalized === 'light' ? '☀' : '☾';
+      if(persist) syncThemeToAccount(normalized);
+    }
+
+    async function syncThemeToAccount(theme) {
+      try {
+        await supabaseClient.auth.updateUser({data:{[GLUEFUL_THEME_META_KEY]:theme}});
+      } catch(error) {
+        console.warn('Theme cloud sync unavailable:', error);
+      }
+    }
+
+    async function loadThemePreference(user=null) {
+      const stored = localStorage.getItem(GLUEFUL_THEME_META_KEY);
+      const accountTheme = user?.user_metadata?.[GLUEFUL_THEME_META_KEY];
+      applyTheme(accountTheme || stored || 'dark', false);
+    }
+
+    function toggleTheme() {
+      const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+      applyTheme(next, true);
+    }
+
+    function openSettings() {
+      closeProfile();
+      applyTheme(document.documentElement.dataset.theme || 'dark', false);
+      openModal('settings-modal');
+    }
 
 
     applyInitialThemeFromDevice();
