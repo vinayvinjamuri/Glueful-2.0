@@ -3863,7 +3863,7 @@
      * exact angle far enough to guarantee the meteor exits fully
      * off-screen on the opposite side. Because the tail's rotation
      * (--star-angle) is derived from the SAME dx/dy used for the
-     * motion (--star-start-*/--star-end-*), the glowing tail can
+     * motion (--star-start-x/y and --star-end-x/y), the glowing tail can
      * never point anywhere other than exactly backward along the
      * meteor's real path.
      *
@@ -7722,8 +7722,12 @@ document.addEventListener("click", (event)=>{
     const APPLICATIONS_TABLE =
       "applications";
 
-    const GLUEFUL_DATA_TABLE =
-      "glueful_data";
+    /*
+     * Interviews/resumes are intentionally local-only in this build.
+     * The current Supabase schema does not contain the legacy glueful_data
+     * table, so startup/save operations must not query it.
+     * Applications continue to sync through public.applications.
+     */
 
     let DATA_USER_ID = null;
     let cloudSyncReady = false;
@@ -8151,43 +8155,11 @@ document.addEventListener("click", (event)=>{
 
     async function loadSupportingCloudData() {
 
-      const {
-        data,
-        error
-      } = await supabaseClient
-        .from(GLUEFUL_DATA_TABLE)
-        .select(
-          "interviews,resumes"
-        )
-        .eq(
-          "user_id",
-          DATA_USER_ID
-        )
-        .maybeSingle();
-
-      if(error) {
-        throw error;
-      }
-
-      if(data) {
-
-        interviews =
-          Array.isArray(data.interviews)
-            ? data.interviews
-            : [];
-
-        resumes =
-          Array.isArray(data.resumes)
-            ? data.resumes
-            : [];
-
-      } else {
-
-        /* Preserve any existing local interview/resume data. */
-        await writeCloudData();
-
-      }
-
+      /*
+       * The old glueful_data table is no longer used.
+       * Interviews/resumes remain in localStorage for now, while
+       * applications continue to use public.applications in Supabase.
+       */
       supportingCloudReady = true;
 
     }
@@ -8693,34 +8665,12 @@ document.addEventListener("click", (event)=>{
 
     async function writeCloudData() {
 
-      if(!DATA_USER_ID) {
-        return;
-      }
-
-      const {
-        error
-      } = await supabaseClient
-        .from(GLUEFUL_DATA_TABLE)
-        .upsert(
-          {
-            user_id:
-              DATA_USER_ID,
-            interviews:
-              interviews,
-            resumes:
-              resumes,
-            updated_at:
-              new Date().toISOString()
-          },
-          {
-            onConflict:
-              "user_id"
-          }
-        );
-
-      if(error) {
-        throw error;
-      }
+      /*
+       * Legacy glueful_data storage is not part of the current schema.
+       * Keep interviews/resumes in localStorage and do not make a failing
+       * Supabase request for the removed table.
+       */
+      return;
 
     }
 
