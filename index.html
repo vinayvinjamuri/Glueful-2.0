@@ -324,7 +324,7 @@
   />
 
   <title>Glueful</title>
-  <!-- V14 — Cloud resume cross-device sync/viewer fixes + guaranteed first-paint shooting star -->
+  <!-- V15 — Mobile resume viewer + professional delete confirmation + guaranteed first-paint shooting star -->
 
   <!-- Resume parsing libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -3675,6 +3675,25 @@
     .resume-viewer-modal{width:min(900px,96vw);max-width:900px;height:min(88vh,900px);display:flex;flex-direction:column}
     .resume-viewer-body{flex:1;min-height:0;border:1px solid var(--border);border-radius:14px;background:var(--card2);overflow:auto}
     .resume-cloud-sync-note{margin-top:7px;color:var(--text-faint);font-size:9px;line-height:1.4}
+    .resume-pdf-canvas-view{width:100%;min-height:100%;padding:10px 8px 18px;background:#20242C;display:flex;flex-direction:column;align-items:center;gap:10px}
+    .resume-pdf-page{width:fit-content;max-width:100%;background:#fff;box-shadow:0 4px 18px rgba(0,0,0,.32);overflow:hidden}
+    .resume-pdf-page canvas{display:block;max-width:100%;height:auto}
+    .resume-pdf-footer{padding:7px 10px;color:#AEB7C2;font-size:9px;font-family:'JetBrains Mono',monospace;text-align:center}
+    .resume-viewer-error{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:28px 18px;color:var(--text-dim)}
+    .resume-viewer-error-title{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;color:var(--text)}
+    .resume-viewer-error-copy{margin-top:7px;max-width:360px;font-size:11px;line-height:1.5}
+    .resume-viewer-error-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:16px}
+
+    .resume-delete-confirm-overlay{z-index:180;align-items:center;justify-content:center;padding:18px}
+    .resume-delete-confirm-modal{width:min(430px,92vw);padding:24px;border-radius:18px;box-shadow:0 24px 80px rgba(0,0,0,.5)}
+    .resume-delete-confirm-icon{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;background:rgba(242,114,114,.10);border:1px solid rgba(242,114,114,.24);color:#F27272;margin-bottom:14px}
+    .resume-delete-confirm-icon svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    .resume-delete-confirm-title{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:var(--text)}
+    .resume-delete-confirm-copy{margin-top:7px;color:var(--text-mute);font-size:11px;line-height:1.6}
+    .resume-delete-confirm-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:20px}
+    .resume-confirm-delete-btn{min-height:40px;border-radius:9px;background:#8F3030;border:1px solid rgba(242,114,114,.42);color:#fff;font-size:12px;font-weight:700}
+    .resume-confirm-delete-btn:hover{background:#A53A3A}
+
     .resume-pdf-preview-wrap{width:100%;height:100%;min-height:60vh;display:flex;flex-direction:column;background:#fff}
     .resume-pdf-preview-wrap iframe{width:100%;flex:1;min-height:0;border:0;display:block;background:#fff}
     .resume-pdf-fallback{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;padding:8px 10px;background:var(--card);border-top:1px solid var(--border);color:var(--text-faint);font-size:10px}
@@ -3766,6 +3785,9 @@
       .resume-pdf-preview-wrap{min-height:0;height:100dvh}
       .resume-pdf-preview-wrap iframe{min-height:0}
       .resume-pdf-fallback{font-size:9px;padding:7px 8px}
+      .resume-pdf-canvas-view{padding:7px 4px 14px;gap:7px}
+      .resume-delete-confirm-modal{padding:20px}
+      .resume-delete-confirm-actions{grid-template-columns:1fr}
     }
 
     html[data-theme="light"] .brand-logo,
@@ -5817,6 +5839,30 @@
 
 
   <!-- =====================================================
+       RESUME DELETE CONFIRMATION
+       Professional in-app confirmation; avoids browser-specific
+       window.confirm dialogs on Android/iOS.
+  ====================================================== -->
+
+  <div id="candidate-resume-delete-confirm" class="modal-overlay resume-delete-confirm-overlay"
+       role="dialog" aria-modal="true" aria-labelledby="candidate-resume-delete-title"
+       aria-describedby="candidate-resume-delete-copy">
+    <div class="modal resume-delete-confirm-modal">
+      <div class="resume-delete-confirm-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M12 3 21 20H3L12 3Z"></path><path d="M12 9v5"></path><path d="M12 17h.01"></path></svg>
+      </div>
+      <div class="resume-delete-confirm-title" id="candidate-resume-delete-title">Delete saved resume?</div>
+      <div class="resume-delete-confirm-copy" id="candidate-resume-delete-copy">
+        Are you sure you want to delete this resume from your Glueful account? Your profile information will not be deleted.
+      </div>
+      <div class="resume-delete-confirm-actions">
+        <button type="button" class="secondary-btn" onclick="cancelDeleteSavedCandidateResume()">Keep resume</button>
+        <button type="button" class="resume-confirm-delete-btn" onclick="confirmDeleteSavedCandidateResume()">Delete resume</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================
        RESUME VIEWER
   ====================================================== -->
 
@@ -6517,9 +6563,25 @@
     function updateCandidateResumeControls() {
       const viewButton = document.getElementById('cp-resume-view-btn');
       const deleteButton = document.getElementById('cp-resume-delete-btn');
-      const hasResume = !!candidateResumeFile || !!candidateResumePersisted || !!candidateResumeCloudMeta?.path;
-      if(viewButton) viewButton.disabled = !hasResume;
-      if(deleteButton) deleteButton.classList.toggle('show', !!candidateResumeCloudMeta?.path || !!candidateResumePersisted);
+      const hasResume = Boolean(
+        candidateResumeFile ||
+        candidateResumePersisted ||
+        candidateResumeCloudMeta?.path
+      );
+
+      if(viewButton) {
+        // A cloud path is enough to enable View resume. The actual bytes are
+        // downloaded lazily by the viewer, which is important on mobile.
+        viewButton.disabled = !hasResume;
+        viewButton.setAttribute('aria-disabled', String(!hasResume));
+      }
+
+      if(deleteButton) {
+        deleteButton.classList.toggle(
+          'show',
+          Boolean(candidateResumeCloudMeta?.path || candidateResumePersisted || candidateResumeFile)
+        );
+      }
     }
 
     let candidateResumeFile = null;
@@ -6567,34 +6629,61 @@
       refreshCandidateProfileCompleteness();
     }
 
+    let candidateResumeDeleteResolver = null;
+
+    function requestDeleteSavedCandidateResume() {
+      const overlay = document.getElementById('candidate-resume-delete-confirm');
+      if(!overlay) return Promise.resolve(window.confirm('Are you sure you want to delete this resume from your Glueful account? Your profile information will not be deleted.'));
+
+      openModal('candidate-resume-delete-confirm');
+      return new Promise(resolve => {
+        candidateResumeDeleteResolver = resolve;
+      });
+    }
+
+    function cancelDeleteSavedCandidateResume() {
+      const resolve = candidateResumeDeleteResolver;
+      candidateResumeDeleteResolver = null;
+      closeModal('candidate-resume-delete-confirm');
+      if(resolve) resolve(false);
+    }
+
+    function confirmDeleteSavedCandidateResume() {
+      const resolve = candidateResumeDeleteResolver;
+      candidateResumeDeleteResolver = null;
+      closeModal('candidate-resume-delete-confirm');
+      if(resolve) resolve(true);
+    }
+
     async function deleteSavedCandidateResume() {
-      const confirmed = window.confirm('Delete the saved resume from your Glueful account? Your profile information will not be deleted.');
+      const confirmed = await requestDeleteSavedCandidateResume();
       if(!confirmed) return;
+
       try {
         setCandidateResumeStatus('Deleting your saved resume…', true);
+
         if(candidateResumeCloudMeta?.path) {
           await deleteCandidateResumeFromCloud();
         }
         await deleteCandidateResumeFromDevice();
 
-        try {
-          const {data} = await supabaseClient.auth.getUser();
-          if(data?.user) {
-            const metadata = {...(data.user.user_metadata || {})};
-            const savedProfile = normalizeCandidateProfile(metadata[GLUEFUL_CANDIDATE_PROFILE_META_KEY]);
-            metadata[GLUEFUL_CANDIDATE_PROFILE_META_KEY] = {
-              ...savedProfile,
-              resumeSource:'',
-              resumeImportedAt:'',
-              resumePath:'',
-              resumeType:'',
-              resumeSize:'',
-              resumeUploadedAt:''
-            };
-            await supabaseClient.auth.updateUser({data:metadata});
-          }
-        } catch(metaError) {
-          console.warn('Resume metadata cleanup unavailable:', metaError);
+        // Remove the cloud file reference from the authenticated account.
+        // If this fails, do not silently claim the account is clean.
+        const {data} = await supabaseClient.auth.getUser();
+        if(data?.user) {
+          const metadata = {...(data.user.user_metadata || {})};
+          const savedProfile = normalizeCandidateProfile(metadata[GLUEFUL_CANDIDATE_PROFILE_META_KEY]);
+          metadata[GLUEFUL_CANDIDATE_PROFILE_META_KEY] = {
+            ...savedProfile,
+            resumeSource:'',
+            resumeImportedAt:'',
+            resumePath:'',
+            resumeType:'',
+            resumeSize:'',
+            resumeUploadedAt:''
+          };
+          const {error:metadataError} = await supabaseClient.auth.updateUser({data:metadata});
+          if(metadataError) throw metadataError;
         }
 
         candidateResumeFile = null;
@@ -6604,18 +6693,21 @@
         candidateResumeCloudMeta = null;
         candidateResumeCloudSignedUrl = '';
         revokeCandidateResumePreviewUrl();
+
         const input=document.getElementById('cp-resume-file');
         const name=document.getElementById('cp-resume-file-name');
         const importButton=document.getElementById('cp-resume-import-btn');
         if(input) input.value='';
         if(name){name.textContent='';name.style.display='none';}
         if(importButton) importButton.disabled=true;
+
         updateCandidateResumeControls();
-        setCandidateResumeStatus('Saved resume deleted from your account. Your profile information is still safe.', true);
         refreshCandidateProfileCompleteness();
+        setCandidateResumeStatus('Resume deleted. Your profile information is still safe.', true);
       } catch(error) {
         console.error('Resume deletion failed:', error);
-        setCandidateResumeStatus('Could not delete the saved resume. Check your connection and try again.', true);
+        updateCandidateResumeControls();
+        setCandidateResumeStatus('We could not delete the resume. Nothing was changed in your profile. Please try again.', true);
       }
     }
 
@@ -6938,20 +7030,84 @@
         : '';
     }
 
+    async function renderCandidateResumePdf(file, body) {
+      if(!window.pdfjsLib) {
+        throw new Error('PDF viewer is still loading. Please try again in a moment.');
+      }
+
+      if(window.pdfjsLib.GlobalWorkerOptions) {
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+          'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      }
+
+      const buffer = await file.arrayBuffer();
+      const pdf = await window.pdfjsLib.getDocument({data:buffer}).promise;
+      const shell = document.createElement('div');
+      shell.className = 'resume-pdf-canvas-view';
+      body.innerHTML = '';
+      body.appendChild(shell);
+
+      const viewportWidth = Math.max(260, Math.min(body.clientWidth || window.innerWidth || 360, 900));
+
+      for(let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+        const page = await pdf.getPage(pageNumber);
+        const baseViewport = page.getViewport({scale:1});
+        const scale = Math.min(2, Math.max(0.8, (viewportWidth - 20) / baseViewport.width));
+        const viewport = page.getViewport({scale});
+
+        const pageWrap = document.createElement('div');
+        pageWrap.className = 'resume-pdf-page';
+        pageWrap.dataset.page = String(pageNumber);
+
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d', {alpha:false});
+        const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.ceil(viewport.width * pixelRatio);
+        canvas.height = Math.ceil(viewport.height * pixelRatio);
+        canvas.style.width = `${Math.ceil(viewport.width)}px`;
+        canvas.style.height = `${Math.ceil(viewport.height)}px`;
+        canvas.setAttribute('aria-label', `Resume page ${pageNumber}`);
+
+        pageWrap.appendChild(canvas);
+        shell.appendChild(pageWrap);
+
+        await page.render({
+          canvasContext: context,
+          viewport,
+          transform: pixelRatio !== 1 ? [pixelRatio,0,0,pixelRatio,0,0] : null
+        }).promise;
+      }
+
+      const footer = document.createElement('div');
+      footer.className = 'resume-pdf-footer';
+      footer.textContent = `${pdf.numPages} page${pdf.numPages === 1 ? '' : 's'} · Secure preview`;
+      shell.appendChild(footer);
+    }
+
     async function openCandidateResumeViewer() {
       const overlay=document.getElementById('candidate-resume-viewer');
       const body=document.getElementById('candidate-resume-viewer-body');
       const title=document.getElementById('candidate-resume-viewer-title');
       if(!overlay || !body) return;
 
-      body.innerHTML='<div class="resume-text-preview">Loading your resume…</div>';
+      // Open the viewer synchronously first. This prevents mobile browsers
+      // from appearing to ignore the tap while the cloud file is downloading.
       openModal('candidate-resume-viewer');
+      body.innerHTML='<div class="resume-text-preview">Loading your resume…</div>';
 
       try {
-        // Cloud metadata is the cross-device source of truth. Download the
-        // file lazily if the current device does not have a local File object.
         const file = await ensureCandidateResumeCloudFile() || candidateResumeFile;
         if(!file) throw new Error('No resume is available for this account.');
+
+        title.textContent = file.name || candidateResumeCloudMeta?.name || 'Resume';
+        const name=file.name.toLowerCase();
+
+        if(name.endsWith('.pdf')) {
+          // Render the PDF ourselves with PDF.js. This avoids Android/iOS
+          // iframe/PDF-plugin differences and works inside the Glueful modal.
+          await renderCandidateResumePdf(file, body);
+          return;
+        }
 
         if(!candidateResumeText.trim()) {
           try {
@@ -6961,7 +7117,7 @@
           }
         }
 
-        if(!candidateResumePreviewHtml && file.name.toLowerCase().endsWith('.docx') && window.mammoth) {
+        if(!candidateResumePreviewHtml && name.endsWith('.docx') && window.mammoth) {
           try {
             const previewBuffer=await file.arrayBuffer();
             const htmlResult=await window.mammoth.convertToHtml({arrayBuffer:previewBuffer});
@@ -6971,41 +7127,7 @@
           }
         }
 
-        title.textContent = file.name || candidateResumeCloudMeta?.name || 'Resume';
-        const name=file.name.toLowerCase();
-
-        if(name.endsWith('.pdf')) {
-          // Prefer the secure Supabase signed URL for cloud resumes.
-          // Android/iOS browsers are more reliable with a normal HTTPS PDF
-          // URL than with a blob: URL inside an iframe.
-          let previewUrl = '';
-          if(candidateResumeCloudMeta?.path) {
-            candidateResumeCloudSignedUrl = '';
-            previewUrl = await getCandidateResumeSignedUrl();
-          }
-
-          if(!previewUrl) {
-            revokeCandidateResumePreviewUrl();
-            candidateResumeObjectUrl = URL.createObjectURL(file);
-            previewUrl = candidateResumeObjectUrl;
-          }
-
-          const safeUrl = String(previewUrl).replace(/"/g, '&quot;');
-          body.innerHTML = `
-            <div class="resume-pdf-preview-wrap">
-              <iframe
-                title="Resume preview"
-                src="${safeUrl}"
-                loading="eager"
-                allow="fullscreen"
-              ></iframe>
-              <div class="resume-pdf-fallback">
-                <span>If the PDF does not render in this browser:</span>
-                <button type="button" class="secondary-btn" onclick="openResumePreviewInNewTab()">Open PDF</button>
-              </div>
-            </div>
-          `;
-        } else if(name.endsWith('.docx')) {
+        if(name.endsWith('.docx')) {
           if(!candidateResumePreviewHtml) {
             body.innerHTML=`<div class="resume-text-preview">${esc(candidateResumeText || 'This DOCX could not be parsed in the browser. Please download/open the original file to inspect it.')}</div>`;
           } else {
@@ -7017,10 +7139,13 @@
       } catch(error) {
         console.error('Resume viewer failed:', error);
         body.innerHTML=`
-          <div class="resume-text-preview">
-            Could not load your resume. Please check your connection and try again.
-            <br><br>
-            <button type="button" class="secondary-btn" onclick="retryCandidateResumeViewer()">Retry</button>
+          <div class="resume-viewer-error">
+            <div class="resume-viewer-error-title">Unable to preview resume</div>
+            <div class="resume-viewer-error-copy">${esc(error?.message || 'Please check your connection and try again.')}</div>
+            <div class="resume-viewer-error-actions">
+              <button type="button" class="secondary-btn" onclick="retryCandidateResumeViewer()">Try again</button>
+              <button type="button" class="primary-btn" onclick="openResumePreviewInNewTab()">Open PDF</button>
+            </div>
           </div>
         `;
       }
