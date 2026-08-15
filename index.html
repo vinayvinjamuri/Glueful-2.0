@@ -255,6 +255,7 @@
   />
 
   <title>Glueful</title>
+  <!-- V10 — Brandfetch job cards + robust View Job / Apply actions -->
 
   <!-- Resume parsing libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -2428,7 +2429,7 @@
     }
     .job-card-top{display:flex;gap:10px;align-items:flex-start}
     .job-logo{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;background:linear-gradient(135deg,#7c4dff,#4f46e5);color:#fff;font-weight:850;font-size:13px;flex:0 0 auto;overflow:hidden}
-    .job-logo img{width:100%;height:100%;object-fit:cover}
+    .job-logo img{width:100%;height:100%;object-fit:contain;padding:5px;background:#fff;border-radius:9px}
     .job-main{min-width:0;flex:1}
     .job-title{font-size:14px;line-height:1.28;font-weight:820;color:var(--text);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
     .job-company{margin-top:2px;font-size:11.5px;font-weight:650;color:var(--text-muted)}
@@ -2466,6 +2467,23 @@
     .job-detail-block p{margin:0;color:var(--text-muted);font-size:12px;line-height:1.65;white-space:pre-line}
     .job-match-panel{margin-top:15px;padding:12px;border-radius:14px;background:rgba(109,59,232,.08);border:1px solid rgba(109,59,232,.16)}
     .job-match-panel strong{color:#6d3be8}
+
+
+    .job-logo{
+      width:54px;height:54px;min-width:54px;border-radius:15px;
+      display:flex;align-items:center;justify-content:center;
+      overflow:hidden;background:var(--surface-2);border:1px solid var(--border);
+      box-shadow:0 5px 18px rgba(0,0,0,.16);
+    }
+    .job-logo img{
+      width:100%;height:100%;object-fit:contain;padding:8px;
+      display:block;background:var(--surface-2);
+    }
+    .job-logo-fallback{
+      width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+      font-size:18px;font-weight:850;color:#fff;
+      background:linear-gradient(135deg,#7c3aed,#2563eb);
+    }
 
     .job-source{
       display:inline-flex;align-items:center;gap:5px;margin-top:6px;
@@ -6832,7 +6850,7 @@
 
       const requestId = ++gluefulJobsRequestId;
       gluefulJobsLoading = true;
-      updateJobsSourceNote("Loading Jobble jobs…");
+      updateJobsSourceNote("Loading jobs…");
 
       try{
         const response = await fetch(`${provider.endpoint}?${params.toString()}`, {
@@ -6920,19 +6938,19 @@
 
       if(cached && cached.length){
         gluefulExternalJobs = cached;
-        updateJobsSourceNote(`Jobble · cached ${cached.length} jobs`);
+        updateJobsSourceNote(`Live jobs · cached ${cached.length}`);
         return cached;
       }
 
       if(JOB_PROVIDERS.jobble.enabled){
         const jobs = await fetchJobbleJobs();
         if(jobs.length){
-          updateJobsSourceNote(`Jobble · ${jobs.length} jobs`);
+          updateJobsSourceNote(`Live jobs · ${jobs.length}`);
           return jobs;
         }
-        updateJobsSourceNote("Jobble unavailable · showing demo feed");
+        updateJobsSourceNote("Live jobs unavailable · showing demo feed");
       }else{
-        updateJobsSourceNote("Jobble connector ready · demo feed until API is connected");
+        updateJobsSourceNote("Live job feed ready · demo feed until API is connected");
       }
 
       gluefulExternalJobs = [];
@@ -6991,6 +7009,94 @@
       return true;
     }
 
+
+    const GLUEFUL_COMPANY_DOMAINS = {
+      "qualcomm":"qualcomm.com",
+      "nvidia":"nvidia.com",
+      "amd":"amd.com",
+      "microsoft":"microsoft.com",
+      "intel":"intel.com",
+      "apple":"apple.com",
+      "google":"google.com",
+      "meta":"meta.com",
+      "amazon":"amazon.com",
+      "tesla":"tesla.com",
+      "samsung":"samsung.com",
+      "arm":"arm.com",
+      "broadcom":"broadcom.com",
+      "mediatek":"mediatek.com",
+      "synopsys":"synopsys.com",
+      "cadence":"cadence.com",
+      "texas instruments":"ti.com",
+      "ti":"ti.com",
+      "nxp":"nxp.com",
+      "stmicroelectronics":"st.com"
+    };
+
+    function getCompanyDomain(company){
+      const key = String(company || "").trim().toLowerCase();
+      if(GLUEFUL_COMPANY_DOMAINS[key]) return GLUEFUL_COMPANY_DOMAINS[key];
+
+      const match = Object.keys(GLUEFUL_COMPANY_DOMAINS)
+        .find(name => key.includes(name) || name.includes(key));
+      return match ? GLUEFUL_COMPANY_DOMAINS[match] : "";
+    }
+
+    /*
+     * Job cards use the SAME Brandfetch integration already used by
+     * Applications / Resume Manager. We intentionally do not use
+     * Google's favicon endpoint here.
+     *
+     * The domain lookup is asynchronous, so the card first renders a
+     * clean initials fallback and then loadCompanyLogos() upgrades it
+     * to the real Brandfetch logo.
+     */
+    function renderCompanyLogo(job){
+      const initials = esc(jobInitials(job.company));
+      const company = esc(job.company);
+
+      return `<div class="job-logo" data-company-logo="${company}">
+        <img class="job-logo-image" alt="${company} logo"
+             loading="lazy" style="display:none;">
+        <span class="job-logo-fallback">${initials}</span>
+      </div>`;
+    }
+
+    function findActiveJobById(id){
+      const all = getActiveJobData();
+      return all.find(job => String(job.id) === String(id))
+          || all.find(job => String(job.sourceJobId || "") === String(id))
+          || null;
+    }
+
+    function openExternalJobUrl(url, label="job"){
+      const target = String(url || "").trim();
+      if(!target){
+        showError(`The ${label} link is not available for this job yet.`);
+        return false;
+      }
+
+      try{
+        const parsed = new URL(target, window.location.href);
+        if(!/^https?:$/.test(parsed.protocol)){
+          showError(`This ${label} link is not valid.`);
+          return false;
+        }
+        const popup = window.open(parsed.href, "_blank", "noopener,noreferrer");
+
+        // Some browsers/PWA contexts block a new tab. Fall back to the
+        // same-tab navigation instead of making the button appear broken.
+        if(!popup){
+          window.location.assign(parsed.href);
+        }
+
+        return true;
+      }catch(e){
+        showError(`This ${label} link is not valid.`);
+        return false;
+      }
+    }
+
     function jobCard(job){
       const saved = gluefulSavedJobs.has(job.id);
       const skills = job.skills.slice(0,8).map(skill=>`<span class="job-skill">${esc(skill)}</span>`).join("");
@@ -6999,11 +7105,10 @@
         <article class="job-card ${expanded ? "expanded" : ""}" data-job-id="${esc(job.id)}"
                  onclick="handleJobCardClick(event,'${job.id}')">
           <div class="job-card-top">
-            <div class="job-logo">${esc(jobInitials(job.company))}</div>
+            ${renderCompanyLogo(job)}
             <div class="job-main">
               <div class="job-title">${esc(job.title)}</div>
               <div class="job-company">${esc(job.company)}</div>
-              <div class="job-source ${job.source === "jobble" ? "live" : ""}"><span class="job-source-dot"></span>${esc(job.sourceName || "Glueful")}</div>
               <div class="job-meta">
                 <span>${esc(job.location)}</span>
                 <span>${esc(job.workMode)}</span>
@@ -7031,7 +7136,7 @@
                 </svg>
               </button>
               <button class="job-action" type="button"
-                      onclick="event.stopPropagation();startMockJobApply('${job.id}')">Apply</button>
+                      onclick="event.stopPropagation();startJobApply('${job.id}')">Apply</button>
             </div>
           </div>
         </article>`;
@@ -7075,6 +7180,10 @@
       recentEl.innerHTML = recent.length
         ? recent.map(jobCard).join("")
         : `<div class="jobs-empty"><strong>No recent jobs match your filters</strong>Try another date range.</div>`;
+
+      // Upgrade job-card initials to the real company logos through the
+      // existing cached Brandfetch integration.
+      loadCompanyLogos();
 
       const active = Object.values(gluefulJobFilters).filter(v=>v && v !== "any").length;
       const label = document.getElementById("jobs-filter-label");
@@ -7164,24 +7273,57 @@
     }
 
     function openJobDetails(id){
-      const job = JOB_MOCK_DATA.find(j=>j.id===id);
-      if(!job) return;
+      const job = findActiveJobById(id);
+      if(!job){
+        showError("This job is no longer available in the current results.");
+        return;
+      }
+
       document.getElementById("job-detail-content").innerHTML = `
         <div class="job-detail-header">
-          <div class="job-logo">${esc(jobInitials(job.company))}</div>
+          ${renderCompanyLogo(job)}
           <div>
             <div class="job-detail-title">${esc(job.title)}</div>
             <div class="job-detail-company">${esc(job.company)} · ${esc(job.location)}</div>
           </div>
         </div>
-        <div class="job-match-panel"><strong>${job.match}% Match</strong> — based on your current profile. This is a UI preview; live matching comes after the job provider is connected.</div>
-        <div class="job-detail-block"><h4>Job overview</h4><p>${esc(job.description)}</p></div>
-        <div class="job-detail-block"><h4>Details</h4><p>${esc(job.workMode)} · ${esc(job.employment)} · ${esc(job.experience)} · ${esc(jobDaysLabel(job.postedDays))}</p></div>
-        <div class="job-detail-block"><h4>Skills</h4><p>${esc(job.skills.join(" · "))}</p></div>
+
+        <div class="job-match-panel">
+          <strong>${job.match}% Match</strong> — based on your current profile.
+        </div>
+
+        <div class="job-detail-block">
+          <h4>Job overview</h4>
+          <p>${esc(job.description || "Job description will be shown when supplied by the job source.")}</p>
+        </div>
+
+        <div class="job-detail-block">
+          <h4>Details</h4>
+          <p>${esc(job.workMode)} · ${esc(job.employment)} · ${esc(job.experience)} · ${esc(jobDaysLabel(job.postedDays))}</p>
+        </div>
+
+        ${job.salary ? `
+        <div class="job-detail-block">
+          <h4>Salary</h4>
+          <p>${esc(job.salary)}</p>
+        </div>` : ""}
+
+        <div class="job-detail-block">
+          <h4>Skills</h4>
+          <p>${esc(job.skills.join(" · ") || "Not specified")}</p>
+        </div>
+
         <div class="modal-actions" style="margin-top:18px;">
-          <button class="secondary-btn" type="button" onclick="toggleSavedJob('${job.id}');openJobDetails('${job.id}')">${gluefulSavedJobs.has(job.id) ? "Saved" : "Save job"}</button>
-          <button class="primary-btn" type="button" onclick="startMockJobApply('${job.id}')">Apply</button>
+          <button class="secondary-btn" type="button"
+                  onclick="toggleSavedJob('${esc(job.id)}');openJobDetails('${esc(job.id)}')">
+            ${gluefulSavedJobs.has(job.id) ? "Saved" : "Save job"}
+          </button>
+          <button class="primary-btn" type="button"
+                  onclick="startJobApply('${esc(job.id)}')">
+            Apply
+          </button>
         </div>`;
+
       openModal("job-detail-modal");
     }
 
@@ -7189,11 +7331,19 @@
       closeModal("job-detail-modal");
     }
 
-    function startMockJobApply(id){
-      const job = JOB_MOCK_DATA.find(j=>j.id===id);
+    function startJobApply(id){
+      const job = findActiveJobById(id);
       if(!job) return;
+
+      // Never fake an application submission. For an external listing,
+      // send the candidate to the authoritative application page.
       closeJobDetails();
-      showError(`Apply flow preview: ${job.company} — ${job.title}. External application + confirmation will be connected after the live job API.`);
+
+      if(job.url){
+        openExternalJobUrl(job.url, "application");
+      }else{
+        showError(`No application link is available for ${job.company} — ${job.title} yet.`);
+      }
     }
 
     document.addEventListener("DOMContentLoaded", ()=>{
@@ -11852,12 +12002,12 @@ document.addEventListener("click", (event)=>{
 
       const image =
         node.querySelector(
-          ".company-logo, .resume-company-logo, .resume-item-logo"
+          ".company-logo, .resume-company-logo, .resume-item-logo, .job-logo-image"
         );
 
       const fallback =
         node.querySelector(
-          ".company-logo-fallback, .resume-company-fallback, .resume-item-logo-fallback"
+          ".company-logo-fallback, .resume-company-fallback, .resume-item-logo-fallback, .job-logo-fallback"
         );
 
       if(image) {
@@ -11878,12 +12028,12 @@ document.addEventListener("click", (event)=>{
 
       const image =
         node.querySelector(
-          ".company-logo, .resume-company-logo, .resume-item-logo"
+          ".company-logo, .resume-company-logo, .resume-item-logo, .job-logo-image"
         );
 
       const fallback =
         node.querySelector(
-          ".company-logo-fallback, .resume-company-fallback, .resume-item-logo-fallback"
+          ".company-logo-fallback, .resume-company-fallback, .resume-item-logo-fallback, .job-logo-fallback"
         );
 
       if(!image) return false;
