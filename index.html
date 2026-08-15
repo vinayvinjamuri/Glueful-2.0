@@ -255,7 +255,7 @@
   />
 
   <title>Glueful</title>
-  <!-- V11 — LinkedIn-style job details, direct apply URLs, rich job data, reliable Brandfetch -->
+  <!-- V12 — Verified multi-provider job search (Adzuna + Jooble), LinkedIn-style job details, direct apply URLs, rich job data -->
 
   <!-- Resume parsing libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -2394,7 +2394,7 @@
     .bottom-nav .nav-btn[data-view="jobs"]{min-width:90px}
 
     /* =====================================================
-       JOB SEARCH V1 — UI ONLY / MOCK DATA
+       JOB SEARCH UI — styling/layout only; live data is supplied by V3 provider layer
     ====================================================== */
     .jobs-page{padding:18px 16px 110px;max-width:980px;margin:0 auto}
     .jobs-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px}
@@ -4624,7 +4624,7 @@
 
   
   <!-- =====================================================
-       JOB SEARCH VIEW — UI ONLY / MOCK DATA
+       JOB SEARCH VIEW — UI layout only; no mock job records are used
   ====================================================== -->
   <section id="jobs-view" class="app-view" style="display:none;">
     <div class="jobs-page">
@@ -6852,76 +6852,58 @@
 
 
     /* =====================================================
-       JOB SEARCH V2 — PROVIDER ARCHITECTURE
-       IMPORTANT:
-       - Job search data is NOT stored in Supabase.
-       - Jobs are fetched through a backend provider endpoint.
-       - The frontend never stores Jobble API credentials.
-       - Until the backend endpoint is configured, the existing demo
-         jobs remain available as a safe fallback.
-       - External jobs are cached in localStorage for a short period
-         to reduce repeated network/database usage.
+       JOB SEARCH V3 — MULTI-PROVIDER / VERIFIED-ONLY ARCHITECTURE
+       ---------------------------------------------------------
+       Design goals:
+       - Jobble is removed from the production search path.
+       - Glueful never invents, fabricates, or ships demo jobs.
+       - Adzuna + Jooble are queried through Glueful's backend.
+       - Provider API keys stay server-side; this HTML never contains them.
+       - Jobs without a stable ID AND a specific source listing URL are rejected.
+       - A specific application URL is required before Glueful shows "Apply".
+       - If live providers fail, only previously fetched real jobs may be shown
+         as a clearly-labelled cache; no mock/demo fallback is ever used.
+       - Results from multiple providers are normalized and de-duplicated.
 
-       Jobble currently exposes a public job board, but we do not
-       assume a public third-party search API exists. The adapter below
-       expects Glueful's backend to provide an authorized Jobble feed.
+       Backend contract:
+         GET /api/jobs/search?provider=adzuna&...
+         GET /api/jobs/search?provider=jooble&...
+
+       The backend should adapt each provider into this canonical shape:
+         {
+           id, jobId, title, company, location, workMode, employment,
+           experience, postedAt, salary, skills, description,
+           responsibilities, requirements, qualifications,
+           preferredQualifications, benefits, education, department,
+           industry, jobUrl, applicationUrl, source, sourceName
+         }
+
+       IMPORTANT:
+       Adzuna's official API requires an app_id/app_key and Jooble's REST API
+       requires an API key. Those secrets belong ONLY on the backend.
     ====================================================== */
 
     const GLUEFUL_JOB_FILTERS_KEY = "glueful_job_filters_v2";
     const GLUEFUL_SAVED_JOBS_KEY = "glueful_saved_jobs_v2";
-    const GLUEFUL_JOB_CACHE_KEY = "glueful_job_provider_cache_v1";
-    const GLUEFUL_JOB_CACHE_TTL_MS = 15 * 60 * 1000;
+    const GLUEFUL_JOB_CACHE_KEY = "glueful_verified_job_cache_v3";
+    const GLUEFUL_JOB_CACHE_TTL_MS = 5 * 60 * 1000;
+    const GLUEFUL_JOB_MAX_RESULTS_PER_PROVIDER = 50;
 
-    /*
-      Configure this only when the Glueful backend endpoint exists.
-
-      Example:
-        window.GLUEFUL_JOB_API_BASE = "https://your-api.example.com";
-
-      Backend contract:
-        GET /api/jobs/search?provider=jobble&q=&location=&page=1&limit=30
-
-      Response:
-        {
-          "jobs": [
-            {
-              "id": "...",
-              "title": "...",
-              "company": "...",
-              "location": "...",
-              "workMode": "Hybrid",
-              "employment": "Full-time",
-              "experience": "2–5 years",
-              "jobId": "...",
-              "postedAt": "2026-08-15T08:00:00Z",
-              "salary": "...",
-              "skills": ["C","Python"],
-              "description": "...",
-              "responsibilities": ["..."],
-              "requirements": ["..."],
-              "qualifications": ["..."],
-              "preferredQualifications": ["..."],
-              "benefits": ["..."],
-              "education": "...",
-              "department": "...",
-              "industry": "...",
-              "jobUrl": "https://.../specific-job",
-              "applicationUrl": "https://.../specific-job/apply",
-              "url": "https://.../specific-job",
-              "source": "jobble"
-            }
-          ]
-        }
-
-      The backend, not this HTML file, should hold any provider credentials.
-    */
     const GLUEFUL_JOB_API_BASE =
       String(window.GLUEFUL_JOB_API_BASE || "").replace(/\/+$/, "");
 
     const JOB_PROVIDERS = {
-      jobble: {
-        id: "jobble",
-        name: "Jobble",
+      adzuna: {
+        id: "adzuna",
+        name: "Adzuna",
+        endpoint: GLUEFUL_JOB_API_BASE
+          ? `${GLUEFUL_JOB_API_BASE}/api/jobs/search`
+          : "",
+        enabled: Boolean(GLUEFUL_JOB_API_BASE)
+      },
+      jooble: {
+        id: "jooble",
+        name: "Jooble",
         endpoint: GLUEFUL_JOB_API_BASE
           ? `${GLUEFUL_JOB_API_BASE}/api/jobs/search`
           : "",
@@ -6932,406 +6914,173 @@
     let gluefulExternalJobs = [];
     let gluefulJobsLoading = false;
     let gluefulJobsRequestId = 0;
+    let gluefulJobProviderStatus = {};
 
     const GLUEFUL_JOB_FILTERS_DEFAULT = {
       date:"any", mode:"any", experience:"any", employment:"any",
       company:"", location:""
     };
 
-    const JOB_MOCK_DATA = [
-      {
-        id:"mock-1",
-        jobId:"DEMO-QCOM-PSV-001",
-        title:"Post-Silicon Validation Engineer",
-        company:"Qualcomm",
-        location:"Hyderabad",
-        workMode:"Hybrid",
-        employment:"Full-time",
-        experience:"2–5 years",
-        postedDays:1,
-        match:92,
-        skills:["C","Python","ARM","SoC Validation","PMIC","JTAG"],
-        department:"Engineering",
-        industry:"Semiconductor",
-        education:"Bachelor's or Master's degree in Computer Science, Electronics/Electrical Engineering, or a related field.",
-        description:"Validate SoC features across silicon and debug failures across hardware and software boundaries. Work with low-level test content, automation and cross-functional engineering teams.",
-        responsibilities:[
-          "Develop and execute SoC validation tests for system-level features.",
-          "Debug failures and isolate hardware, firmware and software root causes.",
-          "Automate validation workflows and regression execution using Python and low-level software.",
-          "Collaborate with design, architecture, firmware and validation teams."
-        ],
-        requirements:[
-          "Strong C programming and low-level debugging skills.",
-          "Understanding of ARM-based SoC architecture and embedded systems.",
-          "Experience with validation, JTAG/debug tools and scripting."
-        ],
-        qualifications:[
-          "Hands-on embedded software or SoC validation experience.",
-          "Ability to analyze logs, traces and hardware/software interactions."
-        ],
-        preferredQualifications:[
-          "Exposure to pre-silicon emulation, post-silicon validation, PMIC or power-management testing.",
-          "Experience with Linux, RTOS or bare-metal environments."
-        ],
-        benefits:[],
-        url:"",
-        applicationUrl:"",
-        source:"jobble"
-      },
-      {
-        id:"mock-2",
-        jobId:"DEMO-NVIDIA-EMB-002",
-        title:"Embedded Software Engineer",
-        company:"NVIDIA",
-        location:"Bengaluru",
-        workMode:"On-site",
-        employment:"Full-time",
-        experience:"2–4 years",
-        postedDays:2,
-        match:88,
-        skills:["C","Embedded C","ARM","Python","Linux","Debugging"],
-        department:"Software Engineering",
-        industry:"Semiconductors / Computing",
-        education:"Bachelor's or Master's degree in Computer Science, Electronics Engineering, or a related field.",
-        description:"Develop and validate embedded software for next-generation platforms with a focus on low-level debugging, hardware/software integration and system reliability.",
-        responsibilities:[
-          "Develop embedded software components in C/C++.",
-          "Validate platform functionality and investigate system-level failures.",
-          "Work closely with hardware and firmware engineers during bring-up and debug.",
-          "Create automation and regression tests using scripting languages."
-        ],
-        requirements:[
-          "Strong C/C++ programming and embedded debugging skills.",
-          "Working knowledge of ARM architecture and Linux.",
-          "Ability to debug hardware/software integration issues."
-        ],
-        qualifications:[],
-        preferredQualifications:[
-          "Python automation experience.",
-          "Experience with boot flows, drivers, RTOS or board bring-up."
-        ],
-        benefits:[],
-        url:"",
-        applicationUrl:"",
-        source:"jobble"
-      },
-      {
-        id:"mock-3",
-        jobId:"DEMO-AMD-SOC-003",
-        title:"SoC Validation Engineer",
-        company:"AMD",
-        location:"Hyderabad",
-        workMode:"On-site",
-        employment:"Full-time",
-        experience:"2–6 years",
-        postedDays:4,
-        match:85,
-        skills:["SoC","Python","C","JTAG","Validation","Debug"],
-        department:"Silicon Validation",
-        industry:"Semiconductor",
-        education:"Bachelor's or Master's degree in Electronics, Electrical Engineering, Computer Science, or a related discipline.",
-        description:"Create validation plans, execute pre- and post-silicon tests, debug hardware/software interaction issues and improve regression coverage.",
-        responsibilities:[
-          "Translate SoC specifications into validation plans and test cases.",
-          "Execute tests on emulation, FPGA or silicon platforms.",
-          "Analyze failures and work with design and firmware teams on root cause.",
-          "Build reusable validation and regression infrastructure."
-        ],
-        requirements:[
-          "C/C++ or Python programming.",
-          "Understanding of computer architecture and SoC validation.",
-          "Experience with hardware debug tools and structured failure analysis."
-        ],
-        qualifications:[],
-        preferredQualifications:[
-          "Experience with emulation or FPGA platforms.",
-          "Knowledge of ARM, PCIe, memory systems or high-speed interfaces."
-        ],
-        benefits:[],
-        url:"",
-        applicationUrl:"",
-        source:"jobble"
-      },
-      {
-        id:"mock-4",
-        jobId:"DEMO-MS-TEST-004",
-        title:"Embedded Test Engineer",
-        company:"Microsoft",
-        location:"Bengaluru",
-        workMode:"Hybrid",
-        employment:"Full-time",
-        experience:"1–4 years",
-        postedDays:6,
-        match:82,
-        skills:["Python","Automation","Embedded","Testing","Linux","Debugging"],
-        department:"Device / Embedded Engineering",
-        industry:"Technology",
-        education:"Bachelor's degree or equivalent practical experience.",
-        description:"Build automated validation workflows for devices and embedded systems and collaborate with hardware and firmware teams to identify and resolve system issues.",
-        responsibilities:[
-          "Design automated tests for embedded devices and platform features.",
-          "Develop Python-based validation utilities and regression flows.",
-          "Debug failures across firmware, drivers and hardware.",
-          "Report, reproduce and track issues through closure."
-        ],
-        requirements:[
-          "Python automation and software testing experience.",
-          "Understanding of embedded systems and debugging.",
-          "Strong problem-solving and communication skills."
-        ],
-        qualifications:[],
-        preferredQualifications:[
-          "Linux, C/C++, device-driver or hardware validation experience."
-        ],
-        benefits:[],
-        url:"",
-        applicationUrl:"",
-        source:"jobble"
-      },
-      {
-        id:"mock-5",
-        jobId:"DEMO-INTEL-FW-005",
-        title:"Firmware Validation Engineer",
-        company:"Intel",
-        location:"Bengaluru",
-        workMode:"Hybrid",
-        employment:"Full-time",
-        experience:"2–5 years",
-        postedDays:8,
-        match:79,
-        skills:["C","Firmware","SPI","I2C","Python","Debugging"],
-        department:"Firmware Validation",
-        industry:"Semiconductor",
-        education:"Bachelor's or Master's degree in Computer Science, Electronics or a related field.",
-        description:"Validate firmware features, interfaces and platform behavior using automation and lab-based debug tools.",
-        responsibilities:[
-          "Create and execute firmware validation tests.",
-          "Validate low-speed interfaces and platform behavior.",
-          "Automate repetitive validation and regression activities.",
-          "Debug firmware and hardware interaction issues."
-        ],
-        requirements:[
-          "Strong C programming and embedded fundamentals.",
-          "Experience with SPI, I2C, UART or similar interfaces.",
-          "Python or shell scripting for validation automation."
-        ],
-        qualifications:[],
-        preferredQualifications:[
-          "Experience with oscilloscopes, logic analyzers or JTAG."
-        ],
-        benefits:[],
-        url:"",
-        applicationUrl:"",
-        source:"jobble"
-      }
-    ];
-
-    let gluefulJobFilters = {
-      date:"any", mode:"any", experience:"any", employment:"any",
-      company:"", location:""
-    };
-
+    let gluefulJobFilters = {...GLUEFUL_JOB_FILTERS_DEFAULT};
     let gluefulSavedJobs = new Set();
     let gluefulExpandedJobId = null;
-
 
     function normalizeJobDate(job){
       if(job.postedDays !== undefined && Number.isFinite(Number(job.postedDays))){
         return Math.max(0, Number(job.postedDays));
       }
-      const raw = job.postedAt || job.posted_at || job.datePosted || "";
+      const raw = job.postedAt || job.posted_at || job.datePosted || job.updated || "";
       const ts = Date.parse(raw);
       if(!Number.isFinite(ts)) return 30;
       return Math.max(0, Math.floor((Date.now() - ts) / 86400000));
     }
 
-    function normalizeExternalJob(raw, providerId="jobble"){
-      const job = raw || {};
-      const title = String(job.title || job.jobTitle || "").trim();
-      const company = String(job.company || job.companyName || "").trim();
-      if(!title || !company) return null;
+    function normalizeJobUrl(value){
+      const raw=String(value||"").trim(); if(!raw) return "";
+      try{ const parsed=new URL(raw,window.location.href); if(!/^https?:$/.test(parsed.protocol)) return ""; parsed.hash=""; return parsed.href; }
+      catch(e){ return ""; }
+    }
 
-      const skills = Array.isArray(job.skills)
-        ? job.skills.map(x=>String(x).trim()).filter(Boolean)
-        : String(job.skills || "")
-            .split(/[,|]/)
-            .map(x=>x.trim())
-            .filter(Boolean);
+    function normalizeJobList(value){
+      if(Array.isArray(value)) return value.map(x=>String(x||"").trim()).filter(Boolean);
+      return String(value||"").split(/\n|[•|]/).map(x=>x.replace(/^[-*]\s*/,"").trim()).filter(Boolean);
+    }
 
-      const provider = JOB_PROVIDERS[providerId];
+    function cleanJobHtml(value){
+      return String(value||"").replace(/<br\s*\/?\s*>/gi,"\n").replace(/<\/p>/gi,"\n").replace(/<[^>]*>/g," ")
+        .replace(/&nbsp;/gi," ").replace(/&amp;/gi,"&").replace(/&lt;/gi,"<").replace(/&gt;/gi,">")
+        .replace(/\s+\n/g,"\n").replace(/\n\s+/g,"\n").replace(/[ \t]+/g," ").trim();
+    }
+
+    function normalizeExternalJob(raw,providerId=""){
+      const job=raw||{}, provider=JOB_PROVIDERS[providerId]||{};
+      const title=String(job.title||job.jobTitle||"").trim();
+      const company=String(job.company||job.companyName||"").trim();
+      const sourceJobId=String(job.jobId||job.sourceJobId||job.id||job.guid||"").trim();
+      const jobUrl=normalizeJobUrl(job.jobUrl||job.url||job.link||job.sourceUrl||job.listingUrl);
+      const applicationUrl=normalizeJobUrl(job.applicationUrl||job.applyUrl||job.application_url);
+      // Verified-only: stable ID + company/title + specific source URL are mandatory.
+      if(!title||!company||!sourceJobId||!jobUrl) return null;
+      const skills=normalizeJobList(job.skills||job.keywords);
+      const description=cleanJobHtml(job.description||job.summary||job.snippet||"");
+      const location=String(job.location||job.city||job.locationName||"Location not specified").trim();
+      const workMode=String(job.workMode||job.work_mode||job.remoteType||job.remote||"Any").trim();
+      const employment=String(job.employment||job.employmentType||job.type||"Any").trim();
+      const experience=String(job.experience||job.experienceLevel||"Any").trim();
+      const canonicalKey=[company,title,location].map(x=>x.toLowerCase().replace(/[^a-z0-9]+/g," ").trim()).join("|");
       return {
-        id: `${providerId}:${String(job.id || job.sourceJobId || `${company}-${title}`).trim()}`,
-        sourceJobId: String(job.id || job.sourceJobId || "").trim(),
-        source: providerId,
-        sourceName: provider?.name || providerId,
-        title,
-        company,
-        location: String(job.location || job.city || "Location not specified").trim(),
-        workMode: String(job.workMode || job.work_mode || job.remoteType || "Any").trim(),
-        employment: String(job.employment || job.employmentType || "Full-time").trim(),
-        experience: String(job.experience || job.experienceLevel || "Any").trim(),
-        postedAt: job.postedAt || job.posted_at || "",
-        postedDays: normalizeJobDate(job),
-        salary: String(job.salary || job.pay || "").trim(),
-        match: Math.max(0, Math.min(100, Number(job.match || job.matchScore || 0) || 0)),
-        skills,
-        description: String(job.description || job.summary || "").trim(),
-        url: String(job.url || job.applicationUrl || job.applyUrl || "").trim()
+        id:`${providerId}:${sourceJobId}`,sourceJobId,source:providerId,sourceName:String(job.sourceName||provider.name||providerId).trim(),
+        title,company,location,workMode,employment,experience,
+        postedAt:job.postedAt||job.posted_at||job.datePosted||job.updated||"",postedDays:normalizeJobDate(job),
+        salary:String(job.salary||job.pay||job.salaryRange||"").trim(),match:Math.max(0,Math.min(100,Number(job.match||job.matchScore||0)||0)),
+        skills,description,responsibilities:normalizeJobList(job.responsibilities),requirements:normalizeJobList(job.requirements),
+        qualifications:normalizeJobList(job.qualifications),preferredQualifications:normalizeJobList(job.preferredQualifications||job.preferred_qualifications),
+        benefits:normalizeJobList(job.benefits),education:String(job.education||"").trim(),department:String(job.department||"").trim(),
+        industry:String(job.industry||"").trim(),jobUrl,applicationUrl,url:jobUrl,canonicalKey,verified:true
       };
+    }
+
+    function dedupeVerifiedJobs(jobs){
+      const byKey=new Map();
+      jobs.forEach(job=>{
+        if(!job||!job.verified) return;
+        const key=`${job.source}:${job.sourceJobId}`.toLowerCase();
+        if(!key) return;
+        const existing=byKey.get(key);
+        if(!existing){ byKey.set(key,job); return; }
+        const score=x=>(x.applicationUrl?1000:0)+String(x.description||"").length+(x.skills?.length||0)*20+(x.requirements?.length||0)*10;
+        if(score(job)>score(existing)) byKey.set(key,job);
+      });
+      const merged=[]; const seenUrl=new Map(); const seenContent=new Map();
+      [...byKey.values()].forEach(job=>{
+        const url=String(job.jobUrl||"").toLowerCase(), content=String(job.canonicalKey||"").toLowerCase();
+        let idx=(url&&seenUrl.has(url))?seenUrl.get(url):(content&&seenContent.has(content)?seenContent.get(content):undefined);
+        if(idx===undefined){ idx=merged.length; merged.push(job); }
+        else if(job.applicationUrl&&!merged[idx].applicationUrl){ merged[idx]=job; }
+        if(url) seenUrl.set(url,idx); if(content) seenContent.set(content,idx);
+      });
+      return merged;
     }
 
     function readJobProviderCache(){
       try{
-        const cached = JSON.parse(localStorage.getItem(GLUEFUL_JOB_CACHE_KEY) || "null");
-        if(!cached || !Array.isArray(cached.jobs)) return null;
-        if(Date.now() - Number(cached.timestamp || 0) > GLUEFUL_JOB_CACHE_TTL_MS) return null;
-        return cached.jobs.map(j=>normalizeExternalJob(j, j.source || "jobble")).filter(Boolean);
-      }catch(e){
-        return null;
-      }
+        const cached=JSON.parse(localStorage.getItem(GLUEFUL_JOB_CACHE_KEY)||"null");
+        if(!cached||!Array.isArray(cached.jobs)||Date.now()-Number(cached.timestamp||0)>GLUEFUL_JOB_CACHE_TTL_MS) return null;
+        return dedupeVerifiedJobs(cached.jobs.map(j=>normalizeExternalJob(j,j.source||"")).filter(Boolean));
+      }catch(e){ return null; }
     }
-
-    function writeJobProviderCache(jobs){
-      try{
-        localStorage.setItem(GLUEFUL_JOB_CACHE_KEY, JSON.stringify({
-          timestamp: Date.now(),
-          jobs: jobs.slice(0,100)
-        }));
-      }catch(e){}
-    }
+    function writeJobProviderCache(jobs){ try{ localStorage.setItem(GLUEFUL_JOB_CACHE_KEY,JSON.stringify({timestamp:Date.now(),jobs:dedupeVerifiedJobs(jobs).slice(0,200)})); }catch(e){} }
 
     function getConfiguredJobSourceLabel(){
-      const provider = JOB_PROVIDERS.jobble;
-      if(provider.enabled) return "Jobble";
-      return "Demo feed";
+      const enabled=Object.values(JOB_PROVIDERS).filter(p=>p.enabled);
+      return enabled.length?enabled.map(p=>p.name).join(" + "):"No live providers configured";
     }
 
-    async function fetchJobbleJobs(){
-      const provider = JOB_PROVIDERS.jobble;
-      if(!provider.enabled) return [];
+    function buildProviderSearchParams(providerId){
+      const input=document.getElementById("jobs-search-input"), profile=getJobSearchProfile()||{};
+      const locations=String(profile.preferredLocations||profile.locations||localStorage.getItem("glueful_jsp_locations")||"").trim();
+      const roles=String(profile.targetRole||profile.targetRoles||localStorage.getItem("glueful_jsp_roles")||"").trim();
+      const workMode=String(profile.workPreference||localStorage.getItem("glueful_jsp_workmode")||"").trim();
+      const employment=String(profile.employmentPreference||localStorage.getItem("glueful_jsp_employment")||"").trim();
+      return new URLSearchParams({provider:providerId,q:String(input?.value||"").trim(),location:locations,roles,workMode,employment,page:"1",limit:String(GLUEFUL_JOB_MAX_RESULTS_PER_PROVIDER)});
+    }
 
-      const input = document.getElementById("jobs-search-input");
-      const q = String(input?.value || "").trim();
-      const profile = getJobSearchProfile();
-
-      const params = new URLSearchParams({
-        provider: "jobble",
-        q,
-        location: String(profile?.preferredLocations || profile?.locations || "").trim(),
-        roles: String(profile?.targetRole || profile?.targetRoles || "").trim(),
-        workMode: String(profile?.workPreference || "").trim(),
-        page: "1",
-        limit: "30"
-      });
-
-      const requestId = ++gluefulJobsRequestId;
-      gluefulJobsLoading = true;
-      updateJobsSourceNote("Loading jobs…");
-
+    async function fetchProviderJobs(providerId,requestId){
+      const provider=JOB_PROVIDERS[providerId]; if(!provider?.enabled) return [];
+      gluefulJobProviderStatus[providerId]={state:"loading",count:0};
       try{
-        const response = await fetch(`${provider.endpoint}?${params.toString()}`, {
-          method:"GET",
-          headers:{ "Accept":"application/json" },
-          credentials:"omit"
-        });
-
-        if(!response.ok) throw new Error(`Job provider HTTP ${response.status}`);
-
-        const payload = await response.json();
-        if(requestId !== gluefulJobsRequestId) return [];
-
-        const jobs = (Array.isArray(payload) ? payload : payload.jobs || [])
-          .map(raw=>normalizeExternalJob(raw, "jobble"))
-          .filter(Boolean);
-
-        gluefulExternalJobs = jobs;
-        writeJobProviderCache(jobs);
-        return jobs;
+        const response=await fetch(`${provider.endpoint}?${buildProviderSearchParams(providerId).toString()}`,{method:"GET",headers:{Accept:"application/json"},credentials:"omit",cache:"no-store"});
+        if(!response.ok) throw new Error(`${provider.name} HTTP ${response.status}`);
+        const payload=await response.json(); if(requestId!==gluefulJobsRequestId) return [];
+        const rawJobs=Array.isArray(payload)?payload:(Array.isArray(payload.jobs)?payload.jobs:(Array.isArray(payload.results)?payload.results:[]));
+        const jobs=rawJobs.map(raw=>normalizeExternalJob(raw,providerId)).filter(Boolean);
+        gluefulJobProviderStatus[providerId]={state:"ok",count:jobs.length}; return jobs;
       }catch(error){
-        console.warn("Jobble provider unavailable:", error);
-        return [];
-      }finally{
-        if(requestId === gluefulJobsRequestId){
-          gluefulJobsLoading = false;
-        }
+        console.warn(`${provider.name} provider unavailable:`,error);
+        gluefulJobProviderStatus[providerId]={state:"error",count:0,error:String(error?.message||error)}; return [];
       }
     }
 
-    function updateJobsSourceNote(text){
-      const el = document.getElementById("jobs-source-note");
-      if(el) el.textContent = text;
+    function updateJobsSourceNote(text){ const el=document.getElementById("jobs-source-note"); if(el) el.textContent=text; }
+    function updateJobsProviderStatusNote(){
+      const providers=Object.values(JOB_PROVIDERS);
+      if(!providers.some(p=>p.enabled)){ updateJobsSourceNote("Live job search is not connected. Configure the Glueful backend for Adzuna + Jooble."); return; }
+      const labels=providers.filter(p=>p.enabled).map(p=>{const st=gluefulJobProviderStatus[p.id]; if(!st)return `${p.name}: waiting`; if(st.state==="ok")return `${p.name}: ${st.count}`; if(st.state==="loading")return `${p.name}: loading`; return `${p.name}: unavailable`;});
+      updateJobsSourceNote(`Verified live sources · ${labels.join(" · ")}`);
     }
 
-    function calculateJobMatch(job, profile){
-      if(!profile) return Number(job.match || 0);
-
-      const roleText = String(
-        profile.targetRole || profile.targetRoles ||
-        profile.professionalHeadline || ""
-      ).toLowerCase();
-
-      const locationText = String(
-        profile.preferredLocations || profile.locations || ""
-      ).toLowerCase();
-
-      const skillsText = Array.isArray(profile.skills)
-        ? profile.skills.join(" ").toLowerCase()
-        : String(profile.skills || "").toLowerCase();
-
-      const hay = `${job.title} ${job.description} ${job.skills.join(" ")}`.toLowerCase();
-      let score = 0;
-
-      if(roleText){
-        roleText.split(/[,|/]+/).map(x=>x.trim()).filter(Boolean).slice(0,8)
-          .forEach(token=>{ if(token && hay.includes(token)) score += 12; });
-      }
-
-      if(skillsText){
-        skillsText.split(/[,|/]+/).map(x=>x.trim()).filter(Boolean).slice(0,20)
-          .forEach(token=>{ if(token && hay.includes(token)) score += 4; });
-      }
-
-      if(locationText && locationText.split(/[,|]+/).some(x=>{
-        const token=x.trim(); return token && job.location.toLowerCase().includes(token);
-      })) score += 8;
-
-      return Math.max(0, Math.min(99, Math.round(score)));
+    function calculateJobMatch(job,profile){
+      if(!profile) return Number(job.match||0);
+      const roleText=String(profile.targetRole||profile.targetRoles||profile.professionalHeadline||"").toLowerCase();
+      const locationText=String(profile.preferredLocations||profile.locations||"").toLowerCase();
+      const skillsText=Array.isArray(profile.skills)?profile.skills.join(" ").toLowerCase():String(profile.skills||"").toLowerCase();
+      const hay=`${job.title} ${job.description} ${job.skills.join(" ")}`.toLowerCase(); let score=0,signals=0;
+      if(roleText) roleText.split(/[,|/]+/).map(x=>x.trim()).filter(Boolean).slice(0,8).forEach(t=>{if(t.length>=2){signals++;if(hay.includes(t))score+=12;}});
+      if(skillsText) skillsText.split(/[,|/]+/).map(x=>x.trim()).filter(Boolean).slice(0,20).forEach(t=>{if(t.length>=2){signals++;if(hay.includes(t))score+=4;}});
+      if(locationText&&locationText.split(/[,|]+/).some(x=>{const t=x.trim();return t&&job.location.toLowerCase().includes(t);})) score+=8;
+      if(!signals) return 0; return Math.max(0,Math.min(99,Math.round(score)));
     }
 
     function getActiveJobData(){
-      const sourceJobs = gluefulExternalJobs.length ? gluefulExternalJobs : JOB_MOCK_DATA;
-      const profile = getJobSearchProfile();
-
-      return sourceJobs.map(job=>{
-        const normalized = normalizeExternalJob(job, job.source || "jobble") || job;
-        const computed = normalized.match ? normalized.match : calculateJobMatch(normalized, profile);
-        return {...normalized, match: computed || calculateJobMatch(normalized, profile)};
-      });
+      const profile=getJobSearchProfile();
+      return dedupeVerifiedJobs(gluefulExternalJobs).map(job=>({...job,match:calculateJobMatch(job,profile)||Number(job.match||0)}));
     }
 
     async function ensureJobProviderData(forceRefresh=false){
-      const cached = forceRefresh ? null : readJobProviderCache();
-
-      if(cached && cached.length){
-        gluefulExternalJobs = cached;
-        updateJobsSourceNote(`Live jobs · cached ${cached.length}`);
-        return cached;
-      }
-
-      if(JOB_PROVIDERS.jobble.enabled){
-        const jobs = await fetchJobbleJobs();
-        if(jobs.length){
-          updateJobsSourceNote(`Live jobs · ${jobs.length}`);
-          return jobs;
-        }
-        updateJobsSourceNote("Live jobs unavailable · showing demo feed");
-      }else{
-        updateJobsSourceNote("Live job feed ready · demo feed until API is connected");
-      }
-
-      gluefulExternalJobs = [];
-      return [];
+      const requestId=++gluefulJobsRequestId; gluefulJobsLoading=true; updateJobsSourceNote("Loading verified jobs from live providers…");
+      if(!forceRefresh){ const cached=readJobProviderCache(); if(cached?.length){gluefulExternalJobs=cached;updateJobsSourceNote(`Verified jobs · cached ${cached.length} · refreshing live sources…`);} }
+      const enabled=Object.values(JOB_PROVIDERS).filter(p=>p.enabled);
+      if(!enabled.length){gluefulExternalJobs=[];gluefulJobsLoading=false;updateJobsProviderStatusNote();return [];}
+      const results=await Promise.all(enabled.map(p=>fetchProviderJobs(p.id,requestId)));
+      if(requestId!==gluefulJobsRequestId) return gluefulExternalJobs;
+      const liveJobs=dedupeVerifiedJobs(results.flat());
+      if(liveJobs.length){gluefulExternalJobs=liveJobs;writeJobProviderCache(liveJobs);}
+      else if(!gluefulExternalJobs.length) gluefulExternalJobs=[];
+      gluefulJobsLoading=false; updateJobsProviderStatusNote();
+      if(!liveJobs.length&&gluefulExternalJobs.length) updateJobsSourceNote(`Live providers unavailable · showing ${gluefulExternalJobs.length} verified cached jobs`);
+      else if(!liveJobs.length) updateJobsSourceNote("No verified jobs returned by the live providers.");
+      else updateJobsSourceNote(`Verified live jobs · ${liveJobs.length}`);
+      return gluefulExternalJobs;
     }
 
     function loadJobUIState(){
@@ -7527,7 +7276,7 @@
                 </svg>
               </button>
               <button class="job-action" type="button"
-                      onclick="event.stopPropagation();startJobApply('${job.id}')">Apply</button>
+                      onclick="event.stopPropagation();${job.applicationUrl ? `startJobApply('${job.id}')` : `openJobDetails('${job.id}')`}">${job.applicationUrl ? "Apply" : "View"}</button>
             </div>
           </div>
         </article>`;
@@ -7593,11 +7342,11 @@
       renderJobs();
       clearTimeout(gluefulJobSearchTimer);
 
-      if(!JOB_PROVIDERS.jobble.enabled) return;
+      if(!Object.values(JOB_PROVIDERS).some(provider=>provider.enabled)) return;
 
       gluefulJobSearchTimer = setTimeout(()=>{
         refreshJobsFromProvider(true);
-      }, 450);
+      }, 500);
     }
 
     function openJobsView(){
@@ -7678,7 +7427,6 @@
       const direct = String(
         job.applicationUrl ||
         job.applyUrl ||
-        job.url ||
         ""
       ).trim();
 
@@ -7702,9 +7450,7 @@
 
       const applicationUrl = getJobApplicationUrl(job);
       const jobPageUrl = String(job.jobUrl || "").trim();
-      const sourceLabel = job.sourceName && job.sourceName !== "jobble"
-        ? job.sourceName
-        : "External job source";
+      const sourceLabel = job.sourceName || job.source || "External job source";
 
       const skillsHtml = job.skills?.length
         ? `
@@ -14540,16 +14286,29 @@ document.addEventListener("click", (event)=>{
 
 
     /*
-      JOBBLE BACKEND TODO
-      -------------------
-      1. Create an Edge Function/server endpoint:
-           GET /api/jobs/search?provider=jobble...
-      2. Keep Jobble credentials/secrets server-side.
-      3. Normalize Jobble responses into the contract documented above.
-      4. Return only the fields Glueful needs.
-      5. Do NOT write the full external job feed into Supabase.
-      6. Cache provider results server-side where permitted.
-      7. Save only user-specific state (saved/applied/hidden jobs) in Supabase.
+      GLUEFUL JOB PROVIDER BACKEND CONTRACT
+      -------------------------------------
+      Configure window.GLUEFUL_JOB_API_BASE in the deployment environment.
+
+      Routes:
+        GET /api/jobs/search?provider=adzuna&...
+        GET /api/jobs/search?provider=jooble&...
+
+      Backend responsibilities:
+        1. Keep Adzuna app_id/app_key and Jooble API key server-side.
+        2. Normalize provider responses into Glueful's canonical job contract.
+        3. Preserve each provider's stable job ID and exact listing URL.
+        4. Populate applicationUrl only when it is a verified job-specific
+           application URL; never substitute a generic careers homepage.
+        5. Add server-side timeouts, retries, rate limits and caching.
+        6. Return JSON as { jobs: [...] }; never return fabricated/demo jobs.
+
+      Frontend reliability rules:
+        - No mock data.
+        - No anonymous job records.
+        - No URL-less job records.
+        - No fake Apply links.
+        - Cached results are explicitly labelled as cached.
     */
 
     /* =====================================================
