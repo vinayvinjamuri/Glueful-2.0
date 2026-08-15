@@ -720,12 +720,6 @@
       z-index:2;
     }
 
-    @media (prefers-reduced-motion:reduce) {
-      .glueful-shooting-star {
-        animation:none !important;
-        display:none !important;
-      }
-    }
 
     :root {
 
@@ -3680,6 +3674,7 @@
     .resume-viewer-overlay{z-index:150}
     .resume-viewer-modal{width:min(900px,96vw);max-width:900px;height:min(88vh,900px);display:flex;flex-direction:column}
     .resume-viewer-body{flex:1;min-height:0;border:1px solid var(--border);border-radius:14px;background:var(--card2);overflow:auto}
+    .resume-cloud-sync-note{margin-top:7px;color:var(--text-faint);font-size:9px;line-height:1.4}
     .resume-viewer-body iframe{width:100%;height:100%;min-height:60vh;border:0;display:block;background:#fff}
     .resume-text-preview{margin:0;padding:18px;white-space:pre-wrap;word-break:break-word;color:var(--text-dim);font:12px/1.65 'Inter',sans-serif}
     .resume-docx-preview{padding:22px;color:var(--text);font-size:13px;line-height:1.7}
@@ -3876,11 +3871,6 @@
       const field = document.querySelector(".glueful-splash-starfield");
       if (!field) return;
 
-      const reduceMotion = window.matchMedia &&
-        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-      if (reduceMotion) return;
-
       const colors = ["#FFFFFF", "#B9A0FF", "#83E4FF", "#D8C7FF", "#9FD8FF"];
       let spawnTimer = null;
       let stopped = false;
@@ -3892,35 +3882,23 @@
       function spawnShootingStar() {
         if (stopped || !document.body.contains(field)) return;
 
-        const w = window.innerWidth;
-        const h = window.innerHeight;
+        const w = Math.max(window.innerWidth || 0, 320);
+        const h = Math.max(window.innerHeight || 0, 480);
         const isMobile = w <= 600;
 
-        // Direction family: true = top-left -> bottom-right,
-        // false = top-right -> bottom-left. Randomized per meteor
-        // so consecutive meteors don't repeat the same path.
         const goingRight = Math.random() < 0.5;
-
-        // Angle from horizontal, kept within a realistic meteor range.
         const angleDeg = random(25, 45);
         const angleRad = angleDeg * Math.PI / 180;
-
-        // Travel far enough (relative to the screen diagonal) that the
-        // meteor is guaranteed to fully exit off the opposite side.
         const diagonal = Math.hypot(w, h);
         const dist = diagonal * random(1.15, 1.5);
 
         const dx = (goingRight ? 1 : -1) * dist * Math.cos(angleRad);
         const dy = dist * Math.sin(angleRad);
 
-        // Start just outside the top-left or top-right corner region.
-        const startX = (goingRight ? random(-0.15, 0.22) : random(0.78, 1.15)) * w;
-        const startY = random(-0.15, 0.35) * h;
+        const startX = (goingRight ? random(-0.18, 0.18) : random(0.82, 1.18)) * w;
+        const startY = random(-0.12, 0.28) * h;
         const endX = startX + dx;
         const endY = startY + dy;
-
-        // Recompute the angle from the exact dx/dy actually used, so the
-        // tail is guaranteed to align with the real motion vector.
         const tailAngle = Math.atan2(dy, dx) * 180 / Math.PI;
 
         const star = document.createElement("span");
@@ -3931,47 +3909,35 @@
         star.style.setProperty("--star-end-x", endX.toFixed(1) + "px");
         star.style.setProperty("--star-end-y", endY.toFixed(1) + "px");
         star.style.setProperty("--star-angle", tailAngle.toFixed(2) + "deg");
+        star.style.setProperty("--star-tail", (isMobile ? random(120, 220) : random(170, 320)).toFixed(0) + "px");
+        star.style.setProperty("--star-size", (isMobile ? random(3.2, 5) : random(3.8, 6.5)).toFixed(1) + "px");
+        star.style.setProperty("--star-color", colors[Math.floor(Math.random() * colors.length)]);
 
-        const tailLength = isMobile ? random(110, 200) : random(160, 300);
-        star.style.setProperty("--star-tail", tailLength.toFixed(0) + "px");
-
-        const headSize = isMobile ? random(3, 4.5) : random(3.5, 6);
-        star.style.setProperty("--star-size", headSize.toFixed(1) + "px");
-
-        star.style.setProperty(
-          "--star-color",
-          colors[Math.floor(Math.random() * colors.length)]
-        );
-
-        // Fast crossing time, as requested: ~0.7–1.5s.
-        const duration = random(0.7, 1.5);
+        const duration = random(0.75, 1.45);
         star.style.setProperty("--star-duration", duration.toFixed(2) + "s");
 
         field.appendChild(star);
-
-        window.setTimeout(() => star.remove(), duration * 1000 + 300);
+        window.setTimeout(() => star.remove(), duration * 1000 + 500);
       }
 
       function scheduleNextStar() {
         if (stopped) return;
-
         spawnTimer = window.setTimeout(() => {
           spawnShootingStar();
-
-          // Occasionally let a second meteor follow shortly after,
-          // then return to a quiet sky.
-          if (Math.random() < 0.22) {
+          if (Math.random() < 0.25) {
             window.setTimeout(() => {
               if (!stopped) spawnShootingStar();
-            }, random(150, 450));
+            }, random(180, 500));
           }
-
           scheduleNextStar();
-        }, random(1500, 5000));
+        }, random(1200, 4200));
       }
 
-      // Start the meteor animation immediately when the splash appears.
-      window.setTimeout(spawnShootingStar, 300);
+      // Always show the cinematic splash effect. It is confined to the
+      // loading screen and is intentionally independent of OS reduced-motion
+      // preferences so the Glueful splash behaves consistently on PC/mobile.
+      window.setTimeout(spawnShootingStar, 220);
+      window.setTimeout(spawnShootingStar, 900);
       scheduleNextStar();
 
       const splash = document.getElementById("glueful-splash");
@@ -3980,10 +3946,10 @@
           if (splash.classList.contains("splash-hidden")) {
             stopped = true;
             if (spawnTimer) window.clearTimeout(spawnTimer);
+            field.querySelectorAll(".glueful-shooting-star").forEach(star => star.remove());
             observer.disconnect();
           }
         });
-
         observer.observe(splash, {
           attributes:true,
           attributeFilter:["class"]
@@ -5596,7 +5562,7 @@
         <div class="resume-import-drop" onclick="document.getElementById('cp-resume-file').click()">
           <div class="resume-import-icon">↥</div>
           <div class="resume-import-title">Upload your resume</div>
-          <div class="resume-import-sub">PDF, DOCX or TXT · Glueful will read it and fill your profile automatically.</div>
+          <div class="resume-import-sub">PDF, DOCX or TXT · Glueful reads it, fills your profile and securely syncs your resume to your account.</div>
           <input id="cp-resume-file" type="file" accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" style="display:none" onchange="handleCandidateResumeUpload(event)" />
         </div>
         <div id="cp-resume-file-name" class="resume-import-file"></div>
@@ -5816,7 +5782,7 @@
       <div class="modal-header">
         <div>
           <h3 id="candidate-resume-viewer-title" class="modal-title">Resume</h3>
-          <div class="view-subtitle">Preview the resume you uploaded before importing it.</div>
+          <div class="view-subtitle">Preview the resume stored in your Glueful account.</div>
         </div>
         <button type="button" class="icon-btn" onclick="closeCandidateResumeViewer()" aria-label="Close resume viewer">×</button>
       </div>
@@ -6251,14 +6217,22 @@
 
     /* =====================================================
        RESUME → CANDIDATE PROFILE IMPORT
-       Persist the uploaded resume in IndexedDB so it survives
-       app/tab restarts and remains until the user explicitly deletes it.
+       Cloud-first resume storage.
+
+       The resume is stored in Supabase Storage under the authenticated
+       user's own folder. IndexedDB remains only as a local cache/fallback,
+       so the same account sees the resume on PC and mobile.
     ====================================================== */
 
     const GLUEFUL_RESUME_DB_NAME = 'glueful_resume_store';
     const GLUEFUL_RESUME_DB_VERSION = 1;
     const GLUEFUL_RESUME_STORE = 'resumes';
+    const GLUEFUL_RESUME_BUCKET = 'candidate-resumes';
+    const GLUEFUL_RESUME_MAX_BYTES = 15 * 1024 * 1024;
+
     let candidateResumePersisted = null;
+    let candidateResumeCloudMeta = null;
+    let candidateResumeCloudSignedUrl = '';
 
     function openGluefulResumeDB() {
       return new Promise((resolve, reject) => {
@@ -6282,6 +6256,19 @@
       } catch(error) {
         return 'default-user';
       }
+    }
+
+    function sanitizeResumeFileName(name='Resume') {
+      return String(name || 'Resume')
+        .replace(/[^a-zA-Z0-9._-]+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^[-.]+|[-.]+$/g, '')
+        .slice(0, 120) || 'Resume';
+    }
+
+    function resumeExtension(name='') {
+      const match = String(name).toLowerCase().match(/\.([a-z0-9]+)$/);
+      return match ? match[1] : 'bin';
     }
 
     async function saveCandidateResumeToDevice(file) {
@@ -6318,29 +6305,178 @@
         candidateResumePersisted = {name:file.name,size:file.size,savedAt:record.savedAt || ''};
         return file;
       } catch(error) {
-        console.warn('Saved resume could not be loaded:', error);
+        console.warn('Saved resume cache could not be loaded:', error);
         candidateResumePersisted = null;
         return null;
       }
     }
 
     async function deleteCandidateResumeFromDevice() {
-      const userId = await getCurrentUserId();
-      const db = await openGluefulResumeDB();
-      return new Promise((resolve,reject) => {
-        const tx = db.transaction(GLUEFUL_RESUME_STORE, 'readwrite');
-        tx.objectStore(GLUEFUL_RESUME_STORE).delete(userId);
-        tx.oncomplete = () => { db.close(); candidateResumePersisted=null; resolve(true); };
-        tx.onerror = () => { db.close(); reject(tx.error || new Error('Could not delete resume')); };
+      try {
+        const userId = await getCurrentUserId();
+        const db = await openGluefulResumeDB();
+        return await new Promise((resolve,reject) => {
+          const tx = db.transaction(GLUEFUL_RESUME_STORE, 'readwrite');
+          tx.objectStore(GLUEFUL_RESUME_STORE).delete(userId);
+          tx.oncomplete = () => { db.close(); candidateResumePersisted=null; resolve(true); };
+          tx.onerror = () => { db.close(); reject(tx.error || new Error('Could not delete resume cache')); };
+        });
+      } catch(error) {
+        candidateResumePersisted = null;
+        return false;
+      }
+    }
+
+    async function uploadCandidateResumeToCloud(file) {
+      if(!file) throw new Error('No resume file selected.');
+      if(file.size > GLUEFUL_RESUME_MAX_BYTES) {
+        throw new Error('Resume is too large. Please upload a file smaller than 15 MB.');
+      }
+
+      const {data,error:userError} = await supabaseClient.auth.getUser();
+      if(userError) throw userError;
+      const user = data?.user;
+      if(!user?.id) throw new Error('Please sign in before uploading a resume.');
+
+      const safeName = sanitizeResumeFileName(file.name);
+      const path = `${user.id}/candidate-resume-${Date.now()}-${safeName}`;
+      const {error} = await supabaseClient.storage
+        .from(GLUEFUL_RESUME_BUCKET)
+        .upload(path, file, {
+          cacheControl:'3600',
+          contentType:file.type || 'application/octet-stream',
+          upsert:false
+        });
+
+      if(error) throw error;
+
+      const previousPath = candidateResumeCloudMeta?.path || '';
+      candidateResumeCloudMeta = {
+        path,
+        name:file.name,
+        type:file.type || 'application/octet-stream',
+        size:file.size,
+        uploadedAt:new Date().toISOString()
+      };
+      candidateResumeCloudSignedUrl = '';
+
+      if(previousPath && previousPath !== path) {
+        try {
+          await supabaseClient.storage.from(GLUEFUL_RESUME_BUCKET).remove([previousPath]);
+        } catch(cleanupError) {
+          console.warn('Previous cloud resume cleanup failed:', cleanupError);
+        }
+      }
+
+      return candidateResumeCloudMeta;
+    }
+
+
+    async function persistCandidateResumeMetadataToAccount() {
+      const meta = candidateResumeCloudMeta;
+      if(!meta?.path) return false;
+      const {data,error} = await supabaseClient.auth.getUser();
+      if(error) throw error;
+      if(!data?.user) throw new Error('No authenticated user.');
+
+      const metadata = {...(data.user.user_metadata || {})};
+      const currentProfile = normalizeCandidateProfile(metadata[GLUEFUL_CANDIDATE_PROFILE_META_KEY]);
+      metadata[GLUEFUL_CANDIDATE_PROFILE_META_KEY] = {
+        ...currentProfile,
+        resumeSource:meta.name || '',
+        resumeImportedAt:meta.uploadedAt || '',
+        resumePath:meta.path || '',
+        resumeType:meta.type || '',
+        resumeSize:meta.size ? String(meta.size) : '',
+        resumeUploadedAt:meta.uploadedAt || ''
+      };
+      const {error:updateError} = await supabaseClient.auth.updateUser({data:metadata});
+      if(updateError) throw updateError;
+      return true;
+    }
+
+    async function deleteCandidateResumeFromCloud() {
+      const path = candidateResumeCloudMeta?.path;
+      if(!path) {
+        candidateResumeCloudMeta = null;
+        candidateResumeCloudSignedUrl = '';
+        return true;
+      }
+
+      const {error} = await supabaseClient.storage
+        .from(GLUEFUL_RESUME_BUCKET)
+        .remove([path]);
+      if(error) throw error;
+
+      candidateResumeCloudMeta = null;
+      candidateResumeCloudSignedUrl = '';
+      return true;
+    }
+
+    async function getCandidateResumeSignedUrl() {
+      if(!candidateResumeCloudMeta?.path) return '';
+      if(candidateResumeCloudSignedUrl) return candidateResumeCloudSignedUrl;
+
+      const {data,error} = await supabaseClient.storage
+        .from(GLUEFUL_RESUME_BUCKET)
+        .createSignedUrl(candidateResumeCloudMeta.path, 600);
+      if(error) throw error;
+      candidateResumeCloudSignedUrl = data?.signedUrl || '';
+      if(!candidateResumeCloudSignedUrl) throw new Error('Could not create a secure resume preview URL.');
+      return candidateResumeCloudSignedUrl;
+    }
+
+    async function downloadCandidateResumeFromCloud() {
+      const url = await getCandidateResumeSignedUrl();
+      const response = await fetch(url, {cache:'no-store'});
+      if(!response.ok) throw new Error(`Resume download failed (${response.status}).`);
+      const blob = await response.blob();
+      const file = new File([blob], candidateResumeCloudMeta.name || 'Resume', {
+        type:candidateResumeCloudMeta.type || blob.type || 'application/octet-stream',
+        lastModified:Date.now()
       });
+      candidateResumePersisted = {
+        name:file.name,
+        size:file.size,
+        savedAt:candidateResumeCloudMeta.uploadedAt || ''
+      };
+      return file;
+    }
+
+    async function loadCandidateResumeCloudMetadata(profile) {
+      const normalized = normalizeCandidateProfile(profile || {});
+      if(normalized.resumePath) {
+        candidateResumeCloudMeta = {
+          path:normalized.resumePath,
+          name:normalized.resumeSource || 'Resume',
+          type:normalized.resumeType || 'application/octet-stream',
+          size:Number(normalized.resumeSize || 0),
+          uploadedAt:normalized.resumeUploadedAt || normalized.resumeImportedAt || ''
+        };
+      } else {
+        candidateResumeCloudMeta = null;
+      }
+      candidateResumeCloudSignedUrl = '';
+      return candidateResumeCloudMeta;
+    }
+
+    async function ensureCandidateResumeCloudFile() {
+      if(candidateResumeFile) return candidateResumeFile;
+      if(!candidateResumeCloudMeta?.path) return null;
+
+      const file = await downloadCandidateResumeFromCloud();
+      candidateResumeFile = file;
+      revokeCandidateResumePreviewUrl();
+      candidateResumeObjectUrl = URL.createObjectURL(file);
+      return file;
     }
 
     function updateCandidateResumeControls() {
       const viewButton = document.getElementById('cp-resume-view-btn');
       const deleteButton = document.getElementById('cp-resume-delete-btn');
-      const hasResume = !!candidateResumeFile || !!candidateResumePersisted;
+      const hasResume = !!candidateResumeFile || !!candidateResumePersisted || !!candidateResumeCloudMeta?.path;
       if(viewButton) viewButton.disabled = !hasResume;
-      if(deleteButton) deleteButton.classList.toggle('show', !!candidateResumePersisted);
+      if(deleteButton) deleteButton.classList.toggle('show', !!candidateResumeCloudMeta?.path || !!candidateResumePersisted);
     }
 
     let candidateResumeFile = null;
@@ -6372,38 +6508,58 @@
       const importButton = document.getElementById('cp-resume-import-btn');
       if(input) input.value = '';
       if(name) {
-        if(candidateResumePersisted) {
-          name.textContent = `${candidateResumePersisted.name} · saved on this device`;
+        if(candidateResumeCloudMeta) {
+          name.textContent = `${candidateResumeCloudMeta.name} · saved to your account`;
+          name.style.display = 'block';
+        } else if(candidateResumePersisted) {
+          name.textContent = `${candidateResumePersisted.name} · saved locally`;
           name.style.display = 'block';
         } else {
           name.textContent = ''; name.style.display = 'none';
         }
       }
-      if(importButton) importButton.disabled = true;
+      if(importButton) importButton.disabled = !candidateResumeText.trim();
       updateCandidateResumeControls();
-      setCandidateResumeStatus(candidateResumePersisted ? 'Saved resume is available on this device until you delete it.' : '', !!candidateResumePersisted);
+      setCandidateResumeStatus(candidateResumeCloudMeta ? 'Resume is synced to your Glueful account and available on your other devices.' : (candidateResumePersisted ? 'A local resume cache is available. Glueful will sync it to your account.' : ''), !!candidateResumeCloudMeta || !!candidateResumePersisted);
       refreshCandidateProfileCompleteness();
     }
 
     async function deleteSavedCandidateResume() {
-      const confirmed = window.confirm('Delete the saved resume from this device? Your profile information will not be deleted.');
+      const confirmed = window.confirm('Delete the saved resume from your Glueful account? Your profile information will not be deleted.');
       if(!confirmed) return;
       try {
+        setCandidateResumeStatus('Deleting your saved resume…', true);
+        if(candidateResumeCloudMeta?.path) {
+          await deleteCandidateResumeFromCloud();
+        }
         await deleteCandidateResumeFromDevice();
+
         try {
           const {data} = await supabaseClient.auth.getUser();
           if(data?.user) {
             const metadata = {...(data.user.user_metadata || {})};
             const savedProfile = normalizeCandidateProfile(metadata[GLUEFUL_CANDIDATE_PROFILE_META_KEY]);
-            metadata[GLUEFUL_CANDIDATE_PROFILE_META_KEY] = {...savedProfile, resumeSource:'', resumeImportedAt:''};
+            metadata[GLUEFUL_CANDIDATE_PROFILE_META_KEY] = {
+              ...savedProfile,
+              resumeSource:'',
+              resumeImportedAt:'',
+              resumePath:'',
+              resumeType:'',
+              resumeSize:'',
+              resumeUploadedAt:''
+            };
             await supabaseClient.auth.updateUser({data:metadata});
           }
         } catch(metaError) {
           console.warn('Resume metadata cleanup unavailable:', metaError);
         }
+
         candidateResumeFile = null;
         candidateResumeText = '';
         candidateResumePreviewHtml = '';
+        candidateResumePersisted = null;
+        candidateResumeCloudMeta = null;
+        candidateResumeCloudSignedUrl = '';
         revokeCandidateResumePreviewUrl();
         const input=document.getElementById('cp-resume-file');
         const name=document.getElementById('cp-resume-file-name');
@@ -6412,17 +6568,23 @@
         if(name){name.textContent='';name.style.display='none';}
         if(importButton) importButton.disabled=true;
         updateCandidateResumeControls();
-        setCandidateResumeStatus('Saved resume deleted. Your profile information is still safe.', true);
+        setCandidateResumeStatus('Saved resume deleted from your account. Your profile information is still safe.', true);
         refreshCandidateProfileCompleteness();
       } catch(error) {
         console.error('Resume deletion failed:', error);
-        setCandidateResumeStatus('Could not delete the saved resume. Please try again.', true);
+        setCandidateResumeStatus('Could not delete the saved resume. Check your connection and try again.', true);
       }
     }
 
     async function handleCandidateResumeUpload(event) {
       const file = event.target.files?.[0];
       if(!file) return;
+      if(file.size > GLUEFUL_RESUME_MAX_BYTES) {
+        setCandidateResumeStatus('Resume is too large. Please upload a file smaller than 15 MB.', true);
+        event.target.value = '';
+        return;
+      }
+
       candidateResumeFile = file;
       candidateResumeText = '';
       candidateResumePreviewHtml = '';
@@ -6438,7 +6600,7 @@
       }
       if(importButton) importButton.disabled = true;
       if(viewButton) viewButton.disabled = true;
-      setCandidateResumeStatus('Reading your resume…', true);
+      setCandidateResumeStatus('Reading and syncing your resume…', true);
 
       try {
         candidateResumeText = await extractResumeText(file);
@@ -6453,24 +6615,37 @@
             candidateResumePreviewHtml = '';
           }
         }
+
         if(viewButton) viewButton.disabled = false;
         if(importButton) importButton.disabled = false;
+
         try {
+          const cloudMeta = await uploadCandidateResumeToCloud(file);
+          await persistCandidateResumeMetadataToAccount();
           await saveCandidateResumeToDevice(file);
-          candidateResumePersisted = {name:file.name,size:file.size,savedAt:new Date().toISOString()};
+          candidateResumePersisted = {name:file.name,size:file.size,savedAt:cloudMeta.uploadedAt};
+          if(name) name.textContent = `${file.name} · synced to your account`;
           updateCandidateResumeControls();
-          setCandidateResumeStatus('Resume saved on this device. It will remain here until you delete it.', true);
+          setCandidateResumeStatus('Resume synced to your Glueful account. It will be available on PC and mobile.', true);
+          refreshCandidateProfileCompleteness();
         } catch(storageError) {
-          console.warn('Resume persistence failed:', storageError);
-          setCandidateResumeStatus('Resume read successfully, but it could not be saved on this device.', true);
+          console.error('Cloud resume upload failed:', storageError);
+          try {
+            await saveCandidateResumeToDevice(file);
+            candidateResumePersisted = {name:file.name,size:file.size,savedAt:new Date().toISOString()};
+            updateCandidateResumeControls();
+            setCandidateResumeStatus('Resume read successfully, but cloud sync failed. It is saved locally on this device; please retry after checking your connection/storage setup.', true);
+          } catch(localError) {
+            console.warn('Local resume cache failed:', localError);
+            setCandidateResumeStatus('Resume read successfully, but it could not be saved. You can still import the information now.', true);
+          }
         }
-        refreshCandidateProfileCompleteness();
       } catch(error) {
         console.error('Resume parsing failed:', error);
         candidateResumeText = '';
         candidateResumePreviewHtml = '';
         if(importButton) importButton.disabled = true;
-        if(viewButton) viewButton.disabled = false; // The original file can still be opened for inspection.
+        if(viewButton) viewButton.disabled = false;
         setCandidateResumeStatus('Could not read this resume. Try a text-based PDF, DOCX or TXT file.', true);
       }
     }
@@ -6720,26 +6895,56 @@
         : '';
     }
 
-    function openCandidateResumeViewer() {
-      if(!candidateResumeFile) return;
+    async function openCandidateResumeViewer() {
       const overlay=document.getElementById('candidate-resume-viewer');
       const body=document.getElementById('candidate-resume-viewer-body');
       const title=document.getElementById('candidate-resume-viewer-title');
       if(!overlay || !body) return;
-      title.textContent = candidateResumeFile.name || 'Resume';
-      const name=candidateResumeFile.name.toLowerCase();
-      if(name.endsWith('.pdf') && candidateResumeObjectUrl) {
-        body.innerHTML=`<iframe title="Resume preview" src="${candidateResumeObjectUrl}"></iframe>`;
-      } else if(name.endsWith('.docx')) {
-        if(!candidateResumePreviewHtml) {
-          body.innerHTML=`<div class="resume-text-preview">${esc(candidateResumeText || 'This DOCX could not be parsed in the browser. Please download/open the original file to inspect it.')}</div>`;
-        } else {
-          body.innerHTML=`<div class="resume-docx-preview">${candidateResumePreviewHtml}</div>`;
-        }
-      } else {
-        body.innerHTML=`<pre class="resume-text-preview">${esc(candidateResumeText || 'No readable text was found in this file.')}</pre>`;
-      }
+
+      body.innerHTML='<div class="resume-text-preview">Loading your resume…</div>';
       openModal('candidate-resume-viewer');
+
+      try {
+        const file = await ensureCandidateResumeCloudFile() || candidateResumeFile;
+        if(!file) throw new Error('No resume is available for this account.');
+
+        if(!candidateResumeText.trim()) {
+          try {
+            candidateResumeText = await extractResumeText(file);
+          } catch(parseError) {
+            console.warn('Resume text extraction for viewer failed:', parseError);
+          }
+        }
+
+        if(!candidateResumePreviewHtml && file.name.toLowerCase().endsWith('.docx') && window.mammoth) {
+          try {
+            const previewBuffer=await file.arrayBuffer();
+            const htmlResult=await window.mammoth.convertToHtml({arrayBuffer:previewBuffer});
+            candidateResumePreviewHtml=htmlResult.value || '';
+          } catch(previewError) {
+            console.warn('DOCX visual preview unavailable:', previewError);
+          }
+        }
+
+        title.textContent = file.name || candidateResumeCloudMeta?.name || 'Resume';
+        const name=file.name.toLowerCase();
+        if(name.endsWith('.pdf')) {
+          revokeCandidateResumePreviewUrl();
+          candidateResumeObjectUrl = URL.createObjectURL(file);
+          body.innerHTML=`<iframe title="Resume preview" src="${candidateResumeObjectUrl}"></iframe>`;
+        } else if(name.endsWith('.docx')) {
+          if(!candidateResumePreviewHtml) {
+            body.innerHTML=`<div class="resume-text-preview">${esc(candidateResumeText || 'This DOCX could not be parsed in the browser. Please download/open the original file to inspect it.')}</div>`;
+          } else {
+            body.innerHTML=`<div class="resume-docx-preview">${candidateResumePreviewHtml}</div>`;
+          }
+        } else {
+          body.innerHTML=`<pre class="resume-text-preview">${esc(candidateResumeText || 'No readable text was found in this file.')}</pre>`;
+        }
+      } catch(error) {
+        console.error('Resume viewer failed:', error);
+        body.innerHTML=`<div class="resume-text-preview">Could not load your resume. Please check your connection and try again.</div>`;
+      }
     }
 
     function closeCandidateResumeViewer() {
@@ -12825,7 +13030,11 @@ document.addEventListener("click", (event)=>{
       github:"",
       portfolio:"",
       resumeSource:"",
-      resumeImportedAt:""
+      resumeImportedAt:"",
+      resumePath:"",
+      resumeType:"",
+      resumeSize:"",
+      resumeUploadedAt:""
     };
 
     function normalizeCandidateProfile(profile) {
@@ -12986,18 +13195,65 @@ document.addEventListener("click", (event)=>{
         const saved = document.getElementById('candidate-profile-saved');
         if(saved) saved.classList.remove('show');
 
-        // Restore the actual resume file from IndexedDB if it exists.
-        const savedResume = await loadCandidateResumeFromDevice();
-        if(savedResume) {
+        // Resume source of truth is Supabase Storage. IndexedDB is only a local cache.
+        await loadCandidateResumeCloudMetadata(profile);
+        candidateResumeFile = null;
+        candidateResumeText = '';
+        candidateResumePreviewHtml = '';
+        revokeCandidateResumePreviewUrl();
+
+        let savedResume = null;
+        try {
+          savedResume = await loadCandidateResumeFromDevice();
+        } catch(cacheError) {
+          console.warn('Local resume cache unavailable:', cacheError);
+        }
+
+        // Migrate an existing V12 device-only resume to cloud storage automatically.
+        if(!candidateResumeCloudMeta?.path && savedResume) {
+          try {
+            setCandidateResumeStatus('Syncing your saved resume to your account…', true);
+            const migratedMeta = await uploadCandidateResumeToCloud(savedResume);
+            candidateResumePersisted = {name:savedResume.name,size:savedResume.size,savedAt:migratedMeta.uploadedAt};
+            await persistCandidateResumeMetadataToAccount();
+          } catch(migrationError) {
+            console.warn('Existing local resume could not be migrated to cloud:', migrationError);
+          }
+        }
+
+        if(candidateResumeCloudMeta?.path) {
+          const displayName = document.getElementById('cp-resume-file-name');
+          if(displayName) {
+            displayName.textContent = `${candidateResumeCloudMeta.name} · synced to your account`;
+            displayName.style.display = 'block';
+          }
+          setCandidateResumeStatus('Resume synced to your Glueful account and available on your other devices.', true);
+
+          // Download in the background so View resume and Import info are ready immediately.
+          try {
+            const cloudFile = await ensureCandidateResumeCloudFile();
+            candidateResumeText = await extractResumeText(cloudFile);
+            if(cloudFile.name.toLowerCase().endsWith('.docx') && window.mammoth) {
+              const previewBuffer=await cloudFile.arrayBuffer();
+              const htmlResult=await window.mammoth.convertToHtml({arrayBuffer:previewBuffer});
+              candidateResumePreviewHtml=htmlResult.value || '';
+            }
+            const restoredImportButton=document.getElementById('cp-resume-import-btn');
+            if(restoredImportButton && candidateResumeText.trim()) restoredImportButton.disabled=false;
+            candidateResumePersisted = {name:cloudFile.name,size:cloudFile.size,savedAt:candidateResumeCloudMeta.uploadedAt || ''};
+          } catch(cloudLoadError) {
+            console.warn('Cloud resume could not be loaded into the preview cache:', cloudLoadError);
+            setCandidateResumeStatus('Resume is synced to your account. Preview will download when you tap View resume.', true);
+          }
+        } else if(savedResume) {
           candidateResumeFile = savedResume;
           candidateResumeText = '';
           candidateResumePreviewHtml = '';
           revokeCandidateResumePreviewUrl();
           candidateResumeObjectUrl = URL.createObjectURL(savedResume);
-          const name=document.getElementById('cp-resume-file-name');
-          if(name) { name.textContent=`${savedResume.name} · saved on this device`; name.style.display='block'; }
-          setCandidateResumeStatus('Saved resume restored. It will remain until you delete it.', true);
-          // Re-extract in the background so View resume and Import info work after restart.
+          const displayName=document.getElementById('cp-resume-file-name');
+          if(displayName) { displayName.textContent=`${savedResume.name} · saved locally`; displayName.style.display='block'; }
+          setCandidateResumeStatus('A local resume cache is available. Cloud sync will be retried when possible.', true);
           try {
             candidateResumeText = await extractResumeText(savedResume);
             if(savedResume.name.toLowerCase().endsWith('.docx') && window.mammoth) {
@@ -13008,7 +13264,7 @@ document.addEventListener("click", (event)=>{
             const restoredImportButton=document.getElementById('cp-resume-import-btn');
             if(restoredImportButton && candidateResumeText.trim()) restoredImportButton.disabled=false;
           } catch(parseError) {
-            console.warn('Restored resume parsing failed:', parseError);
+            console.warn('Local resume parsing failed:', parseError);
           }
         } else {
           clearCandidateResume();
@@ -13119,8 +13375,12 @@ document.addEventListener("click", (event)=>{
           GLUEFUL_CANDIDATE_PROFILE_META_KEY
         ] = {
           ...profile,
-          resumeSource: candidateResumeFile?.name || profile.resumeSource || '',
-          resumeImportedAt: candidateResumeFile ? new Date().toISOString() : (profile.resumeImportedAt || '')
+          resumeSource: candidateResumeCloudMeta?.name || profile.resumeSource || '',
+          resumeImportedAt: candidateResumeCloudMeta?.uploadedAt || profile.resumeImportedAt || '',
+          resumePath: candidateResumeCloudMeta?.path || profile.resumePath || '',
+          resumeType: candidateResumeCloudMeta?.type || profile.resumeType || '',
+          resumeSize: candidateResumeCloudMeta?.size ? String(candidateResumeCloudMeta.size) : (profile.resumeSize || ''),
+          resumeUploadedAt: candidateResumeCloudMeta?.uploadedAt || profile.resumeUploadedAt || ''
         };
 
         const {
