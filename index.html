@@ -27,6 +27,75 @@
           }
         }
       );
+
+    /*
+     * SUPABASE JOB LISTINGS CONNECTION TEST
+     * -------------------------------------
+     * Verifies that the frontend can read public.job_listings through
+     * the Supabase Data API using the existing publishable key.
+     *
+     * Only one row is requested so this test never downloads the
+     * entire job_listings table.
+     *
+     * The function is also exposed on window so it can be re-run from
+     * DevTools Console with:
+     *
+     *   testGluefulJobListings()
+     */
+    async function testGluefulJobListings() {
+      try {
+        const { data, error } = await supabaseClient
+          .from("job_listings")
+          .select("*")
+          .limit(1);
+
+        if (error) {
+          console.error(
+            "[Glueful] job_listings Supabase test FAILED:",
+            error
+          );
+
+          return {
+            ok: false,
+            error
+          };
+        }
+
+        console.log(
+          "[Glueful] job_listings Supabase test OK:",
+          {
+            rowsReturned: Array.isArray(data) ? data.length : 0,
+            sample: Array.isArray(data) && data.length ? data[0] : null
+          }
+        );
+
+        return {
+          ok: true,
+          data: data || []
+        };
+      } catch (error) {
+        console.error(
+          "[Glueful] job_listings Supabase test FAILED:",
+          error
+        );
+
+        return {
+          ok: false,
+          error
+        };
+      }
+    }
+
+    window.testGluefulJobListings = testGluefulJobListings;
+
+    /*
+     * Run once on startup. This does not block Glueful startup.
+     * If the table is not exposed in Supabase Data API, or the RLS
+     * policy does not allow SELECT, the exact Supabase error appears
+     * in DevTools Console.
+     */
+    void testGluefulJobListings();
+
   </script>
 
   <!-- =====================================================
