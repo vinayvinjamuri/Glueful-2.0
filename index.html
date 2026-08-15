@@ -8250,7 +8250,8 @@
       }
     }
 
-    function jobCard(job){
+    function jobCard(job, opts){
+      const showMatch = !opts || opts.showMatch !== false;
       const saved = gluefulSavedJobs.has(job.id);
       const skills = job.skills.slice(0,8).map(skill=>`<span class="job-skill">${esc(skill)}</span>`).join("");
       const expanded = gluefulExpandedJobId === job.id;
@@ -8268,7 +8269,7 @@
                 <span>${esc(jobDaysLabel(job.postedDays))}</span>
               </div>
             </div>
-            <span class="job-match">${job.match}%</span>
+            ${showMatch ? `<span class="job-match">${job.match}%</span>` : ""}
           </div>
 
           <div class="job-expand-hint">
@@ -8351,12 +8352,15 @@
         recEl.innerHTML = `<div class="jobs-empty"><strong>Complete your Candidate Profile to get personalized recommendations</strong>Add your Target Role and Skills so we can match you to relevant jobs.</div>`;
       } else {
         recEl.innerHTML = recommended.length
-          ? recommended.map(jobCard).join("")
+          ? recommended.map(job => jobCard(job, {showMatch:true})).join("")
           : `<div class="jobs-empty"><strong>No strong profile matches yet</strong>Try broadening your Target Role or adding more Skills in Candidate Profile.</div>`;
       }
 
+      // "Recently posted" is a general discovery feed, not a personalized
+      // list — never show the match % badge here, or it reads as a
+      // recommendation even for jobs unrelated to the candidate's profile.
       recentEl.innerHTML = recent.length
-        ? recent.slice(0,20).map(jobCard).join("")
+        ? recent.slice(0,20).map(job => jobCard(job, {showMatch:false})).join("")
         : `<div class="jobs-empty"><strong>No recent jobs match your filters</strong>Try another date range.</div>`;
 
       loadCompanyLogos();
