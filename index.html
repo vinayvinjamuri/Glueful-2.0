@@ -2466,6 +2466,19 @@
     .job-detail-block p{margin:0;color:var(--text-muted);font-size:12px;line-height:1.65;white-space:pre-line}
     .job-match-panel{margin-top:15px;padding:12px;border-radius:14px;background:rgba(109,59,232,.08);border:1px solid rgba(109,59,232,.16)}
     .job-match-panel strong{color:#6d3be8}
+
+    .job-source{
+      display:inline-flex;align-items:center;gap:5px;margin-top:6px;
+      padding:3px 7px;border-radius:999px;border:1px solid var(--border);
+      color:var(--text-faint);font-size:9px;font-weight:800;letter-spacing:.1px;
+    }
+    .job-source.live{
+      color:#6d3be8;border-color:rgba(109,59,232,.22);
+      background:rgba(109,59,232,.07);
+    }
+    .job-source-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+    .jobs-refresh-note{font-size:10px;color:var(--text-faint);margin-top:6px}
+
     html[data-theme="light"] .job-card,
     html[data-theme="light"] .jobs-searchbar,
     html[data-theme="light"] .jobs-filter-btn{box-shadow:0 7px 22px rgba(31,41,55,.06)}
@@ -4397,13 +4410,13 @@
         </svg>
         <input id="jobs-search-input" type="search" autocomplete="off"
                placeholder="Search jobs, skills or companies..."
-               oninput="renderJobs()">
+               oninput="handleJobSearchInput()">
       </div>
 
       <section class="jobs-section">
         <div class="jobs-section-head">
           <div class="jobs-section-title">Recommended for you</div>
-          <div class="jobs-section-note" id="jobs-profile-note">Tap a job to expand</div>
+          <div class="jobs-section-note" id="jobs-profile-note">Matched to your profile</div>
         </div>
         <div id="jobs-recommended-list" class="jobs-list"></div>
       </section>
@@ -4411,7 +4424,7 @@
       <section class="jobs-section">
         <div class="jobs-section-head">
           <div class="jobs-section-title">Recently posted</div>
-          <div class="jobs-section-note">Mock data for UI testing</div>
+          <div class="jobs-section-note" id="jobs-source-note">Loading job sources…</div>
         </div>
         <div id="jobs-recent-list" class="jobs-list"></div>
       </section>
@@ -6601,12 +6614,80 @@
 
 
     /* =====================================================
-       JOB SEARCH V1 — MOCK UI ONLY
-       No Supabase job table, no provider calls.
+       JOB SEARCH V2 — PROVIDER ARCHITECTURE
+       IMPORTANT:
+       - Job search data is NOT stored in Supabase.
+       - Jobs are fetched through a backend provider endpoint.
+       - The frontend never stores Jobble API credentials.
+       - Until the backend endpoint is configured, the existing demo
+         jobs remain available as a safe fallback.
+       - External jobs are cached in localStorage for a short period
+         to reduce repeated network/database usage.
+
+       Jobble currently exposes a public job board, but we do not
+       assume a public third-party search API exists. The adapter below
+       expects Glueful's backend to provide an authorized Jobble feed.
     ====================================================== */
 
-    const GLUEFUL_JOB_FILTERS_KEY = "glueful_job_filters_v1";
-    const GLUEFUL_SAVED_JOBS_KEY = "glueful_saved_jobs_v1";
+    const GLUEFUL_JOB_FILTERS_KEY = "glueful_job_filters_v2";
+    const GLUEFUL_SAVED_JOBS_KEY = "glueful_saved_jobs_v2";
+    const GLUEFUL_JOB_CACHE_KEY = "glueful_job_provider_cache_v1";
+    const GLUEFUL_JOB_CACHE_TTL_MS = 15 * 60 * 1000;
+
+    /*
+      Configure this only when the Glueful backend endpoint exists.
+
+      Example:
+        window.GLUEFUL_JOB_API_BASE = "https://your-api.example.com";
+
+      Backend contract:
+        GET /api/jobs/search?provider=jobble&q=&location=&page=1&limit=30
+
+      Response:
+        {
+          "jobs": [
+            {
+              "id": "...",
+              "title": "...",
+              "company": "...",
+              "location": "...",
+              "workMode": "Hybrid",
+              "employment": "Full-time",
+              "experience": "2–5 years",
+              "postedAt": "2026-08-15T08:00:00Z",
+              "salary": "...",
+              "skills": ["C","Python"],
+              "description": "...",
+              "url": "https://...",
+              "source": "jobble"
+            }
+          ]
+        }
+
+      The backend, not this HTML file, should hold any provider credentials.
+    */
+    const GLUEFUL_JOB_API_BASE =
+      String(window.GLUEFUL_JOB_API_BASE || "").replace(/\/+$/, "");
+
+    const JOB_PROVIDERS = {
+      jobble: {
+        id: "jobble",
+        name: "Jobble",
+        endpoint: GLUEFUL_JOB_API_BASE
+          ? `${GLUEFUL_JOB_API_BASE}/api/jobs/search`
+          : "",
+        enabled: Boolean(GLUEFUL_JOB_API_BASE)
+      }
+    };
+
+    let gluefulExternalJobs = [];
+    let gluefulJobsLoading = false;
+    let gluefulJobsRequestId = 0;
+
+    const GLUEFUL_JOB_FILTERS_DEFAULT = {
+      date:"any", mode:"any", experience:"any", employment:"any",
+      company:"", location:""
+    };
 
     const JOB_MOCK_DATA = [
       {
@@ -6659,10 +6740,209 @@
     let gluefulSavedJobs = new Set();
     let gluefulExpandedJobId = null;
 
+
+    function normalizeJobDate(job){
+      if(job.postedDays !== undefined && Number.isFinite(Number(job.postedDays))){
+        return Math.max(0, Number(job.postedDays));
+      }
+      const raw = job.postedAt || job.posted_at || job.datePosted || "";
+      const ts = Date.parse(raw);
+      if(!Number.isFinite(ts)) return 30;
+      return Math.max(0, Math.floor((Date.now() - ts) / 86400000));
+    }
+
+    function normalizeExternalJob(raw, providerId="jobble"){
+      const job = raw || {};
+      const title = String(job.title || job.jobTitle || "").trim();
+      const company = String(job.company || job.companyName || "").trim();
+      if(!title || !company) return null;
+
+      const skills = Array.isArray(job.skills)
+        ? job.skills.map(x=>String(x).trim()).filter(Boolean)
+        : String(job.skills || "")
+            .split(/[,|]/)
+            .map(x=>x.trim())
+            .filter(Boolean);
+
+      const provider = JOB_PROVIDERS[providerId];
+      return {
+        id: `${providerId}:${String(job.id || job.sourceJobId || `${company}-${title}`).trim()}`,
+        sourceJobId: String(job.id || job.sourceJobId || "").trim(),
+        source: providerId,
+        sourceName: provider?.name || providerId,
+        title,
+        company,
+        location: String(job.location || job.city || "Location not specified").trim(),
+        workMode: String(job.workMode || job.work_mode || job.remoteType || "Any").trim(),
+        employment: String(job.employment || job.employmentType || "Full-time").trim(),
+        experience: String(job.experience || job.experienceLevel || "Any").trim(),
+        postedAt: job.postedAt || job.posted_at || "",
+        postedDays: normalizeJobDate(job),
+        salary: String(job.salary || job.pay || "").trim(),
+        match: Math.max(0, Math.min(100, Number(job.match || job.matchScore || 0) || 0)),
+        skills,
+        description: String(job.description || job.summary || "").trim(),
+        url: String(job.url || job.applicationUrl || job.applyUrl || "").trim()
+      };
+    }
+
+    function readJobProviderCache(){
+      try{
+        const cached = JSON.parse(localStorage.getItem(GLUEFUL_JOB_CACHE_KEY) || "null");
+        if(!cached || !Array.isArray(cached.jobs)) return null;
+        if(Date.now() - Number(cached.timestamp || 0) > GLUEFUL_JOB_CACHE_TTL_MS) return null;
+        return cached.jobs.map(j=>normalizeExternalJob(j, j.source || "jobble")).filter(Boolean);
+      }catch(e){
+        return null;
+      }
+    }
+
+    function writeJobProviderCache(jobs){
+      try{
+        localStorage.setItem(GLUEFUL_JOB_CACHE_KEY, JSON.stringify({
+          timestamp: Date.now(),
+          jobs: jobs.slice(0,100)
+        }));
+      }catch(e){}
+    }
+
+    function getConfiguredJobSourceLabel(){
+      const provider = JOB_PROVIDERS.jobble;
+      if(provider.enabled) return "Jobble";
+      return "Demo feed";
+    }
+
+    async function fetchJobbleJobs(){
+      const provider = JOB_PROVIDERS.jobble;
+      if(!provider.enabled) return [];
+
+      const input = document.getElementById("jobs-search-input");
+      const q = String(input?.value || "").trim();
+      const profile = getJobSearchProfile();
+
+      const params = new URLSearchParams({
+        provider: "jobble",
+        q,
+        location: String(profile?.preferredLocations || profile?.locations || "").trim(),
+        roles: String(profile?.targetRole || profile?.targetRoles || "").trim(),
+        workMode: String(profile?.workPreference || "").trim(),
+        page: "1",
+        limit: "30"
+      });
+
+      const requestId = ++gluefulJobsRequestId;
+      gluefulJobsLoading = true;
+      updateJobsSourceNote("Loading Jobble jobs…");
+
+      try{
+        const response = await fetch(`${provider.endpoint}?${params.toString()}`, {
+          method:"GET",
+          headers:{ "Accept":"application/json" },
+          credentials:"omit"
+        });
+
+        if(!response.ok) throw new Error(`Job provider HTTP ${response.status}`);
+
+        const payload = await response.json();
+        if(requestId !== gluefulJobsRequestId) return [];
+
+        const jobs = (Array.isArray(payload) ? payload : payload.jobs || [])
+          .map(raw=>normalizeExternalJob(raw, "jobble"))
+          .filter(Boolean);
+
+        gluefulExternalJobs = jobs;
+        writeJobProviderCache(jobs);
+        return jobs;
+      }catch(error){
+        console.warn("Jobble provider unavailable:", error);
+        return [];
+      }finally{
+        if(requestId === gluefulJobsRequestId){
+          gluefulJobsLoading = false;
+        }
+      }
+    }
+
+    function updateJobsSourceNote(text){
+      const el = document.getElementById("jobs-source-note");
+      if(el) el.textContent = text;
+    }
+
+    function calculateJobMatch(job, profile){
+      if(!profile) return Number(job.match || 0);
+
+      const roleText = String(
+        profile.targetRole || profile.targetRoles ||
+        profile.professionalHeadline || ""
+      ).toLowerCase();
+
+      const locationText = String(
+        profile.preferredLocations || profile.locations || ""
+      ).toLowerCase();
+
+      const skillsText = Array.isArray(profile.skills)
+        ? profile.skills.join(" ").toLowerCase()
+        : String(profile.skills || "").toLowerCase();
+
+      const hay = `${job.title} ${job.description} ${job.skills.join(" ")}`.toLowerCase();
+      let score = 0;
+
+      if(roleText){
+        roleText.split(/[,|/]+/).map(x=>x.trim()).filter(Boolean).slice(0,8)
+          .forEach(token=>{ if(token && hay.includes(token)) score += 12; });
+      }
+
+      if(skillsText){
+        skillsText.split(/[,|/]+/).map(x=>x.trim()).filter(Boolean).slice(0,20)
+          .forEach(token=>{ if(token && hay.includes(token)) score += 4; });
+      }
+
+      if(locationText && locationText.split(/[,|]+/).some(x=>{
+        const token=x.trim(); return token && job.location.toLowerCase().includes(token);
+      })) score += 8;
+
+      return Math.max(0, Math.min(99, Math.round(score)));
+    }
+
+    function getActiveJobData(){
+      const sourceJobs = gluefulExternalJobs.length ? gluefulExternalJobs : JOB_MOCK_DATA;
+      const profile = getJobSearchProfile();
+
+      return sourceJobs.map(job=>{
+        const normalized = normalizeExternalJob(job, job.source || "jobble") || job;
+        const computed = normalized.match ? normalized.match : calculateJobMatch(normalized, profile);
+        return {...normalized, match: computed || calculateJobMatch(normalized, profile)};
+      });
+    }
+
+    async function ensureJobProviderData(forceRefresh=false){
+      const cached = forceRefresh ? null : readJobProviderCache();
+
+      if(cached && cached.length){
+        gluefulExternalJobs = cached;
+        updateJobsSourceNote(`Jobble · cached ${cached.length} jobs`);
+        return cached;
+      }
+
+      if(JOB_PROVIDERS.jobble.enabled){
+        const jobs = await fetchJobbleJobs();
+        if(jobs.length){
+          updateJobsSourceNote(`Jobble · ${jobs.length} jobs`);
+          return jobs;
+        }
+        updateJobsSourceNote("Jobble unavailable · showing demo feed");
+      }else{
+        updateJobsSourceNote("Jobble connector ready · demo feed until API is connected");
+      }
+
+      gluefulExternalJobs = [];
+      return [];
+    }
+
     function loadJobUIState(){
       try{
         const filters = JSON.parse(localStorage.getItem(GLUEFUL_JOB_FILTERS_KEY) || "{}");
-        gluefulJobFilters = {...gluefulJobFilters, ...filters};
+        gluefulJobFilters = {...GLUEFUL_JOB_FILTERS_DEFAULT, ...gluefulJobFilters, ...filters};
         const saved = JSON.parse(localStorage.getItem(GLUEFUL_SAVED_JOBS_KEY) || "[]");
         gluefulSavedJobs = new Set(Array.isArray(saved) ? saved : []);
       }catch(e){}
@@ -6723,6 +7003,7 @@
             <div class="job-main">
               <div class="job-title">${esc(job.title)}</div>
               <div class="job-company">${esc(job.company)}</div>
+              <div class="job-source ${job.source === "jobble" ? "live" : ""}"><span class="job-source-dot"></span>${esc(job.sourceName || "Glueful")}</div>
               <div class="job-meta">
                 <span>${esc(job.location)}</span>
                 <span>${esc(job.workMode)}</span>
@@ -6778,7 +7059,8 @@
     }
 
     function renderJobs(){
-      const filtered = JOB_MOCK_DATA.filter(jobMatchesFilters);
+      const allJobs = getActiveJobData();
+      const filtered = allJobs.filter(jobMatchesFilters);
       const sorted = [...filtered].sort((a,b)=>b.match-a.match);
       const recent = [...filtered].sort((a,b)=>a.postedDays-b.postedDays);
 
@@ -6799,16 +7081,38 @@
       if(label) label.textContent = active ? `Filter ${active}` : "Filter";
     }
 
+    async function refreshJobsFromProvider(forceRefresh=false){
+      await ensureJobProviderData(forceRefresh);
+      renderJobs();
+    }
+
+
+    let gluefulJobSearchTimer = null;
+
+    function handleJobSearchInput(){
+      renderJobs();
+      clearTimeout(gluefulJobSearchTimer);
+
+      if(!JOB_PROVIDERS.jobble.enabled) return;
+
+      gluefulJobSearchTimer = setTimeout(()=>{
+        refreshJobsFromProvider(true);
+      }, 450);
+    }
+
     function openJobsView(){
       closeProfile();
       document.querySelectorAll(".modal-overlay.open").forEach(m=>m.classList.remove("open"));
       loadJobUIState();
-      renderJobs();
+
       const view = document.getElementById("jobs-view");
       if(view) view.style.display = "block";
       document.querySelectorAll(".app-view").forEach(v=>{
         if(v.id !== "jobs-view") v.style.display = "none";
       });
+
+      renderJobs();
+      refreshJobsFromProvider(false);
     }
 
     function openJobFilters(){
@@ -6846,7 +7150,7 @@
     }
 
     function resetJobFilters(){
-      gluefulJobFilters = {date:"any",mode:"any",experience:"any",employment:"any",company:"",location:""};
+      gluefulJobFilters = {...GLUEFUL_JOB_FILTERS_DEFAULT};
       saveJobUIState();
       openJobFilters();
     }
@@ -13579,6 +13883,20 @@ document.addEventListener("click", (event)=>{
       }
     );
 
+
+
+    /*
+      JOBBLE BACKEND TODO
+      -------------------
+      1. Create an Edge Function/server endpoint:
+           GET /api/jobs/search?provider=jobble...
+      2. Keep Jobble credentials/secrets server-side.
+      3. Normalize Jobble responses into the contract documented above.
+      4. Return only the fields Glueful needs.
+      5. Do NOT write the full external job feed into Supabase.
+      6. Cache provider results server-side where permitted.
+      7. Save only user-specific state (saved/applied/hidden jobs) in Supabase.
+    */
 
     /* =====================================================
        SERVICE WORKER
