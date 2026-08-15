@@ -255,7 +255,7 @@
   />
 
   <title>Glueful</title>
-  <!-- V10 — Brandfetch job cards + robust View Job / Apply actions -->
+  <!-- V11 — LinkedIn-style job details, direct apply URLs, rich job data, reliable Brandfetch -->
 
   <!-- Resume parsing libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -2458,6 +2458,226 @@
     .job-filter-options{display:flex;flex-wrap:wrap;gap:7px}
     .job-filter-chip{border:1px solid var(--border);background:var(--surface);color:var(--text-muted);border-radius:999px;padding:8px 10px;font-size:11px;font-weight:700}
     .job-filter-chip.active{border-color:#6d3be8;background:rgba(109,59,232,.1);color:#6d3be8}
+
+    /* =====================================================
+       JOB DETAILS V11 — solid LinkedIn-style detail sheet
+    ====================================================== */
+    .modal-card{
+      width:100%;
+      max-width:720px;
+      max-height:92vh;
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      background:var(--card) !important;
+      color:var(--text);
+      border:1px solid var(--border);
+      border-radius:20px;
+      box-shadow:0 30px 100px rgba(0,0,0,.55);
+      opacity:1 !important;
+      transform:none !important;
+    }
+
+    .modal-card .modal-header{
+      flex:0 0 auto;
+      padding:16px 18px;
+      margin:0;
+      border-bottom:1px solid var(--border);
+      background:var(--card);
+    }
+
+    .job-detail-card{
+      max-height:92vh;
+      overflow:hidden;
+    }
+
+    .job-detail-scroll{
+      overflow-y:auto;
+      overscroll-behavior:contain;
+      padding:20px;
+      -webkit-overflow-scrolling:touch;
+    }
+
+    .job-detail-hero{
+      display:flex;
+      gap:15px;
+      align-items:flex-start;
+    }
+
+    .job-detail-hero .job-logo{
+      width:64px;
+      height:64px;
+      min-width:64px;
+      border-radius:16px;
+      box-shadow:0 8px 24px rgba(0,0,0,.18);
+    }
+
+    .job-detail-title{
+      font-size:23px;
+      line-height:1.18;
+      font-weight:850;
+      letter-spacing:-.35px;
+      color:var(--text);
+    }
+
+    .job-detail-company{
+      margin-top:5px;
+      color:var(--text-muted);
+      font-size:13px;
+      line-height:1.45;
+      font-weight:650;
+    }
+
+    .job-detail-meta{
+      display:flex;
+      flex-wrap:wrap;
+      gap:7px;
+      margin-top:12px;
+    }
+
+    .job-detail-meta-chip{
+      display:inline-flex;
+      align-items:center;
+      min-height:28px;
+      padding:6px 9px;
+      border:1px solid var(--border);
+      border-radius:9px;
+      background:var(--surface-2,var(--surface));
+      color:var(--text-muted);
+      font-size:10.5px;
+      font-weight:750;
+    }
+
+    .job-detail-id{
+      margin-top:10px;
+      font-size:10.5px;
+      color:var(--text-faint);
+      font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+      overflow-wrap:anywhere;
+    }
+
+    .job-match-panel{
+      margin-top:17px;
+      padding:13px 14px;
+      border-radius:13px;
+      background:rgba(109,59,232,.09);
+      border:1px solid rgba(109,59,232,.20);
+    }
+
+    .job-match-panel strong{color:#8f63ff}
+
+    .job-detail-block{
+      margin-top:22px;
+    }
+
+    .job-detail-block h4{
+      margin:0 0 9px;
+      font-size:14px;
+      font-weight:850;
+      color:var(--text);
+    }
+
+    .job-detail-block p{
+      margin:0;
+      color:var(--text-muted);
+      font-size:12.5px;
+      line-height:1.72;
+      white-space:pre-line;
+    }
+
+    .job-detail-list{
+      margin:0;
+      padding-left:19px;
+      color:var(--text-muted);
+      font-size:12.5px;
+      line-height:1.7;
+    }
+
+    .job-detail-list li{margin:4px 0}
+
+    .job-detail-skill-grid{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+    }
+
+    .job-detail-skill{
+      padding:6px 9px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:var(--surface-2,var(--surface));
+      color:var(--text-muted);
+      font-size:10.5px;
+      font-weight:700;
+    }
+
+    .job-detail-source{
+      margin-top:20px;
+      padding-top:14px;
+      border-top:1px solid var(--border);
+      color:var(--text-faint);
+      font-size:10px;
+    }
+
+    .job-detail-actions{
+      flex:0 0 auto;
+      display:grid;
+      grid-template-columns:1fr 1.25fr;
+      gap:10px;
+      padding:12px 18px max(12px, env(safe-area-inset-bottom));
+      border-top:1px solid var(--border);
+      background:var(--card);
+    }
+
+    .job-detail-actions button{
+      min-height:46px;
+      border-radius:12px;
+      font-size:12px;
+      font-weight:850;
+    }
+
+    .job-apply-missing{
+      margin-top:12px;
+      padding:11px 12px;
+      border-radius:11px;
+      background:rgba(242,184,75,.08);
+      border:1px solid rgba(242,184,75,.20);
+      color:var(--text-muted);
+      font-size:10.5px;
+      line-height:1.5;
+    }
+
+    @media(max-width:600px){
+      .modal-overlay{
+        align-items:flex-end;
+        padding:0;
+      }
+
+      .modal-card.job-detail-card{
+        width:100%;
+        max-width:none;
+        max-height:94vh;
+        border-radius:20px 20px 0 0;
+        border-left:0;
+        border-right:0;
+        border-bottom:0;
+      }
+
+      .job-detail-scroll{
+        padding:17px 16px;
+      }
+
+      .job-detail-title{
+        font-size:21px;
+      }
+
+      .job-detail-actions{
+        grid-template-columns:1fr 1.25fr;
+        padding-left:16px;
+        padding-right:16px;
+      }
+    }
+
     .job-detail-card{max-height:90vh;overflow:auto}
     .job-detail-header{display:flex;gap:12px;align-items:flex-start}
     .job-detail-title{font-size:21px;line-height:1.2;font-weight:850;color:var(--text)}
@@ -6672,11 +6892,22 @@
               "workMode": "Hybrid",
               "employment": "Full-time",
               "experience": "2–5 years",
+              "jobId": "...",
               "postedAt": "2026-08-15T08:00:00Z",
               "salary": "...",
               "skills": ["C","Python"],
               "description": "...",
-              "url": "https://...",
+              "responsibilities": ["..."],
+              "requirements": ["..."],
+              "qualifications": ["..."],
+              "preferredQualifications": ["..."],
+              "benefits": ["..."],
+              "education": "...",
+              "department": "...",
+              "industry": "...",
+              "jobUrl": "https://.../specific-job",
+              "applicationUrl": "https://.../specific-job/apply",
+              "url": "https://.../specific-job",
               "source": "jobble"
             }
           ]
@@ -6709,44 +6940,190 @@
 
     const JOB_MOCK_DATA = [
       {
-        id:"mock-1", title:"Post-Silicon Validation Engineer", company:"Qualcomm",
-        location:"Hyderabad", workMode:"Hybrid", employment:"Full-time",
-        experience:"2–5 years", postedDays:1, match:92,
-        skills:["C","Python","ARM","SoC Validation","PMIC"],
-        description:"Validate SoC features across silicon, debug failures, automate validation and work with low-level hardware and software teams.",
-        url:"https://www.qualcomm.com/jobs"
+        id:"mock-1",
+        jobId:"DEMO-QCOM-PSV-001",
+        title:"Post-Silicon Validation Engineer",
+        company:"Qualcomm",
+        location:"Hyderabad",
+        workMode:"Hybrid",
+        employment:"Full-time",
+        experience:"2–5 years",
+        postedDays:1,
+        match:92,
+        skills:["C","Python","ARM","SoC Validation","PMIC","JTAG"],
+        department:"Engineering",
+        industry:"Semiconductor",
+        education:"Bachelor's or Master's degree in Computer Science, Electronics/Electrical Engineering, or a related field.",
+        description:"Validate SoC features across silicon and debug failures across hardware and software boundaries. Work with low-level test content, automation and cross-functional engineering teams.",
+        responsibilities:[
+          "Develop and execute SoC validation tests for system-level features.",
+          "Debug failures and isolate hardware, firmware and software root causes.",
+          "Automate validation workflows and regression execution using Python and low-level software.",
+          "Collaborate with design, architecture, firmware and validation teams."
+        ],
+        requirements:[
+          "Strong C programming and low-level debugging skills.",
+          "Understanding of ARM-based SoC architecture and embedded systems.",
+          "Experience with validation, JTAG/debug tools and scripting."
+        ],
+        qualifications:[
+          "Hands-on embedded software or SoC validation experience.",
+          "Ability to analyze logs, traces and hardware/software interactions."
+        ],
+        preferredQualifications:[
+          "Exposure to pre-silicon emulation, post-silicon validation, PMIC or power-management testing.",
+          "Experience with Linux, RTOS or bare-metal environments."
+        ],
+        benefits:[],
+        url:"",
+        applicationUrl:"",
+        source:"jobble"
       },
       {
-        id:"mock-2", title:"Embedded Software Engineer", company:"NVIDIA",
-        location:"Bengaluru", workMode:"On-site", employment:"Full-time",
-        experience:"2–4 years", postedDays:2, match:88,
-        skills:["C","Embedded C","ARM","Python","Linux"],
-        description:"Develop and validate embedded software for next-generation platforms with a focus on low-level debugging and system integration.",
-        url:"https://www.nvidia.com/en-us/about-nvidia/careers/"
+        id:"mock-2",
+        jobId:"DEMO-NVIDIA-EMB-002",
+        title:"Embedded Software Engineer",
+        company:"NVIDIA",
+        location:"Bengaluru",
+        workMode:"On-site",
+        employment:"Full-time",
+        experience:"2–4 years",
+        postedDays:2,
+        match:88,
+        skills:["C","Embedded C","ARM","Python","Linux","Debugging"],
+        department:"Software Engineering",
+        industry:"Semiconductors / Computing",
+        education:"Bachelor's or Master's degree in Computer Science, Electronics Engineering, or a related field.",
+        description:"Develop and validate embedded software for next-generation platforms with a focus on low-level debugging, hardware/software integration and system reliability.",
+        responsibilities:[
+          "Develop embedded software components in C/C++.",
+          "Validate platform functionality and investigate system-level failures.",
+          "Work closely with hardware and firmware engineers during bring-up and debug.",
+          "Create automation and regression tests using scripting languages."
+        ],
+        requirements:[
+          "Strong C/C++ programming and embedded debugging skills.",
+          "Working knowledge of ARM architecture and Linux.",
+          "Ability to debug hardware/software integration issues."
+        ],
+        qualifications:[],
+        preferredQualifications:[
+          "Python automation experience.",
+          "Experience with boot flows, drivers, RTOS or board bring-up."
+        ],
+        benefits:[],
+        url:"",
+        applicationUrl:"",
+        source:"jobble"
       },
       {
-        id:"mock-3", title:"SoC Validation Engineer", company:"AMD",
-        location:"Hyderabad", workMode:"On-site", employment:"Full-time",
-        experience:"2–6 years", postedDays:4, match:85,
-        skills:["SoC","Python","C","JTAG","Validation"],
-        description:"Create validation plans, execute post-silicon tests and debug hardware/software interaction issues.",
-        url:"https://careers.amd.com/"
+        id:"mock-3",
+        jobId:"DEMO-AMD-SOC-003",
+        title:"SoC Validation Engineer",
+        company:"AMD",
+        location:"Hyderabad",
+        workMode:"On-site",
+        employment:"Full-time",
+        experience:"2–6 years",
+        postedDays:4,
+        match:85,
+        skills:["SoC","Python","C","JTAG","Validation","Debug"],
+        department:"Silicon Validation",
+        industry:"Semiconductor",
+        education:"Bachelor's or Master's degree in Electronics, Electrical Engineering, Computer Science, or a related discipline.",
+        description:"Create validation plans, execute pre- and post-silicon tests, debug hardware/software interaction issues and improve regression coverage.",
+        responsibilities:[
+          "Translate SoC specifications into validation plans and test cases.",
+          "Execute tests on emulation, FPGA or silicon platforms.",
+          "Analyze failures and work with design and firmware teams on root cause.",
+          "Build reusable validation and regression infrastructure."
+        ],
+        requirements:[
+          "C/C++ or Python programming.",
+          "Understanding of computer architecture and SoC validation.",
+          "Experience with hardware debug tools and structured failure analysis."
+        ],
+        qualifications:[],
+        preferredQualifications:[
+          "Experience with emulation or FPGA platforms.",
+          "Knowledge of ARM, PCIe, memory systems or high-speed interfaces."
+        ],
+        benefits:[],
+        url:"",
+        applicationUrl:"",
+        source:"jobble"
       },
       {
-        id:"mock-4", title:"Embedded Test Engineer", company:"Microsoft",
-        location:"Bengaluru", workMode:"Hybrid", employment:"Full-time",
-        experience:"1–4 years", postedDays:6, match:82,
-        skills:["Python","Automation","Embedded","Testing","Linux"],
-        description:"Build automated validation workflows for devices and embedded systems and collaborate with hardware and firmware teams.",
-        url:"https://jobs.careers.microsoft.com/"
+        id:"mock-4",
+        jobId:"DEMO-MS-TEST-004",
+        title:"Embedded Test Engineer",
+        company:"Microsoft",
+        location:"Bengaluru",
+        workMode:"Hybrid",
+        employment:"Full-time",
+        experience:"1–4 years",
+        postedDays:6,
+        match:82,
+        skills:["Python","Automation","Embedded","Testing","Linux","Debugging"],
+        department:"Device / Embedded Engineering",
+        industry:"Technology",
+        education:"Bachelor's degree or equivalent practical experience.",
+        description:"Build automated validation workflows for devices and embedded systems and collaborate with hardware and firmware teams to identify and resolve system issues.",
+        responsibilities:[
+          "Design automated tests for embedded devices and platform features.",
+          "Develop Python-based validation utilities and regression flows.",
+          "Debug failures across firmware, drivers and hardware.",
+          "Report, reproduce and track issues through closure."
+        ],
+        requirements:[
+          "Python automation and software testing experience.",
+          "Understanding of embedded systems and debugging.",
+          "Strong problem-solving and communication skills."
+        ],
+        qualifications:[],
+        preferredQualifications:[
+          "Linux, C/C++, device-driver or hardware validation experience."
+        ],
+        benefits:[],
+        url:"",
+        applicationUrl:"",
+        source:"jobble"
       },
       {
-        id:"mock-5", title:"Firmware Validation Engineer", company:"Intel",
-        location:"Bengaluru", workMode:"Hybrid", employment:"Full-time",
-        experience:"2–5 years", postedDays:8, match:79,
-        skills:["C","Firmware","SPI","I2C","Python"],
+        id:"mock-5",
+        jobId:"DEMO-INTEL-FW-005",
+        title:"Firmware Validation Engineer",
+        company:"Intel",
+        location:"Bengaluru",
+        workMode:"Hybrid",
+        employment:"Full-time",
+        experience:"2–5 years",
+        postedDays:8,
+        match:79,
+        skills:["C","Firmware","SPI","I2C","Python","Debugging"],
+        department:"Firmware Validation",
+        industry:"Semiconductor",
+        education:"Bachelor's or Master's degree in Computer Science, Electronics or a related field.",
         description:"Validate firmware features, interfaces and platform behavior using automation and lab-based debug tools.",
-        url:"https://jobs.intel.com/"
+        responsibilities:[
+          "Create and execute firmware validation tests.",
+          "Validate low-speed interfaces and platform behavior.",
+          "Automate repetitive validation and regression activities.",
+          "Debug firmware and hardware interaction issues."
+        ],
+        requirements:[
+          "Strong C programming and embedded fundamentals.",
+          "Experience with SPI, I2C, UART or similar interfaces.",
+          "Python or shell scripting for validation automation."
+        ],
+        qualifications:[],
+        preferredQualifications:[
+          "Experience with oscilloscopes, logic analyzers or JTAG."
+        ],
+        benefits:[],
+        url:"",
+        applicationUrl:"",
+        source:"jobble"
       }
     ];
 
@@ -7051,14 +7428,28 @@
      * clean initials fallback and then loadCompanyLogos() upgrades it
      * to the real Brandfetch logo.
      */
+    function getJobBrandfetchLogoUrl(company){
+      const domain = getCompanyDomain(company);
+      if(!domain) return "";
+
+      const client = encodeURIComponent(BRANDFETCH_CLIENT_ID);
+      return `https://cdn.brandfetch.io/domain/${encodeURIComponent(domain)}?c=${client}`;
+    }
+
     function renderCompanyLogo(job){
       const initials = esc(jobInitials(job.company));
       const company = esc(job.company);
+      const logoUrl = getJobBrandfetchLogoUrl(job.company);
 
       return `<div class="job-logo" data-company-logo="${company}">
-        <img class="job-logo-image" alt="${company} logo"
-             loading="lazy" style="display:none;">
-        <span class="job-logo-fallback">${initials}</span>
+        <img class="job-logo-image"
+             src="${esc(logoUrl)}"
+             alt="${company} logo"
+             loading="lazy"
+             referrerpolicy="origin"
+             style="${logoUrl ? "display:block" : "display:none"}"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+        <span class="job-logo-fallback" style="${logoUrl ? "display:none" : "display:flex"}">${initials}</span>
       </div>`;
     }
 
@@ -7272,6 +7663,36 @@
       renderJobs();
     }
 
+    function renderJobDetailList(title, items){
+      if(!Array.isArray(items) || !items.length) return "";
+      return `
+        <div class="job-detail-block">
+          <h4>${esc(title)}</h4>
+          <ul class="job-detail-list">
+            ${items.map(item=>`<li>${esc(cleanJobHtml(item))}</li>`).join("")}
+          </ul>
+        </div>`;
+    }
+
+    function getJobApplicationUrl(job){
+      const direct = String(
+        job.applicationUrl ||
+        job.applyUrl ||
+        job.url ||
+        ""
+      ).trim();
+
+      if(!direct) return "";
+
+      try{
+        const parsed = new URL(direct, window.location.href);
+        if(!/^https?:$/.test(parsed.protocol)) return "";
+        return parsed.href;
+      }catch(e){
+        return "";
+      }
+    }
+
     function openJobDetails(id){
       const job = findActiveJobById(id);
       if(!job){
@@ -7279,52 +7700,119 @@
         return;
       }
 
+      const applicationUrl = getJobApplicationUrl(job);
+      const jobPageUrl = String(job.jobUrl || "").trim();
+      const sourceLabel = job.sourceName && job.sourceName !== "jobble"
+        ? job.sourceName
+        : "External job source";
+
+      const skillsHtml = job.skills?.length
+        ? `
+          <div class="job-detail-block">
+            <h4>Skills</h4>
+            <div class="job-detail-skill-grid">
+              ${job.skills.map(skill=>`<span class="job-detail-skill">${esc(skill)}</span>`).join("")}
+            </div>
+          </div>`
+        : "";
+
+      const extraMeta = [
+        job.department && `Department: ${job.department}`,
+        job.industry && `Industry: ${job.industry}`,
+        job.education && `Education: ${job.education}`
+      ].filter(Boolean);
+
       document.getElementById("job-detail-content").innerHTML = `
-        <div class="job-detail-header">
-          ${renderCompanyLogo(job)}
-          <div>
-            <div class="job-detail-title">${esc(job.title)}</div>
-            <div class="job-detail-company">${esc(job.company)} · ${esc(job.location)}</div>
+        <div class="job-detail-scroll">
+          <div class="job-detail-hero">
+            ${renderCompanyLogo(job)}
+            <div style="min-width:0;flex:1">
+              <div class="job-detail-title">${esc(job.title)}</div>
+              <div class="job-detail-company">
+                ${esc(job.company)} · ${esc(job.location)}
+              </div>
+
+              <div class="job-detail-meta">
+                ${job.workMode ? `<span class="job-detail-meta-chip">${esc(job.workMode)}</span>` : ""}
+                ${job.employment ? `<span class="job-detail-meta-chip">${esc(job.employment)}</span>` : ""}
+                ${job.experience ? `<span class="job-detail-meta-chip">${esc(job.experience)}</span>` : ""}
+                ${job.postedDays !== undefined ? `<span class="job-detail-meta-chip">${esc(jobDaysLabel(job.postedDays))}</span>` : ""}
+              </div>
+
+              <div class="job-detail-id">
+                Job ID: ${esc(job.jobId || job.sourceJobId || "Not provided by source")}
+              </div>
+            </div>
           </div>
+
+          <div class="job-match-panel">
+            <strong>${job.match}% Match</strong> — based on your current profile.
+          </div>
+
+          ${job.description ? `
+            <div class="job-detail-block">
+              <h4>About the job</h4>
+              <p>${esc(job.description)}</p>
+            </div>` : ""}
+
+          ${renderJobDetailList("Responsibilities", job.responsibilities)}
+          ${renderJobDetailList("Requirements", job.requirements)}
+          ${renderJobDetailList("Qualifications", job.qualifications)}
+          ${renderJobDetailList("Preferred qualifications", job.preferredQualifications)}
+          ${renderJobDetailList("Benefits", job.benefits)}
+
+          ${skillsHtml}
+
+          ${job.salary ? `
+            <div class="job-detail-block">
+              <h4>Salary / compensation</h4>
+              <p>${esc(job.salary)}</p>
+            </div>` : ""}
+
+          ${extraMeta.length ? `
+            <div class="job-detail-block">
+              <h4>Additional details</h4>
+              <p>${extraMeta.map(x=>esc(x)).join("\n")}</p>
+            </div>` : ""}
+
+          <div class="job-detail-source">
+            Source: ${esc(sourceLabel)}
+            ${jobPageUrl ? ` · Original listing available` : ""}
+          </div>
+
+          ${!applicationUrl ? `
+            <div class="job-apply-missing">
+              A job-specific application URL was not supplied by the source.
+              Glueful will not redirect you to a generic company careers homepage
+              or pretend that it is the correct application page.
+            </div>` : ""}
         </div>
 
-        <div class="job-match-panel">
-          <strong>${job.match}% Match</strong> — based on your current profile.
-        </div>
-
-        <div class="job-detail-block">
-          <h4>Job overview</h4>
-          <p>${esc(job.description || "Job description will be shown when supplied by the job source.")}</p>
-        </div>
-
-        <div class="job-detail-block">
-          <h4>Details</h4>
-          <p>${esc(job.workMode)} · ${esc(job.employment)} · ${esc(job.experience)} · ${esc(jobDaysLabel(job.postedDays))}</p>
-        </div>
-
-        ${job.salary ? `
-        <div class="job-detail-block">
-          <h4>Salary</h4>
-          <p>${esc(job.salary)}</p>
-        </div>` : ""}
-
-        <div class="job-detail-block">
-          <h4>Skills</h4>
-          <p>${esc(job.skills.join(" · ") || "Not specified")}</p>
-        </div>
-
-        <div class="modal-actions" style="margin-top:18px;">
+        <div class="job-detail-actions">
           <button class="secondary-btn" type="button"
                   onclick="toggleSavedJob('${esc(job.id)}');openJobDetails('${esc(job.id)}')">
             ${gluefulSavedJobs.has(job.id) ? "Saved" : "Save job"}
           </button>
-          <button class="primary-btn" type="button"
-                  onclick="startJobApply('${esc(job.id)}')">
-            Apply
-          </button>
+
+          ${applicationUrl
+            ? `<button class="primary-btn" type="button"
+                 onclick="startJobApply('${esc(job.id)}')">
+                 Apply
+               </button>`
+            : jobPageUrl
+              ? `<button class="primary-btn" type="button"
+                   onclick="openExternalJobUrl('${esc(jobPageUrl)}','job listing')">
+                   View original listing
+                 </button>`
+              : `<button class="primary-btn" type="button" disabled
+                   style="opacity:.5;cursor:not-allowed">
+                   Apply unavailable
+                 </button>`
+          }
         </div>`;
 
       openModal("job-detail-modal");
+      loadCompanyLogos();
     }
 
     function closeJobDetails(){
@@ -7339,10 +7827,12 @@
       // send the candidate to the authoritative application page.
       closeJobDetails();
 
-      if(job.url){
-        openExternalJobUrl(job.url, "application");
+      const applicationUrl = getJobApplicationUrl(job);
+
+      if(applicationUrl){
+        openExternalJobUrl(applicationUrl, "application");
       }else{
-        showError(`No application link is available for ${job.company} — ${job.title} yet.`);
+        showError(`No job-specific application link is available for ${job.company} — ${job.title}.`);
       }
     }
 
@@ -11923,6 +12413,20 @@ document.addEventListener("click", (event)=>{
 
       if(brandDomainCache[key]) {
         return brandDomainCache[key];
+      }
+
+      // Resolve common job-card companies from Glueful's trusted domain map
+      // before making a Brand Search request.
+      const knownDomain = getCompanyDomain(company);
+      if(knownDomain){
+        brandDomainCache[key] = knownDomain;
+        try{
+          localStorage.setItem(
+            BRANDFETCH_CACHE_KEY,
+            JSON.stringify(brandDomainCache)
+          );
+        }catch(e){}
+        return knownDomain;
       }
 
       try {
