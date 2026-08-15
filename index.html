@@ -1510,7 +1510,9 @@
 
     .dashboard-list .empty-state{
       width:100%;
+      max-width:100%;
       min-height:170px;
+      margin:0;
       box-sizing:border-box;
       display:flex;
       flex-direction:column;
@@ -1519,8 +1521,23 @@
     }
 
     @media(max-width:700px){
-      #view-dashboard{padding-bottom:110px;}
-      #dashboard-interviews{width:100%;}
+      /* Extra bottom padding so the last dashboard section (Upcoming
+         interviews) never sits under/behind the fixed bottom nav. */
+      #view-dashboard{
+        padding-bottom:calc(130px + env(safe-area-inset-bottom));
+        box-sizing:border-box;
+        width:100%;
+        overflow-x:hidden;
+      }
+      #dashboard-interviews{
+        width:100%;
+        max-width:100%;
+        box-sizing:border-box;
+      }
+      #dashboard-interviews .empty-state{
+        min-height:140px;
+        padding:2.2rem 1rem;
+      }
     }
 
 
@@ -7980,10 +7997,16 @@
       }
 
       if(!signals) return Number(job.match||0);
-      return Math.max(0, Math.min(99, Math.round(score)));
+      const finalScore = Math.max(0, Math.min(99, Math.round(score)));
+      console.log("Job:", job.title, "| Calculated match:", finalScore, "| matched role families:", matchedFamilies.length);
+      return finalScore;
     }
 
     function getActiveJobData(){
+      // Recalculate match dynamically every call from the CURRENT candidate
+      // profile. Jobs themselves may be cached (gluefulExternalJobs), but the
+      // personalized match score is NEVER cached/stored — it is always
+      // derived fresh here so profile edits are reflected immediately.
       const profile=getJobSearchProfile();
       return dedupeVerifiedJobs(gluefulExternalJobs).map(job=>({...job,match:calculateJobMatch(job,profile)||Number(job.match||0)}));
     }
@@ -8098,8 +8121,11 @@
 
     function getJobSearchProfile(){
       try{
-        return getCandidateProfileFromUser(window.__gluefulCurrentUser || null);
+        const profile = getCandidateProfileFromUser(window.__gluefulCurrentUser || null);
+        console.log("Candidate profile used for recommendations:", profile);
+        return profile;
       }catch(e){
+        console.warn("[Glueful] getJobSearchProfile failed, falling back to empty profile:", e);
         return normalizeCandidateProfile({});
       }
     }
@@ -8309,11 +8335,25 @@
 
       const recommended = hasProfile
         ? sorted.filter(job => job.match >= 15).slice(0,10)
-        : sorted.slice(0,10);
+        : [];
 
-      recEl.innerHTML = recommended.length
-        ? recommended.map(jobCard).join("")
-        : `<div class="jobs-empty"><strong>No strong profile matches yet</strong>Complete your target role and skills in Candidate Profile.</div>`;
+      console.log(
+        "Recommended jobs:",
+        recommended.map(j => ({title:j.title, company:j.company, match:j.match}))
+      );
+
+      const profileNoteEl = document.getElementById("jobs-profile-note");
+      if(profileNoteEl) {
+        profileNoteEl.textContent = hasProfile ? "Matched to your profile" : "Add your target role & skills";
+      }
+
+      if(!hasProfile) {
+        recEl.innerHTML = `<div class="jobs-empty"><strong>Complete your Candidate Profile to get personalized recommendations</strong>Add your Target Role and Skills so we can match you to relevant jobs.</div>`;
+      } else {
+        recEl.innerHTML = recommended.length
+          ? recommended.map(jobCard).join("")
+          : `<div class="jobs-empty"><strong>No strong profile matches yet</strong>Try broadening your Target Role or adding more Skills in Candidate Profile.</div>`;
+      }
 
       recentEl.innerHTML = recent.length
         ? recent.slice(0,20).map(jobCard).join("")
@@ -13911,6 +13951,7 @@ document.addEventListener("click", (event)=>{
     }
 
     async function openCandidateProfile() {
+      console.time("CandidateProfileOpen");
       closeProfile();
       // Hide every other Glueful layer before opening Profile Information.
       document.querySelectorAll('.modal-overlay.open').forEach(modal => {
@@ -13920,17 +13961,23 @@ document.addEventListener("click", (event)=>{
       closeModal('job-search-preferences-modal', true);
       bindCandidateProfileCompleteness();
 
-      // Show the profile immediately; resume/auth work must not block the screen.
+      // STEP 1: Show the profile UI immediately. Everything below this line
+      // is async (profile fields, resume metadata, resume download/parse)
+      // and must NEVER block the modal from appearing.
       openModal('candidate-profile-modal');
+      console.timeEnd("CandidateProfileOpen");
+      console.log("[Glueful] Candidate Profile modal opened. Loading profile/resume data in the background…");
 
       try {
+        // STEP 2: Load candidate profile info asynchronously (fast — just auth.getUser()).
         const profile = await loadCandidateProfile();
         fillCandidateProfile(profile);
 
         const saved = document.getElementById('candidate-profile-saved');
         if(saved) saved.classList.remove('show');
 
-        // Resume source of truth is Supabase Storage. IndexedDB is only a local cache.
+        // STEP 3: Resume source of truth is Supabase Storage. IndexedDB is only a local cache.
+        // (Modal is already open and interactive at this point.)
         await loadCandidateResumeCloudMetadata(profile);
         candidateResumeFile = null;
         candidateResumeText = '';
@@ -14154,6 +14201,29 @@ document.addEventListener("click", (event)=>{
         // Keep the account's local copy ready for the next screen.
         window.gluefulCandidateProfile =
           profile;
+
+        /*
+         * BUG FIX: job recommendations read the candidate profile from
+         * window.__gluefulCurrentUser.user_metadata. Update that cache
+         * immediately (optimistically) so recommendations reflect the
+         * change right away, without waiting for a fresh getUser() round
+         * trip or the async USER_UPDATED auth event.
+         */
+        window.__gluefulCurrentUser = {
+          ...(window.__gluefulCurrentUser || data.user || {}),
+          user_metadata: metadata
+        };
+
+        console.log(
+          "[Glueful] Candidate profile saved. Cache updated with:",
+          metadata[GLUEFUL_CANDIDATE_PROFILE_META_KEY]
+        );
+
+        // If the Jobs page has already loaded data, recompute
+        // "Recommended for you" immediately using the new profile.
+        if(typeof renderJobs === "function" && Array.isArray(gluefulExternalJobs) && gluefulExternalJobs.length) {
+          renderJobs();
+        }
 
         if(button) {
           button.textContent =
@@ -14950,6 +15020,23 @@ document.addEventListener("click", (event)=>{
 
         DATA_USER_ID =
           user.id;
+
+        /*
+         * Cache the current authenticated user object (including
+         * user_metadata, which holds the saved Candidate Profile) so
+         * job-recommendation code can read the CURRENT profile
+         * synchronously instead of depending on a stale/never-set global.
+         * This is refreshed on every auth state change, including the
+         * USER_UPDATED event Supabase fires after updateUser() saves
+         * the candidate profile.
+         */
+        window.__gluefulCurrentUser = user;
+        console.log(
+          "[Glueful] Current user cached for job matching:",
+          user?.id,
+          "profile:",
+          user?.user_metadata?.[GLUEFUL_CANDIDATE_PROFILE_META_KEY]
+        );
 
         /* Placement Portal is account data, not device-only data.
          * Restore it from Supabase user metadata so the same account
