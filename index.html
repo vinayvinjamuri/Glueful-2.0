@@ -3668,10 +3668,13 @@
        Added for the resume-first candidate profile flow.
     ====================================================== */
     .resume-import-primary-actions{display:grid;grid-template-columns:auto auto;gap:8px;min-width:0}
+.resume-file-input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
+.resume-import-drop{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.resume-import-drop:focus-visible{outline:2px solid #7C5CFF;outline-offset:3px}
     .resume-view-btn:disabled{opacity:.42;cursor:not-allowed}
     .skills-preview{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
     .skill-chip{display:inline-flex;align-items:center;min-height:28px;padding:5px 9px;border-radius:999px;border:1px solid rgba(139,111,240,.28);background:rgba(139,47,224,.08);color:var(--text-dim);font-size:10px;font-weight:600;line-height:1.2}
-    .resume-viewer-overlay{z-index:150}
+    .resume-viewer-overlay{z-index:500 !important}
     .resume-viewer-modal{width:min(900px,96vw);max-width:900px;height:min(88vh,900px);display:flex;flex-direction:column}
     .resume-viewer-body{flex:1;min-height:0;border:1px solid var(--border);border-radius:14px;background:var(--card2);overflow:auto}
     .resume-cloud-sync-note{margin-top:7px;color:var(--text-faint);font-size:9px;line-height:1.4}
@@ -3684,7 +3687,7 @@
     .resume-viewer-error-copy{margin-top:7px;max-width:360px;font-size:11px;line-height:1.5}
     .resume-viewer-error-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:16px}
 
-    .resume-delete-confirm-overlay{z-index:180;align-items:center;justify-content:center;padding:18px}
+    .resume-delete-confirm-overlay{z-index:510 !important;align-items:center;justify-content:center;padding:18px}
     .resume-delete-confirm-modal{width:min(430px,92vw);padding:24px;border-radius:18px;box-shadow:0 24px 80px rgba(0,0,0,.5)}
     .resume-delete-confirm-icon{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;background:rgba(242,114,114,.10);border:1px solid rgba(242,114,114,.24);color:#F27272;margin-bottom:14px}
     .resume-delete-confirm-icon svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
@@ -5624,22 +5627,22 @@
 
       <div class="resume-import-card">
         <div class="candidate-profile-section" style="margin-top:0;">Resume → Profile</div>
-        <div class="resume-import-drop" onclick="document.getElementById('cp-resume-file').click()">
+        <label class="resume-import-drop" for="cp-resume-file" role="button" tabindex="0" aria-label="Upload your resume">
           <div class="resume-import-icon">↥</div>
           <div class="resume-import-title">Upload your resume</div>
           <div class="resume-import-sub">PDF, DOCX or TXT · Glueful reads it, fills your profile and securely syncs your resume to your account.</div>
-          <input id="cp-resume-file" type="file" accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" style="display:none" onchange="handleCandidateResumeUpload(event)" />
-        </div>
+        </label>
+        <input id="cp-resume-file" class="resume-file-input" type="file" accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"  />
         <div id="cp-resume-file-name" class="resume-import-file"></div>
         <div id="cp-resume-status" class="resume-import-status"></div>
         <div class="resume-import-actions">
           <button type="button" class="secondary-btn" onclick="clearCandidateResume()">Clear</button>
           <div class="resume-import-primary-actions">
-            <button type="button" class="secondary-btn resume-view-btn" id="cp-resume-view-btn" onclick="openCandidateResumeViewer()" disabled>View resume</button>
+            <button type="button" class="secondary-btn resume-view-btn" id="cp-resume-view-btn"  disabled>View resume</button>
             <button type="button" class="primary-btn" id="cp-resume-import-btn" onclick="importCandidateResume()" disabled>Import info</button>
           </div>
         </div>
-        <button type="button" id="cp-resume-delete-btn" class="resume-delete-btn" onclick="deleteSavedCandidateResume()">Delete saved resume</button>
+        <button type="button" id="cp-resume-delete-btn" class="resume-delete-btn" >Delete saved resume</button>
       </div>
 
       <div class="modal-header">
@@ -5856,8 +5859,8 @@
         Are you sure you want to delete this resume from your Glueful account? Your profile information will not be deleted.
       </div>
       <div class="resume-delete-confirm-actions">
-        <button type="button" class="secondary-btn" onclick="cancelDeleteSavedCandidateResume()">Keep resume</button>
-        <button type="button" class="resume-confirm-delete-btn" onclick="confirmDeleteSavedCandidateResume()">Delete resume</button>
+        <button type="button" class="secondary-btn" onclick="window.cancelDeleteSavedCandidateResume()">Keep resume</button>
+        <button type="button" class="resume-confirm-delete-btn" onclick="window.confirmDeleteSavedCandidateResume()">Delete resume</button>
       </div>
     </div>
   </div>
@@ -6574,14 +6577,16 @@
         // downloaded lazily by the viewer, which is important on mobile.
         viewButton.disabled = !hasResume;
         viewButton.setAttribute('aria-disabled', String(!hasResume));
+        viewButton.style.pointerEvents = hasResume ? 'auto' : 'none';
       }
 
       if(deleteButton) {
-        deleteButton.classList.toggle(
-          'show',
-          Boolean(candidateResumeCloudMeta?.path || candidateResumePersisted || candidateResumeFile)
-        );
+        const canDelete = Boolean(candidateResumeCloudMeta?.path || candidateResumePersisted || candidateResumeFile);
+        deleteButton.classList.toggle('show', canDelete);
+        deleteButton.disabled = !canDelete;
+        deleteButton.style.pointerEvents = canDelete ? 'auto' : 'none';
       }
+      bindMobileResumeActions();
     }
 
     let candidateResumeFile = null;
@@ -7339,10 +7344,67 @@
     }
 
 
+    /*
+       MOBILE RESUME ACTION BRIDGE
+       Keep the three resume controls available on window as well as
+       through inline handlers. This avoids WebView/Android quirks where
+       a top-level function reference is not resolved from inline HTML.
+    */
+    window.openCandidateResumeViewer = openCandidateResumeViewer;
+    window.retryCandidateResumeViewer = retryCandidateResumeViewer;
+    window.closeCandidateResumeViewer = closeCandidateResumeViewer;
+    window.deleteSavedCandidateResume = deleteSavedCandidateResume;
+    window.confirmDeleteSavedCandidateResume = confirmDeleteSavedCandidateResume;
+    window.cancelDeleteSavedCandidateResume = cancelDeleteSavedCandidateResume;
+    window.handleCandidateResumeUpload = handleCandidateResumeUpload;
+
+    function bindMobileResumeActions() {
+      const fileInput = document.getElementById('cp-resume-file');
+      const uploadLabel = document.querySelector('label[for="cp-resume-file"]');
+      const viewButton = document.getElementById('cp-resume-view-btn');
+      const deleteButton = document.getElementById('cp-resume-delete-btn');
+
+      if(fileInput && !fileInput.dataset.mobileBound) {
+        fileInput.dataset.mobileBound = '1';
+        fileInput.addEventListener('change', handleCandidateResumeUpload, {passive:true});
+      }
+
+      if(uploadLabel && !uploadLabel.dataset.mobileBound) {
+        uploadLabel.dataset.mobileBound = '1';
+        uploadLabel.addEventListener('keydown', event => {
+          if(event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            fileInput?.click();
+          }
+        });
+      }
+
+      if(viewButton && !viewButton.dataset.mobileBound) {
+        viewButton.dataset.mobileBound = '1';
+        viewButton.addEventListener('click', event => {
+          if(viewButton.disabled) return;
+          event.preventDefault();
+          window.openCandidateResumeViewer();
+        });
+      }
+
+      if(deleteButton && !deleteButton.dataset.mobileBound) {
+        deleteButton.dataset.mobileBound = '1';
+        deleteButton.addEventListener('click', event => {
+          if(deleteButton.disabled) return;
+          event.preventDefault();
+          window.deleteSavedCandidateResume();
+        });
+      }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
       refreshSettingsSwitches();
       bindCandidateProfileCompleteness();
+      bindMobileResumeActions();
     });
+
+    window.addEventListener('load', bindMobileResumeActions);
 
 
     /* =====================================================
