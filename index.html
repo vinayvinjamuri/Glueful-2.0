@@ -7853,21 +7853,86 @@
       return dedupeVerifiedJobs(gluefulExternalJobs).map(job=>({...job,match:calculateJobMatch(job,profile)||Number(job.match||0)}));
     }
 
+    /*
+     * SUPABASE JOB LISTINGS SOURCE
+     * ----------------------------
+     * Adzuna sync already writes real jobs into public.job_listings.
+     * The Jobs UI reads that table directly instead of waiting for a
+     * separate /api/jobs/search endpoint. Provider API secrets remain
+     * server-side; the browser only reads the public Supabase table.
+     */
+    function normalizeSupabaseJobRow(row){
+      const r = row || {};
+      const providerId = String(
+        r.provider || r.source || r.source_name || r.sourceName || "adzuna"
+      ).toLowerCase().includes("jooble") ? "jooble" : "adzuna";
+
+      const mapped = {
+        ...r,
+        id: r.id || r.job_id || r.jobId || r.external_job_id || r.externalJobId,
+        jobId: r.job_id || r.jobId || r.external_job_id || r.externalJobId || r.id,
+        sourceJobId: r.external_job_id || r.externalJobId || r.job_id || r.jobId || r.id,
+        title: r.title || r.job_title || r.jobTitle || r.position || "",
+        company: r.company || r.company_name || r.companyName || r.employer || "",
+        location: r.location || r.location_name || r.locationName || r.city || "Location not specified",
+        workMode: r.work_mode || r.workMode || r.remote_type || r.remoteType || r.remote || "Any",
+        employment: r.employment || r.employment_type || r.employmentType || r.type || "Any",
+        experience: r.experience || r.experience_level || r.experienceLevel || "Any",
+        postedAt: r.posted_at || r.postedAt || r.date_posted || r.datePosted || r.created_at || r.updated_at || "",
+        salary: r.salary || r.salary_range || r.salaryRange || r.pay || "",
+        description: r.description || r.summary || r.snippet || "",
+        skills: r.skills || r.keywords || [],
+        responsibilities: r.responsibilities || [],
+        requirements: r.requirements || [],
+        qualifications: r.qualifications || [],
+        preferredQualifications: r.preferred_qualifications || r.preferredQualifications || [],
+        benefits: r.benefits || [],
+        education: r.education || "",
+        department: r.department || "",
+        industry: r.industry || "",
+        jobUrl: r.job_url || r.jobUrl || r.url || r.link || r.listing_url || r.listingUrl || r.source_url || r.sourceUrl || "",
+        applicationUrl: r.application_url || r.applicationUrl || r.apply_url || r.applyUrl || "",
+        sourceName: r.source_name || r.sourceName || providerId,
+        source: providerId
+      };
+
+      return normalizeExternalJob(mapped, providerId);
+    }
+
+    async function loadJobListingsFromSupabase(){
+      gluefulJobsLoading = true;
+      updateJobsSourceNote("Loading real jobs from Supabase…");
+
+      try{
+        const { data, error } = await supabaseClient
+          .from("job_listings")
+          .select("*")
+          .limit(200);
+
+        if(error) throw error;
+
+        const jobs = dedupeVerifiedJobs(
+          (Array.isArray(data) ? data : [])
+            .map(normalizeSupabaseJobRow)
+            .filter(Boolean)
+        );
+
+        gluefulExternalJobs = jobs;
+        gluefulJobsLoading = false;
+        updateJobsSourceNote(`Supabase · ${jobs.length} verified jobs`);
+        return jobs;
+      }catch(error){
+        console.error("[Glueful] job_listings load FAILED:", error);
+        gluefulExternalJobs = [];
+        gluefulJobsLoading = false;
+        updateJobsSourceNote(`Unable to load jobs from Supabase: ${String(error?.message || error)}`);
+        return [];
+      }
+    }
+
     async function ensureJobProviderData(forceRefresh=false){
-      const requestId=++gluefulJobsRequestId; gluefulJobsLoading=true; updateJobsSourceNote("Loading verified jobs from live providers…");
-      if(!forceRefresh){ const cached=readJobProviderCache(); if(cached?.length){gluefulExternalJobs=cached;updateJobsSourceNote(`Verified jobs · cached ${cached.length} · refreshing live sources…`);} }
-      const enabled=Object.values(JOB_PROVIDERS).filter(p=>p.enabled);
-      if(!enabled.length){gluefulExternalJobs=[];gluefulJobsLoading=false;updateJobsProviderStatusNote();return [];}
-      const results=await Promise.all(enabled.map(p=>fetchProviderJobs(p.id,requestId)));
-      if(requestId!==gluefulJobsRequestId) return gluefulExternalJobs;
-      const liveJobs=dedupeVerifiedJobs(results.flat());
-      if(liveJobs.length){gluefulExternalJobs=liveJobs;writeJobProviderCache(liveJobs);}
-      else if(!gluefulExternalJobs.length) gluefulExternalJobs=[];
-      gluefulJobsLoading=false; updateJobsProviderStatusNote();
-      if(!liveJobs.length&&gluefulExternalJobs.length) updateJobsSourceNote(`Live providers unavailable · showing ${gluefulExternalJobs.length} verified cached jobs`);
-      else if(!liveJobs.length) updateJobsSourceNote("No verified jobs returned by the live providers.");
-      else updateJobsSourceNote(`Verified live jobs · ${liveJobs.length}`);
-      return gluefulExternalJobs;
+      // forceRefresh is kept for compatibility with the existing Jobs UI.
+      return loadJobListingsFromSupabase();
     }
 
     function loadJobUIState(){
@@ -9562,6 +9627,8 @@ document.addEventListener("click", (event)=>{
       } else if(view === "jobs") {
         loadJobUIState();
         renderJobs();
+        // Load the real synced Adzuna/Jooble rows from Supabase.
+        refreshJobsFromProvider(false);
       }
 
       window.scrollTo({top:0, behavior:"smooth"});
