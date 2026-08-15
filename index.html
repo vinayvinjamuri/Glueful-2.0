@@ -7838,14 +7838,164 @@
 
     function calculateJobMatch(job,profile){
       if(!profile) return Number(job.match||0);
-      const roleText=String(profile.targetRole||profile.targetRoles||profile.professionalHeadline||"").toLowerCase();
-      const locationText=String(profile.preferredLocations||profile.locations||"").toLowerCase();
-      const skillsText=Array.isArray(profile.skills)?profile.skills.join(" ").toLowerCase():String(profile.skills||"").toLowerCase();
-      const hay=`${job.title} ${job.description} ${job.skills.join(" ")}`.toLowerCase(); let score=0,signals=0;
-      if(roleText) roleText.split(/[,|/]+/).map(x=>x.trim()).filter(Boolean).slice(0,8).forEach(t=>{if(t.length>=2){signals++;if(hay.includes(t))score+=12;}});
-      if(skillsText) skillsText.split(/[,|/]+/).map(x=>x.trim()).filter(Boolean).slice(0,20).forEach(t=>{if(t.length>=2){signals++;if(hay.includes(t))score+=4;}});
-      if(locationText&&locationText.split(/[,|]+/).some(x=>{const t=x.trim();return t&&job.location.toLowerCase().includes(t);})) score+=8;
-      if(!signals) return 0; return Math.max(0,Math.min(99,Math.round(score)));
+
+      const normalizeText = value =>
+        String(value ?? "")
+          .toLowerCase()
+          .replace(/&/g," and ")
+          .replace(/[^a-z0-9+#.\s/-]/g," ")
+          .replace(/\s+/g," ")
+          .trim();
+
+      const listFrom = value => {
+        if(Array.isArray(value)) return value.flatMap(v => String(v ?? "").split(/[,|/]+/));
+        return String(value ?? "").split(/[,|/]+/);
+      };
+
+      const meaningfulTokens = value =>
+        normalizeText(value)
+          .split(/\s+/)
+          .filter(t =>
+            t.length >= 3 &&
+            !new Set([
+              "and","the","for","with","from","your","you","job",
+              "jobs","role","roles","engineer","engineering",
+              "developer","development","senior","junior","lead",
+              "software","work","working","full","time"
+            ]).has(t)
+          );
+
+      const jobText = normalizeText([
+        job.title,
+        job.company,
+        job.location,
+        job.description,
+        ...(Array.isArray(job.skills) ? job.skills : []),
+        ...(Array.isArray(job.requirements) ? job.requirements : []),
+        ...(Array.isArray(job.qualifications) ? job.qualifications : []),
+        ...(Array.isArray(job.preferredQualifications) ? job.preferredQualifications : []),
+        ...(Array.isArray(job.responsibilities) ? job.responsibilities : []),
+        job.education,
+        job.department,
+        job.industry,
+        job.workMode,
+        job.employment,
+        job.experience
+      ].join(" "));
+
+      let score = 0;
+      let hasProfileSignal = false;
+
+      // 1. Target role / headline — strongest signal.
+      const rolePhrases = [
+        ...listFrom(profile.targetRole),
+        ...listFrom(profile.headline)
+      ].map(normalizeText).filter(t => t.length >= 2);
+
+      const roleMatches = rolePhrases.filter(phrase => {
+        if(!phrase) return false;
+        const phraseTokens = meaningfulTokens(phrase);
+        if(!phraseTokens.length) return jobText.includes(phrase);
+        const matched = phraseTokens.filter(token => jobText.includes(token)).length;
+        return jobText.includes(phrase) ||
+          matched >= Math.max(1, Math.ceil(phraseTokens.length * 0.5));
+      });
+
+      if(rolePhrases.length){
+        hasProfileSignal = true;
+        score += Math.min(30, roleMatches.length * 15);
+      }
+
+      // 2. Skills / technologies.
+      const skills = listFrom(profile.skills)
+        .map(normalizeText)
+        .filter(skill => skill.length >= 2)
+        .slice(0,30);
+
+      const matchedSkills = skills.filter(skill => {
+        if(jobText.includes(skill)) return true;
+        const tokens = meaningfulTokens(skill);
+        return tokens.length > 0 && tokens.every(token => jobText.includes(token));
+      });
+
+      if(skills.length){
+        hasProfileSignal = true;
+        score += Math.min(35, matchedSkills.length * 5);
+      }
+
+      // 3. Preferred location.
+      const locations = listFrom(profile.locations)
+        .map(normalizeText)
+        .filter(Boolean);
+
+      if(locations.length){
+        hasProfileSignal = true;
+        const jobLocation = normalizeText(job.location);
+        if(locations.some(location =>
+          jobLocation.includes(location) || location.includes(jobLocation)
+        )){
+          score += 15;
+        }
+      }
+
+      // 4. Work-mode preference.
+      const workMode = normalizeText(profile.workMode);
+      if(workMode && !["any",""].includes(workMode)){
+        hasProfileSignal = true;
+        const jobMode = normalizeText(job.workMode);
+        const remoteMatch = workMode.includes("remote") && jobMode.includes("remote");
+        const hybridMatch = workMode.includes("hybrid") && jobMode.includes("hybrid");
+        const onsiteMatch =
+          (workMode.includes("on-site") || workMode.includes("onsite")) &&
+          (jobMode.includes("on-site") || jobMode.includes("onsite"));
+        if(remoteMatch || hybridMatch || onsiteMatch) score += 8;
+      }
+
+      // 5. Employment preference.
+      const employment = normalizeText(
+        profile.employmentPreference || profile.employment
+      );
+      if(employment && !["any",""].includes(employment)){
+        hasProfileSignal = true;
+        if(normalizeText(job.employment).includes(employment)) score += 5;
+      }
+
+      // 6. Degree / field of study.
+      const educationText = normalizeText(
+        `${profile.degree} ${profile.field}`
+      );
+      if(educationText){
+        hasProfileSignal = true;
+        const educationTokens = meaningfulTokens(educationText);
+        const educationMatches =
+          educationTokens.filter(token => jobText.includes(token)).length;
+        if(
+          educationMatches >=
+          Math.min(2, educationTokens.length)
+        ){
+          score += 5;
+        }
+      }
+
+      // 7. Experience compatibility.
+      const profileExperience = Number.parseFloat(
+        String(profile.experience || "").match(/\d+(?:\.\d+)?/)?.[0] || ""
+      );
+      const jobExperience = Number.parseFloat(
+        String(job.experience || "").match(/\d+(?:\.\d+)?/)?.[0] || ""
+      );
+
+      if(Number.isFinite(profileExperience) && Number.isFinite(jobExperience)){
+        hasProfileSignal = true;
+        if(profileExperience >= jobExperience) score += 5;
+        else if(profileExperience + 1 >= jobExperience) score += 2;
+      }
+
+      // Do not show a fake personalized score when the profile has no
+      // recommendation signals at all.
+      if(!hasProfileSignal) return Number(job.match||0);
+
+      return Math.max(1, Math.min(99, Math.round(score)));
     }
 
     function getActiveJobData(){
