@@ -7674,7 +7674,7 @@
        Design goals:
        - Jobble is removed from the production search path.
        - Glueful never invents, fabricates, or ships demo jobs.
-       - Adzuna + Jooble are queried through Glueful's backend.
+       - Adzuna is queried through the Supabase Edge Function; provider secrets stay server-side.
        - Provider API keys stay server-side; this HTML never contains them.
        - Jobs without a stable ID AND a specific source listing URL are rejected.
        - A specific application URL is required before Glueful shows "Apply".
@@ -7774,10 +7774,19 @@
       const title=String(job.title||job.jobTitle||"").trim();
       const company=String(job.company||job.companyName||"").trim();
       const sourceJobId=String(job.jobId||job.sourceJobId||job.id||job.guid||"").trim();
-      const jobUrl=normalizeJobUrl(job.jobUrl||job.url||job.link||job.sourceUrl||job.listingUrl);
-      const applicationUrl=normalizeJobUrl(job.applicationUrl||job.applyUrl||job.application_url);
+      const sourceListingUrl=normalizeJobUrl(
+        job.sourceListingUrl || job.source_listing_url || job.jobUrl || job.url || job.link || job.sourceUrl || job.listingUrl
+      );
+      const employerJobUrl=normalizeJobUrl(
+        job.employerJobUrl || job.employer_job_url
+      );
+      const applicationUrl=normalizeJobUrl(
+        job.applicationUrl || job.application_url || job.applyUrl
+      );
+      // A provider/source listing URL is required. Employer/application URLs
+      // are optional and are never inferred from a provider redirect.
       // Verified-only: stable ID + company/title + specific source URL are mandatory.
-      if(!title||!company||!sourceJobId||!jobUrl) return null;
+      if(!title||!company||!sourceJobId||!sourceListingUrl) return null;
       const skills=normalizeJobList(job.skills||job.keywords);
       const description=cleanJobHtml(job.description||job.summary||job.snippet||"");
       const location=String(job.location||job.city||job.locationName||"Location not specified").trim();
@@ -7793,7 +7802,14 @@
         skills,description,responsibilities:normalizeJobList(job.responsibilities),requirements:normalizeJobList(job.requirements),
         qualifications:normalizeJobList(job.qualifications),preferredQualifications:normalizeJobList(job.preferredQualifications||job.preferred_qualifications),
         benefits:normalizeJobList(job.benefits),education:String(job.education||"").trim(),department:String(job.department||"").trim(),
-        industry:String(job.industry||"").trim(),jobUrl,applicationUrl,url:jobUrl,canonicalKey,verified:true
+        industry:String(job.industry||"").trim(),
+        jobUrl:sourceListingUrl,
+        sourceListingUrl,
+        employerJobUrl,
+        applicationUrl,
+        url:sourceListingUrl,
+        canonicalKey,
+        verified:true
       };
     }
 
@@ -8048,8 +8064,10 @@
         education: r.education || "",
         department: r.department || "",
         industry: r.industry || "",
-        jobUrl: r.job_url || r.jobUrl || r.url || r.link || r.listing_url || r.listingUrl || r.source_url || r.sourceUrl || "",
+        sourceListingUrl: r.source_listing_url || r.sourceListingUrl || r.job_url || r.jobUrl || r.url || r.link || r.listing_url || r.listingUrl || r.source_url || r.sourceUrl || "",
+        employerJobUrl: r.employer_job_url || r.employerJobUrl || "",
         applicationUrl: r.application_url || r.applicationUrl || r.apply_url || r.applyUrl || "",
+        jobUrl: r.source_listing_url || r.sourceListingUrl || r.job_url || r.jobUrl || r.url || r.link || "",
         sourceName: r.source_name || r.sourceName || providerId,
         source: providerId
       };
@@ -8057,39 +8075,123 @@
       return normalizeExternalJob(mapped, providerId);
     }
 
-    async function loadJobListingsFromSupabase(){
-      gluefulJobsLoading = true;
-      updateJobsSourceNote("Loading real jobs from Supabase…");
+    function buildAdzunaQueriesFromProfile(){
+      const profile=getJobSearchProfile()||{};
+      const input=String(document.getElementById("jobs-search-input")?.value||"").trim();
+      const role=String(profile.targetRole||profile.targetRoles||profile.headline||"").trim();
+      const roleText=role.toLowerCase();
+      const queries=[];
+      const add=q=>{
+        q=String(q||"").trim();
+        if(!q) return;
+        if(!queries.some(x=>x.toLowerCase()===q.toLowerCase())) queries.push(q);
+      };
+
+      if(input) add(input);
+      if(role) add(role);
+
+      if(/hardware|electronics|board|validation|test|silicon|soc/i.test(roleText)){
+        add("hardware validation engineer");
+        add("hardware test engineer");
+        add("SoC validation engineer");
+        add("post silicon validation engineer");
+        add("device validation engineer");
+      }
+      if(/embedded|firmware|software|mcu|rtos|arm/i.test(roleText)){
+        add("embedded software engineer");
+        add("firmware engineer");
+        add("embedded systems engineer");
+        add("embedded test engineer");
+      }
+      if(/pmic|power|battery|bms/i.test(roleText)){
+        add("PMIC validation engineer");
+        add("BMS engineer");
+        add("power electronics engineer");
+      }
+
+      // Useful defaults when the profile is still broad/incomplete.
+      [
+        "embedded engineer",
+        "firmware engineer",
+        "hardware validation engineer",
+        "SoC validation engineer",
+        "post silicon validation engineer",
+        "device validation engineer",
+        "embedded test engineer",
+        "hardware test engineer"
+      ].forEach(add);
+
+      return queries.slice(0,8);
+    }
+
+    async function syncAdzunaJobsFromBackend(){
+      const profile=getJobSearchProfile()||{};
+      const queries=buildAdzunaQueriesFromProfile();
+      const locations=String(
+        profile.preferredLocations||profile.locations||localStorage.getItem("glueful_jsp_locations")||""
+      ).trim();
+
+      console.log("[Glueful Jobs] Syncing Adzuna with queries:",queries,"location:",locations||"anywhere");
 
       try{
-        const { data, error } = await supabaseClient
+        const {data,error}=await supabaseClient.functions.invoke("sync-adzuna-jobs",{
+          body:{
+            country:"in",
+            queries,
+            where:locations,
+            pages:2
+          }
+        });
+        if(error) throw error;
+        console.log("[Glueful Jobs] Adzuna sync result:",data);
+        return data;
+      }catch(error){
+        console.warn("[Glueful Jobs] Adzuna sync failed; using existing verified jobs:",error);
+        return null;
+      }
+    }
+
+    async function loadJobListingsFromSupabase(){
+      gluefulJobsLoading=true;
+      updateJobsSourceNote("Refreshing live jobs…");
+
+      try{
+        const {data,error}=await supabaseClient
           .from("job_listings")
           .select("*")
+          .eq("is_active",true)
+          .order("posted_at",{ascending:false,nullsFirst:false})
           .limit(200);
 
         if(error) throw error;
 
-        const jobs = dedupeVerifiedJobs(
-          (Array.isArray(data) ? data : [])
+        const jobs=dedupeVerifiedJobs(
+          (Array.isArray(data)?data:[])
             .map(normalizeSupabaseJobRow)
             .filter(Boolean)
         );
 
-        gluefulExternalJobs = jobs;
-        gluefulJobsLoading = false;
-        updateJobsSourceNote(`Supabase · ${jobs.length} verified jobs`);
+        gluefulExternalJobs=jobs;
+        gluefulJobsLoading=false;
+        updateJobsSourceNote(`Live jobs · ${jobs.length} verified`);
+        console.log("[Glueful Jobs] Candidate pool:",jobs.length);
         return jobs;
       }catch(error){
-        console.error("[Glueful] job_listings load FAILED:", error);
-        gluefulExternalJobs = [];
-        gluefulJobsLoading = false;
-        updateJobsSourceNote(`Unable to load jobs from Supabase: ${String(error?.message || error)}`);
+        console.error("[Glueful] job_listings load FAILED:",error);
+        gluefulExternalJobs=[];
+        gluefulJobsLoading=false;
+        updateJobsSourceNote(`Unable to load jobs: ${String(error?.message||error)}`);
         return [];
       }
     }
 
     async function ensureJobProviderData(forceRefresh=false){
-      // forceRefresh is kept for compatibility with the existing Jobs UI.
+      // Always refresh the provider on Jobs open/search. The personalized
+      // score is calculated later from the CURRENT profile; only real jobs
+      // are persisted in job_listings.
+      if(forceRefresh || !gluefulExternalJobs.length || true){
+        await syncAdzunaJobsFromBackend();
+      }
       return loadJobListingsFromSupabase();
     }
 
@@ -8290,7 +8392,7 @@
                 </svg>
               </button>
               <button class="job-action" type="button"
-                      onclick="event.stopPropagation();${job.applicationUrl ? `startJobApply('${job.id}')` : `openJobDetails('${job.id}')`}">${job.applicationUrl ? "Apply" : "View"}</button>
+                      onclick="event.stopPropagation();${(job.applicationUrl||job.employerJobUrl) ? `startJobApply('${job.id}')` : `openJobDetails('${job.id}')`}">${job.applicationUrl ? "Apply" : (job.employerJobUrl ? "Company job" : "View")}</button>
             </div>
           </div>
         </article>`;
@@ -8467,6 +8569,7 @@
       const direct = String(
         job.applicationUrl ||
         job.applyUrl ||
+        job.employerJobUrl ||
         ""
       ).trim();
 
@@ -8489,7 +8592,9 @@
       }
 
       const applicationUrl = getJobApplicationUrl(job);
-      const jobPageUrl = String(job.jobUrl || "").trim();
+      const directApplicationUrl = normalizeJobUrl(job.applicationUrl || "");
+      const employerJobUrl = normalizeJobUrl(job.employerJobUrl || "");
+      const jobPageUrl = normalizeJobUrl(job.sourceListingUrl || job.jobUrl || "");
       const sourceLabel = job.sourceName || job.source || "External job source";
 
       const skillsHtml = job.skills?.length
@@ -8568,9 +8673,8 @@
 
           ${!applicationUrl ? `
             <div class="job-apply-missing">
-              A job-specific application URL was not supplied by the source.
-              Glueful will not redirect you to a generic company careers homepage
-              or pretend that it is the correct application page.
+              A direct employer/application URL was not verified for this listing.
+              Glueful will only use an actual employer job URL when one is available.
             </div>` : ""}
         </div>
 
@@ -8580,20 +8684,25 @@
             ${gluefulSavedJobs.has(job.id) ? "Saved" : "Save job"}
           </button>
 
-          ${applicationUrl
+          ${directApplicationUrl
             ? `<button class="primary-btn" type="button"
                  onclick="startJobApply('${esc(job.id)}')">
                  Apply
                </button>`
-            : jobPageUrl
+            : employerJobUrl
               ? `<button class="primary-btn" type="button"
-                   onclick="openExternalJobUrl('${esc(jobPageUrl)}','job listing')">
-                   View original listing
+                   onclick="startJobApply('${esc(job.id)}')">
+                   View company job
                  </button>`
-              : `<button class="primary-btn" type="button" disabled
-                   style="opacity:.5;cursor:not-allowed">
-                   Apply unavailable
-                 </button>`
+              : jobPageUrl
+                ? `<button class="primary-btn" type="button"
+                     onclick="openExternalJobUrl('${esc(jobPageUrl)}','source listing')">
+                     View source listing
+                   </button>`
+                : `<button class="primary-btn" type="button" disabled
+                     style="opacity:.5;cursor:not-allowed">
+                     Link unavailable
+                   </button>`
           }
         </div>`;
 
@@ -8613,12 +8722,18 @@
       // send the candidate to the authoritative application page.
       closeJobDetails();
 
-      const applicationUrl = getJobApplicationUrl(job);
+      const directApplicationUrl = normalizeJobUrl(job.applicationUrl || "");
+      const employerJobUrl = normalizeJobUrl(job.employerJobUrl || "");
+      const sourceListingUrl = normalizeJobUrl(job.sourceListingUrl || job.jobUrl || "");
 
-      if(applicationUrl){
-        openExternalJobUrl(applicationUrl, "application");
+      if(directApplicationUrl){
+        openExternalJobUrl(directApplicationUrl, "application");
+      }else if(employerJobUrl){
+        openExternalJobUrl(employerJobUrl, "company job");
+      }else if(sourceListingUrl){
+        openExternalJobUrl(sourceListingUrl, "source listing");
       }else{
-        showError(`No job-specific application link is available for ${job.company} — ${job.title}.`);
+        showError(`No valid job link is available for ${job.company} — ${job.title}.`);
       }
     }
 
