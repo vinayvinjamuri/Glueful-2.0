@@ -8237,6 +8237,7 @@
         );
 
         gluefulExternalJobs=jobs;
+        writeJobProviderCache(jobs);
         gluefulJobsLoading=false;
         updateJobsSourceNote(`Live jobs · ${jobs.length} verified`);
         console.log("[Glueful Jobs] Candidate pool:",jobs.length);
@@ -8251,13 +8252,36 @@
     }
 
     async function ensureJobProviderData(forceRefresh=false){
-      // Always refresh the provider on Jobs open/search. The personalized
-      // score is calculated later from the CURRENT profile; only real jobs
-      // are persisted in job_listings.
-      if(forceRefresh || !gluefulExternalJobs.length || true){
-        await syncAdzunaJobsFromBackend();
+      /*
+       * FAST PATH:
+       * 1. Read the existing Supabase job pool immediately.
+       * 2. Render it without waiting for the external provider.
+       * 3. Sync Adzuna in the background.
+       * 4. Reload Supabase after the sync completes.
+       *
+       * The old flow waited for sync-adzuna-jobs first, which made the Jobs
+       * screen sit on "Loading job sources…" for 25–30 seconds.
+       */
+      const initialJobs = await loadJobListingsFromSupabase();
+
+      const shouldSync =
+        forceRefresh ||
+        !initialJobs.length;
+
+      if(shouldSync){
+        syncAdzunaJobsFromBackend()
+          .then(async result=>{
+            if(result){
+              await loadJobListingsFromSupabase();
+              renderJobs();
+            }
+          })
+          .catch(error=>{
+            console.warn("[Glueful Jobs] Background provider sync failed:",error);
+          });
       }
-      return loadJobListingsFromSupabase();
+
+      return initialJobs;
     }
 
     function loadJobUIState(){
@@ -8442,8 +8466,7 @@
     function getJobActionLabel(job){
       if(getJobApplicationUrl(job)) return "Apply";
       if(getSafeEmployerJobUrl(job)) return "Company job";
-      if(normalizeJobUrl(job.sourceListingUrl || job.jobUrl || "")) return "View source";
-      return "Link unavailable";
+      return "View job";
     }
 
     function getSafeEmployerJobUrl(job){
@@ -8472,9 +8495,9 @@
 
     function getJobActionHandler(job){
       const id=esc(job.id);
-      if(getJobApplicationUrl(job) || getSafeEmployerJobUrl(job)) return `startJobApply('${id}')`;
-      const source=normalizeJobUrl(job.sourceListingUrl || job.jobUrl || "");
-      if(source) return `openExternalJobUrl('${esc(source)}','source listing')`;
+      if(getJobApplicationUrl(job) || getSafeEmployerJobUrl(job)){
+        return `startJobApply('${id}')`;
+      }
       return `openJobDetails('${id}')`;
     }
 
@@ -8489,11 +8512,29 @@
       return true;
     }
 
+    function hasVerifiedApplyLink(job){
+      return Boolean(
+        getJobApplicationUrl(job) ||
+        getSafeEmployerJobUrl(job)
+      );
+    }
+
     function compareJobsActiveFirst(a,b){
-      const activeDiff=Number(isJobCurrentlyActive(b))-Number(isJobCurrentlyActive(a));
+      // Highest priority: jobs that can actually be applied to.
+      const applyDiff =
+        Number(hasVerifiedApplyLink(b)) -
+        Number(hasVerifiedApplyLink(a));
+      if(applyDiff) return applyDiff;
+
+      // Then keep active jobs above expired/inactive jobs.
+      const activeDiff =
+        Number(isJobCurrentlyActive(b)) -
+        Number(isJobCurrentlyActive(a));
       if(activeDiff) return activeDiff;
+
       const matchDiff=Number(b.match||0)-Number(a.match||0);
       if(matchDiff) return matchDiff;
+
       const aTs=Date.parse(a.postedAt||a.posted_at||"");
       const bTs=Date.parse(b.postedAt||b.posted_at||"");
       if(Number.isFinite(aTs) && Number.isFinite(bTs) && bTs!==aTs) return bTs-aTs;
@@ -8501,8 +8542,16 @@
     }
 
     function compareJobsRecentActiveFirst(a,b){
-      const activeDiff=Number(isJobCurrentlyActive(b))-Number(isJobCurrentlyActive(a));
+      const applyDiff =
+        Number(hasVerifiedApplyLink(b)) -
+        Number(hasVerifiedApplyLink(a));
+      if(applyDiff) return applyDiff;
+
+      const activeDiff =
+        Number(isJobCurrentlyActive(b)) -
+        Number(isJobCurrentlyActive(a));
       if(activeDiff) return activeDiff;
+
       return Number(a.postedDays||999999)-Number(b.postedDays||999999);
     }
 
@@ -8627,28 +8676,34 @@
     }
 
     async function refreshJobsFromProvider(forceRefresh=false){
-      await ensureJobProviderData(forceRefresh);
+      const jobs = await ensureJobProviderData(forceRefresh);
       renderJobs();
+      return jobs;
     }
 
 
     let gluefulJobSearchTimer = null;
 
     function handleJobSearchInput(){
+      /*
+       * Search/filter is local against the already-loaded job pool.
+       * Do NOT call the Adzuna edge function for every keystroke.
+       */
       renderJobs();
-      clearTimeout(gluefulJobSearchTimer);
-
-      if(!Object.values(JOB_PROVIDERS).some(provider=>provider.enabled)) return;
-
-      gluefulJobSearchTimer = setTimeout(()=>{
-        refreshJobsFromProvider(true);
-      }, 500);
     }
 
     function openJobsView(){
       closeProfile();
       document.querySelectorAll(".modal-overlay.open").forEach(m=>m.classList.remove("open"));
       loadJobUIState();
+
+      if(!gluefulExternalJobs.length){
+        const cachedJobs = readJobProviderCache();
+        if(Array.isArray(cachedJobs) && cachedJobs.length){
+          gluefulExternalJobs = cachedJobs;
+          updateJobsSourceNote(`Cached jobs · ${cachedJobs.length}`);
+        }
+      }
 
       const view = document.getElementById("jobs-view");
       if(view) view.style.display = "block";
@@ -8827,7 +8882,6 @@
 
           <div class="job-detail-source">
             Source: ${esc(sourceLabel)}
-            ${jobPageUrl ? ` · Original listing available` : ""}
           </div>
 
           ${!applicationUrl ? `
@@ -8853,15 +8907,10 @@
                    onclick="startJobApply('${esc(job.id)}')">
                    View company job
                  </button>`
-              : jobPageUrl
-                ? `<button class="primary-btn" type="button"
-                     onclick="openExternalJobUrl('${esc(jobPageUrl)}','source listing')">
-                     View source listing
-                   </button>`
-                : `<button class="primary-btn" type="button" disabled
-                     style="opacity:.5;cursor:not-allowed">
-                     Link unavailable
-                   </button>`
+              : `<button class="primary-btn" type="button" disabled
+                   style="opacity:.5;cursor:not-allowed">
+                   Application link unavailable
+                 </button>`
           }
         </div>`;
 
@@ -8883,16 +8932,15 @@
 
       const directApplicationUrl = getJobApplicationUrl(job);
       const employerJobUrl = getSafeEmployerJobUrl(job);
-      const sourceListingUrl = normalizeJobUrl(job.sourceListingUrl || job.jobUrl || "");
 
       if(directApplicationUrl){
         openExternalJobUrl(directApplicationUrl, "application");
       }else if(employerJobUrl){
         openExternalJobUrl(employerJobUrl, "company job");
-      }else if(sourceListingUrl){
-        openExternalJobUrl(sourceListingUrl, "source listing");
       }else{
-        showError(`No valid job link is available for ${job.company} — ${job.title}.`);
+        showError(
+          `No verified employer/application link is available for ${job.company} — ${job.title}.`
+        );
       }
     }
 
