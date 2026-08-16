@@ -2582,7 +2582,9 @@
     }
     .job-match.weak{opacity:.62;}
     .job-card:not(.has-apply-link) .job-apply-button{
-      display:none;
+      display:inline-flex;
+      opacity:.55;
+      cursor:not-allowed;
     }
     .job-action.apply{
       border:0;
@@ -5086,8 +5088,8 @@
       <section class="jobs-section jobs-feed-section">
         <div class="jobs-section-head">
           <div>
-            <div class="jobs-section-title">Apply-ready jobs</div>
-            <div class="jobs-section-note">Verified Apply button · profile fit · experience · newest</div>
+            <div class="jobs-section-title">Matching jobs</div>
+            <div class="jobs-section-note">Profile fit · experience · verified Apply when available · newest</div>
           </div>
           <div class="jobs-section-note" id="jobs-source-note">Loading job sources…</div>
         </div>
