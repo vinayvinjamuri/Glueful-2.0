@@ -8674,22 +8674,19 @@
 
     async function loadMoreJobListings(){
       if(gluefulJobsLoadingMore || !gluefulJobDbHasMore) return;
-      // Keep fetching pages when the current page is mostly jobs without usable
-      // application links. The user should not have to manually hunt for one.
-      let guard=0;
-      do{
-        await loadJobListingsFromSupabase({append:true});
-        guard++;
-        const current=getActiveJobData().filter(jobMatchesFilters).filter(hasVerifiedApplyLink).length;
-        renderJobs();
-        if(current>=12 || !gluefulJobDbHasMore || guard>=5) break;
-      }while(gluefulJobDbHasMore);
+
+      // Load the next database page regardless of whether its jobs have a
+      // verified direct application URL. The feed must show all matching jobs;
+      // Apply availability is displayed per card instead of deciding whether
+      // the job exists in the feed.
+      await loadJobListingsFromSupabase({append:true});
+      renderJobs();
     }
 
     async function ensureJobProviderData(forceRefresh=false){
       /*
        * FAST PATH:
-       * 1. Read only the first 60 verified rows from Supabase.
+       * 1. Read the first database page from Supabase.
        * 2. Render immediately.
        * 3. Sync Adzuna in the background.
        * 4. Pagination continues independently as the user scrolls.
@@ -9173,8 +9170,8 @@
     }
 
     function compareJobsActiveFirst(a,b){
-      // Default feed is optimized for action: jobs the user can actually apply
-      // to first, then strong profile fit, then active/newest.
+      // Default feed prioritizes jobs the user can actually apply to first,
+      // then strong profile fit, then active/newest. All jobs remain visible.
       const applyDiff=Number(hasVerifiedApplyLink(b))-Number(hasVerifiedApplyLink(a));
       if(applyDiff) return applyDiff;
 
@@ -9237,8 +9234,11 @@
             <div class="job-actions">
               <button class="job-action details" type="button"
                       onclick="event.stopPropagation();openJobDetails('${esc(job.id)}')">View details</button>
-              <button class="job-action apply job-apply-button" type="button"
-                      onclick="event.stopPropagation();startJobApply('${esc(job.id)}')">Apply</button>
+              ${applyAvailable
+                ? `<button class="job-action apply job-apply-button" type="button"
+                        onclick="event.stopPropagation();startJobApply('${esc(job.id)}')">Apply</button>`
+                : `<button class="job-action apply job-apply-button" type="button" disabled
+                        title="No verified direct application link is available">Apply unavailable</button>`}
             </div>
           </div>
         </article>`;
@@ -9260,18 +9260,15 @@
     function updateJobFeedStatus(applyReadyCount=0,totalMatchingCount=0){
       const el=document.getElementById("jobs-feed-status");
       if(!el) return;
+
       if(gluefulJobsLoadingMore){
-        el.textContent="Finding more apply-ready jobs…";
+        el.textContent=`${totalMatchingCount} jobs shown · loading more…`;
       }else if(gluefulJobsLoading){
         el.textContent="Loading jobs…";
       }else if(gluefulJobDbHasMore){
-        el.textContent=applyReadyCount
-          ? `${applyReadyCount} apply-ready jobs · more will load as you scroll`
-          : "No apply-ready jobs in this page · loading more…";
+        el.textContent=`${totalMatchingCount} jobs shown · ${applyReadyCount} apply-ready · scroll for more`;
       }else{
-        el.textContent=applyReadyCount
-          ? `${applyReadyCount} apply-ready jobs shown`
-          : "No verified employer/application links are available in the current job pool.";
+        el.textContent=`${totalMatchingCount} jobs shown · ${applyReadyCount} apply-ready`;
       }
     }
 
@@ -9297,19 +9294,22 @@
     }
 
     function renderJobs(){
+      // IMPORTANT: every matching job belongs in the feed. A verified direct
+      // application URL only controls whether the Apply action is available.
+      // It must never control whether the job card is rendered.
       const allJobs=getActiveJobData().filter(jobMatchesFilters);
       const applyReady=allJobs.filter(hasVerifiedApplyLink);
-      const sorted=[...applyReady].sort(compareJobsActiveFirst);
+      const sorted=[...allJobs].sort(compareJobsActiveFirst);
       const feedEl=document.getElementById("jobs-feed-list");
       if(!feedEl) return;
 
       feedEl.innerHTML=sorted.length
         ? sorted.map(job=>jobCard(job)).join("")
         : `<div class="jobs-empty">
-             <strong>${gluefulJobsLoading ? "Finding apply-ready jobs…" : "No apply-ready jobs found"}</strong>
+             <strong>${gluefulJobsLoading ? "Loading jobs…" : "No matching jobs found"}</strong>
              ${gluefulJobsLoading
-               ? "Glueful is loading and checking the current job pool."
-               : "Try another location, role or date filter. Jobs without a verified employer/application link are hidden from the main feed so you never have to hunt for an Apply button."}
+               ? "Glueful is loading the current job pool."
+               : "Try another location, role or date filter."}
            </div>`;
 
       loadCompanyLogos();
