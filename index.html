@@ -2525,6 +2525,252 @@
     .jobs-empty strong{display:block;color:var(--text);margin-bottom:5px}
     .jobs-empty{padding:32px 18px;text-align:center;color:var(--text-muted);border:1px dashed var(--border);border-radius:16px}
     .jobs-empty strong{display:block;color:var(--text);margin-bottom:5px}
+
+    /* =====================================================
+       JOB FEED V13
+       - one continuous feed
+       - no arbitrary 10/20 job caps
+       - apply-link jobs first
+       - fast first page + lazy pagination
+    ====================================================== */
+    .jobs-feed-section{margin-bottom:1rem}
+    .jobs-feed-sentinel{height:2px;width:100%;margin-top:4px}
+    .jobs-feed-status{
+      min-height:22px;
+      padding:8px 4px 16px;
+      text-align:center;
+      color:var(--text-faint);
+      font-size:10px;
+    }
+
+    .job-priority-row{
+      display:flex;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:5px;
+      margin-top:7px;
+    }
+    .job-priority-badge,
+    .job-active-badge,
+    .job-ats-badge{
+      display:inline-flex;
+      align-items:center;
+      min-height:21px;
+      padding:3px 7px;
+      border-radius:999px;
+      font-size:9px;
+      font-weight:850;
+      white-space:nowrap;
+    }
+    .job-priority-badge{
+      color:#fff;
+      background:linear-gradient(135deg,#8B2FE0,#2F6FFF);
+      border:1px solid transparent;
+    }
+    .job-active-badge{
+      color:#61D8A7;
+      background:rgba(97,216,167,.09);
+      border:1px solid rgba(97,216,167,.22);
+    }
+    .job-ats-badge{
+      color:#B497FF;
+      background:rgba(139,47,224,.10);
+      border:1px solid rgba(139,47,224,.20);
+    }
+    .job-match{
+      margin-left:auto;
+    }
+    .job-card:not(.has-apply-link) .job-apply-button{
+      display:none;
+    }
+    .job-action.apply{
+      border:0;
+      background:var(--grad);
+      color:#fff;
+    }
+    .job-action.details{
+      background:transparent;
+    }
+    .job-card .job-actions{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+    }
+    .job-card .job-save{
+      display:none;
+    }
+    .job-card .job-expanded-content{
+      display:block;
+    }
+    .job-card .job-description{
+      -webkit-line-clamp:4;
+    }
+    .job-card .job-expand-hint{
+      display:none;
+    }
+    .job-company-domain-note{
+      color:var(--text-faint);
+      font-size:9px;
+      margin-top:3px;
+    }
+
+    /* Consistent company-logo geometry. Unknown companies deliberately
+       use initials instead of a guessed logo, preventing mismatched brands. */
+    .job-logo{
+      width:46px !important;
+      height:46px !important;
+      min-width:46px !important;
+      min-height:46px !important;
+      border-radius:13px !important;
+      padding:0 !important;
+      background:#F5F7FB !important;
+      border:1px solid var(--border);
+      overflow:hidden;
+      display:flex !important;
+      align-items:center;
+      justify-content:center;
+    }
+    .job-logo-image{
+      width:100% !important;
+      height:100% !important;
+      max-width:100% !important;
+      max-height:100% !important;
+      object-fit:contain !important;
+      object-position:center !important;
+      padding:4px !important;
+      background:#fff !important;
+      border-radius:12px !important;
+      display:block;
+    }
+    .job-logo-fallback{
+      width:100%;
+      height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:2px;
+      color:#1B2130;
+      background:#F5F7FB;
+      font-family:'Space Grotesk',sans-serif;
+      font-size:15px;
+      font-weight:800;
+      text-align:center;
+    }
+
+    /* Job-specific resume editor */
+    .job-resume-editor-card{
+      max-height:94vh;
+      overflow:hidden;
+    }
+    .job-resume-editor-scroll{
+      overflow-y:auto;
+      padding:16px;
+      -webkit-overflow-scrolling:touch;
+    }
+    .job-resume-editor-job{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:11px;
+      border:1px solid var(--border);
+      border-radius:13px;
+      background:var(--surface);
+    }
+    .job-resume-editor-job-copy{min-width:0}
+    .job-resume-editor-job-title{
+      color:var(--text);
+      font-size:13px;
+      font-weight:850;
+      line-height:1.3;
+    }
+    .job-resume-editor-job-company{
+      margin-top:3px;
+      color:var(--text-muted);
+      font-size:10.5px;
+    }
+    .job-ats-editor-panel{
+      margin-top:12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:12px;
+      border-radius:13px;
+      background:rgba(109,59,232,.09);
+      border:1px solid rgba(109,59,232,.20);
+    }
+    .job-ats-editor-label{
+      color:var(--text-faint);
+      font-size:9px;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      font-weight:800;
+    }
+    .job-ats-editor-score{
+      margin-top:2px;
+      color:#B497FF;
+      font-family:'JetBrains Mono',monospace;
+      font-size:24px;
+      font-weight:800;
+    }
+    .job-ats-editor-note{
+      max-width:230px;
+      color:var(--text-muted);
+      font-size:10px;
+      line-height:1.45;
+      text-align:right;
+    }
+    .job-resume-master-note{
+      display:flex;
+      flex-direction:column;
+      gap:3px;
+      margin-top:12px;
+      padding:10px 11px;
+      border:1px solid var(--border);
+      border-radius:11px;
+      background:var(--surface);
+      color:var(--text-muted);
+      font-size:10px;
+      line-height:1.45;
+    }
+    .job-resume-master-note strong{color:var(--text)}
+    .job-resume-editor-text{
+      width:100%;
+      min-height:55vh;
+      margin-top:12px;
+      resize:vertical;
+      border:1px solid var(--border);
+      border-radius:13px;
+      background:var(--bg);
+      color:var(--text);
+      padding:13px;
+      font-family:'Inter',sans-serif;
+      font-size:12px;
+      line-height:1.6;
+    }
+    .job-resume-editor-actions{
+      flex:0 0 auto;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+      padding:10px 16px max(12px, env(safe-area-inset-bottom));
+      border-top:1px solid var(--border);
+      background:var(--card);
+    }
+    .job-resume-editor-actions button{
+      min-height:42px;
+      border-radius:10px;
+      font-size:11px;
+      font-weight:800;
+    }
+    .job-resume-apply-btn{
+      grid-column:1 / -1;
+    }
+    @media(max-width:600px){
+      .job-ats-editor-panel{align-items:flex-start}
+      .job-ats-editor-note{max-width:180px}
+      .job-resume-editor-text{min-height:50vh}
+    }
+
     .job-filter-sheet .modal-card{max-height:88vh;overflow:auto}
     .job-filter-grid{display:grid;gap:13px}
     .job-filter-label{font-size:11px;font-weight:800;color:var(--text);margin-bottom:6px}
@@ -4807,7 +5053,9 @@
 
   
   <!-- =====================================================
-       JOB SEARCH VIEW — UI layout only; no mock job records are used
+       JOB SEARCH VIEW — real jobs only, one continuous feed
+       Apply-link jobs are ranked first. The feed keeps loading
+       additional real rows as the user scrolls.
   ====================================================== -->
   <section id="jobs-view" class="app-view" style="display:none;">
     <div class="jobs-page">
@@ -4834,20 +5082,17 @@
                oninput="handleJobSearchInput()">
       </div>
 
-      <section class="jobs-section">
+      <section class="jobs-section jobs-feed-section">
         <div class="jobs-section-head">
-          <div class="jobs-section-title">Recommended for you</div>
-          <div class="jobs-section-note" id="jobs-profile-note">Matched to your profile</div>
-        </div>
-        <div id="jobs-recommended-list" class="jobs-list"></div>
-      </section>
-
-      <section class="jobs-section">
-        <div class="jobs-section-head">
-          <div class="jobs-section-title">Recently posted</div>
+          <div>
+            <div class="jobs-section-title">All matching jobs</div>
+            <div class="jobs-section-note">Apply links first · match score · location · newest</div>
+          </div>
           <div class="jobs-section-note" id="jobs-source-note">Loading job sources…</div>
         </div>
-        <div id="jobs-recent-list" class="jobs-list"></div>
+        <div id="jobs-feed-list" class="jobs-list"></div>
+        <div id="jobs-feed-sentinel" class="jobs-feed-sentinel" aria-hidden="true"></div>
+        <div id="jobs-feed-status" class="jobs-feed-status"></div>
       </section>
     </div>
   </section>
@@ -4903,6 +5148,49 @@
         <button class="icon-btn" type="button" onclick="closeJobDetails()" aria-label="Close">×</button>
       </div>
       <div id="job-detail-content"></div>
+    </div>
+  </div>
+
+  <!-- Job-specific resume editor -->
+  <div id="job-resume-editor-modal" class="modal-overlay" onclick="if(event.target===this) closeJobResumeEditor()">
+    <div class="modal-card job-resume-editor-card">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">Tailor resume for this job</div>
+          <div id="job-resume-editor-subtitle" class="modal-subtitle">Your master resume is never changed.</div>
+        </div>
+        <button class="icon-btn" type="button" onclick="closeJobResumeEditor()" aria-label="Close">×</button>
+      </div>
+
+      <div class="job-resume-editor-scroll">
+        <div id="job-resume-editor-job" class="job-resume-editor-job"></div>
+
+        <div class="job-ats-editor-panel">
+          <div>
+            <div class="job-ats-editor-label">ATS score</div>
+            <div id="job-resume-editor-ats" class="job-ats-editor-score">—</div>
+          </div>
+          <div id="job-resume-editor-ats-note" class="job-ats-editor-note">
+            Edit the resume below and the score updates instantly.
+          </div>
+        </div>
+
+        <div class="job-resume-master-note">
+          <strong>Master resume protected</strong>
+          <span>This is a job-specific copy. Saving it will not replace the resume uploaded in Candidate Profile.</span>
+        </div>
+
+        <textarea id="job-resume-editor-text" class="job-resume-editor-text"
+                  spellcheck="true"
+                  placeholder="Your Candidate Profile resume will appear here…"></textarea>
+      </div>
+
+      <div class="job-resume-editor-actions">
+        <button class="secondary-btn" type="button" onclick="resetJobResumeToMaster()">Reset to master</button>
+        <button class="secondary-btn" type="button" onclick="downloadJobResumeVariant()">Download .txt</button>
+        <button class="primary-btn" type="button" onclick="saveJobResumeVariant()">Save tailored resume</button>
+        <button class="primary-btn job-resume-apply-btn" type="button" onclick="applyFromJobResumeEditor()">Apply</button>
+      </div>
     </div>
   </div>
 
@@ -6784,6 +7072,7 @@
 
         candidateResumeFile = null;
         candidateResumeText = '';
+        gluefulMasterResumeText = '';
         candidateResumePreviewHtml = '';
         candidateResumePersisted = null;
         candidateResumeCloudMeta = null;
@@ -6835,6 +7124,7 @@
 
       try {
         candidateResumeText = await extractResumeText(file);
+        gluefulMasterResumeText = candidateResumeText || '';
         if(!candidateResumeText.trim()) throw new Error('No readable text found.');
         if(file.name.toLowerCase().endsWith('.docx') && window.mammoth) {
           try {
@@ -7716,6 +8006,7 @@
     const GLUEFUL_JOB_CACHE_KEY = "glueful_verified_job_cache_v3";
     const GLUEFUL_JOB_CACHE_TTL_MS = 5 * 60 * 1000;
     const GLUEFUL_JOB_MAX_RESULTS_PER_PROVIDER = 50;
+    const GLUEFUL_JOB_PROVIDER_SYNC_PAGES = 10;
 
     const GLUEFUL_JOB_API_BASE =
       String(window.GLUEFUL_JOB_API_BASE || "").replace(/\/+$/, "");
@@ -7741,8 +8032,18 @@
 
     let gluefulExternalJobs = [];
     let gluefulJobsLoading = false;
+    let gluefulJobsLoadingMore = false;
     let gluefulJobsRequestId = 0;
     let gluefulJobProviderStatus = {};
+    let gluefulJobDbOffset = 0;
+    let gluefulJobDbHasMore = true;
+    const GLUEFUL_JOB_PAGE_SIZE = 60;
+
+    let gluefulMasterResumeText = "";
+    let gluefulMasterResumeLoading = false;
+    let gluefulJobResumeEditorId = null;
+    const GLUEFUL_JOB_RESUME_VARIANTS_KEY = "glueful_job_resume_variants_v1";
+    let gluefulJobResumeVariants = {};
 
     const GLUEFUL_JOB_FILTERS_DEFAULT = {
       date:"any", mode:"any", experience:"any", employment:"any",
@@ -7839,9 +8140,27 @@
       const employment=String(job.employment||job.employmentType||job.type||"Any").trim();
       const experience=String(job.experience||job.experienceLevel||"Any").trim();
       const canonicalKey=[company,title,location].map(x=>x.toLowerCase().replace(/[^a-z0-9]+/g," ").trim()).join("|");
+      let companyDomain = String(
+        job.companyDomain ||
+        job.company_domain ||
+        job.employerDomain ||
+        job.employer_domain ||
+        job.companyWebsiteDomain ||
+        job.company_website_domain ||
+        ""
+      ).trim();
+      if(companyDomain){
+        try{
+          companyDomain = new URL(
+            /^https?:\/\//i.test(companyDomain) ? companyDomain : `https://${companyDomain}`
+          ).hostname.toLowerCase().replace(/^www\./,"");
+        }catch(e){
+          companyDomain = companyDomain.replace(/^https?:\/\//i,"").split("/")[0].replace(/^www\./,"").trim();
+        }
+      }
       return {
         id:`${providerId}:${sourceJobId}`,sourceJobId,source:providerId,sourceName:String(job.sourceName||provider.name||providerId).trim(),
-        title,company,location,workMode,employment,experience,
+        title,company,companyDomain,location,workMode,employment,experience,
         postedAt:job.postedAt||job.posted_at||job.datePosted||job.updated||"",postedDays:normalizeJobDate(job),
         salary:String(job.salary||job.pay||job.salaryRange||"").trim(),match:Math.max(0,Math.min(100,Number(job.match||job.matchScore||0)||0)),
         skills,description,responsibilities:normalizeJobList(job.responsibilities),requirements:normalizeJobList(job.requirements),
@@ -7899,7 +8218,7 @@
         return dedupeVerifiedJobs(cached.jobs.map(j=>normalizeExternalJob(j,j.source||"")).filter(Boolean));
       }catch(e){ return null; }
     }
-    function writeJobProviderCache(jobs){ try{ localStorage.setItem(GLUEFUL_JOB_CACHE_KEY,JSON.stringify({timestamp:Date.now(),jobs:dedupeVerifiedJobs(jobs).slice(0,200)})); }catch(e){} }
+    function writeJobProviderCache(jobs){ try{ localStorage.setItem(GLUEFUL_JOB_CACHE_KEY,JSON.stringify({timestamp:Date.now(),jobs:dedupeVerifiedJobs(jobs).slice(0,1000)})); }catch(e){} }
 
     function getConfiguredJobSourceLabel(){
       const enabled=Object.values(JOB_PROVIDERS).filter(p=>p.enabled);
@@ -8105,6 +8424,7 @@
         sourceJobId: r.external_job_id || r.externalJobId || r.job_id || r.jobId || r.id,
         title: r.title || r.job_title || r.jobTitle || r.position || "",
         company: r.company || r.company_name || r.companyName || r.employer || "",
+        companyDomain: r.company_domain || r.companyDomain || r.employer_domain || r.employerDomain || r.company_website_domain || r.companyWebsiteDomain || "",
         location: r.location || r.location_name || r.locationName || r.city || "Location not specified",
         workMode: r.work_mode || r.workMode || r.remote_type || r.remoteType || r.remote || "Any",
         employment: r.employment || r.employment_type || r.employmentType || r.type || "Any",
@@ -8204,7 +8524,7 @@
             country:"in",
             queries,
             where:locations,
-            pages:2
+            pages:GLUEFUL_JOB_PROVIDER_SYNC_PAGES
           }
         });
         if(error) throw error;
@@ -8216,63 +8536,147 @@
       }
     }
 
-    async function loadJobListingsFromSupabase(){
-      gluefulJobsLoading=true;
-      updateJobsSourceNote("Refreshing live jobs…");
+    function resetJobFeedState(){
+      gluefulExternalJobs = [];
+      gluefulJobDbOffset = 0;
+      gluefulJobDbHasMore = true;
+      gluefulJobsLoading = false;
+      gluefulJobsLoadingMore = false;
+    }
+
+    function mergeJobRowsIntoFeed(rows){
+      const incoming = (Array.isArray(rows) ? rows : [])
+        .map(normalizeSupabaseJobRow)
+        .filter(Boolean);
+
+      gluefulExternalJobs = dedupeVerifiedJobs([
+        ...gluefulExternalJobs,
+        ...incoming
+      ]);
+
+      writeJobProviderCache(gluefulExternalJobs);
+      return incoming.length;
+    }
+
+    async function loadJobListingsFromSupabase({append=false, silent=false} = {}){
+      if(append){
+        if(gluefulJobsLoadingMore || !gluefulJobDbHasMore) return gluefulExternalJobs;
+        gluefulJobsLoadingMore = true;
+      }else{
+        if(gluefulJobsLoading) return gluefulExternalJobs;
+        gluefulJobsLoading = true;
+      }
+
+      const requestId = ++gluefulJobsRequestId;
+      if(!silent) updateJobsSourceNote(append ? "Loading more jobs…" : "Loading jobs…");
 
       try{
-        const {data,error}=await supabaseClient
+        const from = append ? gluefulJobDbOffset : 0;
+        const to = from + GLUEFUL_JOB_PAGE_SIZE - 1;
+
+        const {data,error} = await supabaseClient
           .from("job_listings")
           .select("*")
           .order("is_active",{ascending:false,nullsFirst:false})
           .order("posted_at",{ascending:false,nullsFirst:false})
-          .limit(500);
+          .range(from,to);
 
         if(error) throw error;
+        if(requestId !== gluefulJobsRequestId) return gluefulExternalJobs;
 
-        const jobs=dedupeVerifiedJobs(
-          (Array.isArray(data)?data:[])
-            .map(normalizeSupabaseJobRow)
-            .filter(Boolean)
-        );
+        const rows = Array.isArray(data) ? data : [];
+        if(!append){
+          gluefulExternalJobs = [];
+          gluefulJobDbOffset = 0;
+        }
 
-        gluefulExternalJobs=jobs;
-        writeJobProviderCache(jobs);
-        gluefulJobsLoading=false;
-        updateJobsSourceNote(`Live jobs · ${jobs.length} verified`);
-        console.log("[Glueful Jobs] Candidate pool:",jobs.length);
-        return jobs;
+        mergeJobRowsIntoFeed(rows);
+        gluefulJobDbOffset = from + rows.length;
+        gluefulJobDbHasMore = rows.length === GLUEFUL_JOB_PAGE_SIZE;
+
+        const label = gluefulJobDbHasMore ? "scroll for more" : "all available jobs loaded";
+        updateJobsSourceNote(`Live jobs · ${gluefulExternalJobs.length} loaded · ${label}`);
+        console.log("[Glueful Jobs] Loaded page:", {
+          append,
+          rows:rows.length,
+          total:gluefulExternalJobs.length,
+          hasMore:gluefulJobDbHasMore
+        });
+
+        return gluefulExternalJobs;
       }catch(error){
         console.error("[Glueful] job_listings load FAILED:",error);
-        gluefulExternalJobs=[];
-        gluefulJobsLoading=false;
-        updateJobsSourceNote(`Unable to load jobs: ${String(error?.message||error)}`);
-        return [];
+        if(!append && !gluefulExternalJobs.length){
+          updateJobsSourceNote(`Unable to load jobs: ${String(error?.message||error)}`);
+        }else{
+          updateJobsSourceNote(`Live jobs · ${gluefulExternalJobs.length} loaded`);
+        }
+        return gluefulExternalJobs;
+      }finally{
+        if(append) gluefulJobsLoadingMore = false;
+        else gluefulJobsLoading = false;
+        updateJobFeedStatus();
       }
+    }
+
+    async function loadMoreJobListings(){
+      if(gluefulJobsLoadingMore || !gluefulJobDbHasMore) return;
+      await loadJobListingsFromSupabase({append:true});
+      renderJobs();
+      if(gluefulJobDbHasMore) observeJobsFeedSentinel();
     }
 
     async function ensureJobProviderData(forceRefresh=false){
       /*
        * FAST PATH:
-       * 1. Read the existing Supabase job pool immediately.
-       * 2. Render it without waiting for the external provider.
+       * 1. Read only the first 60 verified rows from Supabase.
+       * 2. Render immediately.
        * 3. Sync Adzuna in the background.
-       * 4. Reload Supabase after the sync completes.
+       * 4. Pagination continues independently as the user scrolls.
        *
-       * The old flow waited for sync-adzuna-jobs first, which made the Jobs
-       * screen sit on "Loading job sources…" for 25–30 seconds.
+       * No provider request is allowed to block the first screen.
        */
-      const initialJobs = await loadJobListingsFromSupabase();
+      if(forceRefresh){
+        ++gluefulJobsRequestId;
+        resetJobFeedState();
+      }
 
-      const shouldSync =
-        forceRefresh ||
-        !initialJobs.length;
+      let usedCache = false;
+
+      if(!gluefulExternalJobs.length){
+        const cachedJobs = readJobProviderCache();
+        if(cachedJobs?.length){
+          gluefulExternalJobs = cachedJobs;
+          gluefulJobDbOffset = 0;
+          gluefulJobDbHasMore = true;
+          usedCache = true;
+          updateJobsSourceNote(`Cached jobs · ${cachedJobs.length} available · refreshing in background`);
+        }
+      }
+
+      const initialJobs = gluefulExternalJobs.length
+        ? gluefulExternalJobs
+        : await loadJobListingsFromSupabase();
+
+      // Cache is only a paint-fast fallback. Always refresh the first database
+      // page in the background when cache was used.
+      if(usedCache){
+        loadJobListingsFromSupabase({silent:true})
+          .then(()=>renderJobs())
+          .catch(error=>console.warn("[Glueful Jobs] Cached feed refresh failed:",error));
+      }
+
+      const shouldSync = forceRefresh || !initialJobs.length;
 
       if(shouldSync){
         syncAdzunaJobsFromBackend()
           .then(async result=>{
             if(result){
-              await loadJobListingsFromSupabase();
+              // The sync writes real provider rows to Supabase. Reload only
+              // the first page so the newest jobs become visible immediately.
+              ++gluefulJobsRequestId;
+              resetJobFeedState();
+              await loadJobListingsFromSupabase({silent:true});
               renderJobs();
             }
           })
@@ -8319,6 +8723,187 @@
         console.warn("[Glueful] getJobSearchProfile failed, falling back to empty profile:", e);
         return normalizeCandidateProfile({});
       }
+    }
+
+    function getJobResumeVariantsStorageKey(){
+      const userId = window.__gluefulCurrentUser?.id || "anonymous";
+      return `${GLUEFUL_JOB_RESUME_VARIANTS_KEY}_${userId}`;
+    }
+
+    function loadJobResumeVariants(){
+      try{
+        const raw = JSON.parse(localStorage.getItem(getJobResumeVariantsStorageKey()) || "{}");
+        gluefulJobResumeVariants = raw && typeof raw === "object" ? raw : {};
+      }catch(e){
+        gluefulJobResumeVariants = {};
+      }
+    }
+
+    function saveJobResumeVariants(){
+      try{
+        localStorage.setItem(
+          getJobResumeVariantsStorageKey(),
+          JSON.stringify(gluefulJobResumeVariants)
+        );
+      }catch(e){
+        console.warn("[Glueful Jobs] Could not persist tailored resume variants:",e);
+      }
+    }
+
+    function getJobResumeVariant(job){
+      if(!job) return "";
+      const variant = gluefulJobResumeVariants[String(job.id)];
+      return typeof variant === "string" ? variant : "";
+    }
+
+    function buildProfileResumeFallback(){
+      const profile = getJobSearchProfile() || {};
+      const parts = [
+        profile.name,
+        profile.headline,
+        profile.targetRole,
+        profile.about,
+        profile.skills,
+        profile.experience,
+        profile.degree,
+        profile.field,
+        profile.certifications,
+        profile.portfolio
+      ].filter(v=>String(v||"").trim());
+      return parts.join("\n");
+    }
+
+    async function ensureMasterResumeText(){
+      if(gluefulMasterResumeText.trim()) return gluefulMasterResumeText;
+      if(gluefulMasterResumeLoading) return "";
+
+      gluefulMasterResumeLoading = true;
+      try{
+        // Resume source of truth is Candidate Profile / Supabase Storage.
+        // This is loaded lazily so opening Jobs is never blocked by a large PDF.
+        const profile = getJobSearchProfile() || {};
+        if(typeof loadCandidateResumeCloudMetadata === "function"){
+          await loadCandidateResumeCloudMetadata(profile);
+        }
+
+        let file = null;
+        if(typeof ensureCandidateResumeCloudFile === "function"){
+          file = await ensureCandidateResumeCloudFile();
+        }
+
+        if(!file && typeof loadCandidateResumeFromDevice === "function"){
+          try{ file = await loadCandidateResumeFromDevice(); }catch(e){}
+        }
+
+        if(file && typeof extractResumeText === "function"){
+          const extracted = await extractResumeText(file);
+          if(String(extracted||"").trim()){
+            gluefulMasterResumeText = String(extracted).trim();
+            candidateResumeText = gluefulMasterResumeText;
+            return gluefulMasterResumeText;
+          }
+        }
+
+        // If the actual resume file cannot be read yet, do not overwrite the
+        // master resume. The profile fields are only a temporary ATS fallback.
+        return "";
+      }finally{
+        gluefulMasterResumeLoading = false;
+      }
+    }
+
+    function atsNormalize(value){
+      return String(value ?? "")
+        .toLowerCase()
+        .replace(/&/g," and ")
+        .replace(/[^a-z0-9+#.\s/-]/g," ")
+        .replace(/\s+/g," ")
+        .trim();
+    }
+
+    function atsTokens(value){
+      return atsNormalize(value)
+        .split(/\s+/)
+        .filter(token =>
+          token.length >= 3 &&
+          ![
+            "and","the","for","with","from","your","you","job","jobs","role",
+            "roles","engineer","engineering","developer","development","senior",
+            "junior","lead","software","work","working","full","time","years",
+            "year","team","teams","using","use","including","required","preferred",
+            "responsibilities","requirements","qualifications","experience"
+          ].includes(token)
+        );
+    }
+
+    function calculateJobAtsScore(job,resumeText){
+      const resume = atsNormalize(resumeText);
+      if(!resume) return null;
+
+      const explicitSkills = (job.skills || [])
+        .flatMap(value => String(value||"").split(/[,|/]+/))
+        .map(atsNormalize)
+        .filter(x=>x.length >= 2);
+
+      const jobRoleTokens = atsTokens(job.title);
+      const requirementTokens = atsTokens([
+        ...(job.requirements || []),
+        ...(job.qualifications || []),
+        ...(job.preferredQualifications || [])
+      ].join(" "));
+
+      const jdTokens = atsTokens([
+        job.title, job.description,
+        ...(job.skills || []),
+        ...(job.requirements || []),
+        ...(job.qualifications || []),
+        ...(job.responsibilities || []),
+        job.education, job.experience
+      ].join(" "));
+
+      let score = 0;
+
+      // Explicit skills are the strongest ATS signal.
+      if(explicitSkills.length){
+        const hits = explicitSkills.filter(skill=>{
+          if(resume.includes(skill)) return true;
+          const parts = atsTokens(skill);
+          return parts.length > 0 && parts.every(token=>resume.includes(token));
+        }).length;
+        score += (hits / explicitSkills.length) * 50;
+      }else{
+        const uniqueJd = [...new Set(jdTokens)].slice(0,80);
+        const hits = uniqueJd.filter(token=>resume.includes(token)).length;
+        score += uniqueJd.length ? (hits / uniqueJd.length) * 50 : 0;
+      }
+
+      // Role/title alignment.
+      if(jobRoleTokens.length){
+        const hits = jobRoleTokens.filter(token=>resume.includes(token)).length;
+        score += (hits / jobRoleTokens.length) * 20;
+      }
+
+      // Requirements/qualifications coverage.
+      if(requirementTokens.length){
+        const uniqueReq = [...new Set(requirementTokens)].slice(0,50);
+        const hits = uniqueReq.filter(token=>resume.includes(token)).length;
+        score += (hits / uniqueReq.length) * 20;
+      }
+
+      // Experience / education evidence.
+      const experienceYears = String(job.experience || "").match(/\d+(?:\.\d+)?/);
+      if(experienceYears){
+        const requested = Number(experienceYears[0]);
+        const resumeYears = String(resumeText||"").match(/(?:\b|^)(\d+(?:\.\d+)?)\+?\s*(?:years|yrs)/i);
+        if(resumeYears){
+          score += Number(resumeYears[1]) >= requested ? 5 : 2;
+        }
+      }
+
+      const educationText = atsNormalize(`${job.education||""}`);
+      if(educationText && resume.includes(educationText)) score += 5;
+
+      return Math.max(0,Math.min(99,Math.round(score)));
     }
 
     function jobMatchesFilters(job){
@@ -8403,8 +8988,21 @@
      * clean initials fallback and then loadCompanyLogos() upgrades it
      * to the real Brandfetch logo.
      */
-    function getJobBrandfetchLogoUrl(company){
-      const domain = getCompanyDomain(company);
+    function getJobCompanyDomain(job){
+      const direct = String(job?.companyDomain || "").trim().toLowerCase().replace(/^www\./,"");
+      if(direct && direct.includes(".")) return direct;
+
+      const mapped = getCompanyDomain(job?.company || "");
+      if(mapped) return mapped;
+
+      // Do NOT derive a logo from an arbitrary application URL. Many employers
+      // use Greenhouse/Workday/Lever and that would show the ATS vendor logo.
+      // For unknown companies, initials are safer than a mismatched logo.
+      return "";
+    }
+
+    function getJobBrandfetchLogoUrl(job){
+      const domain = getJobCompanyDomain(job);
       if(!domain) return "";
 
       const client = encodeURIComponent(BRANDFETCH_CLIENT_ID);
@@ -8414,9 +9012,10 @@
     function renderCompanyLogo(job){
       const initials = esc(jobInitials(job.company));
       const company = esc(job.company);
-      const logoUrl = getJobBrandfetchLogoUrl(job.company);
+      const domain = getJobCompanyDomain(job);
+      const logoUrl = getJobBrandfetchLogoUrl(job);
 
-      return `<div class="job-logo" data-company-logo="${company}">
+      return `<div class="job-logo" data-company-logo="${company}" data-company-domain="${esc(domain)}" data-job-logo="true">
         <img class="job-logo-image"
              src="${esc(logoUrl)}"
              alt="${company} logo"
@@ -8463,12 +9062,6 @@
       }
     }
 
-    function getJobActionLabel(job){
-      if(getJobApplicationUrl(job)) return "Apply";
-      if(getSafeEmployerJobUrl(job)) return "Company job";
-      return "View job";
-    }
-
     function getSafeEmployerJobUrl(job){
       const employer=normalizeJobUrl(job?.employerJobUrl || "");
       if(!employer) return "";
@@ -8493,12 +9086,8 @@
       }
     }
 
-    function getJobActionHandler(job){
-      const id=esc(job.id);
-      if(getJobApplicationUrl(job) || getSafeEmployerJobUrl(job)){
-        return `startJobApply('${id}')`;
-      }
-      return `openJobDetails('${id}')`;
+    function getJobActionLabel(job){
+      return hasVerifiedApplyLink(job) ? "Apply" : "";
     }
 
     function isJobCurrentlyActive(job){
@@ -8513,89 +9102,87 @@
     }
 
     function hasVerifiedApplyLink(job){
-      return Boolean(
-        getJobApplicationUrl(job) ||
-        getSafeEmployerJobUrl(job)
-      );
+      // IMPORTANT: sourceListingUrl is intentionally NOT accepted.
+      // Glueful never sends a user to Adzuna/Jooble just because a listing
+      // exists there. Only a verified employer/application URL can drive Apply.
+      return Boolean(getJobApplicationUrl(job));
     }
 
     function compareJobsActiveFirst(a,b){
-      // Highest priority: jobs that can actually be applied to.
+      // 1. A real application URL always wins.
       const applyDiff =
         Number(hasVerifiedApplyLink(b)) -
         Number(hasVerifiedApplyLink(a));
       if(applyDiff) return applyDiff;
 
-      // Then keep active jobs above expired/inactive jobs.
+      // 2. Active jobs stay above expired/inactive jobs.
       const activeDiff =
         Number(isJobCurrentlyActive(b)) -
         Number(isJobCurrentlyActive(a));
       if(activeDiff) return activeDiff;
 
+      // 3. Best profile match next.
       const matchDiff=Number(b.match||0)-Number(a.match||0);
       if(matchDiff) return matchDiff;
 
+      // 4. Newest jobs next.
       const aTs=Date.parse(a.postedAt||a.posted_at||"");
       const bTs=Date.parse(b.postedAt||b.posted_at||"");
       if(Number.isFinite(aTs) && Number.isFinite(bTs) && bTs!==aTs) return bTs-aTs;
       return Number(a.postedDays||999999)-Number(b.postedDays||999999);
     }
 
-    function compareJobsRecentActiveFirst(a,b){
-      const applyDiff =
-        Number(hasVerifiedApplyLink(b)) -
-        Number(hasVerifiedApplyLink(a));
-      if(applyDiff) return applyDiff;
-
-      const activeDiff =
-        Number(isJobCurrentlyActive(b)) -
-        Number(isJobCurrentlyActive(a));
-      if(activeDiff) return activeDiff;
-
-      return Number(a.postedDays||999999)-Number(b.postedDays||999999);
+    function getJobAtsScore(job){
+      const variant = getJobResumeVariant(job);
+      if(variant.trim()) return calculateJobAtsScore(job,variant);
+      if(!gluefulMasterResumeText.trim()) return null;
+      return calculateJobAtsScore(job,gluefulMasterResumeText);
     }
 
-    function jobCard(job, opts){
-      const showMatch = !opts || opts.showMatch !== false;
-      const saved = gluefulSavedJobs.has(job.id);
-      const skills = job.skills.slice(0,8).map(skill=>`<span class="job-skill">${esc(skill)}</span>`).join("");
-      const expanded = gluefulExpandedJobId === job.id;
+    function jobCard(job){
+      const applyAvailable = hasVerifiedApplyLink(job);
+      const active = isJobCurrentlyActive(job);
+      const ats = getJobAtsScore(job);
+      const skills = (job.skills || []).slice(0,8)
+        .map(skill=>`<span class="job-skill">${esc(skill)}</span>`).join("");
+
       return `
-        <article class="job-card ${expanded ? "expanded" : ""}" data-job-id="${esc(job.id)}"
-                 onclick="handleJobCardClick(event,'${job.id}')">
+        <article class="job-card ${applyAvailable ? "has-apply-link" : ""}" data-job-id="${esc(job.id)}"
+                 onclick="handleJobCardClick(event,'${esc(job.id)}')">
           <div class="job-card-top">
             ${renderCompanyLogo(job)}
             <div class="job-main">
               <div class="job-title">${esc(job.title)}</div>
               <div class="job-company">${esc(job.company)}</div>
+
+              <div class="job-priority-row">
+                ${applyAvailable ? `<span class="job-priority-badge">Apply available</span>` : ""}
+                ${active ? `<span class="job-active-badge">Active</span>` : ""}
+                <span class="job-ats-badge">ATS ${ats === null ? "…" : `${ats}%`}</span>
+                <span class="job-match">${Number(job.match||0)}% Match</span>
+              </div>
+
               <div class="job-meta">
-                <span>${esc(job.location)}</span>
-                <span>${esc(job.workMode)}</span>
+                <span>📍 ${esc(job.location)}</span>
+                ${job.workMode && job.workMode !== "Any" ? `<span>${esc(job.workMode)}</span>` : ""}
+                ${job.employment && job.employment !== "Any" ? `<span>${esc(job.employment)}</span>` : ""}
                 <span>${esc(jobDaysLabel(job.postedDays))}</span>
               </div>
             </div>
-            ${showMatch ? `<span class="job-match">${job.match}%</span>` : ""}
-          </div>
-
-          <div class="job-expand-hint">
-            ${expanded ? "Tap to collapse" : "Tap to view job"}
           </div>
 
           <div class="job-expanded-content">
-            <div class="job-description">${esc(job.description)}</div>
-            <div class="job-skills">${skills}</div>
+            <div class="job-description">${esc(job.description || "Job description not provided by the source.")}</div>
+            ${skills ? `<div class="job-skills">${skills}</div>` : ""}
             <div class="job-actions">
-              <button class="job-action primary" type="button"
-                      onclick="event.stopPropagation();openJobDetails('${job.id}')">View job</button>
-              <button class="job-action ${saved ? "saved" : ""} job-save" type="button"
-                      onclick="event.stopPropagation();toggleSavedJob('${job.id}')"
-                      aria-label="${saved ? "Unsave" : "Save"} job">
-                <svg viewBox="0 0 24 24" fill="${saved ? "currentColor" : "none"}" stroke="currentColor" stroke-width="1.8" width="16" height="16">
-                  <path d="M6 4.5A2.5 2.5 0 0 1 8.5 2h7A2.5 2.5 0 0 1 18 4.5V21l-6-3.5L6 21V4.5Z"/>
-                </svg>
-              </button>
-              <button class="job-action" type="button"
-                      onclick="event.stopPropagation();${getJobActionHandler(job)}">${getJobActionLabel(job)}</button>
+              <button class="job-action details" type="button"
+                      onclick="event.stopPropagation();openJobDetails('${esc(job.id)}')">View details</button>
+              ${applyAvailable
+                ? `<button class="job-action apply job-apply-button" type="button"
+                      onclick="event.stopPropagation();startJobApply('${esc(job.id)}')">Apply</button>`
+                : `<button class="job-action" type="button" disabled
+                      style="opacity:.42;cursor:not-allowed">No verified apply link</button>`
+              }
             </div>
           </div>
         </article>`;
@@ -8612,67 +9199,69 @@
 
     function handleJobCardClick(event,id){
       if(event.target.closest("button,a,input,select,textarea")) return;
-      gluefulExpandedJobId = gluefulExpandedJobId === id ? null : id;
-      renderJobs();
-      requestAnimationFrame(()=>{
-        const card = document.querySelector(`.job-card[data-job-id="${CSS.escape(id)}"]`);
-        if(card && gluefulExpandedJobId === id){
-          card.scrollIntoView({behavior:"smooth",block:"nearest"});
+      openJobDetails(id);
+    }
+
+    function updateJobFeedStatus(){
+      const el = document.getElementById("jobs-feed-status");
+      if(!el) return;
+
+      if(gluefulJobsLoadingMore){
+        el.textContent = "Loading more jobs…";
+      }else if(gluefulJobsLoading){
+        el.textContent = "Loading jobs…";
+      }else if(gluefulJobDbHasMore){
+        el.textContent = "Scroll down to load more jobs";
+      }else{
+        el.textContent = gluefulExternalJobs.length
+          ? "You reached the end of the currently available jobs."
+          : "";
+      }
+    }
+
+    function observeJobsFeedSentinel(){
+      const sentinel = document.getElementById("jobs-feed-sentinel");
+      if(!sentinel) return;
+
+      if(window.__gluefulJobsObserver){
+        try{ window.__gluefulJobsObserver.disconnect(); }catch(e){}
+      }
+
+      window.__gluefulJobsObserver = new IntersectionObserver(entries=>{
+        if(entries.some(entry=>entry.isIntersecting)){
+          loadMoreJobListings();
         }
+      },{
+        root:null,
+        rootMargin:"700px 0px",
+        threshold:0
       });
+
+      window.__gluefulJobsObserver.observe(sentinel);
     }
 
     function renderJobs(){
       const allJobs = getActiveJobData();
       const filtered = allJobs.filter(jobMatchesFilters);
       const sorted = [...filtered].sort(compareJobsActiveFirst);
-      const recent = [...filtered].sort(compareJobsRecentActiveFirst);
+      const feedEl = document.getElementById("jobs-feed-list");
+      if(!feedEl) return;
 
-      const recEl = document.getElementById("jobs-recommended-list");
-      const recentEl = document.getElementById("jobs-recent-list");
-      if(!recEl || !recentEl) return;
-
-      const profile = getJobSearchProfile() || {};
-      const hasProfile = Boolean(
-        String(profile.targetRole || profile.headline || profile.about || "").trim() ||
-        String(profile.skills || "").trim() ||
-        String(profile.locations || "").trim()
-      );
-
-      const recommended = hasProfile
-        ? sorted.filter(job => job.match >= 15).slice(0,10)
-        : [];
-
-      console.log(
-        "Recommended jobs:",
-        recommended.map(j => ({title:j.title, company:j.company, match:j.match}))
-      );
-
-      const profileNoteEl = document.getElementById("jobs-profile-note");
-      if(profileNoteEl) {
-        profileNoteEl.textContent = hasProfile ? "Matched to your profile" : "Add your target role & skills";
-      }
-
-      if(!hasProfile) {
-        recEl.innerHTML = `<div class="jobs-empty"><strong>Complete your Candidate Profile to get personalized recommendations</strong>Add your Target Role and Skills so we can match you to relevant jobs.</div>`;
-      } else {
-        recEl.innerHTML = recommended.length
-          ? recommended.map(job => jobCard(job, {showMatch:true})).join("")
-          : `<div class="jobs-empty"><strong>No strong profile matches yet</strong>Try broadening your Target Role or adding more Skills in Candidate Profile.</div>`;
-      }
-
-      // "Recently posted" is a general discovery feed, not a personalized
-      // list — never show the match % badge here, or it reads as a
-      // recommendation even for jobs unrelated to the candidate's profile.
-      recentEl.innerHTML = recent.length
-        ? recent.slice(0,20).map(job => jobCard(job, {showMatch:false})).join("")
-        : `<div class="jobs-empty"><strong>No recent jobs match your filters</strong>Try another date range.</div>`;
+      feedEl.innerHTML = sorted.length
+        ? sorted.map(job => jobCard(job)).join("")
+        : `<div class="jobs-empty">
+             <strong>${gluefulJobsLoading ? "Loading jobs…" : "No jobs match your filters"}</strong>
+             ${gluefulJobsLoading ? "Your first jobs are loading now." : "Try a broader search, location or date range."}
+           </div>`;
 
       loadCompanyLogos();
+      updateJobFeedStatus();
 
       const active = Object.values(gluefulJobFilters).filter(v=>v && v !== "any").length;
       const label = document.getElementById("jobs-filter-label");
       if(label) label.textContent = active ? `Filter ${active}` : "Filter";
+
+      observeJobsFeedSentinel();
     }
 
     async function refreshJobsFromProvider(forceRefresh=false){
@@ -8685,10 +9274,7 @@
     let gluefulJobSearchTimer = null;
 
     function handleJobSearchInput(){
-      /*
-       * Search/filter is local against the already-loaded job pool.
-       * Do NOT call the Adzuna edge function for every keystroke.
-       */
+      // Search is intentionally local. It never calls Adzuna on every keystroke.
       renderJobs();
     }
 
@@ -8696,14 +9282,7 @@
       closeProfile();
       document.querySelectorAll(".modal-overlay.open").forEach(m=>m.classList.remove("open"));
       loadJobUIState();
-
-      if(!gluefulExternalJobs.length){
-        const cachedJobs = readJobProviderCache();
-        if(Array.isArray(cachedJobs) && cachedJobs.length){
-          gluefulExternalJobs = cachedJobs;
-          updateJobsSourceNote(`Cached jobs · ${cachedJobs.length}`);
-        }
-      }
+      loadJobResumeVariants();
 
       const view = document.getElementById("jobs-view");
       if(view) view.style.display = "block";
@@ -8712,8 +9291,16 @@
       });
 
       renderJobs();
+
+      // These two operations are deliberately independent. The user gets the
+      // first job page immediately; the master resume/ATS data loads in the
+      // background and then upgrades every card's ATS score.
       refreshJobsFromProvider(false);
+      ensureMasterResumeText()
+        .then(()=>renderJobs())
+        .catch(error=>console.warn("[Glueful Jobs] Master resume load failed:",error));
     }
+
 
     function openJobFilters(){
       loadJobUIState();
@@ -8787,6 +9374,10 @@
         ];
         if(providerHosts.some(domain => host===domain || host.endsWith("."+domain))) return "";
 
+        const parsed = new URL(direct);
+        const path = parsed.pathname.replace(/\/+$/,"");
+        if(!path || /^\/(?:careers?|jobs?|job-search|search)$/i.test(path)) return "";
+
         const source=normalizeJobUrl(job?.sourceListingUrl || job?.jobUrl || "");
         if(source){
           const sourceHost=new URL(source).hostname.toLowerCase().replace(/^www\./,"");
@@ -8806,10 +9397,9 @@
       }
 
       const applicationUrl = getJobApplicationUrl(job);
-      const directApplicationUrl = applicationUrl;
-      const employerJobUrl = getSafeEmployerJobUrl(job);
-      const jobPageUrl = normalizeJobUrl(job.sourceListingUrl || job.jobUrl || "");
-      const sourceLabel = job.sourceName || job.source || "External job source";
+      const ats = getJobAtsScore(job);
+      const variantExists = Boolean(getJobResumeVariant(job));
+      const sourceLabel = job.sourceName || job.source || "Verified job source";
 
       const skillsHtml = job.skills?.length
         ? `
@@ -8838,6 +9428,8 @@
               </div>
 
               <div class="job-detail-meta">
+                ${hasVerifiedApplyLink(job) ? `<span class="job-detail-meta-chip" style="color:#62DDB4">✓ Apply link verified</span>` : ""}
+                ${isJobCurrentlyActive(job) ? `<span class="job-detail-meta-chip" style="color:#62DDB4">Active</span>` : `<span class="job-detail-meta-chip">Inactive</span>`}
                 ${job.workMode ? `<span class="job-detail-meta-chip">${esc(job.workMode)}</span>` : ""}
                 ${job.employment ? `<span class="job-detail-meta-chip">${esc(job.employment)}</span>` : ""}
                 ${job.experience ? `<span class="job-detail-meta-chip">${esc(job.experience)}</span>` : ""}
@@ -8851,7 +9443,11 @@
           </div>
 
           <div class="job-match-panel">
-            <strong>${job.match}% Match</strong> — based on your current profile.
+            <div><strong>${Number(job.match||0)}% Match</strong> — based on your current Candidate Profile.</div>
+            <div style="margin-top:5px;color:#B497FF;font-weight:800">
+              ATS ${ats === null ? "…" : `${ats}%`}
+              ${variantExists ? " · tailored resume" : " · master resume"}
+            </div>
           </div>
 
           ${job.description ? `
@@ -8881,36 +9477,31 @@
             </div>` : ""}
 
           <div class="job-detail-source">
-            Source: ${esc(sourceLabel)}
+            Source: ${esc(sourceLabel)} · Job details are displayed inside Glueful.
           </div>
 
           ${!applicationUrl ? `
             <div class="job-apply-missing">
-              A direct employer/application URL was not verified for this listing.
-              Glueful will only use an actual employer job URL when one is available.
+              No verified job-specific application link is available for this listing.
+              Glueful will not send you to an Adzuna/Jooble listing page as a substitute.
             </div>` : ""}
         </div>
 
         <div class="job-detail-actions">
           <button class="secondary-btn" type="button"
-                  onclick="toggleSavedJob('${esc(job.id)}');openJobDetails('${esc(job.id)}')">
-            ${gluefulSavedJobs.has(job.id) ? "Saved" : "Save job"}
+                  onclick="openJobResumeEditor('${esc(job.id)}')">
+            ${variantExists ? "Edit tailored resume" : "Edit resume for this job"}
           </button>
 
-          ${directApplicationUrl
+          ${applicationUrl
             ? `<button class="primary-btn" type="button"
                  onclick="startJobApply('${esc(job.id)}')">
                  Apply
                </button>`
-            : employerJobUrl
-              ? `<button class="primary-btn" type="button"
-                   onclick="startJobApply('${esc(job.id)}')">
-                   View company job
-                 </button>`
-              : `<button class="primary-btn" type="button" disabled
-                   style="opacity:.5;cursor:not-allowed">
-                   Application link unavailable
-                 </button>`
+            : `<button class="primary-btn" type="button" disabled
+                 style="opacity:.45;cursor:not-allowed">
+                 Apply unavailable
+               </button>`
           }
         </div>`;
 
@@ -8926,32 +9517,204 @@
       const job = findActiveJobById(id);
       if(!job) return;
 
-      // Never fake an application submission. For an external listing,
-      // send the candidate to the authoritative application page.
-      closeJobDetails();
-
+      // ONLY a verified job-specific application URL is allowed.
+      // Never fall back to sourceListingUrl, Adzuna, Jooble or a generic
+      // company homepage. This prevents the old 401/403 provider-page flow.
       const directApplicationUrl = getJobApplicationUrl(job);
-      const employerJobUrl = getSafeEmployerJobUrl(job);
 
-      if(directApplicationUrl){
-        openExternalJobUrl(directApplicationUrl, "application");
-      }else if(employerJobUrl){
-        openExternalJobUrl(employerJobUrl, "company job");
-      }else{
+      if(!directApplicationUrl){
         showError(
-          `No verified employer/application link is available for ${job.company} — ${job.title}.`
+          `No verified job-specific application link is available for ${job.company} — ${job.title}.`
         );
+        return;
       }
+
+      closeJobDetails();
+      closeJobResumeEditor();
+      openExternalJobUrl(directApplicationUrl, "application");
+    }
+
+    async function openJobResumeEditor(id){
+      const job = findActiveJobById(id);
+      if(!job) return;
+
+      gluefulJobResumeEditorId = String(job.id);
+      loadJobResumeVariants();
+
+      const editor = document.getElementById("job-resume-editor-text");
+      const jobEl = document.getElementById("job-resume-editor-job");
+      const atsEl = document.getElementById("job-resume-editor-ats");
+      const noteEl = document.getElementById("job-resume-editor-ats-note");
+
+      openModal("job-resume-editor-modal");
+
+      if(jobEl){
+        jobEl.innerHTML = `
+          ${renderCompanyLogo(job)}
+          <div class="job-resume-editor-job-copy">
+            <div class="job-resume-editor-job-title">${esc(job.title)}</div>
+            <div class="job-resume-editor-job-company">${esc(job.company)} · ${esc(job.location)}</div>
+          </div>`;
+        loadCompanyLogos();
+      }
+
+      if(editor){
+        editor.value = "";
+        editor.disabled = true;
+      }
+
+      if(atsEl) atsEl.textContent = "…";
+      if(noteEl) noteEl.textContent = "Loading your master resume from Candidate Profile…";
+
+      let master = gluefulMasterResumeText.trim();
+      if(!master){
+        try{ master = (await ensureMasterResumeText() || "").trim(); }catch(e){}
+      }
+
+      const variant = getJobResumeVariant(job);
+      const base = variant || master || buildProfileResumeFallback();
+
+      if(editor){
+        editor.value = base;
+        editor.disabled = false;
+      }
+
+      const score = base.trim() ? calculateJobAtsScore(job,base) : null;
+      if(atsEl) atsEl.textContent = score === null ? "—" : `${score}%`;
+      if(noteEl){
+        noteEl.textContent = variant
+          ? "This job already has a saved tailored copy. Your master resume is unchanged."
+          : master
+            ? "This starts from your Candidate Profile master resume. Your master file is never overwritten."
+            : "No readable master resume is available yet. Upload one in Candidate Profile.";
+      }
+    }
+
+    function closeJobResumeEditor(){
+      const modal = document.getElementById("job-resume-editor-modal");
+      if(modal){
+        try{ closeModal("job-resume-editor-modal"); }
+        catch(e){ modal.classList.remove("open"); }
+      }
+      gluefulJobResumeEditorId = null;
+    }
+
+    function getCurrentJobResumeEditorJob(){
+      return gluefulJobResumeEditorId
+        ? findActiveJobById(gluefulJobResumeEditorId)
+        : null;
+    }
+
+    function updateJobResumeEditorAts(){
+      const job = getCurrentJobResumeEditorJob();
+      const editor = document.getElementById("job-resume-editor-text");
+      const atsEl = document.getElementById("job-resume-editor-ats");
+      const noteEl = document.getElementById("job-resume-editor-ats-note");
+      if(!job || !editor) return;
+
+      const text = editor.value || "";
+      const score = text.trim() ? calculateJobAtsScore(job,text) : null;
+      if(atsEl) atsEl.textContent = score === null ? "—" : `${score}%`;
+      if(noteEl){
+        noteEl.textContent = score === null
+          ? "Add resume content to calculate the ATS score."
+          : "ATS score is calculated locally from this job description and the resume copy you are editing.";
+      }
+    }
+
+    function saveJobResumeVariant(){
+      const job = getCurrentJobResumeEditorJob();
+      const editor = document.getElementById("job-resume-editor-text");
+      if(!job || !editor) return;
+
+      const text = String(editor.value || "").trim();
+      if(!text){
+        showError("The job-specific resume cannot be empty.");
+        return;
+      }
+
+      gluefulJobResumeVariants[String(job.id)] = text;
+      saveJobResumeVariants();
+
+      const score = calculateJobAtsScore(job,text);
+      closeJobResumeEditor();
+      renderJobs();
+      openJobDetails(job.id);
+
+      const atsEl = document.querySelector("#job-detail-content .job-match-panel");
+      if(atsEl && score !== null){
+        // openJobDetails already renders the latest score; this is only a
+        // defensive refresh for browsers with a delayed paint.
+        atsEl.dataset.atsScore = String(score);
+      }
+    }
+
+    function resetJobResumeToMaster(){
+      const job = getCurrentJobResumeEditorJob();
+      const editor = document.getElementById("job-resume-editor-text");
+      if(!job || !editor) return;
+
+      const master = gluefulMasterResumeText.trim() || buildProfileResumeFallback();
+      editor.value = master;
+      delete gluefulJobResumeVariants[String(job.id)];
+      saveJobResumeVariants();
+      updateJobResumeEditorAts();
+    }
+
+    function downloadJobResumeVariant(){
+      const job = getCurrentJobResumeEditorJob();
+      const editor = document.getElementById("job-resume-editor-text");
+      if(!job || !editor) return;
+
+      const text = String(editor.value || "").trim();
+      if(!text){
+        showError("There is no resume content to download.");
+        return;
+      }
+
+      const safeCompany = String(job.company||"job").replace(/[^a-z0-9]+/gi,"-").replace(/^-|-$/g,"").toLowerCase();
+      const safeTitle = String(job.title||"resume").replace(/[^a-z0-9]+/gi,"-").replace(/^-|-$/g,"").toLowerCase();
+      const blob = new Blob([text],{type:"text/plain;charset=utf-8"});
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `glueful-${safeCompany}-${safeTitle}-resume.txt`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),1000);
+    }
+
+    function applyFromJobResumeEditor(){
+      const job = getCurrentJobResumeEditorJob();
+      if(!job) return;
+
+      const editor = document.getElementById("job-resume-editor-text");
+      const text = String(editor?.value || "").trim();
+      if(text){
+        gluefulJobResumeVariants[String(job.id)] = text;
+        saveJobResumeVariants();
+      }
+
+      startJobApply(job.id);
     }
 
     document.addEventListener("DOMContentLoaded", ()=>{
       loadJobUIState();
+      loadJobResumeVariants();
+
       const searchInput = document.getElementById("jobs-search-input");
       if(searchInput){
         searchInput.addEventListener("input", renderJobs);
         searchInput.addEventListener("search", renderJobs);
         searchInput.addEventListener("change", renderJobs);
       }
+
+      const resumeEditor = document.getElementById("job-resume-editor-text");
+      if(resumeEditor){
+        resumeEditor.addEventListener("input", updateJobResumeEditorAts);
+      }
+
       renderJobs();
     });
 
@@ -13629,49 +14392,38 @@ document.addEventListener("click", (event)=>{
     }
 
 
-    async function loadCompanyLogo(node) {
-
-      const company =
-        String(
-          node?.getAttribute(
-            "data-company-logo"
-          ) || ""
-        ).trim();
-
+        async function loadCompanyLogo(node) {
+      const company = String(node?.getAttribute("data-company-logo") || "").trim();
       if(!company) return;
 
-      const domain =
-        await findBrandDomain(
-          company
-        );
+      // Job cards/details: only use a domain explicitly trusted by the job
+      // record or the small exact-name allowlist. Do not run a fuzzy Brandfetch
+      // company-name search here; that can return the wrong company logo.
+      const isJobLogo = node.getAttribute("data-job-logo") === "true";
+      let domain = String(node?.getAttribute("data-company-domain") || "").trim();
+
+      if(isJobLogo){
+        if(!domain){
+          setCompanyLogoFallback(node);
+          return;
+        }
+      }else{
+        domain = domain || await findBrandDomain(company);
+      }
 
       if(!domain) {
         setCompanyLogoFallback(node);
         return;
       }
 
-      const client =
-        encodeURIComponent(
-          BRANDFETCH_CLIENT_ID
-        );
-
-      /*
-       * Brandfetch is the primary logo source.
-       * The CSS container keeps every logo centered and contained
-       * without adding an unnecessary inner square or stretching
-       * the source image.
-       */
+      const client = encodeURIComponent(BRANDFETCH_CLIENT_ID);
       const brandfetchUrl =
         "https://cdn.brandfetch.io/domain/" +
         encodeURIComponent(domain) +
         "?c=" +
         client;
 
-      showCompanyLogo(
-        node,
-        brandfetchUrl
-      );
-
+      showCompanyLogo(node, brandfetchUrl);
     }
 
 
@@ -14345,6 +15097,7 @@ document.addEventListener("click", (event)=>{
           try {
             const cloudFile = await ensureCandidateResumeCloudFile();
             candidateResumeText = await extractResumeText(cloudFile);
+            gluefulMasterResumeText = candidateResumeText || '';
             if(cloudFile.name.toLowerCase().endsWith('.docx') && window.mammoth) {
               const previewBuffer=await cloudFile.arrayBuffer();
               const htmlResult=await window.mammoth.convertToHtml({arrayBuffer:previewBuffer});
@@ -14376,6 +15129,7 @@ document.addEventListener("click", (event)=>{
           refreshCandidateProfileCompleteness();
           try {
             candidateResumeText = await extractResumeText(savedResume);
+            gluefulMasterResumeText = candidateResumeText || '';
             if(savedResume.name.toLowerCase().endsWith('.docx') && window.mammoth) {
               const previewBuffer=await savedResume.arrayBuffer();
               const htmlResult=await window.mammoth.convertToHtml({arrayBuffer:previewBuffer});
