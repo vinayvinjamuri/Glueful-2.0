@@ -2580,6 +2580,7 @@
     .job-match{
       margin-left:auto;
     }
+    .job-match.weak{opacity:.62;}
     .job-card:not(.has-apply-link) .job-apply-button{
       display:none;
     }
@@ -5085,8 +5086,8 @@
       <section class="jobs-section jobs-feed-section">
         <div class="jobs-section-head">
           <div>
-            <div class="jobs-section-title">All matching jobs</div>
-            <div class="jobs-section-note">Apply links first · match score · location · newest</div>
+            <div class="jobs-section-title">Apply-ready jobs</div>
+            <div class="jobs-section-note">Verified Apply button · profile fit · experience · newest</div>
           </div>
           <div class="jobs-section-note" id="jobs-source-note">Loading job sources…</div>
         </div>
@@ -8258,6 +8259,67 @@
       updateJobsSourceNote(`Verified live sources · ${labels.join(" · ")}`);
     }
 
+    function getCandidateExperienceYears(profile){
+      const raw = String(profile?.experience || profile?.yearsExperience || profile?.years_experience || "");
+      const m = raw.match(/\d+(?:\.\d+)?/);
+      return m ? Number(m[0]) : null;
+    }
+
+    function inferJobSeniority(job){
+      const text = String([
+        job?.title || "",
+        job?.experience || "",
+        ...(job?.requirements || []),
+        ...(job?.qualifications || [])
+      ].join(" ")).toLowerCase();
+
+      if(/\b(avp|svp|evp|vice president|vp|director|head of|chief|cxo)\b/.test(text)) return {level:8,minYears:10,label:"executive"};
+      if(/\b(senior manager|group manager|engineering manager|product manager|project manager|program manager|people manager)\b/.test(text)) return {level:6,minYears:6,label:"manager"};
+      if(/\b(principal|distinguished|staff engineer|staff software|staff firmware)\b/.test(text)) return {level:7,minYears:7,label:"staff/principal"};
+      if(/\b(lead|tech lead|technical lead)\b/.test(text)) return {level:5,minYears:5,label:"lead"};
+      if(/\b(senior|sr\.?|sr engineer|senior engineer)\b/.test(text)) return {level:4,minYears:4,label:"senior"};
+      if(/\b(junior|jr\.?|entry[- ]level|associate|graduate|fresher|trainee)\b/.test(text)) return {level:1,minYears:0,label:"junior/entry"};
+      return {level:2,minYears:1,label:"individual contributor"};
+    }
+
+    function inferJobExperienceRange(job){
+      const text = String([
+        job?.experience || "",
+        job?.title || "",
+        job?.description || "",
+        ...(job?.requirements || []),
+        ...(job?.qualifications || []),
+        ...(job?.preferredQualifications || [])
+      ].join(" ")).toLowerCase();
+
+      let min = null, max = null;
+      const ranges = [
+        /(?:minimum|min(?:imum)?|at least|requires?|required)\s*(?:of\s*)?(\d+(?:\.\d+)?)\s*(?:-|to)\s*(\d+(?:\.\d+)?)\s*(?:years?|yrs?)/g,
+        /(\d+(?:\.\d+)?)\s*(?:-|to)\s*(\d+(?:\.\d+)?)\s*(?:years?|yrs?)/g
+      ];
+      for(const re of ranges){
+        let m;
+        while((m=re.exec(text))){
+          const a=Number(m[1]), b=Number(m[2]);
+          if(!Number.isFinite(a)||!Number.isFinite(b)) continue;
+          min=min===null?a:Math.min(min,a);
+          max=max===null?b:Math.max(max,b);
+        }
+      }
+
+      const plus = text.match(/(?:at least|required|minimum|min(?:imum)?|over|more than)\s*(\d+(?:\.\d+)?)\s*\+?\s*(?:years?|yrs?)/);
+      if(plus) min=Math.max(min===null?0:min, Number(plus[1]));
+
+      const plainPlus = text.match(/\b(\d+(?:\.\d+)?)\s*\+\s*(?:years?|yrs?)\b/);
+      if(plainPlus) min=Math.max(min===null?0:min, Number(plainPlus[1]));
+
+      const seniority=inferJobSeniority(job);
+      if(min===null && seniority.minYears>0) min=seniority.minYears;
+      if(max===null && /\b(junior|jr\.?|entry[- ]level|associate|graduate|fresher|trainee)\b/.test(text)) max=3;
+
+      return {min,max,seniority};
+    }
+
     function calculateJobMatch(job,profile){
       if(!profile) return Number(job.match||0);
 
@@ -8273,125 +8335,116 @@
         return String(value ?? "").split(/[,|/]+/);
       };
 
-      const tokens = value => norm(value).split(/\s+/).filter(t =>
-        t.length >= 3 &&
-        !["and","the","for","with","from","your","you","job","jobs","role",
-          "roles","engineer","engineering","developer","development",
-          "senior","junior","lead","software","work","working","full","time",
-          "years","year"].includes(t)
-      );
+      const stop = new Set([
+        "and","the","for","with","from","your","you","job","jobs","role","roles",
+        "engineer","engineering","developer","development","software","work","working",
+        "full","time","years","year","experience","using","required","preferred","team",
+        "teams","strong","good","knowledge","skills","ability","design","development"
+      ]);
+      const tokens = value => norm(value).split(/\s+/).filter(t=>t.length>=3 && !stop.has(t));
 
+      // Match primarily against the actual target role. The old algorithm gave
+      // too much weight to the user's About text, which made unrelated jobs look
+      // relevant just because the profile contained broad keywords.
+      const targetRole = norm(profile.targetRole || profile.targetRoles || "");
+      const headline = norm(profile.headline || "");
+      const roleText = targetRole || headline;
+      const jobTitle = norm(job.title);
       const jobText = norm([
-        job.title, job.company, job.location, job.description,
-        ...(job.skills || []),
-        ...(job.requirements || []),
-        ...(job.qualifications || []),
-        ...(job.preferredQualifications || []),
-        ...(job.responsibilities || []),
-        job.education, job.department, job.industry,
-        job.workMode, job.employment, job.experience
+        job.title, job.company, job.description,
+        ...(job.skills || []), ...(job.requirements || []),
+        ...(job.qualifications || []), ...(job.preferredQualifications || []),
+        ...(job.responsibilities || []), job.education, job.department, job.industry
       ].join(" "));
 
-      let score = 0;
-      let signals = 0;
+      let score=0;
+      let roleScore=0;
+      let skillScore=0;
+      let experienceScore=0;
+      let preferenceScore=0;
 
-      const roleFamilies = [
-        ["embedded","firmware","microcontroller","mcu","bare metal","rtos","embedded systems"],
-        ["soc validation","silicon validation","post silicon","post-silicon","device validation","hardware validation","validation engineer"],
-        ["verification","design verification","dv","functional verification"],
-        ["qa","quality assurance","test engineer","software test","automation test","sdet"],
-        ["hardware","board","electronics","electrical","hardware engineer"],
-        ["python","automation","test automation","validation automation"],
-        ["bms","battery management","battery","power electronics"],
-        ["driver","device driver","kernel","linux driver"],
-        ["embedded software","embedded c","firmware development"]
-      ];
-
-      const roleInput = norm([
-        profile.targetRole,
-        profile.headline,
-        profile.about
-      ].join(" "));
-
-      const matchedFamilies = roleFamilies.filter(family =>
-        family.some(term => roleInput.includes(term)) &&
-        family.some(term => jobText.includes(term))
-      );
-
-      if(roleInput){
-        signals++;
-        score += Math.min(32, matchedFamilies.length * 16);
-
-        const roleWords = tokens(roleInput);
-        const roleWordHits = roleWords.filter(t => jobText.includes(t)).length;
-        if(roleWords.length) {
-          score += Math.min(18, Math.round((roleWordHits / roleWords.length) * 18));
-        }
+      // 1) Role alignment: title is the strongest signal.
+      const roleTokens=[...new Set(tokens(roleText))];
+      if(roleTokens.length){
+        const titleHits=roleTokens.filter(t=>jobTitle.includes(t)).length;
+        const textHits=roleTokens.filter(t=>jobText.includes(t)).length;
+        roleScore=Math.min(45, Math.round((titleHits/roleTokens.length)*35 + (textHits/roleTokens.length)*10));
       }
 
-      const skills = splitList(profile.skills)
-        .map(norm)
-        .filter(Boolean)
-        .slice(0,40);
-
+      // 2) Explicit skills from the candidate profile.
+      const skills=splitList(profile.skills).map(norm).filter(Boolean).slice(0,50);
       if(skills.length){
-        signals++;
-        let skillHits = 0;
-        skills.forEach(skill => {
-          const parts = tokens(skill);
-          if(jobText.includes(skill) || (parts.length && parts.every(t => jobText.includes(t)))) {
-            skillHits++;
-          }
+        let hits=0;
+        skills.forEach(skill=>{
+          const parts=tokens(skill);
+          if(jobText.includes(skill) || (parts.length && parts.every(t=>jobText.includes(t)))) hits++;
         });
-        score += Math.min(30, skillHits * 4);
+        skillScore=Math.min(30,Math.round((hits/skills.length)*30));
       }
 
-      const locations = splitList(profile.locations).map(norm).filter(Boolean);
-      if(locations.length){
-        signals++;
-        const jobLocation = norm(job.location);
-        if(locations.some(x => jobLocation.includes(x) || x.includes(jobLocation))) score += 10;
+      // 3) Experience/seniority fit. This is a hard quality signal, not a tiny
+      // bonus. A 2-year candidate must not receive a strong match for AVP,
+      // director, manager, principal or senior roles.
+      const candidateYears=getCandidateExperienceYears(profile);
+      const exp=inferJobExperienceRange(job);
+      if(Number.isFinite(candidateYears)){
+        if(exp.min!==null){
+          if(candidateYears>=exp.min) experienceScore=20;
+          else {
+            const gap=exp.min-candidateYears;
+            experienceScore=gap<=1 ? 8 : gap<=2 ? 2 : 0;
+          }
+        }else{
+          experienceScore=14;
+        }
+
+        // Strong seniority mismatch caps the final result regardless of keyword overlap.
+        if(candidateYears < exp.seniority.minYears){
+          const gap=exp.seniority.minYears-candidateYears;
+          if(exp.seniority.level>=8) experienceScore=0;
+          else if(exp.seniority.level>=6) experienceScore=Math.min(experienceScore,1);
+          else if(exp.seniority.level>=5) experienceScore=Math.min(experienceScore,3);
+          else if(exp.seniority.level>=4) experienceScore=Math.min(experienceScore,6);
+        }
+      }else{
+        experienceScore=10;
       }
 
-      const workMode = norm(profile.workMode);
-      if(workMode && workMode !== "any"){
-        signals++;
-        const jm = norm(job.workMode);
-        if(
-          (workMode.includes("remote") && jm.includes("remote")) ||
-          (workMode.includes("hybrid") && jm.includes("hybrid")) ||
-          ((workMode.includes("on-site") || workMode.includes("onsite")) &&
-           (jm.includes("on-site") || jm.includes("onsite")))
-        ) score += 6;
+      // 4) Location/work-mode/employment are secondary preferences.
+      const locations=splitList(profile.preferredLocations || profile.locations).map(norm).filter(Boolean);
+      if(locations.length && locations.some(x=>norm(job.location).includes(x) || x.includes(norm(job.location)))) preferenceScore+=3;
+      const workMode=norm(profile.workMode || profile.workPreference);
+      if(workMode && workMode!=="any" && norm(job.workMode).includes(workMode)) preferenceScore+=2;
+
+      score=Math.round(roleScore + skillScore + experienceScore + preferenceScore);
+
+      // Role-family mismatch is also a hard quality gate. This prevents a
+      // generic "Software Engineer"/"Product Engineer"/"Project Manager" job
+      // from ranking highly merely because a few skills occur in the JD.
+      const roleFamilies = [
+        ["soc validation","silicon validation","post silicon","post-silicon","device validation","hardware validation","validation engineer"],
+        ["embedded","firmware","embedded software","embedded systems","mcu","microcontroller","rtos"],
+        ["hardware","board","electronics","electrical","hardware engineer"],
+        ["python","automation","test automation","validation automation","qa","sdet"],
+        ["pmic","power","battery","bms","power electronics"],
+        ["driver","device driver","kernel","linux driver"]
+      ];
+      const roleFamily=roleFamilies.find(f=>f.some(term=>roleText.includes(term)));
+      const jobFamilyMatch=roleFamily
+        ? roleFamily.some(term=>jobText.includes(term))
+        : roleTokens.some(t=>jobTitle.includes(t) || jobText.includes(t));
+      if(roleText && !jobFamilyMatch) score=Math.min(score,25);
+
+      // Hard mismatch: executive/managerial roles are not useful to an early-career
+      // candidate even when their skill keywords happen to overlap.
+      if(Number.isFinite(candidateYears) && candidateYears < exp.seniority.minYears){
+        if(exp.seniority.level>=8) score=Math.min(score,8);
+        else if(exp.seniority.level>=6) score=Math.min(score,15);
+        else if(exp.seniority.level>=5) score=Math.min(score,25);
+        else if(exp.seniority.level>=4) score=Math.min(score,38);
       }
 
-      const employment = norm(profile.employmentPreference || profile.employment);
-      if(employment && employment !== "any"){
-        signals++;
-        if(norm(job.employment).includes(employment)) score += 4;
-      }
-
-      const education = norm(`${profile.degree} ${profile.field}`);
-      if(education){
-        signals++;
-        const edTokens = tokens(education);
-        const hits = edTokens.filter(t => jobText.includes(t)).length;
-        if(hits >= Math.min(2, edTokens.length)) score += 5;
-      }
-
-      const pe = Number.parseFloat(String(profile.experience || "").match(/\d+(?:\.\d+)?/)?.[0] || "");
-      const je = Number.parseFloat(String(job.experience || "").match(/\d+(?:\.\d+)?/)?.[0] || "");
-      if(Number.isFinite(pe) && Number.isFinite(je)){
-        signals++;
-        if(pe >= je) score += 5;
-        else if(pe + 1 >= je) score += 2;
-        else score -= 5;
-      }
-
-      if(!signals) return Number(job.match||0);
-      const finalScore = Math.max(0, Math.min(99, Math.round(score)));
-      console.log("Job:", job.title, "| Calculated match:", finalScore, "| matched role families:", matchedFamilies.length);
-      return finalScore;
+      return Math.max(0,Math.min(99,score));
     }
 
     function getActiveJobData(){
@@ -8621,9 +8674,16 @@
 
     async function loadMoreJobListings(){
       if(gluefulJobsLoadingMore || !gluefulJobDbHasMore) return;
-      await loadJobListingsFromSupabase({append:true});
-      renderJobs();
-      if(gluefulJobDbHasMore) observeJobsFeedSentinel();
+      // Keep fetching pages when the current page is mostly jobs without usable
+      // application links. The user should not have to manually hunt for one.
+      let guard=0;
+      do{
+        await loadJobListingsFromSupabase({append:true});
+        guard++;
+        const current=getActiveJobData().filter(jobMatchesFilters).filter(hasVerifiedApplyLink).length;
+        renderJobs();
+        if(current>=12 || !gluefulJobDbHasMore || guard>=5) break;
+      }while(gluefulJobDbHasMore);
     }
 
     async function ensureJobProviderData(forceRefresh=false){
@@ -9102,33 +9162,31 @@
     }
 
     function hasVerifiedApplyLink(job){
-      // IMPORTANT: sourceListingUrl is intentionally NOT accepted.
-      // Glueful never sends a user to Adzuna/Jooble just because a listing
-      // exists there. Only a verified employer/application URL can drive Apply.
-      return Boolean(getJobApplicationUrl(job));
+      // A verified application URL can come from either the direct application
+      // field or a validated employer job URL. Provider/source listing URLs are
+      // deliberately excluded so the user never gets dumped onto Adzuna/Jooble.
+      return Boolean(getJobApplicationUrl(job) || getSafeEmployerJobUrl(job));
+    }
+
+    function getBestJobApplyUrl(job){
+      return getJobApplicationUrl(job) || getSafeEmployerJobUrl(job) || "";
     }
 
     function compareJobsActiveFirst(a,b){
-      // 1. A real application URL always wins.
-      const applyDiff =
-        Number(hasVerifiedApplyLink(b)) -
-        Number(hasVerifiedApplyLink(a));
+      // Default feed is optimized for action: jobs the user can actually apply
+      // to first, then strong profile fit, then active/newest.
+      const applyDiff=Number(hasVerifiedApplyLink(b))-Number(hasVerifiedApplyLink(a));
       if(applyDiff) return applyDiff;
 
-      // 2. Active jobs stay above expired/inactive jobs.
-      const activeDiff =
-        Number(isJobCurrentlyActive(b)) -
-        Number(isJobCurrentlyActive(a));
-      if(activeDiff) return activeDiff;
-
-      // 3. Best profile match next.
       const matchDiff=Number(b.match||0)-Number(a.match||0);
       if(matchDiff) return matchDiff;
 
-      // 4. Newest jobs next.
+      const activeDiff=Number(isJobCurrentlyActive(b))-Number(isJobCurrentlyActive(a));
+      if(activeDiff) return activeDiff;
+
       const aTs=Date.parse(a.postedAt||a.posted_at||"");
       const bTs=Date.parse(b.postedAt||b.posted_at||"");
-      if(Number.isFinite(aTs) && Number.isFinite(bTs) && bTs!==aTs) return bTs-aTs;
+      if(Number.isFinite(aTs)&&Number.isFinite(bTs)&&bTs!==aTs) return bTs-aTs;
       return Number(a.postedDays||999999)-Number(b.postedDays||999999);
     }
 
@@ -9140,10 +9198,12 @@
     }
 
     function jobCard(job){
-      const applyAvailable = hasVerifiedApplyLink(job);
-      const active = isJobCurrentlyActive(job);
-      const ats = getJobAtsScore(job);
-      const skills = (job.skills || []).slice(0,8)
+      const applyAvailable=hasVerifiedApplyLink(job);
+      const active=isJobCurrentlyActive(job);
+      const ats=getJobAtsScore(job);
+      const match=Number(job.match||0);
+      const fitLabel=match>=75 ? "Strong match" : match>=55 ? "Good match" : match>=40 ? "Possible match" : "Low match";
+      const skills=(job.skills||[]).slice(0,8)
         .map(skill=>`<span class="job-skill">${esc(skill)}</span>`).join("");
 
       return `
@@ -9156,38 +9216,33 @@
               <div class="job-company">${esc(job.company)}</div>
 
               <div class="job-priority-row">
-                ${applyAvailable ? `<span class="job-priority-badge">Apply available</span>` : ""}
+                ${applyAvailable ? `<span class="job-priority-badge">Apply now</span>` : ""}
                 ${active ? `<span class="job-active-badge">Active</span>` : ""}
-                <span class="job-ats-badge">ATS ${ats === null ? "…" : `${ats}%`}</span>
-                <span class="job-match">${Number(job.match||0)}% Match</span>
+                <span class="job-ats-badge">ATS ${ats===null ? "…" : `${ats}%`}</span>
+                <span class="job-match ${match<40 ? "weak" : ""}">${match}% · ${fitLabel}</span>
               </div>
 
               <div class="job-meta">
                 <span>📍 ${esc(job.location)}</span>
-                ${job.workMode && job.workMode !== "Any" ? `<span>${esc(job.workMode)}</span>` : ""}
-                ${job.employment && job.employment !== "Any" ? `<span>${esc(job.employment)}</span>` : ""}
+                ${job.workMode&&job.workMode!=="Any" ? `<span>${esc(job.workMode)}</span>` : ""}
+                ${job.employment&&job.employment!=="Any" ? `<span>${esc(job.employment)}</span>` : ""}
                 <span>${esc(jobDaysLabel(job.postedDays))}</span>
               </div>
             </div>
           </div>
 
           <div class="job-expanded-content">
-            <div class="job-description">${esc(job.description || "Job description not provided by the source.")}</div>
+            <div class="job-description">${esc(job.description||"Job description not provided by the source.")}</div>
             ${skills ? `<div class="job-skills">${skills}</div>` : ""}
             <div class="job-actions">
               <button class="job-action details" type="button"
                       onclick="event.stopPropagation();openJobDetails('${esc(job.id)}')">View details</button>
-              ${applyAvailable
-                ? `<button class="job-action apply job-apply-button" type="button"
-                      onclick="event.stopPropagation();startJobApply('${esc(job.id)}')">Apply</button>`
-                : `<button class="job-action" type="button" disabled
-                      style="opacity:.42;cursor:not-allowed">No verified apply link</button>`
-              }
+              <button class="job-action apply job-apply-button" type="button"
+                      onclick="event.stopPropagation();startJobApply('${esc(job.id)}')">Apply</button>
             </div>
           </div>
         </article>`;
     }
-
 
     function closeJobsPanels(){
       document.querySelectorAll(".job-details-modal,.jobs-filter-sheet,.jobs-filter-overlay").forEach(el=>{
@@ -9202,20 +9257,21 @@
       openJobDetails(id);
     }
 
-    function updateJobFeedStatus(){
-      const el = document.getElementById("jobs-feed-status");
+    function updateJobFeedStatus(applyReadyCount=0,totalMatchingCount=0){
+      const el=document.getElementById("jobs-feed-status");
       if(!el) return;
-
       if(gluefulJobsLoadingMore){
-        el.textContent = "Loading more jobs…";
+        el.textContent="Finding more apply-ready jobs…";
       }else if(gluefulJobsLoading){
-        el.textContent = "Loading jobs…";
+        el.textContent="Loading jobs…";
       }else if(gluefulJobDbHasMore){
-        el.textContent = "Scroll down to load more jobs";
+        el.textContent=applyReadyCount
+          ? `${applyReadyCount} apply-ready jobs · more will load as you scroll`
+          : "No apply-ready jobs in this page · loading more…";
       }else{
-        el.textContent = gluefulExternalJobs.length
-          ? "You reached the end of the currently available jobs."
-          : "";
+        el.textContent=applyReadyCount
+          ? `${applyReadyCount} apply-ready jobs shown`
+          : "No verified employer/application links are available in the current job pool.";
       }
     }
 
@@ -9241,26 +9297,27 @@
     }
 
     function renderJobs(){
-      const allJobs = getActiveJobData();
-      const filtered = allJobs.filter(jobMatchesFilters);
-      const sorted = [...filtered].sort(compareJobsActiveFirst);
-      const feedEl = document.getElementById("jobs-feed-list");
+      const allJobs=getActiveJobData().filter(jobMatchesFilters);
+      const applyReady=allJobs.filter(hasVerifiedApplyLink);
+      const sorted=[...applyReady].sort(compareJobsActiveFirst);
+      const feedEl=document.getElementById("jobs-feed-list");
       if(!feedEl) return;
 
-      feedEl.innerHTML = sorted.length
-        ? sorted.map(job => jobCard(job)).join("")
+      feedEl.innerHTML=sorted.length
+        ? sorted.map(job=>jobCard(job)).join("")
         : `<div class="jobs-empty">
-             <strong>${gluefulJobsLoading ? "Loading jobs…" : "No jobs match your filters"}</strong>
-             ${gluefulJobsLoading ? "Your first jobs are loading now." : "Try a broader search, location or date range."}
+             <strong>${gluefulJobsLoading ? "Finding apply-ready jobs…" : "No apply-ready jobs found"}</strong>
+             ${gluefulJobsLoading
+               ? "Glueful is loading and checking the current job pool."
+               : "Try another location, role or date filter. Jobs without a verified employer/application link are hidden from the main feed so you never have to hunt for an Apply button."}
            </div>`;
 
       loadCompanyLogos();
-      updateJobFeedStatus();
+      updateJobFeedStatus(applyReady.length, allJobs.length);
 
-      const active = Object.values(gluefulJobFilters).filter(v=>v && v !== "any").length;
-      const label = document.getElementById("jobs-filter-label");
-      if(label) label.textContent = active ? `Filter ${active}` : "Filter";
-
+      const active=Object.values(gluefulJobFilters).filter(v=>v&&v!=="any").length;
+      const label=document.getElementById("jobs-filter-label");
+      if(label) label.textContent=active ? `Filter ${active}` : "Filter";
       observeJobsFeedSentinel();
     }
 
@@ -9396,7 +9453,7 @@
         return;
       }
 
-      const applicationUrl = getJobApplicationUrl(job);
+      const applicationUrl = getBestJobApplyUrl(job);
       const ats = getJobAtsScore(job);
       const variantExists = Boolean(getJobResumeVariant(job));
       const sourceLabel = job.sourceName || job.source || "Verified job source";
@@ -9482,7 +9539,7 @@
 
           ${!applicationUrl ? `
             <div class="job-apply-missing">
-              No verified job-specific application link is available for this listing.
+              This listing is not shown in the main Apply-ready feed because Glueful could not verify a direct employer/application URL.
               Glueful will not send you to an Adzuna/Jooble listing page as a substitute.
             </div>` : ""}
         </div>
@@ -9520,7 +9577,7 @@
       // ONLY a verified job-specific application URL is allowed.
       // Never fall back to sourceListingUrl, Adzuna, Jooble or a generic
       // company homepage. This prevents the old 401/403 provider-page flow.
-      const directApplicationUrl = getJobApplicationUrl(job);
+      const directApplicationUrl = getBestJobApplyUrl(job);
 
       if(!directApplicationUrl){
         showError(
