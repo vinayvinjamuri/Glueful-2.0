@@ -2763,10 +2763,21 @@
 
 
     .job-logo{
-      width:54px;height:54px;min-width:54px;border-radius:15px;
+      width:54px;height:54px;min-width:54px;min-height:54px;border-radius:15px;
       display:flex;align-items:center;justify-content:center;
-      overflow:hidden;background:var(--surface-2);border:1px solid var(--border);
+      overflow:hidden;background:#fff;border:1px solid var(--border);
       box-shadow:0 5px 18px rgba(0,0,0,.16);
+      padding:0;
+    }
+    .job-logo-image{
+      display:block;width:100%;height:100%;max-width:100%;max-height:100%;
+      object-fit:contain;object-position:center;padding:4px;background:#fff;
+      border-radius:13px;box-sizing:border-box;
+    }
+    .job-logo-fallback{
+      width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+      color:#1B2130;font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:800;
+      background:#F5F7FB;
     }
     .job-logo img{
       width:100%;height:100%;object-fit:contain;padding:8px;
@@ -7777,12 +7788,46 @@
       const sourceListingUrl=normalizeJobUrl(
         job.sourceListingUrl || job.source_listing_url || job.jobUrl || job.url || job.link || job.sourceUrl || job.listingUrl
       );
-      const employerJobUrl=normalizeJobUrl(
+
+      // Provider URLs are source listings, never employer/application URLs.
+      // Sanitize stored rows so an Adzuna redirect can never appear behind
+      // an "Apply" or "Company job" button.
+      const rawEmployerJobUrl=normalizeJobUrl(
         job.employerJobUrl || job.employer_job_url
       );
-      const applicationUrl=normalizeJobUrl(
+      const rawApplicationUrl=normalizeJobUrl(
         job.applicationUrl || job.application_url || job.applyUrl
       );
+
+      const providerHosts = {
+        adzuna:["adzuna.in","adzuna.com","adzuna.co.uk","adzuna.com.au","adzuna.ca","adzuna.co.nz","adzuna.co.za"],
+        jooble:["jooble.org","jooble.com"]
+      };
+
+      function isProviderListingUrl(url){
+        if(!url) return false;
+        try{
+          const host=new URL(url).hostname.toLowerCase().replace(/^www\./,"");
+          const known=providerHosts[providerId]||[];
+          if(known.some(domain => host===domain || host.endsWith("." + domain))) return true;
+          if(sourceListingUrl){
+            const sourceHost=new URL(sourceListingUrl).hostname.toLowerCase().replace(/^www\./,"");
+            if(host===sourceHost) return true;
+          }
+        }catch(e){}
+        return false;
+      }
+
+      const employerJobUrl =
+        rawEmployerJobUrl && !isProviderListingUrl(rawEmployerJobUrl)
+          ? rawEmployerJobUrl
+          : "";
+
+      const applicationUrl =
+        rawApplicationUrl && !isProviderListingUrl(rawApplicationUrl)
+          ? rawApplicationUrl
+          : "";
+
       // A provider/source listing URL is required. Employer/application URLs
       // are optional and are never inferred from a provider redirect.
       // Verified-only: stable ID + company/title + specific source URL are mandatory.
@@ -7803,6 +7848,18 @@
         qualifications:normalizeJobList(job.qualifications),preferredQualifications:normalizeJobList(job.preferredQualifications||job.preferred_qualifications),
         benefits:normalizeJobList(job.benefits),education:String(job.education||"").trim(),department:String(job.department||"").trim(),
         industry:String(job.industry||"").trim(),
+        isActive:
+          job.isActive !== undefined
+            ? Boolean(job.isActive)
+            : job.is_active !== undefined
+              ? Boolean(job.is_active)
+              : true,
+        expiresAt:
+          job.expiresAt ||
+          job.expires_at ||
+          job.expirationDate ||
+          job.expiration_date ||
+          "",
         jobUrl:sourceListingUrl,
         sourceListingUrl,
         employerJobUrl,
@@ -8053,6 +8110,14 @@
         employment: r.employment || r.employment_type || r.employmentType || r.type || "Any",
         experience: r.experience || r.experience_level || r.experienceLevel || "Any",
         postedAt: r.posted_at || r.postedAt || r.date_posted || r.datePosted || r.created_at || r.updated_at || "",
+        isActive:
+          r.is_active !== undefined
+            ? Boolean(r.is_active)
+            : r.isActive !== undefined
+              ? Boolean(r.isActive)
+              : true,
+        expiresAt:
+          r.expires_at || r.expiresAt || r.expiration_date || r.expirationDate || r.valid_until || "",
         salary: r.salary || r.salary_range || r.salaryRange || r.pay || "",
         description: r.description || r.summary || r.snippet || "",
         skills: r.skills || r.keywords || [],
@@ -8159,9 +8224,9 @@
         const {data,error}=await supabaseClient
           .from("job_listings")
           .select("*")
-          .eq("is_active",true)
+          .order("is_active",{ascending:false,nullsFirst:false})
           .order("posted_at",{ascending:false,nullsFirst:false})
-          .limit(200);
+          .limit(500);
 
         if(error) throw error;
 
@@ -8269,18 +8334,40 @@
       "synopsys":"synopsys.com",
       "cadence":"cadence.com",
       "texas instruments":"ti.com",
-      "ti":"ti.com",
+      "texas instruments inc":"ti.com",
+      "texas instruments incorporated":"ti.com",
       "nxp":"nxp.com",
       "stmicroelectronics":"st.com"
     };
 
+    function normalizeCompanyNameForLogo(value){
+      return String(value || "")
+        .toLowerCase()
+        .replace(/&/g, " and ")
+        .replace(/[^a-z0-9]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
     function getCompanyDomain(company){
-      const key = String(company || "").trim().toLowerCase();
+      const key = normalizeCompanyNameForLogo(company);
+      if(!key) return "";
+
+      // Exact trusted company names only. This prevents short names such as
+      // "ti" from matching unrelated companies like Kiddie Global Solutions.
       if(GLUEFUL_COMPANY_DOMAINS[key]) return GLUEFUL_COMPANY_DOMAINS[key];
 
-      const match = Object.keys(GLUEFUL_COMPANY_DOMAINS)
-        .find(name => key.includes(name) || name.includes(key));
-      return match ? GLUEFUL_COMPANY_DOMAINS[match] : "";
+      const aliases = {
+        "amazon web services":"amazon.com",
+        "aws":"amazon.com",
+        "nxp semiconductors":"nxp.com",
+        "texas instruments inc":"ti.com",
+        "texas instruments incorporated":"ti.com",
+        "st microelectronics":"st.com",
+        "stmicroelectronics":"st.com"
+      };
+
+      return aliases[key] || "";
     }
 
     /*
@@ -8352,6 +8439,73 @@
       }
     }
 
+    function getJobActionLabel(job){
+      if(getJobApplicationUrl(job)) return "Apply";
+      if(getSafeEmployerJobUrl(job)) return "Company job";
+      if(normalizeJobUrl(job.sourceListingUrl || job.jobUrl || "")) return "View source";
+      return "Link unavailable";
+    }
+
+    function getSafeEmployerJobUrl(job){
+      const employer=normalizeJobUrl(job?.employerJobUrl || "");
+      if(!employer) return "";
+
+      try{
+        const host=new URL(employer).hostname.toLowerCase().replace(/^www\./,"");
+        const providerHosts=[
+          "adzuna.in","adzuna.com","adzuna.co.uk","adzuna.com.au",
+          "adzuna.ca","adzuna.co.nz","adzuna.co.za",
+          "jooble.org","jooble.com"
+        ];
+        if(providerHosts.some(domain => host===domain || host.endsWith("."+domain))) return "";
+
+        const source=normalizeJobUrl(job?.sourceListingUrl || job?.jobUrl || "");
+        if(source){
+          const sourceHost=new URL(source).hostname.toLowerCase().replace(/^www\./,"");
+          if(host===sourceHost) return "";
+        }
+        return employer;
+      }catch(e){
+        return "";
+      }
+    }
+
+    function getJobActionHandler(job){
+      const id=esc(job.id);
+      if(getJobApplicationUrl(job) || getSafeEmployerJobUrl(job)) return `startJobApply('${id}')`;
+      const source=normalizeJobUrl(job.sourceListingUrl || job.jobUrl || "");
+      if(source) return `openExternalJobUrl('${esc(source)}','source listing')`;
+      return `openJobDetails('${id}')`;
+    }
+
+    function isJobCurrentlyActive(job){
+      if(!job) return false;
+      if(job.isActive === false || job.is_active === false) return false;
+      const expiry=job.expiresAt || job.expires_at || job.expirationDate || job.expiration_date || job.expires || "";
+      if(expiry){
+        const expiryTs=Date.parse(String(expiry));
+        if(Number.isFinite(expiryTs) && expiryTs < Date.now()) return false;
+      }
+      return true;
+    }
+
+    function compareJobsActiveFirst(a,b){
+      const activeDiff=Number(isJobCurrentlyActive(b))-Number(isJobCurrentlyActive(a));
+      if(activeDiff) return activeDiff;
+      const matchDiff=Number(b.match||0)-Number(a.match||0);
+      if(matchDiff) return matchDiff;
+      const aTs=Date.parse(a.postedAt||a.posted_at||"");
+      const bTs=Date.parse(b.postedAt||b.posted_at||"");
+      if(Number.isFinite(aTs) && Number.isFinite(bTs) && bTs!==aTs) return bTs-aTs;
+      return Number(a.postedDays||999999)-Number(b.postedDays||999999);
+    }
+
+    function compareJobsRecentActiveFirst(a,b){
+      const activeDiff=Number(isJobCurrentlyActive(b))-Number(isJobCurrentlyActive(a));
+      if(activeDiff) return activeDiff;
+      return Number(a.postedDays||999999)-Number(b.postedDays||999999);
+    }
+
     function jobCard(job, opts){
       const showMatch = !opts || opts.showMatch !== false;
       const saved = gluefulSavedJobs.has(job.id);
@@ -8392,7 +8546,7 @@
                 </svg>
               </button>
               <button class="job-action" type="button"
-                      onclick="event.stopPropagation();${(job.applicationUrl||job.employerJobUrl) ? `startJobApply('${job.id}')` : `openJobDetails('${job.id}')`}">${job.applicationUrl ? "Apply" : (job.employerJobUrl ? "Company job" : "View")}</button>
+                      onclick="event.stopPropagation();${getJobActionHandler(job)}">${getJobActionLabel(job)}</button>
             </div>
           </div>
         </article>`;
@@ -8422,8 +8576,8 @@
     function renderJobs(){
       const allJobs = getActiveJobData();
       const filtered = allJobs.filter(jobMatchesFilters);
-      const sorted = [...filtered].sort((a,b)=>b.match-a.match || a.postedDays-b.postedDays);
-      const recent = [...filtered].sort((a,b)=>a.postedDays-b.postedDays);
+      const sorted = [...filtered].sort(compareJobsActiveFirst);
+      const recent = [...filtered].sort(compareJobsRecentActiveFirst);
 
       const recEl = document.getElementById("jobs-recommended-list");
       const recentEl = document.getElementById("jobs-recent-list");
@@ -8566,19 +8720,24 @@
     }
 
     function getJobApplicationUrl(job){
-      const direct = String(
-        job.applicationUrl ||
-        job.applyUrl ||
-        job.employerJobUrl ||
-        ""
-      ).trim();
-
+      const direct=normalizeJobUrl(job?.applicationUrl || "");
       if(!direct) return "";
 
       try{
-        const parsed = new URL(direct, window.location.href);
-        if(!/^https?:$/.test(parsed.protocol)) return "";
-        return parsed.href;
+        const host=new URL(direct).hostname.toLowerCase().replace(/^www\./,"");
+        const providerHosts=[
+          "adzuna.in","adzuna.com","adzuna.co.uk","adzuna.com.au",
+          "adzuna.ca","adzuna.co.nz","adzuna.co.za",
+          "jooble.org","jooble.com"
+        ];
+        if(providerHosts.some(domain => host===domain || host.endsWith("."+domain))) return "";
+
+        const source=normalizeJobUrl(job?.sourceListingUrl || job?.jobUrl || "");
+        if(source){
+          const sourceHost=new URL(source).hostname.toLowerCase().replace(/^www\./,"");
+          if(host===sourceHost) return "";
+        }
+        return direct;
       }catch(e){
         return "";
       }
@@ -8592,8 +8751,8 @@
       }
 
       const applicationUrl = getJobApplicationUrl(job);
-      const directApplicationUrl = normalizeJobUrl(job.applicationUrl || "");
-      const employerJobUrl = normalizeJobUrl(job.employerJobUrl || "");
+      const directApplicationUrl = applicationUrl;
+      const employerJobUrl = getSafeEmployerJobUrl(job);
       const jobPageUrl = normalizeJobUrl(job.sourceListingUrl || job.jobUrl || "");
       const sourceLabel = job.sourceName || job.source || "External job source";
 
@@ -8722,8 +8881,8 @@
       // send the candidate to the authoritative application page.
       closeJobDetails();
 
-      const directApplicationUrl = normalizeJobUrl(job.applicationUrl || "");
-      const employerJobUrl = normalizeJobUrl(job.employerJobUrl || "");
+      const directApplicationUrl = getJobApplicationUrl(job);
+      const employerJobUrl = getSafeEmployerJobUrl(job);
       const sourceListingUrl = normalizeJobUrl(job.sourceListingUrl || job.jobUrl || "");
 
       if(directApplicationUrl){
