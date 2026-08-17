@@ -8278,25 +8278,73 @@
       };
     }
 
+    function isGenericJobSourceUrl(url){
+      if(!url) return true;
+      try{
+        const u=new URL(url);
+        const path=(u.pathname||"").replace(/\/+$/,"");
+        if(!path || /^\/(?:careers?|jobs?|job-search|search)$/i.test(path)) return true;
+        return false;
+      }catch(e){
+        return true;
+      }
+    }
+
     function dedupeVerifiedJobs(jobs){
       const byKey=new Map();
+
+      // First dedupe by the stable provider/source job ID.
+      // This is the authoritative identity and prevents legitimate jobs from
+      // being collapsed merely because a company uses one shared careers URL.
       jobs.forEach(job=>{
         if(!job||!job.verified) return;
-        const key=`${job.source}:${job.sourceJobId}`.toLowerCase();
-        if(!key) return;
+        const source=String(job.source||"").trim().toLowerCase();
+        const sourceJobId=String(job.sourceJobId||job.jobId||job.id||"").trim().toLowerCase();
+        if(!sourceJobId) return;
+
+        const key=`${source}:${sourceJobId}`;
         const existing=byKey.get(key);
         if(!existing){ byKey.set(key,job); return; }
-        const score=x=>(x.applicationUrl?1000:0)+String(x.description||"").length+(x.skills?.length||0)*20+(x.requirements?.length||0)*10;
+
+        const score=x=>(x.applicationUrl?1000:0)
+          +String(x.description||"").length
+          +(x.skills?.length||0)*20
+          +(x.requirements?.length||0)*10;
+
         if(score(job)>score(existing)) byKey.set(key,job);
       });
-      const merged=[]; const seenUrl=new Map(); const seenContent=new Map();
+
+      const merged=[];
+      const seenUrl=new Map();
+      const seenContent=new Map();
+
       [...byKey.values()].forEach(job=>{
-        const url=String(job.jobUrl||"").toLowerCase(), content=String(job.canonicalKey||"").toLowerCase();
-        let idx=(url&&seenUrl.has(url))?seenUrl.get(url):(content&&seenContent.has(content)?seenContent.get(content):undefined);
-        if(idx===undefined){ idx=merged.length; merged.push(job); }
-        else if(job.applicationUrl&&!merged[idx].applicationUrl){ merged[idx]=job; }
-        if(url) seenUrl.set(url,idx); if(content) seenContent.set(content,idx);
+        const rawUrl=String(job.jobUrl||"").trim().toLowerCase();
+        const content=String(job.canonicalKey||"").trim().toLowerCase();
+
+        // NEVER use a generic company careers/source URL as a dedupe key.
+        // Many Workday/company feeds intentionally put the same source URL
+        // on every job while the real job URL is stored separately.
+        const usableUrl=rawUrl && !isGenericJobSourceUrl(job.jobUrl);
+
+        let idx;
+        if(usableUrl && seenUrl.has(rawUrl)){
+          idx=seenUrl.get(rawUrl);
+        }else if(content && seenContent.has(content)){
+          idx=seenContent.get(content);
+        }
+
+        if(idx===undefined){
+          idx=merged.length;
+          merged.push(job);
+        }else if(job.applicationUrl && !merged[idx].applicationUrl){
+          merged[idx]=job;
+        }
+
+        if(usableUrl) seenUrl.set(rawUrl,idx);
+        if(content) seenContent.set(content,idx);
       });
+
       return merged;
     }
 
@@ -8691,7 +8739,9 @@
         sourceListingUrl: r.source_listing_url || r.sourceListingUrl || r.job_url || r.jobUrl || r.url || r.link || r.listing_url || r.listingUrl || r.source_url || r.sourceUrl || "",
         employerJobUrl: r.employer_job_url || r.employerJobUrl || "",
         applicationUrl: r.application_url || r.applicationUrl || r.apply_url || r.applyUrl || "",
-        jobUrl: r.source_listing_url || r.sourceListingUrl || r.job_url || r.jobUrl || r.url || r.link || "",
+        // Prefer the exact job URL for identity/display when available.
+        // source_listing_url may intentionally be a shared company/ATS source URL.
+        jobUrl: r.job_url || r.jobUrl || r.employer_job_url || r.employerJobUrl || r.source_listing_url || r.sourceListingUrl || r.url || r.link || "",
         sourceName: r.source_name || r.sourceName || providerId,
         source: providerId
       };
