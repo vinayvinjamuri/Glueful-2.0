@@ -8678,7 +8678,7 @@
 
         const {data,error} = await supabaseClient
           .from("job_listings")
-          .select("*")
+          .select("*, job_intelligence(*)")
           .order("is_active",{ascending:false,nullsFirst:false})
           .order("posted_at",{ascending:false,nullsFirst:false})
           .range(from,to);
