@@ -9242,6 +9242,27 @@
       "apple":"apple.com",
       "google":"google.com",
       "meta":"meta.com",
+      "halma":"halma.com",
+      "cloudflare":"cloudflare.com",
+      "abb":"abb.com",
+      "siteminder":"siteminder.com",
+      "vonage":"vonage.com",
+      "schneider electric":"se.com",
+      "wells fargo":"wellsfargo.com",
+      "wells fargo and company":"wellsfargo.com",
+      "amazon":"amazon.com",
+      "nvidia":"nvidia.com",
+      "qualcomm":"qualcomm.com",
+      "dell":"dell.com",
+      "hp":"hp.com",
+      "hewlett packard enterprise":"hpe.com",
+      "hpe":"hpe.com",
+      "lenovo":"lenovo.com",
+      "samsung":"samsung.com",
+      "sony":"sony.com",
+      "bosch":"bosch.com",
+      "siemens":"siemens.com",
+      "honeywell":"honeywell.com",
       "amazon":"amazon.com",
       "tesla":"tesla.com",
       "samsung":"samsung.com",
@@ -9421,14 +9442,22 @@
     }
 
     function hasVerifiedApplyLink(job){
-      // Only a verified direct application URL enables Apply.
-      // An employer job page is useful for "Company job", but is not itself
-      // proof that a direct application form exists.
-      return Boolean(getJobApplicationUrl(job));
+      // Apply is allowed when Glueful has either:
+      // 1) a verified job-specific application URL, or
+      // 2) a verified non-provider employer job URL.
+      // Adzuna/Jooble listing URLs are never accepted.
+      return Boolean(
+        getJobApplicationUrl(job) ||
+        getSafeEmployerJobUrl(job)
+      );
     }
 
     function getBestJobApplyUrl(job){
-      return getJobApplicationUrl(job) || "";
+      return (
+        getJobApplicationUrl(job) ||
+        getSafeEmployerJobUrl(job) ||
+        ""
+      );
     }
 
     function compareJobsActiveFirst(a,b){
@@ -14546,9 +14575,7 @@ document.addEventListener("click", (event)=>{
     async function findBrandDomain(company) {
 
       const key =
-        String(company || "")
-          .trim()
-          .toLowerCase();
+        normalizeCompanyNameForLogo(company);
 
       if(!key) return "";
 
@@ -14592,15 +14619,38 @@ document.addEventListener("click", (event)=>{
         const data =
           await response.json();
 
-        const result =
+        const candidates =
           Array.isArray(data)
-            ? data[0]
-            : data?.results?.[0] ||
-              data?.[0];
+            ? data
+            : Array.isArray(data?.results)
+              ? data.results
+              : Array.isArray(data?.data)
+                ? data.data
+                : Array.isArray(data?.items)
+                  ? data.items
+                  : data
+                    ? [data]
+                    : [];
+
+        const result =
+          candidates.find(item => {
+            const d = String(
+              item?.domain ||
+              item?.website ||
+              item?.url ||
+              item?.brand?.domain ||
+              ""
+            ).trim();
+            return Boolean(d);
+          }) || null;
 
         const domain =
           String(
-            result?.domain || ""
+            result?.domain ||
+            result?.website ||
+            result?.url ||
+            result?.brand?.domain ||
+            ""
           )
             .replace(
               /^https?:\/\//i,
@@ -14744,9 +14794,20 @@ document.addEventListener("click", (event)=>{
       }
 
       const client = encodeURIComponent(BRANDFETCH_CLIENT_ID);
+      const cleanDomain = String(domain)
+        .replace(/^https?:\/\//i, "")
+        .split("/")[0]
+        .replace(/^www\./i, "")
+        .trim();
+
+      if(!cleanDomain){
+        setCompanyLogoFallback(node);
+        return;
+      }
+
       const brandfetchUrl =
         "https://cdn.brandfetch.io/domain/" +
-        encodeURIComponent(domain) +
+        encodeURIComponent(cleanDomain) +
         "?c=" +
         client;
 
