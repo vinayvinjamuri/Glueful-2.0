@@ -8278,74 +8278,43 @@
       };
     }
 
-    function isGenericJobSourceUrl(url){
-      if(!url) return true;
-      try{
-        const u=new URL(url);
-        const path=(u.pathname||"").replace(/\/+$/,"");
-        if(!path || /^\/(?:careers?|jobs?|job-search|search)$/i.test(path)) return true;
-        return false;
-      }catch(e){
-        return true;
-      }
-    }
-
     function dedupeVerifiedJobs(jobs){
       const byKey=new Map();
 
-      // First dedupe by the stable provider/source job ID.
-      // This is the authoritative identity and prevents legitimate jobs from
-      // being collapsed merely because a company uses one shared careers URL.
-      jobs.forEach(job=>{
-        if(!job||!job.verified) return;
-        const source=String(job.source||"").trim().toLowerCase();
-        const sourceJobId=String(job.sourceJobId||job.jobId||job.id||"").trim().toLowerCase();
-        if(!sourceJobId) return;
+      // A real job is identified by provider + external/source job ID.
+      // Never collapse separate jobs because an ATS/company feed reuses a
+      // common careers URL or because two postings happen to share content.
+      (Array.isArray(jobs) ? jobs : []).forEach(job=>{
+        if(!job || !job.verified) return;
 
-        const key=`${source}:${sourceJobId}`;
+        const source=String(job.source||job.provider||"").trim().toLowerCase();
+        const sourceJobId=String(
+          job.sourceJobId || job.jobId || job.external_job_id || job.id || ""
+        ).trim().toLowerCase();
+
+        const key=sourceJobId
+          ? `${source}:${sourceJobId}`
+          : `row:${String(job.id||"")}`;
+
         const existing=byKey.get(key);
-        if(!existing){ byKey.set(key,job); return; }
+        if(!existing){
+          byKey.set(key,job);
+          return;
+        }
 
-        const score=x=>(x.applicationUrl?1000:0)
-          +String(x.description||"").length
-          +(x.skills?.length||0)*20
-          +(x.requirements?.length||0)*10;
+        // Prefer the richer/Apply-ready copy when the same real job appears
+        // more than once.
+        const score=x=>
+          (x.applicationUrl?1000:0) +
+          (x.employerJobUrl?500:0) +
+          String(x.description||"").length +
+          (x.skills?.length||0)*20 +
+          (x.requirements?.length||0)*10;
 
         if(score(job)>score(existing)) byKey.set(key,job);
       });
 
-      const merged=[];
-      const seenUrl=new Map();
-      const seenContent=new Map();
-
-      [...byKey.values()].forEach(job=>{
-        const rawUrl=String(job.jobUrl||"").trim().toLowerCase();
-        const content=String(job.canonicalKey||"").trim().toLowerCase();
-
-        // NEVER use a generic company careers/source URL as a dedupe key.
-        // Many Workday/company feeds intentionally put the same source URL
-        // on every job while the real job URL is stored separately.
-        const usableUrl=rawUrl && !isGenericJobSourceUrl(job.jobUrl);
-
-        let idx;
-        if(usableUrl && seenUrl.has(rawUrl)){
-          idx=seenUrl.get(rawUrl);
-        }else if(content && seenContent.has(content)){
-          idx=seenContent.get(content);
-        }
-
-        if(idx===undefined){
-          idx=merged.length;
-          merged.push(job);
-        }else if(job.applicationUrl && !merged[idx].applicationUrl){
-          merged[idx]=job;
-        }
-
-        if(usableUrl) seenUrl.set(rawUrl,idx);
-        if(content) seenContent.set(content,idx);
-      });
-
-      return merged;
+      return [...byKey.values()];
     }
 
     function readJobProviderCache(){
@@ -8913,7 +8882,8 @@
         if(gluefulJobsLoadingMore || !gluefulJobDbHasMore) return gluefulExternalJobs;
         gluefulJobsLoadingMore = true;
       }else{
-        if(gluefulJobsLoading) return gluefulExternalJobs;
+        // A new search must be allowed to supersede an in-flight initial load.
+        // The requestId below makes stale responses harmless.
         gluefulJobsLoading = true;
       }
 
@@ -8937,13 +8907,16 @@
          */
         let query;
         if(q){
+          // Do not chain PostgREST filters onto the RPC result. The RPC is
+          // already the authoritative full-database search. Filtering the RPC
+          // response here has caused provider-specific result loss in some
+          // PostgREST deployments. Exclude unwanted providers after rows arrive.
           query = supabaseClient
             .rpc("search_jobs",{
               search_text:q,
               result_limit:GLUEFUL_JOB_PAGE_SIZE,
               result_offset:from
-            })
-            .not("provider","in","(adzuna,arbeitnow,jobicy)");
+            });
         }else{
           query = supabaseClient
             .from("job_listings")
@@ -8964,6 +8937,17 @@
         if(requestId !== gluefulJobsRequestId) return gluefulExternalJobs;
 
         let rows = Array.isArray(data) ? data : [];
+
+        // Keep global search provider-agnostic, but hide legacy aggregator
+        // rows that Glueful intentionally no longer treats as first-class
+        // sources. This is done after the RPC so it cannot alter database
+        // search/pagination semantics.
+        if(q){
+          rows = rows.filter(row=>{
+            const p=String(row?.provider || row?.source || "").trim().toLowerCase();
+            return !["adzuna","arbeitnow","jobicy"].includes(p);
+          });
+        }
 
         if(rows.length){
           const jobIds = rows.map(row=>row?.id).filter(Boolean);
@@ -8998,8 +8982,10 @@
         }
 
         mergeJobRowsIntoFeed(rows);
-        gluefulJobDbOffset = from + rows.length;
-        gluefulJobDbHasMore = rows.length === GLUEFUL_JOB_PAGE_SIZE;
+        // Advance by the number returned by the database page, not merely the
+        // number surviving optional frontend provider filtering.
+        gluefulJobDbOffset = from + (Array.isArray(data) ? data.length : 0);
+        gluefulJobDbHasMore = (Array.isArray(data) ? data.length : 0) === GLUEFUL_JOB_PAGE_SIZE;
 
         const label = gluefulJobDbHasMore ? "scroll for more" : "all available jobs loaded";
         updateJobsSourceNote(`Live jobs · ${gluefulExternalJobs.length} loaded · ${label}`);
