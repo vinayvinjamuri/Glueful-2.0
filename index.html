@@ -8507,6 +8507,30 @@
      * separate /api/jobs/search endpoint. Provider API secrets remain
      * server-side; the browser only reads the public Supabase table.
      */
+    function cleanJobDescription(value){
+      if(value === null || value === undefined) return "";
+
+      const raw = String(value);
+
+      // Supabase/job providers may return HTML or HTML-encoded HTML.
+      // Decode entities first, then remove tags while preserving readable
+      // paragraph/list spacing.
+      const textarea = document.createElement("textarea");
+      textarea.innerHTML = raw;
+      const decoded = textarea.value;
+
+      const div = document.createElement("div");
+      div.innerHTML = decoded;
+
+      return String(div.textContent || div.innerText || "")
+        .replace(/\\r\\n/g, "\\n")
+        .replace(/\\r/g, "\\n")
+        .replace(/\\n{3,}/g, "\\n\\n")
+        .replace(/[ \\t]+/g, " ")
+        .replace(/ *\\n */g, "\\n")
+        .trim();
+    }
+
     function normalizeSupabaseJobRow(row){
       const r = row || {};
       const intelligence = Array.isArray(r.job_intelligence)
@@ -8527,6 +8551,7 @@
         title: r.title || r.job_title || r.jobTitle || r.position || "",
         company: r.company || r.company_name || r.companyName || r.employer || "",
         companyDomain: r.company_domain || r.companyDomain || r.employer_domain || r.employerDomain || r.company_website_domain || r.companyWebsiteDomain || "",
+        companyLogoUrl: r.company_logo_url || r.companyLogoUrl || r.logo_url || r.logoUrl || r.company_logo || r.companyLogo || "",
         location: r.location || r.location_name || r.locationName || r.city || "Location not specified",
         workMode: r.work_mode || r.workMode || r.remote_type || r.remoteType || r.remote || "Any",
         employment: r.employment || r.employment_type || r.employmentType || r.type || "Any",
@@ -8541,7 +8566,7 @@
         expiresAt:
           r.expires_at || r.expiresAt || r.expiration_date || r.expirationDate || r.valid_until || "",
         salary: r.salary || r.salary_range || r.salaryRange || r.pay || "",
-        description: r.description || r.summary || r.snippet || "",
+        description: cleanJobDescription(r.description || r.summary || r.snippet || ""),
         skills: r.skills || r.keywords || [],
         responsibilities: r.responsibilities || [],
         requirements: r.requirements || [],
@@ -9211,9 +9236,20 @@
       const initials = esc(jobInitials(job.company));
       const company = esc(job.company);
       const domain = getJobCompanyDomain(job);
-      const logoUrl = getJobBrandfetchLogoUrl(job);
 
-      return `<div class="job-logo" data-company-logo="${company}" data-company-domain="${esc(domain)}" data-job-logo="true">
+      // Prefer an explicit logo URL supplied by the trusted job record.
+      // Brandfetch remains the fallback for rows that only provide a domain.
+      const directLogoUrl = String(
+        job?.companyLogoUrl ||
+        job?.company_logo_url ||
+        job?.logoUrl ||
+        job?.logo_url ||
+        ""
+      ).trim();
+
+      const logoUrl = directLogoUrl || getJobBrandfetchLogoUrl(job);
+
+      return `<div class="job-logo" data-company-logo="${company}" data-company-domain="${esc(domain)}" data-job-logo="true" data-company-logo-url="${esc(directLogoUrl)}">
         <img class="job-logo-image"
              src="${esc(logoUrl)}"
              alt="${company} logo"
@@ -14597,7 +14633,17 @@ document.addEventListener("click", (event)=>{
       // record or the small exact-name allowlist. Do not run a fuzzy Brandfetch
       // company-name search here; that can return the wrong company logo.
       const isJobLogo = node.getAttribute("data-job-logo") === "true";
+      const directLogoUrl = String(
+        node?.getAttribute("data-company-logo-url") || ""
+      ).trim();
       let domain = String(node?.getAttribute("data-company-domain") || "").trim();
+
+      // A logo URL explicitly supplied by the job row is authoritative.
+      // Do not overwrite it with Brandfetch.
+      if(directLogoUrl){
+        showCompanyLogo(node, directLogoUrl);
+        return;
+      }
 
       if(isJobLogo){
         if(!domain){
