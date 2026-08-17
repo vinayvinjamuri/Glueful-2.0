@@ -779,6 +779,28 @@
       -webkit-tap-highlight-color:transparent;
     }
 
+    /* =====================================================
+       RESPONSIVE WIDTH / HORIZONTAL-OVERFLOW GUARD
+       -----------------------------------------------------
+       The mobile UI must never become wider than the
+       viewport. Some flex/grid children can otherwise
+       establish a min-content width and push the whole
+       application sideways.
+    ====================================================== */
+    html,
+    body {
+      width:100%;
+      max-width:100%;
+      overflow-x:hidden;
+    }
+
+    .app-view {
+      width:100%;
+      max-width:100%;
+      min-width:0;
+      overflow-x:hidden;
+    }
+
 
     html,
     body {
@@ -1058,17 +1080,14 @@
     ====================================================== */
 
     .top-header {
-
       display:flex;
-
       align-items:center;
-
       justify-content:space-between;
-
       gap:12px;
-
+      width:100%;
+      min-width:0;
+      max-width:100%;
       margin-bottom:1.4rem;
-
     }
 
 
@@ -2469,8 +2488,23 @@
     /* =====================================================
        JOB SEARCH UI — styling/layout only; live data is supplied by V3 provider layer
     ====================================================== */
-    .jobs-page{padding:18px 16px 110px;max-width:980px;margin:0 auto}
-    .jobs-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px}
+    .jobs-page{
+      width:100%;
+      max-width:980px;
+      min-width:0;
+      margin:0 auto;
+      padding:18px 16px 110px;
+      box-sizing:border-box;
+      overflow-x:hidden;
+    }
+    .jobs-head{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:14px;
+      min-width:0;
+      margin-bottom:14px;
+    }
     .jobs-title{font-size:27px;line-height:1.08;font-weight:800;letter-spacing:-.7px;color:var(--text)}
     .jobs-subtitle{margin-top:6px;color:var(--text-muted);font-size:13px;line-height:1.45}
     .jobs-filter-btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:12px;padding:10px 12px;font-weight:750;font-size:12px;box-shadow:0 5px 16px rgba(0,0,0,.08);white-space:nowrap}
@@ -2485,8 +2519,18 @@
     .jobs-section-note{font-size:11px;color:var(--text-faint)}
     .jobs-list{display:grid;gap:10px}
     /* Compact job feed — collapsed cards show more jobs; tapping expands actions/details */
-    .jobs-list{display:grid;gap:7px}
+    .jobs-list{
+      display:grid;
+      grid-template-columns:minmax(0,1fr);
+      gap:7px;
+      width:100%;
+      min-width:0;
+      max-width:100%;
+    }
     .job-card{
+      width:100%;
+      min-width:0;
+      max-width:100%;
       background:var(--surface);
       border:1px solid var(--border);
       border-radius:14px;
@@ -2500,10 +2544,23 @@
       border-color:rgba(109,59,232,.48);
       box-shadow:0 8px 24px rgba(109,59,232,.10);
     }
-    .job-card-top{display:flex;gap:10px;align-items:flex-start}
+    .job-card-top{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      width:100%;
+      min-width:0;
+      max-width:100%;
+    }
     .job-logo{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;background:linear-gradient(135deg,#7c4dff,#4f46e5);color:#fff;font-weight:850;font-size:13px;flex:0 0 auto;overflow:hidden}
     .job-logo img{width:100%;height:100%;object-fit:contain;padding:5px;background:#fff;border-radius:9px}
-    .job-main{min-width:0;flex:1}
+    .job-main{
+      min-width:0;
+      width:0;
+      max-width:100%;
+      flex:1 1 auto;
+      overflow:hidden;
+    }
     .job-title{font-size:14px;line-height:1.28;font-weight:820;color:var(--text);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
     .job-company{margin-top:2px;font-size:11.5px;font-weight:650;color:var(--text-muted)}
     .job-meta{display:flex;flex-wrap:wrap;gap:4px 8px;margin-top:6px;font-size:10.5px;color:var(--text-muted)}
@@ -3831,11 +3888,27 @@
 
     @media(max-width:700px) {
 
+      html,
       body {
+        width:100%;
+        max-width:100%;
+        overflow-x:hidden !important;
+      }
 
+      body {
         padding-left:.75rem;
         padding-right:.75rem;
+      }
 
+      .app-view,
+      #jobs-view,
+      .jobs-page,
+      .jobs-list,
+      .job-card {
+        width:100%;
+        max-width:100%;
+        min-width:0;
+        box-sizing:border-box;
       }
 
 
