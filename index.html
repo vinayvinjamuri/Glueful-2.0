@@ -9286,8 +9286,7 @@
               ${applyAvailable
                 ? `<button class="job-action apply job-apply-button" type="button"
                         onclick="event.stopPropagation();startJobApply('${esc(job.id)}')">Apply</button>`
-                : `<button class="job-action apply job-apply-button" type="button" disabled
-                        title="No verified direct application link is available">Apply unavailable</button>`}
+                : ""}
             </div>
           </div>
         </article>`;
