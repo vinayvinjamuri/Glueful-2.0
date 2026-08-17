@@ -328,7 +328,7 @@
        viewer also ships its own +/- /FIT zoom controls (75%-300%). -->
 
   <title>Glueful</title>
-  <!-- V24 — Self-discovering official sources + canonical URL refresh -->
+  <!-- V25 — Official sources only; aggregator rows excluded from Jobs feed -->
   <!-- V16 — Resume preview + automatic re-import on replacement + mobile resume actions -->
 
   <!-- Resume parsing libraries -->
@@ -8092,7 +8092,7 @@
 
     const GLUEFUL_JOB_FILTERS_KEY = "glueful_job_filters_v2";
     const GLUEFUL_SAVED_JOBS_KEY = "glueful_saved_jobs_v2";
-    const GLUEFUL_JOB_CACHE_KEY = "glueful_verified_job_cache_v3";
+    const GLUEFUL_JOB_CACHE_KEY = "glueful_verified_job_cache_v4_official_only";
     const GLUEFUL_JOB_CACHE_TTL_MS = 5 * 60 * 1000;
     const GLUEFUL_JOB_MAX_RESULTS_PER_PROVIDER = 50;
     const GLUEFUL_JOB_PROVIDER_SYNC_PAGES = 10;
@@ -8304,7 +8304,17 @@
       try{
         const cached=JSON.parse(localStorage.getItem(GLUEFUL_JOB_CACHE_KEY)||"null");
         if(!cached||!Array.isArray(cached.jobs)||Date.now()-Number(cached.timestamp||0)>GLUEFUL_JOB_CACHE_TTL_MS) return null;
-        return dedupeVerifiedJobs(cached.jobs.map(j=>normalizeExternalJob(j,j.source||"")).filter(Boolean));
+        return dedupeVerifiedJobs(
+          cached.jobs
+            .map(j=>normalizeExternalJob(j,j.source||""))
+            .filter(Boolean)
+            .filter(j=>{
+              const p=String(j.provider||j.source||"").toLowerCase();
+              return j.isActive !== false &&
+                     j.is_active !== false &&
+                     !["adzuna","arbeitnow","jobicy","jooble","indeed","linkedin","glassdoor"].includes(p);
+            })
+        );
       }catch(e){ return null; }
     }
     function writeJobProviderCache(jobs){ try{ localStorage.setItem(GLUEFUL_JOB_CACHE_KEY,JSON.stringify({timestamp:Date.now(),jobs:dedupeVerifiedJobs(jobs).slice(0,1000)})); }catch(e){} }
@@ -8331,7 +8341,13 @@
         if(!response.ok) throw new Error(`${provider.name} HTTP ${response.status}`);
         const payload=await response.json(); if(requestId!==gluefulJobsRequestId) return [];
         const rawJobs=Array.isArray(payload)?payload:(Array.isArray(payload.jobs)?payload.jobs:(Array.isArray(payload.results)?payload.results:[]));
-        const jobs=rawJobs.map(raw=>normalizeExternalJob(raw,providerId)).filter(Boolean);
+        const jobs=rawJobs
+          .map(raw=>normalizeExternalJob(raw,providerId))
+          .filter(Boolean)
+          .filter(j=>{
+            const p=String(j.provider||j.source||providerId||"").toLowerCase();
+            return !["adzuna","arbeitnow","jobicy","jooble","indeed","linkedin","glassdoor"].includes(p);
+          });
         gluefulJobProviderStatus[providerId]={state:"ok",count:jobs.length}; return jobs;
       }catch(error){
         console.warn(`${provider.name} provider unavailable:`,error);
@@ -8865,7 +8881,8 @@
         const {data,error} = await supabaseClient
           .from("job_listings")
           .select("*")
-          .order("is_active",{ascending:false,nullsFirst:false})
+          .eq("is_active",true)
+          .not("provider","in","(adzuna,arbeitnow,jobicy)")
           .order("posted_at",{ascending:false,nullsFirst:false})
           .range(from,to);
 
@@ -8951,7 +8968,7 @@
        * FAST PATH:
        * 1. Read the first database page from Supabase.
        * 2. Render immediately.
-       * 3. Sync Adzuna in the background.
+       * 3. Sync official company/ATS sources in the background.
        * 4. Pagination continues independently as the user scrolls.
        *
        * No provider request is allowed to block the first screen.
@@ -8989,10 +9006,9 @@
       const shouldSync = forceRefresh || !initialJobs.length;
 
       if(shouldSync){
-        // Start the single backend orchestrator instead of invoking
-        // individual provider functions from the browser. This prevents
-        // duplicate Adzuna runs and keeps the provider pipeline centralized
-        // in Supabase.
+        // Start the single backend orchestrator instead of invoking individual
+        // provider functions from the browser. The orchestrator now uses
+        // official company/ATS sources only; Adzuna is disabled.
         const syncTasks = [
           triggerGluefulFullJobSync()
         ];
