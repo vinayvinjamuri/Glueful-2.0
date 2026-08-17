@@ -328,6 +328,7 @@
        viewer also ships its own +/- /FIT zoom controls (75%-300%). -->
 
   <title>Glueful</title>
+  <!-- V23 — Full Supabase job-sync orchestrator + fixed multi-source fallback -->
   <!-- V16 — Resume preview + automatic re-import on replacement + mobile resume actions -->
 
   <!-- Resume parsing libraries -->
@@ -8731,6 +8732,65 @@
       return queries.slice(0,8);
     }
 
+    /*
+     * GLUEFUL FULL JOB SYNC ORCHESTRATOR
+     * ----------------------------------
+     * Supabase now has a dedicated run-sync-now Edge Function which
+     * orchestrates the complete ingestion pipeline:
+     *   - public ATS discovery
+     *   - Adzuna
+     *   - fixed multi-source sync
+     *   - Workday
+     *   - NXP Workday
+     *   - Recruitee
+     *   - public ATS jobs
+     *   - application-URL resolution
+     *
+     * The browser only starts the orchestrator. Provider credentials and
+     * service-role operations remain server-side.
+     *
+     * run-sync-now intentionally returns HTTP 202 because the backend
+     * continues the sync in the background. The Jobs feed is reloaded after
+     * the request is accepted.
+     */
+    async function triggerGluefulFullJobSync(){
+      try{
+        const {data,error}=await supabaseClient.functions.invoke("run-sync-now",{
+          body:{
+            trigger:"jobs_refresh",
+            source:"glueful_web"
+          }
+        });
+
+        if(error) throw error;
+
+        console.log("[Glueful Jobs] Full sync accepted:",data);
+        return data || {ok:true,accepted:true};
+      }catch(error){
+        console.warn("[Glueful Jobs] Full sync orchestrator unavailable:",error);
+
+        // Compatibility fallback: if the orchestrator is temporarily
+        // unavailable, use the currently deployed fixed multi-source
+        // function directly. Adzuna is still handled separately below.
+        try{
+          const {data,error:fallbackError}=await supabaseClient.functions.invoke("sync-job-sources-fixed",{
+            body:{
+              trigger:"jobs_refresh",
+              providers:["greenhouse","lever","arbeitnow"]
+            }
+          });
+
+          if(fallbackError) throw fallbackError;
+
+          console.log("[Glueful Jobs] Fixed multi-source fallback accepted:",data);
+          return data || {ok:true};
+        }catch(fallbackError){
+          console.warn("[Glueful Jobs] Fixed multi-source fallback failed:",fallbackError);
+          return null;
+        }
+      }
+    }
+
     async function syncAdzunaJobsFromBackend(){
       const profile=getJobSearchProfile()||{};
       const queries=buildAdzunaQueriesFromProfile();
@@ -8752,38 +8812,9 @@
         if(error) throw error;
         console.log("[Glueful Jobs] Adzuna sync result:",data);
 
-        // Keep the existing Adzuna pipeline intact, but also refresh the
-        // independent multi-source ingestion layer. A failure in the
-        // additional source must never prevent Adzuna or cached jobs from
-        // being used.
-        try{
-          const {data:sourceData,error:sourceError}=await supabaseClient.functions.invoke("sync-job-sources",{
-            body:{
-              providers:["greenhouse","lever","arbeitnow"]
-            }
-          });
-          if(sourceError) throw sourceError;
-          console.log("[Glueful Jobs] Additional source sync result:",sourceData);
-        }catch(sourceError){
-          console.warn("[Glueful Jobs] Additional job sources unavailable; keeping existing jobs:",sourceError);
-        }
-
         return data;
       }catch(error){
         console.warn("[Glueful Jobs] Adzuna sync failed; using existing verified jobs:",error);
-
-        // Even if Adzuna is unavailable, try the independent source layer.
-        try{
-          const {data:sourceData,error:sourceError}=await supabaseClient.functions.invoke("sync-job-sources",{
-            body:{
-              providers:["greenhouse","lever","arbeitnow"]
-            }
-          });
-          if(sourceError) throw sourceError;
-          console.log("[Glueful Jobs] Fallback source sync result:",sourceData);
-        }catch(sourceError){
-          console.warn("[Glueful Jobs] Fallback job sources unavailable; using cached/database jobs:",sourceError);
-        }
 
         return null;
       }
@@ -8958,23 +8989,12 @@
       const shouldSync = forceRefresh || !initialJobs.length;
 
       if(shouldSync){
-        // Run the existing Adzuna sync and the independent multi-source sync
-        // together. A failure in one provider path must not hide existing jobs.
+        // Start the single backend orchestrator instead of invoking
+        // individual provider functions from the browser. This prevents
+        // duplicate Adzuna runs and keeps the provider pipeline centralized
+        // in Supabase.
         const syncTasks = [
-          syncAdzunaJobsFromBackend(),
-          (async()=>{
-            try{
-              const {data,error} = await supabaseClient.functions.invoke("sync-job-sources",{
-                body:{trigger:"jobs_refresh"}
-              });
-              if(error) throw error;
-              console.log("[Glueful Jobs] Multi-source sync result:",data);
-              return data;
-            }catch(error){
-              console.warn("[Glueful Jobs] Multi-source sync failed; existing jobs remain available:",error);
-              return null;
-            }
-          })()
+          triggerGluefulFullJobSync()
         ];
 
         Promise.allSettled(syncTasks)
