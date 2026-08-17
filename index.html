@@ -8489,7 +8489,14 @@
       // personalized match score is NEVER cached/stored — it is always
       // derived fresh here so profile edits are reflected immediately.
       const profile=getJobSearchProfile();
-      return dedupeVerifiedJobs(gluefulExternalJobs).map(job=>({...job,match:calculateJobMatch(job,profile)||Number(job.match||0)}));
+      return dedupeVerifiedJobs(gluefulExternalJobs).map(job=>{
+        try{
+          return {...job,match:calculateJobMatch(job,profile)||Number(job.match||0)};
+        }catch(error){
+          console.warn("[Glueful Jobs] Match calculation failed for job; rendering with fallback score:",job?.id,error);
+          return {...job,match:Number(job.match||0)};
+        }
+      });
     }
 
     /*
@@ -8505,9 +8512,12 @@
       const intelligence = Array.isArray(r.job_intelligence)
         ? (r.job_intelligence[0] || {})
         : (r.job_intelligence || {});
+      // Preserve the real provider identity. Older code collapsed every
+      // non-Jooble source into Adzuna, which broke multi-source attribution
+      // and provider-specific URL safety.
       const providerId = String(
         r.provider || r.source || r.source_name || r.sourceName || "adzuna"
-      ).toLowerCase().includes("jooble") ? "jooble" : "adzuna";
+      ).trim().toLowerCase() || "adzuna";
 
       const mapped = {
         ...r,
@@ -8631,9 +8641,40 @@
         });
         if(error) throw error;
         console.log("[Glueful Jobs] Adzuna sync result:",data);
+
+        // Keep the existing Adzuna pipeline intact, but also refresh the
+        // independent multi-source ingestion layer. A failure in the
+        // additional source must never prevent Adzuna or cached jobs from
+        // being used.
+        try{
+          const {data:sourceData,error:sourceError}=await supabaseClient.functions.invoke("sync-job-sources",{
+            body:{
+              providers:["greenhouse","lever","arbeitnow"]
+            }
+          });
+          if(sourceError) throw sourceError;
+          console.log("[Glueful Jobs] Additional source sync result:",sourceData);
+        }catch(sourceError){
+          console.warn("[Glueful Jobs] Additional job sources unavailable; keeping existing jobs:",sourceError);
+        }
+
         return data;
       }catch(error){
         console.warn("[Glueful Jobs] Adzuna sync failed; using existing verified jobs:",error);
+
+        // Even if Adzuna is unavailable, try the independent source layer.
+        try{
+          const {data:sourceData,error:sourceError}=await supabaseClient.functions.invoke("sync-job-sources",{
+            body:{
+              providers:["greenhouse","lever","arbeitnow"]
+            }
+          });
+          if(sourceError) throw sourceError;
+          console.log("[Glueful Jobs] Fallback source sync result:",sourceData);
+        }catch(sourceError){
+          console.warn("[Glueful Jobs] Fallback job sources unavailable; using cached/database jobs:",sourceError);
+        }
+
         return null;
       }
     }
@@ -8676,9 +8717,13 @@
         const from = append ? gluefulJobDbOffset : 0;
         const to = from + GLUEFUL_JOB_PAGE_SIZE - 1;
 
+        // Load the canonical job rows independently from Job Intelligence.
+        // Embedded PostgREST relationships can fail when the relationship
+        // metadata/cache is stale; that must never make the entire Jobs feed
+        // disappear. Intelligence is enriched in a second, optional query.
         const {data,error} = await supabaseClient
           .from("job_listings")
-          .select("*, job_intelligence(*)")
+          .select("*")
           .order("is_active",{ascending:false,nullsFirst:false})
           .order("posted_at",{ascending:false,nullsFirst:false})
           .range(from,to);
@@ -8686,7 +8731,35 @@
         if(error) throw error;
         if(requestId !== gluefulJobsRequestId) return gluefulExternalJobs;
 
-        const rows = Array.isArray(data) ? data : [];
+        let rows = Array.isArray(data) ? data : [];
+
+        if(rows.length){
+          const jobIds = rows.map(row=>row?.id).filter(Boolean);
+          if(jobIds.length){
+            try{
+              const {data:intelligenceRows,error:intelligenceError} = await supabaseClient
+                .from("job_intelligence")
+                .select("*")
+                .in("job_id",jobIds);
+
+              if(!intelligenceError && Array.isArray(intelligenceRows)){
+                const intelligenceByJobId = new Map(
+                  intelligenceRows.map(item=>[String(item.job_id),item])
+                );
+                rows = rows.map(row=>({
+                  ...row,
+                  job_intelligence: intelligenceByJobId.has(String(row.id))
+                    ? [intelligenceByJobId.get(String(row.id))]
+                    : []
+                }));
+              }else if(intelligenceError){
+                console.warn("[Glueful Jobs] Job Intelligence enrichment unavailable; rendering jobs without it:",intelligenceError);
+              }
+            }catch(intelligenceError){
+              console.warn("[Glueful Jobs] Job Intelligence enrichment failed; rendering jobs without it:",intelligenceError);
+            }
+          }
+        }
         if(!append){
           gluefulExternalJobs = [];
           gluefulJobDbOffset = 0;
@@ -8775,11 +8848,30 @@
       const shouldSync = forceRefresh || !initialJobs.length;
 
       if(shouldSync){
-        syncAdzunaJobsFromBackend()
-          .then(async result=>{
-            if(result){
-              // The sync writes real provider rows to Supabase. Reload only
-              // the first page so the newest jobs become visible immediately.
+        // Run the existing Adzuna sync and the independent multi-source sync
+        // together. A failure in one provider path must not hide existing jobs.
+        const syncTasks = [
+          syncAdzunaJobsFromBackend(),
+          (async()=>{
+            try{
+              const {data,error} = await supabaseClient.functions.invoke("sync-job-sources",{
+                body:{trigger:"jobs_refresh"}
+              });
+              if(error) throw error;
+              console.log("[Glueful Jobs] Multi-source sync result:",data);
+              return data;
+            }catch(error){
+              console.warn("[Glueful Jobs] Multi-source sync failed; existing jobs remain available:",error);
+              return null;
+            }
+          })()
+        ];
+
+        Promise.allSettled(syncTasks)
+          .then(async results=>{
+            const anySyncCompleted = results.some(result=>result.status === "fulfilled" && result.value);
+            if(anySyncCompleted || forceRefresh){
+              // Reload the first page so newly ingested jobs become visible.
               ++gluefulJobsRequestId;
               resetJobFeedState();
               await loadJobListingsFromSupabase({silent:true});
@@ -8787,7 +8879,7 @@
             }
           })
           .catch(error=>{
-            console.warn("[Glueful Jobs] Background provider sync failed:",error);
+            console.warn("[Glueful Jobs] Provider refresh coordination failed:",error);
           });
       }
 
