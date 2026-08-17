@@ -328,7 +328,7 @@
        viewer also ships its own +/- /FIT zoom controls (75%-300%). -->
 
   <title>Glueful</title>
-  <!-- V25 — Official sources only; aggregator rows excluded from Jobs feed -->
+  <!-- V26 — Fix official ATS same-host Apply URL validation -->
   <!-- V16 — Resume preview + automatic re-import on replacement + mobile resume actions -->
 
   <!-- Resume parsing libraries -->
@@ -8200,10 +8200,10 @@
           const host=new URL(url).hostname.toLowerCase().replace(/^www\./,"");
           const known=providerHosts[providerId]||[];
           if(known.some(domain => host===domain || host.endsWith("." + domain))) return true;
-          if(sourceListingUrl){
-            const sourceHost=new URL(sourceListingUrl).hostname.toLowerCase().replace(/^www\./,"");
-            if(host===sourceHost) return true;
-          }
+          // IMPORTANT: an official ATS job page can legitimately use the
+          // same hostname as the source listing (for example Greenhouse,
+          // Lever, Jobvite, or Workday). Only known aggregator hosts are
+          // rejected here.
         }catch(e){}
         return false;
       }
@@ -9451,11 +9451,8 @@
         ];
         if(providerHosts.some(domain => host===domain || host.endsWith("."+domain))) return "";
 
-        const source=normalizeJobUrl(job?.sourceListingUrl || job?.jobUrl || "");
-        if(source){
-          const sourceHost=new URL(source).hostname.toLowerCase().replace(/^www\./,"");
-          if(host===sourceHost) return "";
-        }
+        // Same-host is NOT evidence of an aggregator URL. Official ATS
+        // postings commonly use the same host for both listing and apply.
         return employer;
       }catch(e){
         return "";
@@ -9761,11 +9758,8 @@
         const path = parsed.pathname.replace(/\/+$/,"");
         if(!path || /^\/(?:careers?|jobs?|job-search|search)$/i.test(path)) return "";
 
-        const source=normalizeJobUrl(job?.sourceListingUrl || job?.jobUrl || "");
-        if(source){
-          const sourceHost=new URL(source).hostname.toLowerCase().replace(/^www\./,"");
-          if(host===sourceHost) return "";
-        }
+        // Same-host is NOT evidence of an aggregator URL. Official ATS
+        // postings commonly use the same host for both listing and apply.
         return direct;
       }catch(e){
         return "";
