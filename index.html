@@ -8858,7 +8858,7 @@
       return incoming.length;
     }
 
-    async function loadJobListingsFromSupabase({append=false, silent=false} = {}){
+    async function loadJobListingsFromSupabase({append=false, silent=false, searchText=null} = {}){
       if(append){
         if(gluefulJobsLoadingMore || !gluefulJobDbHasMore) return gluefulExternalJobs;
         gluefulJobsLoadingMore = true;
@@ -8868,23 +8868,47 @@
       }
 
       const requestId = ++gluefulJobsRequestId;
-      if(!silent) updateJobsSourceNote(append ? "Loading more jobs…" : "Loading jobs…");
+      if(!silent) updateJobsSourceNote(append ? "Loading more jobs…" : "Searching jobs…");
 
       try{
         const from = append ? gluefulJobDbOffset : 0;
-        const to = from + GLUEFUL_JOB_PAGE_SIZE - 1;
+        const q = searchText === null
+          ? String(document.getElementById("jobs-search-input")?.value || "").trim()
+          : String(searchText || "").trim();
+
+        /*
+         * SCALE-SAFE SEARCH:
+         * The browser must NEVER search only the jobs currently loaded in
+         * memory. When the user enters a search term, query the Supabase
+         * search_jobs RPC, which searches the complete job_listings table.
+         *
+         * This keeps the frontend at ~60 rows per page even when Glueful
+         * grows to 1M+ jobs.
+         */
+        let query;
+        if(q){
+          query = supabaseClient
+            .rpc("search_jobs",{
+              search_text:q,
+              result_limit:GLUEFUL_JOB_PAGE_SIZE,
+              result_offset:from
+            })
+            .not("provider","in","(adzuna,arbeitnow,jobicy)");
+        }else{
+          query = supabaseClient
+            .from("job_listings")
+            .select("*")
+            .eq("is_active",true)
+            .not("provider","in","(adzuna,arbeitnow,jobicy)")
+            .order("posted_at",{ascending:false,nullsFirst:false})
+            .range(from,from + GLUEFUL_JOB_PAGE_SIZE - 1);
+        }
 
         // Load the canonical job rows independently from Job Intelligence.
         // Embedded PostgREST relationships can fail when the relationship
         // metadata/cache is stale; that must never make the entire Jobs feed
         // disappear. Intelligence is enriched in a second, optional query.
-        const {data,error} = await supabaseClient
-          .from("job_listings")
-          .select("*")
-          .eq("is_active",true)
-          .not("provider","in","(adzuna,arbeitnow,jobicy)")
-          .order("posted_at",{ascending:false,nullsFirst:false})
-          .range(from,to);
+        const {data,error} = await query;
 
         if(error) throw error;
         if(requestId !== gluefulJobsRequestId) return gluefulExternalJobs;
@@ -8959,7 +8983,10 @@
       // verified direct application URL. The feed must show all matching jobs;
       // Apply availability is displayed per card instead of deciding whether
       // the job exists in the feed.
-      await loadJobListingsFromSupabase({append:true});
+      await loadJobListingsFromSupabase({
+        append:true,
+        searchText:String(document.getElementById("jobs-search-input")?.value || "").trim()
+      });
       renderJobs();
     }
 
@@ -8991,14 +9018,23 @@
         }
       }
 
+      const currentSearchText = String(
+        document.getElementById("jobs-search-input")?.value || ""
+      ).trim();
+
       const initialJobs = gluefulExternalJobs.length
         ? gluefulExternalJobs
-        : await loadJobListingsFromSupabase();
+        : await loadJobListingsFromSupabase({
+            searchText:currentSearchText
+          });
 
       // Cache is only a paint-fast fallback. Always refresh the first database
       // page in the background when cache was used.
       if(usedCache){
-        loadJobListingsFromSupabase({silent:true})
+        loadJobListingsFromSupabase({
+          silent:true,
+          searchText:currentSearchText
+        })
           .then(()=>renderJobs())
           .catch(error=>console.warn("[Glueful Jobs] Cached feed refresh failed:",error));
       }
@@ -9020,7 +9056,10 @@
               // Reload the first page so newly ingested jobs become visible.
               ++gluefulJobsRequestId;
               resetJobFeedState();
-              await loadJobListingsFromSupabase({silent:true});
+              await loadJobListingsFromSupabase({
+                silent:true,
+                searchText:String(document.getElementById("jobs-search-input")?.value || "").trim()
+              });
               renderJobs();
             }
           })
@@ -9654,8 +9693,30 @@
     let gluefulJobSearchTimer = null;
 
     function handleJobSearchInput(){
-      // Search is intentionally local. It never calls Adzuna on every keystroke.
-      renderJobs();
+      /*
+       * SEARCH THE DATABASE, NOT THE CURRENT 60-ROW BROWSER PAGE.
+       *
+       * The search_jobs RPC searches company/title/location across the full
+       * job_listings table. Debouncing prevents a request on every keystroke.
+       */
+      clearTimeout(gluefulJobSearchTimer);
+
+      const input = document.getElementById("jobs-search-input");
+      const searchText = String(input?.value || "").trim();
+
+      gluefulJobSearchTimer = setTimeout(async ()=>{
+        ++gluefulJobsRequestId;
+        resetJobFeedState();
+
+        // Empty search returns to the normal paginated feed.
+        await loadJobListingsFromSupabase({
+          append:false,
+          searchText,
+          silent:false
+        });
+
+        renderJobs();
+      }, 250);
     }
 
     function openJobsView(){
