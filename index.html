@@ -46,7 +46,7 @@
       try {
         const { data, error } = await supabaseClient
           .from("job_listings")
-          .select("*")
+          .select("*, job_intelligence(*)")
           .limit(1);
 
         if (error) {
@@ -8328,6 +8328,7 @@
       const norm = value => String(value ?? "")
         .toLowerCase()
         .replace(/&/g," and ")
+        .replace(/[–—]/g,"-")
         .replace(/[^a-z0-9+#.\s/-]/g," ")
         .replace(/\s+/g," ")
         .trim();
@@ -8337,113 +8338,146 @@
         return String(value ?? "").split(/[,|/]+/);
       };
 
-      const stop = new Set([
-        "and","the","for","with","from","your","you","job","jobs","role","roles",
-        "engineer","engineering","developer","development","software","work","working",
-        "full","time","years","year","experience","using","required","preferred","team",
-        "teams","strong","good","knowledge","skills","ability","design","development"
-      ]);
-      const tokens = value => norm(value).split(/\s+/).filter(t=>t.length>=3 && !stop.has(t));
+      const tokens = value => norm(value).split(/\s+/)
+        .filter(t=>t.length>=3 && !new Set([
+          "and","the","for","with","from","your","you","job","jobs","role","roles",
+          "engineer","engineering","developer","development","software","work","working",
+          "full","time","years","year","experience","using","required","preferred",
+          "team","teams","strong","good","knowledge","skills","ability","design"
+        ]).has(t));
 
-      // Match primarily against the actual target role. The old algorithm gave
-      // too much weight to the user's About text, which made unrelated jobs look
-      // relevant just because the profile contained broad keywords.
-      const targetRole = norm(profile.targetRole || profile.targetRoles || "");
-      const headline = norm(profile.headline || "");
-      const roleText = targetRole || headline;
+      const targetRole = norm(profile.targetRole || profile.targetRoles || profile.headline || "");
       const jobTitle = norm(job.title);
       const jobText = norm([
         job.title, job.company, job.description,
-        ...(job.skills || []), ...(job.requirements || []),
+        ...(job.skills || []), ...(job.requiredSkills || []),
+        ...(job.preferredSkills || []), ...(job.requirements || []),
         ...(job.qualifications || []), ...(job.preferredQualifications || []),
-        ...(job.responsibilities || []), job.education, job.department, job.industry
+        ...(job.responsibilities || []), job.education, job.department, job.industry,
+        job.roleFamily, job.roleSubfamily
       ].join(" "));
 
-      let score=0;
-      let roleScore=0;
-      let skillScore=0;
-      let experienceScore=0;
-      let preferenceScore=0;
+      const candidateYears = getCandidateExperienceYears(profile);
+      const intelligenceFamily = norm(job.roleFamily);
+      const intelligenceSubfamily = norm(job.roleSubfamily);
+      const intelligenceMin = Number.isFinite(Number(job.minExperienceYears))
+        ? Number(job.minExperienceYears) : null;
+      const intelligenceSeniorLevel = Number.isFinite(Number(job.seniorityLevel))
+        ? Number(job.seniorityLevel) : null;
 
-      // 1) Role alignment: title is the strongest signal.
-      const roleTokens=[...new Set(tokens(roleText))];
-      if(roleTokens.length){
+      // 1) Role alignment. Job intelligence gets priority when available.
+      let roleScore = 0;
+      const roleText = targetRole;
+      const roleTokens = [...new Set(tokens(roleText))];
+
+      const familyGroups = [
+        {
+          terms:["soc validation","silicon validation","post silicon","post-silicon","device validation","hardware validation","validation engineer"],
+          families:["silicon/soc validation","hardware/validation"]
+        },
+        {
+          terms:["embedded","firmware","embedded software","embedded systems","mcu","microcontroller","rtos"],
+          families:["embedded/firmware"]
+        },
+        {
+          terms:["hardware","electronics","electrical","board"],
+          families:["hardware engineering","hardware/validation"]
+        },
+        {
+          terms:["python","automation","test automation","validation automation","qa","sdet"],
+          families:["python/automation/test"]
+        },
+        {
+          terms:["pmic","power","battery","bms","power electronics"],
+          families:["pmic/power validation"]
+        },
+        {
+          terms:["software engineer","software engineering","software developer","backend","frontend","full stack"],
+          families:["software engineering"]
+        }
+      ];
+
+      const targetGroup = familyGroups.find(g=>g.terms.some(term=>roleText.includes(term)));
+      if(targetGroup && intelligenceFamily){
+        if(targetGroup.families.includes(intelligenceFamily)){
+          roleScore = 45;
+        }else{
+          roleScore = 0;
+        }
+      }else if(roleTokens.length){
         const titleHits=roleTokens.filter(t=>jobTitle.includes(t)).length;
         const textHits=roleTokens.filter(t=>jobText.includes(t)).length;
-        roleScore=Math.min(45, Math.round((titleHits/roleTokens.length)*35 + (textHits/roleTokens.length)*10));
+        roleScore=Math.min(45,Math.round((titleHits/roleTokens.length)*35+(textHits/roleTokens.length)*10));
       }
 
-      // 2) Explicit skills from the candidate profile.
-      const skills=splitList(profile.skills).map(norm).filter(Boolean).slice(0,50);
-      if(skills.length){
+      // 2) Skill fit. Intelligence skills are authoritative when present.
+      const candidateSkills=splitList(profile.skills).map(norm).filter(Boolean).slice(0,50);
+      const jobSkills=[...(job.requiredSkills||[]),...(job.preferredSkills||[]),...(job.skills||[])].map(norm).filter(Boolean);
+      let skillScore=0;
+      if(candidateSkills.length){
         let hits=0;
-        skills.forEach(skill=>{
+        candidateSkills.forEach(skill=>{
           const parts=tokens(skill);
-          if(jobText.includes(skill) || (parts.length && parts.every(t=>jobText.includes(t)))) hits++;
+          if(jobSkills.some(js=>js===skill || js.includes(skill) || skill.includes(js)) ||
+             jobText.includes(skill) || (parts.length && parts.every(t=>jobText.includes(t)))) hits++;
         });
-        skillScore=Math.min(30,Math.round((hits/skills.length)*30));
+        skillScore=Math.min(30,Math.round((hits/candidateSkills.length)*30));
       }
 
-      // 3) Experience/seniority fit. This is a hard quality signal, not a tiny
-      // bonus. A 2-year candidate must not receive a strong match for AVP,
-      // director, manager, principal or senior roles.
-      const candidateYears=getCandidateExperienceYears(profile);
-      const exp=inferJobExperienceRange(job);
+      // 3) Experience and seniority are hard quality signals.
+      let experienceScore=10;
+      let seniorityLevel=intelligenceSeniorLevel;
+      let requiredMin=intelligenceMin;
+
+      if(!Number.isFinite(requiredMin)){
+        const exp=inferJobExperienceRange(job);
+        requiredMin=exp.min;
+        seniorityLevel=seniorityLevel ?? exp.seniority.level;
+      }
+
       if(Number.isFinite(candidateYears)){
-        if(exp.min!==null){
-          if(candidateYears>=exp.min) experienceScore=20;
+        if(Number.isFinite(requiredMin)){
+          if(candidateYears>=requiredMin) experienceScore=20;
           else {
-            const gap=exp.min-candidateYears;
+            const gap=requiredMin-candidateYears;
             experienceScore=gap<=1 ? 8 : gap<=2 ? 2 : 0;
           }
-        }else{
-          experienceScore=14;
         }
 
-        // Strong seniority mismatch caps the final result regardless of keyword overlap.
-        if(candidateYears < exp.seniority.minYears){
-          const gap=exp.seniority.minYears-candidateYears;
-          if(exp.seniority.level>=8) experienceScore=0;
-          else if(exp.seniority.level>=6) experienceScore=Math.min(experienceScore,1);
-          else if(exp.seniority.level>=5) experienceScore=Math.min(experienceScore,3);
-          else if(exp.seniority.level>=4) experienceScore=Math.min(experienceScore,6);
+        if(Number.isFinite(seniorityLevel) && candidateYears < Number(job.minExperienceYears ?? 0)){
+          // Explicit experience is already represented above.
         }
-      }else{
-        experienceScore=10;
+
+        if(Number.isFinite(seniorityLevel)){
+          if(seniorityLevel>=8 && candidateYears<10) experienceScore=0;
+          else if(seniorityLevel>=7 && candidateYears<7) experienceScore=Math.min(experienceScore,1);
+          else if(seniorityLevel>=6 && candidateYears<6) experienceScore=Math.min(experienceScore,1);
+          else if(seniorityLevel>=5 && candidateYears<5) experienceScore=Math.min(experienceScore,3);
+          else if(seniorityLevel>=4 && candidateYears<4) experienceScore=Math.min(experienceScore,6);
+        }
       }
 
-      // 4) Location/work-mode/employment are secondary preferences.
+      // 4) Location/work mode are secondary preferences.
+      let preferenceScore=0;
       const locations=splitList(profile.preferredLocations || profile.locations).map(norm).filter(Boolean);
       if(locations.length && locations.some(x=>norm(job.location).includes(x) || x.includes(norm(job.location)))) preferenceScore+=3;
       const workMode=norm(profile.workMode || profile.workPreference);
       if(workMode && workMode!=="any" && norm(job.workMode).includes(workMode)) preferenceScore+=2;
 
-      score=Math.round(roleScore + skillScore + experienceScore + preferenceScore);
+      let score=Math.round(roleScore+skillScore+experienceScore+preferenceScore);
 
-      // Role-family mismatch is also a hard quality gate. This prevents a
-      // generic "Software Engineer"/"Product Engineer"/"Project Manager" job
-      // from ranking highly merely because a few skills occur in the JD.
-      const roleFamilies = [
-        ["soc validation","silicon validation","post silicon","post-silicon","device validation","hardware validation","validation engineer"],
-        ["embedded","firmware","embedded software","embedded systems","mcu","microcontroller","rtos"],
-        ["hardware","board","electronics","electrical","hardware engineer"],
-        ["python","automation","test automation","validation automation","qa","sdet"],
-        ["pmic","power","battery","bms","power electronics"],
-        ["driver","device driver","kernel","linux driver"]
-      ];
-      const roleFamily=roleFamilies.find(f=>f.some(term=>roleText.includes(term)));
-      const jobFamilyMatch=roleFamily
-        ? roleFamily.some(term=>jobText.includes(term))
-        : roleTokens.some(t=>jobTitle.includes(t) || jobText.includes(t));
-      if(roleText && !jobFamilyMatch) score=Math.min(score,25);
+      // Hard role-family mismatch gate.
+      if(targetGroup && intelligenceFamily && !targetGroup.families.includes(intelligenceFamily)){
+        score=Math.min(score,25);
+      }
 
-      // Hard mismatch: executive/managerial roles are not useful to an early-career
-      // candidate even when their skill keywords happen to overlap.
-      if(Number.isFinite(candidateYears) && candidateYears < exp.seniority.minYears){
-        if(exp.seniority.level>=8) score=Math.min(score,8);
-        else if(exp.seniority.level>=6) score=Math.min(score,15);
-        else if(exp.seniority.level>=5) score=Math.min(score,25);
-        else if(exp.seniority.level>=4) score=Math.min(score,38);
+      // Managers/executives/principal roles remain capped for early-career candidates.
+      if(Number.isFinite(candidateYears) && Number.isFinite(seniorityLevel)){
+        if(seniorityLevel>=8 && candidateYears<10) score=Math.min(score,8);
+        else if(seniorityLevel>=7 && candidateYears<7) score=Math.min(score,12);
+        else if(seniorityLevel>=6 && candidateYears<6) score=Math.min(score,15);
+        else if(seniorityLevel>=5 && candidateYears<5) score=Math.min(score,25);
+        else if(seniorityLevel>=4 && candidateYears<4) score=Math.min(score,38);
       }
 
       return Math.max(0,Math.min(99,score));
@@ -8468,6 +8502,9 @@
      */
     function normalizeSupabaseJobRow(row){
       const r = row || {};
+      const intelligence = Array.isArray(r.job_intelligence)
+        ? (r.job_intelligence[0] || {})
+        : (r.job_intelligence || {});
       const providerId = String(
         r.provider || r.source || r.source_name || r.sourceName || "adzuna"
       ).toLowerCase().includes("jooble") ? "jooble" : "adzuna";
@@ -8504,6 +8541,16 @@
         education: r.education || "",
         department: r.department || "",
         industry: r.industry || "",
+        roleFamily: intelligence.role_family || r.role_family || "",
+        roleSubfamily: intelligence.role_subfamily || r.role_subfamily || "",
+        seniorityLevel: intelligence.seniority_level ?? r.seniority_level ?? null,
+        seniorityLabel: intelligence.seniority_label || r.seniority_label || "",
+        minExperienceYears: intelligence.min_experience_years ?? r.min_experience_years ?? null,
+        maxExperienceYears: intelligence.max_experience_years ?? r.max_experience_years ?? null,
+        experienceConfidence: intelligence.experience_confidence ?? r.experience_confidence ?? null,
+        requiredSkills: Array.isArray(intelligence.required_skills) ? intelligence.required_skills : (r.required_skills || []),
+        preferredSkills: Array.isArray(intelligence.preferred_skills) ? intelligence.preferred_skills : (r.preferred_skills || []),
+        intelligenceVersion: intelligence.intelligence_version || r.intelligence_version || "",
         sourceListingUrl: r.source_listing_url || r.sourceListingUrl || r.job_url || r.jobUrl || r.url || r.link || r.listing_url || r.listingUrl || r.source_url || r.sourceUrl || "",
         employerJobUrl: r.employer_job_url || r.employerJobUrl || "",
         applicationUrl: r.application_url || r.applicationUrl || r.apply_url || r.applyUrl || "",
@@ -9161,24 +9208,24 @@
     }
 
     function hasVerifiedApplyLink(job){
-      // A verified application URL can come from either the direct application
-      // field or a validated employer job URL. Provider/source listing URLs are
-      // deliberately excluded so the user never gets dumped onto Adzuna/Jooble.
-      return Boolean(getJobApplicationUrl(job) || getSafeEmployerJobUrl(job));
+      // Only a verified direct application URL enables Apply.
+      // An employer job page is useful for "Company job", but is not itself
+      // proof that a direct application form exists.
+      return Boolean(getJobApplicationUrl(job));
     }
 
     function getBestJobApplyUrl(job){
-      return getJobApplicationUrl(job) || getSafeEmployerJobUrl(job) || "";
+      return getJobApplicationUrl(job) || "";
     }
 
     function compareJobsActiveFirst(a,b){
-      // Default feed prioritizes jobs the user can actually apply to first,
-      // then strong profile fit, then active/newest. All jobs remain visible.
-      const applyDiff=Number(hasVerifiedApplyLink(b))-Number(hasVerifiedApplyLink(a));
-      if(applyDiff) return applyDiff;
-
+      // Relevance is the primary ranking signal. Application availability
+      // is secondary and never removes a matching job.
       const matchDiff=Number(b.match||0)-Number(a.match||0);
       if(matchDiff) return matchDiff;
+
+      const applyDiff=Number(hasVerifiedApplyLink(b))-Number(hasVerifiedApplyLink(a));
+      if(applyDiff) return applyDiff;
 
       const activeDiff=Number(isJobCurrentlyActive(b))-Number(isJobCurrentlyActive(a));
       if(activeDiff) return activeDiff;
