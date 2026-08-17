@@ -10177,11 +10177,21 @@
       loadJobUIState();
       loadJobResumeVariants();
 
+      // IMPORTANT: do not bind a second, un-debounced renderJobs() to this
+      // input. The oninput="handleJobSearchInput()" attribute on the element
+      // already owns search: it debounces, queries the search_jobs RPC
+      // against the full job_listings table, and renders once results
+      // arrive. A second synchronous renderJobs() listener here fired on
+      // every keystroke BEFORE the debounced database search resolved,
+      // filtering only the small, already-in-memory default job page
+      // client-side — which is exactly why searching "NVIDIA" showed only
+      // 1 job instead of all matching rows. Route "search"/"change" (native
+      // clear button, Enter key) through the same debounced database path
+      // instead of a raw local re-render.
       const searchInput = document.getElementById("jobs-search-input");
       if(searchInput){
-        searchInput.addEventListener("input", renderJobs);
-        searchInput.addEventListener("search", renderJobs);
-        searchInput.addEventListener("change", renderJobs);
+        searchInput.addEventListener("search", handleJobSearchInput);
+        searchInput.addEventListener("change", handleJobSearchInput);
       }
 
       const resumeEditor = document.getElementById("job-resume-editor-text");
