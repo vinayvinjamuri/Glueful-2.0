@@ -14993,6 +14993,40 @@ document.addEventListener("click", (event)=>{
       resumeUploadedAt:""
     };
 
+    function isInvalidCandidateRole(value) {
+      const v = String(value ?? "").trim().toLowerCase();
+      if(!v) return true;
+      if(/(?:mobile|phone|contact|telephone|tel)\s*(?:no|number)?\s*[:#-]?/i.test(v)) return true;
+      if(/^\+?\d[\d\s().-]{7,}$/.test(v)) return true;
+      if(/\b\d{8,}\b/.test(v) && !/[a-z]/i.test(v)) return true;
+      if(v.includes("@") && !/\b(engineer|developer|validation|firmware|software|hardware|tester|qa|sdet)\b/i.test(v)) return true;
+      return false;
+    }
+
+    function inferCandidateTargetRole(profile) {
+      const text = String([
+        profile?.about,
+        profile?.skills,
+        profile?.headline
+      ].filter(Boolean).join(" ")).toLowerCase();
+
+      const rolePatterns = [
+        ["SoC / Silicon Validation Engineer", /(soc validation|silicon validation|post[- ]silicon|device validation|chip validation)/i],
+        ["Embedded / Firmware Engineer", /(embedded software|embedded systems|firmware|microcontroller|embedded c|rtos)/i],
+        ["Hardware Validation Engineer", /(hardware validation|hardware test|board validation|main logic board)/i],
+        ["PMIC / Power Validation Engineer", /(pmic|power validation|battery management|\bbms\b|buck converter|ldo)/i],
+        ["Python Automation / Test Engineer", /(python automation|test automation|qa automation|\bsdet\b)/i],
+        ["Hardware Engineer", /(hardware engineer|electronics engineer|electrical engineer)/i],
+        ["Software Engineer", /(software engineer|software developer|software development)/i],
+        ["Validation Engineer", /(validation engineer|validation experience|post silicon validation)/i]
+      ];
+
+      for(const [role, pattern] of rolePatterns){
+        if(pattern.test(text)) return role;
+      }
+      return "";
+    }
+
     function normalizeCandidateProfile(profile) {
       const source =
         profile && typeof profile === "object"
@@ -15013,6 +15047,19 @@ document.addEventListener("click", (event)=>{
       normalized.headline = capitalizeResumeRole(normalized.headline);
       normalized.targetRole = capitalizeResumeRole(normalized.targetRole);
       normalized.skills = normalizeSkillList(normalized.skills);
+
+      // Resume/profile imports can accidentally place a phone number,
+      // email address, or contact label into headline/targetRole.
+      // Never allow those values to drive job matching.
+      if(isInvalidCandidateRole(normalized.targetRole)){
+        const inferred = inferCandidateTargetRole(normalized);
+        if(inferred) normalized.targetRole = inferred;
+      }
+      if(isInvalidCandidateRole(normalized.headline)){
+        const inferred = inferCandidateTargetRole(normalized);
+        if(inferred) normalized.headline = inferred;
+      }
+
       return normalized;
     }
 
