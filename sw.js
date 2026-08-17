@@ -1,26 +1,3 @@
-Glueful frontend regression fix
-
-Replace the repository root sw.js with the complete contents below.
-
-This fixes two issues visible in the Jobs UI: 1. Company logos are
-loaded from public.job_listings.company_logo_url. 2. Job descriptions
-are decoded/cleaned so raw HTML such as &quot; and <div> is not
-displayed.
-
-The service worker cache version is bumped to v2 so the new worker can
-take control.
-
-Regression tests already run
-
--   JavaScript syntax check: PASS
--   Patch anchor/content checks: PASS
--   Supabase logo verification: 3004/3004 jobs have company_logo_url
--   Existing Jobs renderer was inspected and confirmed to be ignoring
-    the persisted company_logo_url, which caused the initials fallback.
--   The screenshot’s raw HTML problem was confirmed in the existing
-    .job-description rendering path.
-
-Replacement sw.js
 
     const CACHE_NAME = "glueful-cache-v2";
     const ASSETS = [
