@@ -1,3 +1,4 @@
+
 /*
  * Glueful V51 — lightweight Word-style resume authoring bridge
  *
@@ -24,41 +25,93 @@ function gluefulDocAuthInstallStyles() {
   const style = document.createElement("style");
   style.id = "glueful-native-docauth-style";
   style.textContent = `
+    /* The outer V41 scroll container is the ONLY document scroller.
+       The authoring host itself must never create an inner scrollbar. */
     #glueful-docauth-editor {
       position: relative;
       width: 100%;
-      height: min(78vh, 980px);
-      min-height: 520px;
-      overflow: auto !important;
+      height: auto;
+      min-height: 0;
+      overflow: visible !important;
       box-sizing: border-box;
-      padding: 32px;
-      background: #20242d;
-      border-radius: 12px;
-      overscroll-behavior: contain;
-      -webkit-overflow-scrolling: touch;
+      padding: 0;
+      background: transparent;
+      border-radius: 0;
+      overscroll-behavior: auto;
+      -webkit-overflow-scrolling: auto;
     }
 
     #glueful-docauth-editor .glueful-native-document-wrap {
-      width: max-content;
-      min-width: 100%;
+      width: 100%;
+      min-width: 0;
       display: flex;
       justify-content: center;
+      align-items: flex-start;
       box-sizing: border-box;
+      padding: 24px 0 40px;
     }
 
     #glueful-docauth-editor .glueful-native-page {
-      flex: 0 0 auto;
+      flex: 0 0 794px;
       width: 794px;
       min-height: 1123px;
       box-sizing: border-box;
-      padding: 72px;
+      padding: 58px 64px 64px;
+      margin: 0;
       background: #fff;
       color: #111;
-      box-shadow: 0 8px 32px rgba(0,0,0,.32);
+      border: 1px solid #d9dde5;
+      box-shadow: 0 12px 36px rgba(15,23,42,.20);
       overflow: visible;
       font-family: "Times New Roman", Times, serif;
-      font-size: 12pt;
-      line-height: 1.25;
+      font-size: 11pt;
+      line-height: 1.18;
+      text-align: left;
+      word-break: normal;
+      overflow-wrap: break-word;
+      caret-color: #6d3be8;
+    }
+
+    #glueful-docauth-editor .glueful-native-page img {
+      max-width: 100%;
+      height: auto;
+      object-fit: contain;
+      vertical-align: middle;
+    }
+
+    #glueful-docauth-editor .glueful-native-page table {
+      width: 100%;
+      max-width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    #glueful-docauth-editor .glueful-native-page td,
+    #glueful-docauth-editor .glueful-native-page th {
+      vertical-align: top;
+      overflow-wrap: anywhere;
+    }
+
+    #glueful-docauth-editor .glueful-native-page p {
+      margin: 0 0 7px;
+      padding: 0;
+    }
+
+    #glueful-docauth-editor .glueful-native-page h1,
+    #glueful-docauth-editor .glueful-native-page h2,
+    #glueful-docauth-editor .glueful-native-page h3 {
+      margin: 12px 0 7px;
+      line-height: 1.1;
+    }
+
+    #glueful-docauth-editor .glueful-native-page ul,
+    #glueful-docauth-editor .glueful-native-page ol {
+      margin: 2px 0 8px;
+      padding-left: 24px;
+    }
+
+    #glueful-docauth-editor .glueful-native-page li {
+      margin: 0 0 3px;
     }
 
     #glueful-docauth-editor .glueful-native-page[contenteditable="true"] {
@@ -92,10 +145,15 @@ function gluefulDocAuthInstallStyles() {
     }
 
     @media (max-width: 760px) {
-      #glueful-docauth-editor {
-        height: 70vh;
-        min-height: 420px;
-        padding: 16px;
+      #glueful-docauth-editor .glueful-native-document-wrap {
+        justify-content: flex-start;
+        padding: 12px 8px 140px;
+      }
+      #glueful-docauth-editor .glueful-native-page {
+        flex-basis: 794px;
+        width: 794px;
+        min-height: 1123px;
+        padding: 48px 56px 58px;
       }
     }
   `;
