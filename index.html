@@ -18973,7 +18973,7 @@ document.addEventListener("click", (event)=>{
     if(title && title.textContent.trim() === "Tailor resume for this job"){
       title.textContent = "Resume Studio";
     }
-    if(subtitle){
+    if(subtitle && subtitle.textContent !== "Tailored copy · your master resume is protected") {
       subtitle.textContent = "Tailored copy · your master resume is protected";
     }
   }
