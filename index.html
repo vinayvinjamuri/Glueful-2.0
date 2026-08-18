@@ -19862,7 +19862,7 @@ document.addEventListener("click", (event)=>{
 }
 
 /* =========================================================
-   V47 HOTFIX — preserve PDF-native canvas page geometry
+   V48 + V47 HOTFIX — preserve PDF-native canvas page geometry + reliable editing
    The older generic .job-resume-pdf-page rules were collapsing
    native canvas pages to height:auto/static positioning. These
    rules MUST come last so native PDF pages keep their real size.
@@ -20056,6 +20056,208 @@ document.addEventListener("click", (event)=>{
       sel.addRange(savedRange);
       return true;
     }catch(e){ return false; }
+  };
+})();
+</script>
+
+
+<style id="glueful-v48-pdf-edit-hit-test">
+/* =========================================================
+   V48 — PDF native editor: reliable text hit-testing/editing
+   The PDF canvas remains the exact visual master. Editable
+   text is supplied by the transparent overlay. This patch
+   makes the overlay reliably clickable even when PDF.js
+   glyph geometry is slightly different from browser hit boxes.
+========================================================= */
+#job-resume-editor-modal .pdf-native-canvas .glueful-pdf-edit-layer{
+  pointer-events:auto !important;
+  z-index:20 !important;
+}
+#job-resume-editor-modal .pdf-native-canvas .job-resume-pdf-run{
+  pointer-events:auto !important;
+  cursor:text !important;
+  user-select:text !important;
+  -webkit-user-select:text !important;
+  -webkit-user-modify:read-write !important;
+  touch-action:auto !important;
+}
+#job-resume-editor-modal .pdf-native-canvas .job-resume-pdf-run.glueful-run-active,
+#job-resume-editor-modal .pdf-native-canvas .job-resume-pdf-run:focus{
+  caret-color:#111 !important;
+}
+</style>
+
+<script id="glueful-v48-pdf-edit-hit-test-runtime">
+(function(){
+  "use strict";
+
+  function getEditor(){
+    return document.getElementById("job-resume-editor-text");
+  }
+
+  function getRunAtPoint(x, y){
+    const editor = getEditor();
+    if(!editor) return null;
+
+    const page = document.elementFromPoint(x, y)?.closest?.(".glueful-pdf-native-page");
+    if(!page || !editor.contains(page)) return null;
+
+    const layer = page.querySelector(".glueful-pdf-edit-layer");
+    if(!layer) return null;
+
+    const runs = Array.from(layer.querySelectorAll(".job-resume-pdf-run"));
+    let best = null;
+    let bestArea = Infinity;
+
+    for(const run of runs){
+      const r = run.getBoundingClientRect();
+      if(!r.width || !r.height) continue;
+
+      /* Normal hit box. */
+      if(x >= r.left && x <= r.right && y >= r.top && y <= r.bottom){
+        const area = r.width * r.height;
+        if(area < bestArea){
+          best = run;
+          bestArea = area;
+        }
+        continue;
+      }
+
+      /* Expanded hit box. PDF.js glyph boxes can be very tight. */
+      const padX = Math.max(5, Math.min(14, r.height * 0.35));
+      const padY = Math.max(4, Math.min(10, r.height * 0.30));
+      if(
+        x >= r.left - padX && x <= r.right + padX &&
+        y >= r.top - padY && y <= r.bottom + padY
+      ){
+        const area = (r.width + padX * 2) * (r.height + padY * 2);
+        if(area < bestArea){
+          best = run;
+          bestArea = area;
+        }
+      }
+    }
+    return best;
+  }
+
+  function activateRun(run, x, y){
+    if(!run) return false;
+
+    document.querySelectorAll(
+      "#job-resume-editor-modal .job-resume-pdf-run.glueful-run-active"
+    ).forEach(node => {
+      if(node !== run) node.classList.remove("glueful-run-active");
+    });
+
+    run.classList.add("glueful-run-active");
+    run.setAttribute("contenteditable","true");
+    run.setAttribute("spellcheck","true");
+
+    try{
+      run.focus({preventScroll:true});
+    }catch(e){
+      try{ run.focus(); }catch(ignore){}
+    }
+
+    /* Put the caret close to the actual click position when possible. */
+    try{
+      const doc = document;
+      const caretRange = doc.caretRangeFromPoint
+        ? doc.caretRangeFromPoint(x, y)
+        : null;
+
+      if(caretRange && run.contains(caretRange.startContainer)){
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(caretRange);
+        return true;
+      }
+    }catch(e){}
+
+    try{
+      const range = document.createRange();
+      range.selectNodeContents(run);
+      range.collapse(false);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }catch(e){}
+
+    return true;
+  }
+
+  /* Capture before browser default handling so a click on the
+     rasterized PDF text can still enter the corresponding text run. */
+  document.addEventListener("pointerdown", function(event){
+    const editor = getEditor();
+    if(!editor || !editor.classList.contains("pdf-native-canvas")) return;
+
+    const targetRun = event.target.closest?.(".job-resume-pdf-run");
+    if(targetRun && editor.contains(targetRun)){
+      targetRun.classList.add("glueful-run-active");
+      targetRun.setAttribute("contenteditable","true");
+      return;
+    }
+
+    const run = getRunAtPoint(event.clientX, event.clientY);
+    if(!run) return;
+
+    activateRun(run, event.clientX, event.clientY);
+
+    /* Do not prevent the event: the browser must still place the caret. */
+  }, true);
+
+  document.addEventListener("dblclick", function(event){
+    const editor = getEditor();
+    if(!editor || !editor.classList.contains("pdf-native-canvas")) return;
+
+    const run = event.target.closest?.(".job-resume-pdf-run") ||
+                getRunAtPoint(event.clientX, event.clientY);
+
+    if(run && editor.contains(run)){
+      activateRun(run, event.clientX, event.clientY);
+    }
+  }, true);
+
+  /* If a run is focused programmatically, make it visibly editable. */
+  document.addEventListener("focusin", function(event){
+    const run = event.target.closest?.(".job-resume-pdf-run");
+    if(!run) return;
+    run.setAttribute("contenteditable","true");
+    run.classList.add("glueful-run-active");
+  }, true);
+
+  /* Keep the native editor model synchronized after edits. */
+  document.addEventListener("input", function(event){
+    const run = event.target.closest?.(".job-resume-pdf-run");
+    if(!run) return;
+
+    const current = String(run.textContent || "");
+    run.dataset.currentText = current;
+    run.classList.toggle(
+      "glueful-run-dirty",
+      current !== String(run.dataset.originalText || "")
+    );
+
+    if(typeof updateJobResumeEditorAts === "function"){
+      try{ updateJobResumeEditorAts(); }catch(e){}
+    }
+  }, true);
+
+  /* Keyboard behavior: normal text editing stays inside the selected run. */
+  document.addEventListener("keydown", function(event){
+    const run = event.target.closest?.(".job-resume-pdf-run");
+    if(!run) return;
+
+    if(event.key === "Enter"){
+      /* A PDF text run is a positioned single line; don't create
+         a new browser block that would corrupt the page overlay. */
+      event.preventDefault();
+    }
+  }, true);
+
+  window.gluefulV48ActivatePdfRunAtPoint = function(x,y){
+    return activateRun(getRunAtPoint(x,y),x,y);
   };
 })();
 </script>
