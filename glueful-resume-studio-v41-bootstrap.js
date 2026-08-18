@@ -1,14 +1,4 @@
-/* Glueful Resume Studio V53 bootstrap patch.
- *
- * This runs before the main app scripts. It keeps the existing V41 behavior
- * intact and fixes the browser-side rendering layer after DOCX/PDF import.
- *
- * Mammoth converts DOCX into semantic HTML rather than reproducing Word's
- * exact page layout. In particular, positioned/anchored images can arrive as
- * normal inline <img> elements. The old V41/V52 CSS then allowed the first
- * image to expand to the full content width, which is why the NIT logo became
- * enormous and the header collapsed.
- */
+/* Glueful Resume Studio V53 bootstrap patch. */
 (function(){
   'use strict';
 
@@ -16,9 +6,7 @@
     if(!window.__gluefulV41BodyObserverGuard){
       const NativeObserve = MutationObserver.prototype.observe;
       MutationObserver.prototype.observe = function(target, options){
-        if(target === document.body && options && options.childList && options.subtree){
-          return;
-        }
+        if(target === document.body && options && options.childList && options.subtree) return;
         return NativeObserve.call(this, target, options);
       };
       window.__gluefulV41BodyObserverGuard = true;
@@ -54,6 +42,7 @@
   }
 
   function markHeaderImage(editor){
+    if(editor.classList.contains('glueful-docx-layout-mode')) return;
     const images=Array.from(editor.querySelectorAll('img'));
     if(!images.length) return;
     const first=images[0];
@@ -78,7 +67,7 @@
 
   function normalizeImportedResume(){
     const editor=document.getElementById(EDITOR_ID);
-    if(!editor||!editor.innerHTML.trim()) return;
+    if(!editor||!editor.innerHTML.trim()||editor.classList.contains('glueful-docx-layout-mode')) return;
     markHeaderImage(editor);
     const firstImage=editor.querySelector('img');
     if(firstImage){firstImage.removeAttribute('width');firstImage.removeAttribute('height');}
@@ -112,23 +101,20 @@
   else boot();
 
   /*
-   * AUTHORITATIVE RESUME STUDIO LOADER
-   * ----------------------------------
-   * The old architecture relied on sw.js to inject the Adobe controller,
-   * but a service worker is inert unless the page explicitly registers it.
-   * This bootstrap is already part of the Resume Studio runtime, so use it
-   * as the deterministic loader. DOMContentLoaded runs after the normal app
-   * scripts, making the Adobe controller the final openJobResumeEditor
-   * assignment without requiring a service worker or a manual deployment
-   * step.
+   * The previous fix relied on sw.js to inject the authoritative controller.
+   * A service worker is inert until the page registers it, so that dependency
+   * made the live application capable of silently running the legacy V41/V50
+   * PDF reconstruction path. This bootstrap is already part of the Resume
+   * Studio runtime, therefore it deterministically loads the Adobe controller
+   * after DOMContentLoaded, after the normal app scripts have finished loading.
    */
   const FORENSICS_SRC = './glueful-resume-docx-forensics.js';
   const CONTROLLER_SRC = './glueful-resume-studio-adobe.js';
 
   function loadResumeStudioAsset(src,id){
     return new Promise((resolve,reject)=>{
-      if(document.getElementById(id)){
-        const existing=document.getElementById(id);
+      const existing=document.getElementById(id);
+      if(existing){
         if(existing.dataset.loaded==='true') return resolve();
         existing.addEventListener('load',()=>resolve(),{once:true});
         existing.addEventListener('error',()=>reject(new Error(`Failed to load ${src}`)),{once:true});
@@ -156,9 +142,6 @@
     }
   }
 
-  if(document.readyState==='loading'){
-    document.addEventListener('DOMContentLoaded',()=>void installAuthoritativeResumeStudio(),{once:true});
-  }else{
-    setTimeout(()=>void installAuthoritativeResumeStudio(),0);
-  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>void installAuthoritativeResumeStudio(),{once:true});
+  else setTimeout(()=>void installAuthoritativeResumeStudio(),0);
 })();
