@@ -36,10 +36,8 @@
 
   function showConversionBanner(message) {
     document.querySelectorAll('.glueful-adobe-conversion-banner').forEach((n) => n.remove());
-
     const host = modal()?.querySelector('.job-resume-editor-scroll') || modal();
     if (!host) return null;
-
     const banner = document.createElement('div');
     banner.className = 'glueful-adobe-conversion-banner';
     banner.textContent = message;
@@ -50,7 +48,6 @@
       'background:rgba(22,20,38,.94)', 'color:#ddd8ff',
       'font:500 12px/1.2 Inter,Arial,sans-serif', 'box-shadow:0 8px 24px rgba(0,0,0,.18)'
     ].join(';');
-
     host.insertBefore(banner, host.firstChild);
     return banner;
   }
@@ -62,9 +59,7 @@
   async function waitForMammoth(timeout = 12000) {
     const started = Date.now();
     while (!window.mammoth) {
-      if (Date.now() - started >= timeout) {
-        throw new Error('Mammoth DOCX importer did not finish loading.');
-      }
+      if (Date.now() - started >= timeout) throw new Error('Mammoth DOCX importer did not finish loading.');
       await new Promise((resolve) => setTimeout(resolve, 80));
     }
     return window.mammoth;
@@ -72,20 +67,19 @@
 
   async function getSourceFile() {
     try {
-      if (typeof candidateResumeFile !== 'undefined' && candidateResumeFile) {
-        return candidateResumeFile;
-      }
+      if (typeof candidateResumeFile !== 'undefined' && candidateResumeFile) return candidateResumeFile;
     } catch (_) {}
-
-    if (typeof window.ensureCandidateResumeCloudFile === 'function') {
-      return window.ensureCandidateResumeCloudFile();
-    }
-
-    if (typeof window.loadCandidateResumeFromDevice === 'function') {
-      return window.loadCandidateResumeFromDevice();
-    }
-
+    if (typeof window.ensureCandidateResumeCloudFile === 'function') return window.ensureCandidateResumeCloudFile();
+    if (typeof window.loadCandidateResumeFromDevice === 'function') return window.loadCandidateResumeFromDevice();
     return null;
+  }
+
+  function getSupabaseConfig() {
+    let url = '';
+    let key = '';
+    try { url = typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : ''; } catch (_) {}
+    try { key = typeof SUPABASE_KEY !== 'undefined' ? SUPABASE_KEY : ''; } catch (_) {}
+    return { url: String(url || '').replace(/\/$/, ''), key: String(key || '') };
   }
 
   async function convertPdfWithAdobe(pdfBuffer) {
@@ -98,7 +92,8 @@
     }
 
     const client = window.supabaseClient;
-    if (!client?.auth || !window.SUPABASE_URL || !window.SUPABASE_KEY) {
+    const config = getSupabaseConfig();
+    if (!client?.auth || !config.url || !config.key) {
       throw new Error('Supabase authentication client is not available for PDF conversion.');
     }
 
@@ -107,10 +102,10 @@
       throw new Error('Your Glueful session is unavailable. Please sign in again.');
     }
 
-    const response = await fetch(`${window.SUPABASE_URL}/functions/v1/${FUNCTION_NAME}`, {
+    const response = await fetch(`${config.url}/functions/v1/${FUNCTION_NAME}`, {
       method: 'POST',
       headers: {
-        apikey: window.SUPABASE_KEY,
+        apikey: config.key,
         Authorization: `Bearer ${sessionData.session.access_token}`,
         'Content-Type': 'application/pdf'
       },
@@ -204,15 +199,11 @@
     if (!ed) throw new Error('Resume editor surface is missing.');
 
     let master = safeText(window.gluefulMasterResumeText);
-    if (!master && typeof window.ensureMasterResumeText === 'function') {
-      master = safeText(await window.ensureMasterResumeText());
-    }
+    if (!master && typeof window.ensureMasterResumeText === 'function') master = safeText(await window.ensureMasterResumeText());
 
-    const base = master || (typeof window.buildProfileResumeFallback === 'function'
-      ? safeText(window.buildProfileResumeFallback())
-      : '');
-
+    const base = master || (typeof window.buildProfileResumeFallback === 'function' ? safeText(window.buildProfileResumeFallback()) : '');
     const imported = await sourceFileToEditorHtml(await getSourceFile());
+
     if (imported?.html) {
       ed.innerHTML = imported.html;
       prepareEditor(ed);
@@ -298,6 +289,7 @@
   async function resetJobResumeToMaster() {
     const ed = editor();
     if (!ed) return;
+
     try {
       clearConversionUi();
       await loadMasterIntoEditor();
@@ -323,6 +315,5 @@
 
   window.openJobResumeEditor = openJobResumeEditor;
   window.resetJobResumeToMaster = resetJobResumeToMaster;
-
   console.info('[Glueful Resume Studio Adobe] authoritative controller loaded.');
 })();
