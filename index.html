@@ -5017,6 +5017,14 @@
               <div class="ingestion-metric-label">Failed companies</div>
               <div id="ingestion-companies-failed" class="ingestion-metric-value">—</div>
             </div>
+            <div class="ingestion-metric">
+              <div class="ingestion-metric-label">Discovery rate</div>
+              <div id="ingestion-companies-rate" class="ingestion-metric-value">—</div>
+            </div>
+            <div class="ingestion-metric">
+              <div class="ingestion-metric-label">Estimated time left</div>
+              <div id="ingestion-eta" class="ingestion-metric-value">—</div>
+            </div>
           </div>
 
           <div class="ingestion-monitor-footer">
@@ -11793,12 +11801,54 @@ document.addEventListener("click", (event)=>{
       setIngestionText("ingestion-healthy-sources", formatIngestionNumber(healthySources));
       setIngestionText("ingestion-companies-failed", formatIngestionNumber(companiesFailed));
 
+      const discoveryRate10m = Number(summary?.companies_per_hour_10m);
+      const discoveryRate = Number(summary?.companies_per_hour);
+      const discoveryRate24h = Number(summary?.companies_per_hour_24h);
+      const etaHours = Number(summary?.eta_hours);
+      const etaHours24h = Number(summary?.eta_hours_24h);
+
+      const rateText = Number.isFinite(discoveryRate10m) && discoveryRate10m > 0
+        ? `${discoveryRate10m.toLocaleString("en-US")} /h`
+        : (Number.isFinite(discoveryRate) && discoveryRate > 0
+          ? `${discoveryRate.toLocaleString("en-US")} /h`
+          : (Number.isFinite(discoveryRate24h) && discoveryRate24h > 0
+            ? `${discoveryRate24h.toLocaleString("en-US")} /h`
+            : "Waiting for rate"));
+
+      const etaText = Number.isFinite(etaHours)
+        ? formatIngestionEta(etaHours)
+        : (Number.isFinite(etaHours24h)
+          ? formatIngestionEta(etaHours24h)
+          : "Calculating…");
+
+      setIngestionText("ingestion-companies-rate", rateText);
+      setIngestionText("ingestion-eta", etaText);
+
       setIngestionText(
         "ingestion-last-run",
         summary?.last_completed_run
           ? `Last completed sync: ${formatIngestionTime(summary.last_completed_run)}`
           : "Last completed sync: no completed run recorded yet"
       );
+    }
+
+    async function refreshIngestionRateSummary() {
+      const { data, error } = await supabaseClient
+        .rpc("get_ingestion_rate_summary");
+
+      if (error) throw error;
+
+      return Array.isArray(data) ? (data[0] || null) : data;
+    }
+
+    function formatIngestionEta(hours) {
+      const n = Number(hours);
+      if (!Number.isFinite(n) || n < 0) return "—";
+      if (n < 1) return "<1h";
+      if (n < 24) return `${Math.ceil(n)}h`;
+      const days = Math.floor(n / 24);
+      const remainingHours = Math.ceil(n % 24);
+      return remainingHours ? `${days}d ${remainingHours}h` : `${days}d`;
     }
 
     async function refreshIngestionMonitor(force = false) {
@@ -11825,7 +11875,17 @@ document.addEventListener("click", (event)=>{
           throw new Error("No ingestion progress summary is available.");
         }
 
-        renderIngestionMonitor(summary);
+        let rateSummary = null;
+        try {
+          rateSummary = await refreshIngestionRateSummary();
+        } catch (rateError) {
+          console.warn("[Glueful] Ingestion rate summary unavailable:", rateError);
+        }
+
+        renderIngestionMonitor({
+          ...summary,
+          ...(rateSummary || {})
+        });
       } catch (error) {
         console.error("[Glueful] Ingestion monitor load failed:", error);
 
