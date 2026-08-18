@@ -20,8 +20,7 @@
   function showConversionNote(message) { const note = $('job-resume-editor-ats-note'); if (note) note.textContent = message; }
   function showConversionBanner(message) {
     document.querySelectorAll('.glueful-adobe-conversion-banner').forEach((n) => n.remove());
-    const host = modal()?.querySelector('.job-resume-editor-scroll') || modal();
-    if (!host) return null;
+    const host = modal()?.querySelector('.job-resume-editor-scroll') || modal(); if (!host) return null;
     const banner = document.createElement('div'); banner.className = 'glueful-adobe-conversion-banner'; banner.textContent = message;
     banner.style.cssText = ['position:sticky','top:0','z-index:95','width:fit-content','max-width:calc(100% - 32px)','margin:10px auto -8px','padding:7px 12px','border:1px solid rgba(130,105,255,.45)','border-radius:999px','background:rgba(22,20,38,.94)','color:#ddd8ff','font:500 12px/1.2 Inter,Arial,sans-serif','box-shadow:0 8px 24px rgba(0,0,0,.18)'].join(';');
     host.insertBefore(banner, host.firstChild); return banner;
@@ -53,9 +52,7 @@
     if (typeof window.ensureCandidateResumeCloudFile === 'function') return window.ensureCandidateResumeCloudFile();
     if (typeof window.loadCandidateResumeFromDevice === 'function') return window.loadCandidateResumeFromDevice(); return null;
   }
-  function getSupabaseConfig() {
-    let url = '', key = ''; try { url = typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : ''; } catch (_) {} try { key = typeof SUPABASE_KEY !== 'undefined' ? SUPABASE_KEY : ''; } catch (_) {} return { url: String(url || '').replace(/\/$/, ''), key: String(key || '') };
-  }
+  function getSupabaseConfig() { let url = '', key = ''; try { url = typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : ''; } catch (_) {} try { key = typeof SUPABASE_KEY !== 'undefined' ? SUPABASE_KEY : ''; } catch (_) {} return { url: String(url || '').replace(/\/$/, ''), key: String(key || '') }; }
   async function convertPdfWithAdobe(pdfBuffer) {
     if (!(pdfBuffer instanceof ArrayBuffer)) throw new Error('Invalid PDF data.'); if (!pdfBuffer.byteLength) throw new Error('The PDF is empty.');
     const bytes = new Uint8Array(pdfBuffer); if (bytes[0] !== 0x25 || bytes[1] !== 0x50 || bytes[2] !== 0x44 || bytes[3] !== 0x46) throw new Error('The uploaded file does not appear to be a PDF.');
@@ -67,12 +64,20 @@
     const docxBuffer = await response.arrayBuffer(); if (!docxBuffer.byteLength) throw new Error('Adobe conversion returned an empty DOCX.'); return docxBuffer;
   }
   async function renderDocxWithLayout(docxBuffer, ed) {
-    const docxPreview = await ensureDocxPreview(); const styleHost = document.createElement('div'); styleHost.className = 'glueful-docx-style-host'; styleHost.setAttribute('aria-hidden', 'true'); styleHost.style.display = 'none';
+    const docxPreview = await ensureDocxPreview();
     const renderHost = document.createElement('div'); renderHost.className = 'glueful-docx-render-host'; renderHost.contentEditable = 'true'; renderHost.spellcheck = true;
-    ed.replaceChildren(renderHost, styleHost); ed.contentEditable = 'true'; ed.classList.remove('pdf-structured-canvas', 'pdf-native-canvas'); ed.classList.add('glueful-word-document-mode', 'glueful-docx-layout-mode', 'job-resume-master-imported'); ed.setAttribute('role', 'textbox'); ed.setAttribute('aria-multiline', 'true');
-    await docxPreview.renderAsync(docxBuffer, renderHost, styleHost, { className: 'glueful-docx', inWrapper: true, hideWrapperOnPrint: false, ignoreWidth: false, ignoreHeight: false, ignoreFonts: false, breakPages: true, ignoreLastRenderedPageBreak: false, experimental: true, renderHeaders: true, renderFooters: true, renderFootnotes: true, renderEndnotes: true, useBase64URL: false, renderChanges: false, renderComments: false, renderAltChunks: true, debug: false });
-    const pages = renderHost.querySelectorAll('.docx-wrapper > section, .docx > section').length; const images = renderHost.querySelectorAll('img').length; const tables = renderHost.querySelectorAll('table').length; renderHost.querySelectorAll('img').forEach((img) => { img.style.maxWidth = '100%'; img.style.objectFit = 'contain'; });
-    console.info('[Glueful Resume Studio] DOCX layout render complete:', { pages, images, tables, renderer: 'docx-preview' }); return { html: renderHost.innerHTML, imported: true, pdfConverted: true, renderer: 'docx-preview' };
+    ed.replaceChildren(renderHost); ed.contentEditable = 'true'; ed.classList.remove('pdf-structured-canvas', 'pdf-native-canvas'); ed.classList.add('glueful-word-document-mode', 'glueful-docx-layout-mode', 'job-resume-master-imported'); ed.setAttribute('role', 'textbox'); ed.setAttribute('aria-multiline', 'true');
+    const styleHost = document.createElement('div'); styleHost.className = 'glueful-docx-style-host'; styleHost.setAttribute('aria-hidden', 'true'); styleHost.style.display = 'none';
+    document.head.appendChild(styleHost);
+    try {
+      await docxPreview.renderAsync(docxBuffer, renderHost, styleHost, { className: 'glueful-docx', inWrapper: true, hideWrapperOnPrint: false, ignoreWidth: false, ignoreHeight: false, ignoreFonts: false, breakPages: true, ignoreLastRenderedPageBreak: false, experimental: true, renderHeaders: true, renderFooters: true, renderFootnotes: true, renderEndnotes: true, useBase64URL: false, renderChanges: false, renderComments: false, renderAltChunks: true, debug: false });
+    } catch (error) {
+      styleHost.remove(); throw error;
+    }
+    const pages = renderHost.querySelectorAll('.docx-wrapper > section, .docx > section').length; const images = renderHost.querySelectorAll('img').length; const tables = renderHost.querySelectorAll('table').length;
+    renderHost.querySelectorAll('img').forEach((img) => { img.style.maxWidth = '100%'; img.style.objectFit = 'contain'; });
+    console.info('[Glueful Resume Studio] DOCX layout render complete:', { pages, images, tables, renderer: 'docx-preview' });
+    return { html: renderHost.innerHTML, imported: true, pdfConverted: true, renderer: 'docx-preview' };
   }
   async function docxToMammothHtml(docxBuffer) {
     const mammoth = await waitForLibrary('mammoth'); const result = await mammoth.convertToHtml({ arrayBuffer: docxBuffer }); const html = safeText(result?.value); if (!html) throw new Error('The converted Word document did not contain editable content.'); if (Array.isArray(result?.messages) && result.messages.length) console.info('[Glueful Resume Studio] Mammoth fallback messages:', result.messages);
@@ -98,6 +103,6 @@
     if (typeof window.updateJobResumeEditorAts === 'function') { try { window.updateJobResumeEditorAts(); } catch (_) {} } if (typeof window.gluefulResumeStudioEnhance === 'function') { try { window.gluefulResumeStudioEnhance(); } catch (_) {} }
   }
   async function resetJobResumeToMaster() { const ed = editor(); if (!ed) return; try { clearConversionUi(); await loadMasterIntoEditor(); if (typeof window.updateJobResumeEditorAts === 'function') { try { window.updateJobResumeEditorAts(); } catch (_) {} } ed.focus(); } catch (error) { console.error('[Glueful Resume Studio Adobe] reset failed:', error); if (typeof window.showError === 'function') window.showError(error?.message || 'Could not reset the temporary resume.'); } finally { clearConversionUi(); } }
-  window.gluefulAdobeResumeStudio = { version: '2.4.0', functionName: FUNCTION_NAME, pipeline: ['PDF master', 'Supabase glueful-pdf-to-docx', 'Adobe PDF Services', 'real DOCX', 'docx-preview layout renderer', 'existing contenteditable Word-style editor'], openJobResumeEditor, resetJobResumeToMaster };
+  window.gluefulAdobeResumeStudio = { version: '2.5.0', functionName: FUNCTION_NAME, pipeline: ['PDF master', 'Supabase glueful-pdf-to-docx', 'Adobe PDF Services', 'real DOCX', 'docx-preview layout renderer', 'existing contenteditable Word-style editor'], openJobResumeEditor, resetJobResumeToMaster };
   window.openJobResumeEditor = openJobResumeEditor; window.resetJobResumeToMaster = resetJobResumeToMaster; console.info('[Glueful Resume Studio] authoritative DOCX layout controller loaded.');
 })();
