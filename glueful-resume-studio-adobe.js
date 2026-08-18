@@ -44,19 +44,11 @@
     banner.className = 'glueful-adobe-conversion-banner';
     banner.textContent = message;
     banner.style.cssText = [
-      'position:sticky',
-      'top:0',
-      'z-index:95',
-      'width:fit-content',
-      'max-width:calc(100% - 32px)',
-      'margin:10px auto -8px',
-      'padding:7px 12px',
-      'border:1px solid rgba(130,105,255,.45)',
-      'border-radius:999px',
-      'background:rgba(22,20,38,.94)',
-      'color:#ddd8ff',
-      'font:500 12px/1.2 Inter,Arial,sans-serif',
-      'box-shadow:0 8px 24px rgba(0,0,0,.18)'
+      'position:sticky', 'top:0', 'z-index:95', 'width:fit-content',
+      'max-width:calc(100% - 32px)', 'margin:10px auto -8px', 'padding:7px 12px',
+      'border:1px solid rgba(130,105,255,.45)', 'border-radius:999px',
+      'background:rgba(22,20,38,.94)', 'color:#ddd8ff',
+      'font:500 12px/1.2 Inter,Arial,sans-serif', 'box-shadow:0 8px 24px rgba(0,0,0,.18)'
     ].join(';');
 
     host.insertBefore(banner, host.firstChild);
@@ -79,9 +71,11 @@
   }
 
   async function getSourceFile() {
-    if (typeof window.candidateResumeFile !== 'undefined' && window.candidateResumeFile) {
-      return window.candidateResumeFile;
-    }
+    try {
+      if (typeof candidateResumeFile !== 'undefined' && candidateResumeFile) {
+        return candidateResumeFile;
+      }
+    } catch (_) {}
 
     if (typeof window.ensureCandidateResumeCloudFile === 'function') {
       return window.ensureCandidateResumeCloudFile();
@@ -95,67 +89,62 @@
   }
 
   async function convertPdfWithAdobe(pdfBuffer) {
-    if (!window.supabaseClient?.functions) {
-      throw new Error('Supabase client is not available for PDF conversion.');
-    }
-
-    if (!(pdfBuffer instanceof ArrayBuffer)) {
-      throw new Error('Invalid PDF data.');
-    }
-
-    if (!pdfBuffer.byteLength) {
-      throw new Error('The PDF is empty.');
-    }
+    if (!(pdfBuffer instanceof ArrayBuffer)) throw new Error('Invalid PDF data.');
+    if (!pdfBuffer.byteLength) throw new Error('The PDF is empty.');
 
     const bytes = new Uint8Array(pdfBuffer);
     if (bytes[0] !== 0x25 || bytes[1] !== 0x50 || bytes[2] !== 0x44 || bytes[3] !== 0x46) {
       throw new Error('The uploaded file does not appear to be a PDF.');
     }
 
-    const { data, error } = await window.supabaseClient.functions.invoke(FUNCTION_NAME, {
+    const client = window.supabaseClient;
+    if (!client?.auth || !window.SUPABASE_URL || !window.SUPABASE_KEY) {
+      throw new Error('Supabase authentication client is not available for PDF conversion.');
+    }
+
+    const { data: sessionData, error: sessionError } = await client.auth.getSession();
+    if (sessionError || !sessionData?.session?.access_token) {
+      throw new Error('Your Glueful session is unavailable. Please sign in again.');
+    }
+
+    const response = await fetch(`${window.SUPABASE_URL}/functions/v1/${FUNCTION_NAME}`, {
       method: 'POST',
       headers: {
+        apikey: window.SUPABASE_KEY,
+        Authorization: `Bearer ${sessionData.session.access_token}`,
         'Content-Type': 'application/pdf'
       },
-      body: pdfBuffer
+      body: pdfBuffer,
+      cache: 'no-store'
     });
 
-    if (error) {
+    if (!response.ok) {
       let detail = '';
       try {
-        if (error.context) {
-          const payload = await error.context.json();
-          detail = payload?.detail || payload?.error || '';
-        }
+        const payload = await response.json();
+        detail = payload?.detail || payload?.error || '';
       } catch (_) {}
-
-      throw new Error(detail || error.message || 'Adobe PDF conversion failed.');
+      throw new Error(detail || `Adobe PDF conversion failed (${response.status}).`);
     }
 
-    if (!(data instanceof ArrayBuffer)) {
-      throw new Error('Adobe conversion returned an unexpected response type.');
+    const contentType = String(response.headers.get('content-type') || '').toLowerCase();
+    if (!contentType.includes('application/vnd.openxmlformats-officedocument.wordprocessingml.document')) {
+      throw new Error('Adobe conversion returned an unexpected content type.');
     }
 
-    if (!data.byteLength) {
-      throw new Error('Adobe conversion returned an empty DOCX.');
-    }
-
-    return data;
+    const docxBuffer = await response.arrayBuffer();
+    if (!docxBuffer.byteLength) throw new Error('Adobe conversion returned an empty DOCX.');
+    return docxBuffer;
   }
 
   async function docxToHtml(docxBuffer) {
     const mammoth = await waitForMammoth();
-
     const result = await mammoth.convertToHtml({ arrayBuffer: docxBuffer });
     const html = safeText(result?.value);
-
-    if (!html) {
-      throw new Error('The converted Word document did not contain editable content.');
-    }
+    if (!html) throw new Error('The converted Word document did not contain editable content.');
 
     const holder = document.createElement('div');
     holder.innerHTML = html;
-
     holder.querySelectorAll('script,style,iframe,object,embed').forEach((node) => node.remove());
 
     holder.querySelectorAll('img').forEach((img) => {
@@ -164,7 +153,6 @@
         img.remove();
         return;
       }
-
       img.removeAttribute('width');
       img.removeAttribute('height');
       img.style.maxWidth = '100%';
@@ -177,22 +165,17 @@
 
   async function sourceFileToEditorHtml(file) {
     if (!file) return null;
-
     const name = safeText(file.name).toLowerCase();
 
     if (name.endsWith('.docx')) {
-      const html = await docxToHtml(await file.arrayBuffer());
-      return { html, imported: true, pdfConverted: false };
+      return { html: await docxToHtml(await file.arrayBuffer()), imported: true, pdfConverted: false };
     }
 
     if (name.endsWith('.pdf')) {
       showConversionBanner('Converting your PDF to an editable Word document…');
       showConversionNote('Converting your PDF with Adobe PDF Services…');
-
       const docxBuffer = await convertPdfWithAdobe(await file.arrayBuffer());
-      const html = await docxToHtml(docxBuffer);
-
-      return { html, imported: true, pdfConverted: true };
+      return { html: await docxToHtml(docxBuffer), imported: true, pdfConverted: true };
     }
 
     return null;
@@ -200,7 +183,6 @@
 
   function prepareEditor(ed) {
     if (!ed) return;
-
     ed.classList.remove('pdf-structured-canvas', 'pdf-native-canvas', 'job-resume-master-imported');
     ed.classList.add('glueful-word-document-mode', 'job-resume-master-imported');
     ed.contentEditable = 'true';
@@ -208,7 +190,6 @@
     ed.setAttribute('aria-multiline', 'true');
     ed.spellcheck = true;
 
-    /* Never let converted DOCX images inherit stale PDF/editor dimensions. */
     ed.querySelectorAll('img').forEach((img) => {
       img.removeAttribute('width');
       img.removeAttribute('height');
@@ -231,9 +212,7 @@
       ? safeText(window.buildProfileResumeFallback())
       : '');
 
-    const file = await getSourceFile();
-    const imported = await sourceFileToEditorHtml(file);
-
+    const imported = await sourceFileToEditorHtml(await getSourceFile());
     if (imported?.html) {
       ed.innerHTML = imported.html;
       prepareEditor(ed);
@@ -246,9 +225,10 @@
     if (typeof window.resumeTextToEditorHtml === 'function') {
       ed.innerHTML = window.resumeTextToEditorHtml(base);
     } else {
-      ed.innerHTML = base
-        .split(/\r?\n/)
-        .map((line) => line.trim() ? `<p>${line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>` : '<p><br></p>')
+      ed.innerHTML = base.split(/\r?\n/)
+        .map((line) => line.trim()
+          ? `<p>${line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`
+          : '<p><br></p>')
         .join('');
     }
 
@@ -261,40 +241,26 @@
   }
 
   async function openJobResumeEditor(id) {
-    const job = typeof window.findActiveJobById === 'function'
-      ? window.findActiveJobById(id)
-      : null;
-
+    const job = typeof window.findActiveJobById === 'function' ? window.findActiveJobById(id) : null;
     if (!job) return;
 
     window.gluefulJobResumeEditorId = String(job.id);
-
-    if (typeof window.openModal === 'function') {
-      window.openModal(MODAL_ID);
-    }
+    if (typeof window.openModal === 'function') window.openModal(MODAL_ID);
 
     const jobEl = $('job-resume-editor-job');
     const ats = $('job-resume-editor-ats');
     const ed = editor();
 
     if (jobEl) {
-      const logoHtml = typeof window.renderCompanyLogo === 'function'
-        ? window.renderCompanyLogo(job)
-        : '';
+      const logoHtml = typeof window.renderCompanyLogo === 'function' ? window.renderCompanyLogo(job) : '';
       const escape = (value) => String(value ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
       jobEl.innerHTML = `${logoHtml}<div class="job-resume-editor-job-copy"><div class="job-resume-editor-job-title">${escape(job.title)}</div><div class="job-resume-editor-job-company">${escape(job.company)} · ${escape(job.location)}</div></div>`;
-
       if (typeof window.loadCompanyLogos === 'function') window.loadCompanyLogos();
     }
 
     if (ats) ats.textContent = '…';
-
     if (ed) {
       ed.innerHTML = '<p style="padding:40px;text-align:center;color:#777;font-family:Inter,Arial,sans-serif">Preparing editable Word document…</p>';
       ed.contentEditable = 'true';
@@ -308,24 +274,15 @@
 
       if (ed) {
         let master = safeText(window.gluefulMasterResumeText);
-        if (!master && typeof window.buildProfileResumeFallback === 'function') {
-          master = safeText(window.buildProfileResumeFallback());
-        }
-
-        if (typeof window.resumeTextToEditorHtml === 'function') {
-          ed.innerHTML = window.resumeTextToEditorHtml(master);
-        } else {
-          ed.innerHTML = `<p>${master.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`;
-        }
-
+        if (!master && typeof window.buildProfileResumeFallback === 'function') master = safeText(window.buildProfileResumeFallback());
+        ed.innerHTML = typeof window.resumeTextToEditorHtml === 'function'
+          ? window.resumeTextToEditorHtml(master)
+          : `<p>${master.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`;
         prepareEditor(ed);
       }
 
       showConversionNote('Adobe PDF conversion failed. The editable text fallback was loaded; your master resume was not changed.');
-
-      if (typeof window.showError === 'function') {
-        window.showError(error?.message || 'Could not convert the PDF into an editable Word document.');
-      }
+      if (typeof window.showError === 'function') window.showError(error?.message || 'Could not convert the PDF into an editable Word document.');
     } finally {
       clearConversionUi();
     }
@@ -333,7 +290,6 @@
     if (typeof window.updateJobResumeEditorAts === 'function') {
       try { window.updateJobResumeEditorAts(); } catch (_) {}
     }
-
     if (typeof window.gluefulResumeStudioEnhance === 'function') {
       try { window.gluefulResumeStudioEnhance(); } catch (_) {}
     }
@@ -342,7 +298,6 @@
   async function resetJobResumeToMaster() {
     const ed = editor();
     if (!ed) return;
-
     try {
       clearConversionUi();
       await loadMasterIntoEditor();
@@ -352,9 +307,7 @@
       ed.focus();
     } catch (error) {
       console.error('[Glueful Resume Studio Adobe] reset failed:', error);
-      if (typeof window.showError === 'function') {
-        window.showError(error?.message || 'Could not reset the temporary resume.');
-      }
+      if (typeof window.showError === 'function') window.showError(error?.message || 'Could not reset the temporary resume.');
     } finally {
       clearConversionUi();
     }
@@ -363,20 +316,11 @@
   window.gluefulAdobeResumeStudio = {
     version: '1.0.0',
     functionName: FUNCTION_NAME,
-    pipeline: [
-      'PDF master',
-      'Supabase glueful-pdf-to-docx',
-      'Adobe PDF Services',
-      'real DOCX',
-      'Mammoth',
-      'existing contenteditable Word-style editor'
-    ],
+    pipeline: ['PDF master', 'Supabase glueful-pdf-to-docx', 'Adobe PDF Services', 'real DOCX', 'Mammoth', 'existing contenteditable Word-style editor'],
     openJobResumeEditor,
     resetJobResumeToMaster
   };
 
-  /* This script is deliberately loaded last so these are the sole active
-     Resume Studio open/reset entry points at runtime. */
   window.openJobResumeEditor = openJobResumeEditor;
   window.resetJobResumeToMaster = resetJobResumeToMaster;
 
