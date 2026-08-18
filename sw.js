@@ -1,9 +1,10 @@
 const CACHE_NAME = "glueful-cache-v2-resume-adobe";
 const AUTHORITATIVE_RESUME_SCRIPT = "./glueful-resume-studio-adobe.js";
 
+/* Do not precache index.html/root: those responses must pass through the
+   network-first transformer below so deployments cannot be masked by a raw
+   old HTML document. */
 const ASSETS = [
-  "./",
-  "./index.html",
   "./manifest.json",
   "./glueful-resume-studio-adobe.js",
   "./icons/icon-192.png",
@@ -27,9 +28,6 @@ async function buildAuthoritativeIndex(request, preloadResponse) {
 
   const html = await response.text();
 
-  /* The controller is injected after the entire existing index runtime.
-     This makes it the final open/reset Resume Studio controller without
-     deleting V41/V50 code that may still be referenced by older clients. */
   if (html.includes(AUTHORITATIVE_RESUME_SCRIPT)) {
     return new Response(html, {
       status: response.status,
@@ -92,7 +90,7 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
 
   /* HTML is network-first so deployments are not masked by an old index.
-     A cached transformed index remains the offline fallback. */
+     A previously transformed index remains the offline fallback. */
   if (request.method === "GET" && request.mode === "navigate") {
     event.respondWith((async () => {
       try {
@@ -101,13 +99,13 @@ self.addEventListener("fetch", (event) => {
         return response;
       } catch (error) {
         console.warn("[Glueful SW] navigation network fetch failed:", error);
-        return (await caches.match(request)) || (await caches.match("./index.html")) || Response.error();
+        return (await caches.match(request)) || Response.error();
       }
     })());
     return;
   }
 
-  /* The authoritative controller is a normal versioned static asset. */
+  /* The authoritative controller is a versioned static asset. */
   if (request.method === "GET" && url.pathname.endsWith("/glueful-resume-studio-adobe.js")) {
     event.respondWith((async () => {
       try {
