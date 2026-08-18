@@ -11808,19 +11808,24 @@ document.addEventListener("click", (event)=>{
       ingestionMonitorRequestInFlight = true;
 
       try {
+        /*
+         * Use the SECURITY DEFINER RPC instead of selecting the monitoring
+         * view directly. This avoids exposing the underlying ingestion
+         * tables through PostgREST/RLS and fixes authenticated-client
+         * "permission denied for view ingestion_progress_summary".
+         */
         const { data, error } = await supabaseClient
-          .from("ingestion_progress_summary")
-          .select("*")
-          .limit(1)
-          .maybeSingle();
+          .rpc("get_ingestion_progress_summary");
 
         if (error) throw error;
 
-        if (!data) {
+        const summary = Array.isArray(data) ? data[0] : data;
+
+        if (!summary) {
           throw new Error("No ingestion progress summary is available.");
         }
 
-        renderIngestionMonitor(data);
+        renderIngestionMonitor(summary);
       } catch (error) {
         console.error("[Glueful] Ingestion monitor load failed:", error);
 
