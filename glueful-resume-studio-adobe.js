@@ -3,7 +3,7 @@
    ---------------------------------------------------------
    PDF -> Supabase glueful-pdf-to-docx -> Adobe PDF Services -> DOCX
    -> docx-preview -> existing contenteditable Word-style editor.
-   Mammoth remains a semantic fallback only.
+   Mammoth is intentionally NOT on the active import path.
    ========================================================= */
 (function () {
   'use strict';
@@ -44,9 +44,6 @@
     if (existingDocxGenerator) window.docx = existingDocxGenerator;
     return window.gluefulDocxPreview;
   }
-  async function waitForLibrary(name, timeout = DOCX_PREVIEW_TIMEOUT) {
-    const started = Date.now(); while (!window[name]) { if (Date.now() - started >= timeout) throw new Error(`${name} importer did not finish loading.`); await new Promise((resolve) => setTimeout(resolve, 80)); } return window[name];
-  }
   async function getSourceFile() {
     try { if (typeof candidateResumeFile !== 'undefined' && candidateResumeFile) return candidateResumeFile; } catch (_) {}
     if (typeof window.ensureCandidateResumeCloudFile === 'function') return window.ensureCandidateResumeCloudFile();
@@ -61,7 +58,13 @@
     const response = await fetch(`${config.url}/functions/v1/${FUNCTION_NAME}`, { method: 'POST', headers: { apikey: config.key, Authorization: `Bearer ${sessionData.session.access_token}`, 'Content-Type': 'application/pdf' }, body: pdfBuffer, cache: 'no-store' });
     if (!response.ok) { let detail = ''; try { const payload = await response.json(); detail = payload?.detail || payload?.error || ''; } catch (_) {} throw new Error(detail || `Adobe PDF conversion failed (${response.status}).`); }
     const contentType = String(response.headers.get('content-type') || '').toLowerCase(); if (!contentType.includes('application/vnd.openxmlformats-officedocument.wordprocessingml.document')) throw new Error('Adobe conversion returned an unexpected content type.');
-    const docxBuffer = await response.arrayBuffer(); if (!docxBuffer.byteLength) throw new Error('Adobe conversion returned an empty DOCX.'); return docxBuffer;
+    const docxBuffer = await response.arrayBuffer(); if (!docxBuffer.byteLength) throw new Error('Adobe conversion returned an empty DOCX.');
+    window.gluefulLastAdobeDocxBuffer = docxBuffer.slice(0);
+    console.info('[Glueful Resume Studio] Adobe DOCX received:', { bytes: docxBuffer.byteLength, contentType });
+    if (window.gluefulResumeDocxForensics?.inspectBuffer) {
+      try { window.gluefulResumeDocxForensics.inspectBuffer(docxBuffer); } catch (error) { console.warn('[Glueful Resume Studio] DOCX forensic inspection failed:', error); }
+    }
+    return docxBuffer;
   }
   async function renderDocxWithLayout(docxBuffer, ed) {
     const docxPreview = await ensureDocxPreview();
@@ -75,36 +78,38 @@
       styleHost.remove(); throw error;
     }
     const pages = renderHost.querySelectorAll('.docx-wrapper > section, .docx > section').length; const images = renderHost.querySelectorAll('img').length; const tables = renderHost.querySelectorAll('table').length;
-    renderHost.querySelectorAll('img').forEach((img) => { img.style.maxWidth = '100%'; img.style.objectFit = 'contain'; });
-    const report = { pages, images, tables, renderer: 'docx-preview' };
+    const report = { pages, images, tables, renderer: 'docx-preview', bytes: docxBuffer.byteLength };
     window.gluefulResumeRendererReport = report;
     console.info('[Glueful Resume Studio] DOCX layout render complete:', report);
+    if (!pages && !renderHost.textContent.trim() && !images && !tables) throw new Error('docx-preview completed without producing document content.');
     return { html: renderHost.innerHTML, imported: true, pdfConverted: true, renderer: 'docx-preview' };
-  }
-  async function docxToMammothHtml(docxBuffer) {
-    const mammoth = await waitForLibrary('mammoth'); const result = await mammoth.convertToHtml({ arrayBuffer: docxBuffer }); const html = safeText(result?.value); if (!html) throw new Error('The converted Word document did not contain editable content.'); if (Array.isArray(result?.messages) && result.messages.length) console.info('[Glueful Resume Studio] Mammoth fallback messages:', result.messages);
-    const holder = document.createElement('div'); holder.innerHTML = html; holder.querySelectorAll('script,style,iframe,object,embed').forEach((node) => node.remove()); return holder.innerHTML.trim();
   }
   async function sourceFileToEditor(file, ed) {
     if (!file) return null; const name = safeText(file.name).toLowerCase();
-    if (name.endsWith('.docx')) { const docxBuffer = await file.arrayBuffer(); try { return await renderDocxWithLayout(docxBuffer, ed); } catch (layoutError) { console.warn('[Glueful Resume Studio] DOCX layout renderer failed; using Mammoth fallback:', layoutError); const html = await docxToMammothHtml(docxBuffer); ed.innerHTML = html; window.gluefulResumeRendererReport = { renderer: 'mammoth-fallback', error: String(layoutError?.message || layoutError) }; return { html, imported: true, pdfConverted: false, renderer: 'mammoth-fallback' }; } }
-    if (name.endsWith('.pdf')) { showConversionBanner('Converting your PDF to an editable Word document…'); showConversionNote('Converting your PDF with Adobe PDF Services…'); const docxBuffer = await convertPdfWithAdobe(await file.arrayBuffer()); try { return await renderDocxWithLayout(docxBuffer, ed); } catch (layoutError) { console.warn('[Glueful Resume Studio] DOCX layout renderer failed; using Mammoth fallback:', layoutError); const html = await docxToMammothHtml(docxBuffer); ed.innerHTML = html; window.gluefulResumeRendererReport = { renderer: 'mammoth-fallback', error: String(layoutError?.message || layoutError) }; return { html, imported: true, pdfConverted: true, renderer: 'mammoth-fallback' }; } }
+    if (name.endsWith('.docx')) { const docxBuffer = await file.arrayBuffer(); return await renderDocxWithLayout(docxBuffer, ed); }
+    if (name.endsWith('.pdf')) { showConversionBanner('Converting your PDF to an editable Word document…'); showConversionNote('Converting your PDF with Adobe PDF Services…'); const docxBuffer = await convertPdfWithAdobe(await file.arrayBuffer()); return await renderDocxWithLayout(docxBuffer, ed); }
     return null;
   }
   function preparePlainEditor(ed) { if (!ed) return; ed.classList.remove('pdf-structured-canvas', 'pdf-native-canvas', 'glueful-docx-layout-mode'); ed.classList.add('glueful-word-document-mode', 'job-resume-master-imported'); ed.contentEditable = 'true'; ed.setAttribute('role', 'textbox'); ed.setAttribute('aria-multiline', 'true'); ed.spellcheck = true; }
   async function loadMasterIntoEditor() {
     const ed = editor(); if (!ed) throw new Error('Resume editor surface is missing.'); let master = safeText(window.gluefulMasterResumeText); if (!master && typeof window.ensureMasterResumeText === 'function') master = safeText(await window.ensureMasterResumeText()); const base = master || (typeof window.buildProfileResumeFallback === 'function' ? safeText(window.buildProfileResumeFallback()) : ''); const imported = await sourceFileToEditor(await getSourceFile(), ed);
-    if (imported?.html) { if (imported.renderer !== 'docx-preview') preparePlainEditor(ed); showConversionNote(imported.renderer === 'docx-preview' ? (imported.pdfConverted ? 'PDF converted by Adobe and rendered with docx-preview. Your master resume remains protected.' : 'Editable master resume rendered with docx-preview. Your master resume remains protected.') : 'PDF converted by Adobe; layout renderer failed, so semantic fallback was used. Check the console for the exact renderer error.'); return imported; }
+    if (imported?.html) { showConversionNote(imported.renderer === 'docx-preview' ? (imported.pdfConverted ? 'PDF converted by Adobe and rendered with docx-preview. Your master resume remains protected.' : 'Editable master resume rendered with docx-preview. Your master resume remains protected.') : 'Editable document loaded.'); return imported; }
     if (typeof window.resumeTextToEditorHtml === 'function') ed.innerHTML = window.resumeTextToEditorHtml(base); else ed.innerHTML = base.split(/\r?\n/).map((line) => line.trim() ? `<p>${line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>` : '<p><br></p>').join(''); preparePlainEditor(ed); showConversionNote(master ? 'Loaded from your Candidate Profile master resume. This job-specific copy is temporary.' : 'No readable master resume is available yet. Upload one in Candidate Profile.'); return { html: ed.innerHTML, imported: false, pdfConverted: false, renderer: 'plain-fallback' };
   }
   async function openJobResumeEditor(id) {
     const job = typeof window.findActiveJobById === 'function' ? window.findActiveJobById(id) : null; if (!job) return; window.gluefulJobResumeEditorId = String(job.id); if (typeof window.openModal === 'function') window.openModal(MODAL_ID); const jobEl = $('job-resume-editor-job'); const ats = $('job-resume-editor-ats'); const ed = editor();
     if (jobEl) { const logoHtml = typeof window.renderCompanyLogo === 'function' ? window.renderCompanyLogo(job) : ''; const escape = (value) => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\"/g, '&quot;').replace(/'/g, '&#39;'); jobEl.innerHTML = `${logoHtml}<div class="job-resume-editor-job-copy"><div class="job-resume-editor-job-title">${escape(job.title)}</div><div class="job-resume-editor-job-company">${escape(job.company)} · ${escape(job.location)}</div></div>`; if (typeof window.loadCompanyLogos === 'function') window.loadCompanyLogos(); }
     if (ats) ats.textContent = '…'; if (ed) { ed.innerHTML = '<p style="padding:40px;text-align:center;color:#777;font-family:Inter,Arial,sans-serif">Preparing editable Word document…</p>'; ed.contentEditable = 'true'; }
-    try { clearConversionUi(); await loadMasterIntoEditor(); } catch (error) { console.error('[Glueful Resume Studio Adobe] load failed:', error); if (ed) { let master = safeText(window.gluefulMasterResumeText); if (!master && typeof window.buildProfileResumeFallback === 'function') master = safeText(window.buildProfileResumeFallback()); ed.innerHTML = typeof window.resumeTextToEditorHtml === 'function' ? window.resumeTextToEditorHtml(master) : `<p>${master.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`; preparePlainEditor(ed); } showConversionNote('Adobe PDF conversion failed. The editable text fallback was loaded; your master resume was not changed.'); if (typeof window.showError === 'function') window.showError(error?.message || 'Could not convert the PDF into an editable Word document.'); } finally { clearConversionUi(); }
+    try { clearConversionUi(); await loadMasterIntoEditor(); } catch (error) {
+      console.error('[Glueful Resume Studio Adobe] load failed:', error);
+      window.gluefulResumeRendererReport = { renderer: 'error', error: String(error?.message || error) };
+      if (ed) { ed.innerHTML = `<div style="padding:40px;text-align:center;font-family:Inter,Arial,sans-serif;color:#8b1e1e;background:#fff7f7;border:1px solid #e8b4b4;border-radius:8px"><strong>Resume layout renderer failed.</strong><br><span style="font-size:12px">The master resume was not modified. Check the browser console for the exact conversion/rendering error.</span></div>`; ed.contentEditable = 'false'; }
+      showConversionNote('Resume layout rendering failed; no semantic fallback was inserted.');
+      if (typeof window.showError === 'function') window.showError(error?.message || 'Could not render the Adobe-generated Word document.');
+    } finally { clearConversionUi(); }
     if (typeof window.updateJobResumeEditorAts === 'function') { try { window.updateJobResumeEditorAts(); } catch (_) {} } if (typeof window.gluefulResumeStudioEnhance === 'function') { try { window.gluefulResumeStudioEnhance(); } catch (_) {} }
   }
   async function resetJobResumeToMaster() { const ed = editor(); if (!ed) return; try { clearConversionUi(); await loadMasterIntoEditor(); if (typeof window.updateJobResumeEditorAts === 'function') { try { window.updateJobResumeEditorAts(); } catch (_) {} } ed.focus(); } catch (error) { console.error('[Glueful Resume Studio Adobe] reset failed:', error); if (typeof window.showError === 'function') window.showError(error?.message || 'Could not reset the temporary resume.'); } finally { clearConversionUi(); } }
-  window.gluefulAdobeResumeStudio = { version: '2.6.0', functionName: FUNCTION_NAME, pipeline: ['PDF master', 'Supabase glueful-pdf-to-docx', 'Adobe PDF Services', 'real DOCX', 'docx-preview layout renderer', 'existing contenteditable Word-style editor'], openJobResumeEditor, resetJobResumeToMaster };
+  window.gluefulAdobeResumeStudio = { version: '2.7.0', functionName: FUNCTION_NAME, pipeline: ['PDF master', 'Supabase glueful-pdf-to-docx', 'Adobe PDF Services', 'real DOCX', 'docx-preview layout renderer', 'existing contenteditable Word-style editor'], openJobResumeEditor, resetJobResumeToMaster };
   window.openJobResumeEditor = openJobResumeEditor; window.resetJobResumeToMaster = resetJobResumeToMaster; console.info('[Glueful Resume Studio] authoritative DOCX layout controller loaded.');
 })();
