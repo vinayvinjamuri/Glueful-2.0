@@ -1358,6 +1358,215 @@
 
     }
 
+    /* =====================================================
+       INGESTION MONITOR
+       Live visibility into Glueful's background job network.
+    ====================================================== */
+
+    .ingestion-monitor-card{
+      margin-bottom:1.2rem;
+      padding:1rem;
+      overflow:hidden;
+    }
+
+    .ingestion-monitor-head{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:1rem;
+    }
+
+    .ingestion-monitor-title{
+      margin:0;
+      font-family:'Space Grotesk',sans-serif;
+      font-size:16px;
+      font-weight:600;
+    }
+
+    .ingestion-monitor-subtitle{
+      margin:4px 0 0;
+      color:var(--text-mute);
+      font-size:10px;
+      line-height:1.45;
+    }
+
+    .ingestion-live-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      flex-shrink:0;
+      padding:5px 8px;
+      border-radius:999px;
+      border:1px solid #214A3A;
+      background:#10241C;
+      color:#6EE7A8;
+      font-family:'JetBrains Mono',monospace;
+      font-size:9px;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+    }
+
+    html[data-theme="light"] .ingestion-live-pill{
+      border-color:#B9E6D2;
+      background:#EDF9F3;
+      color:#147A52;
+    }
+
+    .ingestion-live-dot{
+      width:6px;
+      height:6px;
+      border-radius:50%;
+      background:currentColor;
+      box-shadow:0 0 8px currentColor;
+      animation:ingestionPulse 1.6s ease-in-out infinite;
+    }
+
+    @keyframes ingestionPulse{
+      0%,100%{opacity:.45;transform:scale(.9)}
+      50%{opacity:1;transform:scale(1.15)}
+    }
+
+    .ingestion-progress-grid{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px;
+      margin-bottom:1rem;
+    }
+
+    .ingestion-progress-item{
+      min-width:0;
+      padding:.8rem;
+      border:1px solid var(--border-soft);
+      border-radius:10px;
+      background:var(--card2);
+    }
+
+    .ingestion-progress-top{
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      gap:8px;
+      margin-bottom:7px;
+    }
+
+    .ingestion-progress-label{
+      color:var(--text-mute);
+      font-size:10px;
+    }
+
+    .ingestion-progress-value{
+      color:var(--text);
+      font-family:'JetBrains Mono',monospace;
+      font-size:11px;
+      font-weight:700;
+      white-space:nowrap;
+    }
+
+    .ingestion-progress-track{
+      width:100%;
+      height:7px;
+      border-radius:999px;
+      overflow:hidden;
+      background:#0D1118;
+      border:1px solid rgba(255,255,255,.04);
+    }
+
+    html[data-theme="light"] .ingestion-progress-track{
+      background:#E9EDF4;
+      border-color:#DDE2EA;
+    }
+
+    .ingestion-progress-fill{
+      height:100%;
+      width:0;
+      border-radius:inherit;
+      background:var(--grad);
+      transition:width .45s ease;
+    }
+
+    .ingestion-progress-note{
+      margin-top:6px;
+      color:var(--text-faint);
+      font-size:9px;
+    }
+
+    .ingestion-metrics-grid{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:8px;
+      margin-bottom:1rem;
+    }
+
+    .ingestion-metric{
+      padding:.7rem;
+      border:1px solid var(--border-soft);
+      border-radius:9px;
+      background:var(--card2);
+      min-width:0;
+    }
+
+    .ingestion-metric-label{
+      color:var(--text-faint);
+      font-size:9px;
+      line-height:1.3;
+    }
+
+    .ingestion-metric-value{
+      margin-top:4px;
+      color:var(--text);
+      font-family:'JetBrains Mono',monospace;
+      font-size:16px;
+      font-weight:700;
+    }
+
+    .ingestion-monitor-footer{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      color:var(--text-faint);
+      font-size:9px;
+    }
+
+    .ingestion-refresh-btn{
+      padding:5px 8px;
+      border-radius:7px;
+      border:1px solid var(--border);
+      background:#1A2029;
+      color:var(--text-dim);
+      font-size:9px;
+    }
+
+    .ingestion-refresh-btn:hover{
+      background:#222936;
+      color:var(--text);
+    }
+
+    .ingestion-monitor-error{
+      padding:.7rem;
+      border:1px solid rgba(242,114,114,.35);
+      border-radius:9px;
+      background:rgba(242,114,114,.08);
+      color:#F7A2A2;
+      font-size:10px;
+      line-height:1.45;
+    }
+
+    @media(max-width:700px){
+      .ingestion-progress-grid{
+        grid-template-columns:1fr;
+      }
+
+      .ingestion-metrics-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+      }
+
+      .ingestion-monitor-head{
+        align-items:center;
+      }
+    }
+
 
     /* =====================================================
        MONTHLY ACTIVITY HEATMAP
@@ -4728,6 +4937,98 @@
         id="stats"
         class="stats-grid"
       ></div>
+
+
+      <!-- LIVE INGESTION MONITOR -->
+
+      <section
+        id="ingestion-monitor"
+        class="card ingestion-monitor-card"
+        aria-live="polite"
+      >
+        <div class="ingestion-monitor-head">
+          <div>
+            <h3 class="ingestion-monitor-title">Job Network</h3>
+            <p class="ingestion-monitor-subtitle">
+              Live background ingestion progress — no need to guess how the database is growing.
+            </p>
+          </div>
+          <div class="ingestion-live-pill">
+            <span class="ingestion-live-dot"></span>
+            <span id="ingestion-live-label">Loading</span>
+          </div>
+        </div>
+
+        <div id="ingestion-monitor-body">
+          <div class="ingestion-progress-grid">
+            <div class="ingestion-progress-item">
+              <div class="ingestion-progress-top">
+                <span class="ingestion-progress-label">Company discovery</span>
+                <span id="ingestion-company-progress" class="ingestion-progress-value">—</span>
+              </div>
+              <div class="ingestion-progress-track">
+                <div id="ingestion-company-fill" class="ingestion-progress-fill"></div>
+              </div>
+              <div id="ingestion-company-note" class="ingestion-progress-note">Loading…</div>
+            </div>
+
+            <div class="ingestion-progress-item">
+              <div class="ingestion-progress-top">
+                <span class="ingestion-progress-label">Source health</span>
+                <span id="ingestion-source-progress" class="ingestion-progress-value">—</span>
+              </div>
+              <div class="ingestion-progress-track">
+                <div id="ingestion-source-fill" class="ingestion-progress-fill"></div>
+              </div>
+              <div id="ingestion-source-note" class="ingestion-progress-note">Loading…</div>
+            </div>
+          </div>
+
+          <div class="ingestion-metrics-grid">
+            <div class="ingestion-metric">
+              <div class="ingestion-metric-label">Active jobs</div>
+              <div id="ingestion-active-jobs" class="ingestion-metric-value">—</div>
+            </div>
+            <div class="ingestion-metric">
+              <div class="ingestion-metric-label">India jobs</div>
+              <div id="ingestion-india-jobs" class="ingestion-metric-value">—</div>
+            </div>
+            <div class="ingestion-metric">
+              <div class="ingestion-metric-label">Jobs added · 24h</div>
+              <div id="ingestion-jobs-added" class="ingestion-metric-value">—</div>
+            </div>
+            <div class="ingestion-metric">
+              <div class="ingestion-metric-label">Jobs updated · 24h</div>
+              <div id="ingestion-jobs-updated" class="ingestion-metric-value">—</div>
+            </div>
+            <div class="ingestion-metric">
+              <div class="ingestion-metric-label">Jobs deactivated · 24h</div>
+              <div id="ingestion-jobs-deactivated" class="ingestion-metric-value">—</div>
+            </div>
+            <div class="ingestion-metric">
+              <div class="ingestion-metric-label">Queued companies</div>
+              <div id="ingestion-companies-queued" class="ingestion-metric-value">—</div>
+            </div>
+            <div class="ingestion-metric">
+              <div class="ingestion-metric-label">Healthy sources</div>
+              <div id="ingestion-healthy-sources" class="ingestion-metric-value">—</div>
+            </div>
+            <div class="ingestion-metric">
+              <div class="ingestion-metric-label">Failed companies</div>
+              <div id="ingestion-companies-failed" class="ingestion-metric-value">—</div>
+            </div>
+          </div>
+
+          <div class="ingestion-monitor-footer">
+            <span id="ingestion-last-run">Last completed sync: —</span>
+            <button
+              type="button"
+              class="ingestion-refresh-btn"
+              onclick="refreshIngestionMonitor(true)"
+            >Refresh</button>
+          </div>
+        </div>
+      </section>
 
 
       <!-- HEATMAP -->
@@ -11396,7 +11697,338 @@ document.addEventListener("click", (event)=>{
        DASHBOARD
     ====================================================== */
 
-    function renderDashboard() {
+    /* =====================================================
+       LIVE INGESTION MONITOR
+       Reads the Supabase progress views created by the
+       ingestion_progress_monitor_v1 migration.
+    ====================================================== */
+
+    let ingestionMonitorRefreshTimer = null;
+    let ingestionMonitorRequestInFlight = false;
+
+    function formatIngestionNumber(value) {
+      const n = Number(value);
+      return Number.isFinite(n) ? n.toLocaleString("en-US") : "—";
+    }
+
+    function formatIngestionPercent(value) {
+      const n = Number(value);
+      if (!Number.isFinite(n)) return "0%";
+      return `${Math.max(0, Math.min(100, n)).toFixed(n >= 10 ? 0 : 1)}%`;
+    }
+
+    function formatIngestionTime(value) {
+      if (!value) return "—";
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return "—";
+      return d.toLocaleString([], {
+        month:"short",
+        day:"numeric",
+        hour:"numeric",
+        minute:"2-digit"
+      });
+    }
+
+    function setIngestionText(id, value) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = value;
+    }
+
+    function setIngestionFill(id, percent) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const n = Number(percent);
+      el.style.width = `${Math.max(0, Math.min(100, Number.isFinite(n) ? n : 0))}%`;
+    }
+
+    function renderIngestionMonitor(summary) {
+      const companiesTotal = Number(summary?.companies_total) || 0;
+      const companiesDiscovered = Number(summary?.companies_discovered) || 0;
+      const companiesQueued = Number(summary?.companies_queued) || 0;
+      const companiesFailed = Number(summary?.companies_failed) || 0;
+
+      const enabledSources = Number(summary?.enabled_sources) || 0;
+      const healthySources = Number(summary?.healthy_sources) || 0;
+      const failedSources = Number(summary?.failed_sources) || 0;
+
+      const companyPct = companiesTotal
+        ? (companiesDiscovered / companiesTotal) * 100
+        : 0;
+
+      const sourcePct = enabledSources
+        ? (healthySources / enabledSources) * 100
+        : 0;
+
+      setIngestionText(
+        "ingestion-live-label",
+        summary?.current_run_started ? "Sync active" : "Monitoring"
+      );
+
+      setIngestionText(
+        "ingestion-company-progress",
+        `${formatIngestionNumber(companiesDiscovered)} / ${formatIngestionNumber(companiesTotal)}`
+      );
+      setIngestionFill("ingestion-company-fill", companyPct);
+      setIngestionText(
+        "ingestion-company-note",
+        `${formatIngestionPercent(companyPct)} discovered · ${formatIngestionNumber(companiesQueued)} queued · ${formatIngestionNumber(companiesFailed)} failed`
+      );
+
+      setIngestionText(
+        "ingestion-source-progress",
+        `${formatIngestionNumber(healthySources)} / ${formatIngestionNumber(enabledSources)}`
+      );
+      setIngestionFill("ingestion-source-fill", sourcePct);
+      setIngestionText(
+        "ingestion-source-note",
+        `${formatIngestionPercent(sourcePct)} healthy · ${formatIngestionNumber(failedSources)} failed`
+      );
+
+      setIngestionText("ingestion-active-jobs", formatIngestionNumber(summary?.active_jobs));
+      setIngestionText("ingestion-india-jobs", formatIngestionNumber(summary?.india_active_jobs));
+      setIngestionText("ingestion-jobs-added", formatIngestionNumber(summary?.jobs_added_24h));
+      setIngestionText("ingestion-jobs-updated", formatIngestionNumber(summary?.jobs_updated_24h));
+      setIngestionText("ingestion-jobs-deactivated", formatIngestionNumber(summary?.jobs_deactivated_24h));
+      setIngestionText("ingestion-companies-queued", formatIngestionNumber(companiesQueued));
+      setIngestionText("ingestion-healthy-sources", formatIngestionNumber(healthySources));
+      setIngestionText("ingestion-companies-failed", formatIngestionNumber(companiesFailed));
+
+      setIngestionText(
+        "ingestion-last-run",
+        summary?.last_completed_run
+          ? `Last completed sync: ${formatIngestionTime(summary.last_completed_run)}`
+          : "Last completed sync: no completed run recorded yet"
+      );
+    }
+
+    async function refreshIngestionMonitor(force = false) {
+      const monitor = document.getElementById("ingestion-monitor");
+      if (!monitor || ingestionMonitorRequestInFlight) return;
+
+      ingestionMonitorRequestInFlight = true;
+
+      try {
+        const { data, error } = await supabaseClient
+          .from("ingestion_progress_summary")
+          .select("*")
+          .limit(1)
+          .maybeSingle();
+
+        if (error) throw error;
+
+        if (!data) {
+          throw new Error("No ingestion progress summary is available.");
+        }
+
+        renderIngestionMonitor(data);
+      } catch (error) {
+        console.error("[Glueful] Ingestion monitor load failed:", error);
+
+        setIngestionText("ingestion-live-label", "Unavailable");
+
+        const body = document.getElementById("ingestion-monitor-body");
+        if (body) {
+          const existingError = body.querySelector(".ingestion-monitor-error");
+          if (!existingError) {
+            const errorBox = document.createElement("div");
+            errorBox.className = "ingestion-monitor-error";
+            errorBox.textContent =
+              "Live ingestion metrics could not be loaded. " +
+              (error?.message || "Please check the Supabase view permissions.");
+            body.prepend(errorBox);
+          }
+        }
+      } finally {
+        ingestionMonitorRequestInFlight = false;
+      }
+
+      if (force && currentView === "dashboard") {
+        console.log("[Glueful] Ingestion monitor refreshed.");
+      }
+    }
+
+    function startIngestionMonitorRefresh() {
+      if (ingestionMonitorRefreshTimer) {
+        clearInterval(ingestionMonitorRefreshTimer);
+      }
+
+      ingestionMonitorRefreshTimer = setInterval(() => {
+        if (currentView === "dashboard") {
+          refreshIngestionMonitor(false);
+        }
+      }, 60000);
+    }
+
+    startIngestionMonitorRefresh();
+
+    
+    /* =====================================================
+       MOBILE PULL-TO-REFRESH
+       Pull down from the top of the dashboard to refresh
+       the current Glueful data/UI. Native browser reload
+       is intentionally avoided so the app state is preserved.
+    ====================================================== */
+
+    let gluefulPullStartY = null;
+    let gluefulPullStartX = null;
+    let gluefulPullTriggered = false;
+    let gluefulPullRefreshing = false;
+
+    const GLUEFUL_PULL_THRESHOLD = 72;
+
+    function gluefulIsAtTop() {
+      return window.scrollY <= 0;
+    }
+
+    function showGluefulPullRefreshIndicator(show, message = "Release to refresh") {
+      let indicator = document.getElementById("glueful-pull-refresh");
+
+      if (!indicator) {
+        indicator = document.createElement("div");
+        indicator.id = "glueful-pull-refresh";
+        indicator.style.cssText = `
+          position:fixed;
+          top:calc(env(safe-area-inset-top, 0px) + 8px);
+          left:50%;
+          transform:translate(-50%,-130%);
+          z-index:99999;
+          padding:7px 12px;
+          border:1px solid var(--border);
+          border-radius:999px;
+          background:var(--card);
+          color:var(--text);
+          box-shadow:0 8px 24px rgba(0,0,0,.18);
+          font:10px 'JetBrains Mono',monospace;
+          pointer-events:none;
+          opacity:0;
+          transition:transform .18s ease,opacity .18s ease;
+          white-space:nowrap;
+        `;
+        document.body.appendChild(indicator);
+      }
+
+      indicator.textContent = message;
+
+      if (show) {
+        indicator.style.transform = "translate(-50%,0)";
+        indicator.style.opacity = "1";
+      } else {
+        indicator.style.transform = "translate(-50%,-130%)";
+        indicator.style.opacity = "0";
+      }
+    }
+
+    async function refreshGluefulDashboard() {
+      if (gluefulPullRefreshing) return;
+
+      gluefulPullRefreshing = true;
+      showGluefulPullRefreshIndicator(true, "Refreshing…");
+
+      try {
+        /*
+         * Re-read the current account data instead of doing a full
+         * browser reload. This keeps the logged-in app state intact.
+         */
+        if (typeof loadAll === "function" && DATA_USER_ID) {
+          await loadAll();
+        }
+
+        if (currentView === "dashboard") {
+          renderDashboard();
+          await refreshIngestionMonitor(true);
+        } else if (currentView === "jobs") {
+          await refreshJobsFromProvider(false);
+        } else if (currentView === "applications") {
+          renderApplications();
+        } else if (currentView === "interviews") {
+          renderInterviews();
+        } else if (currentView === "resumes") {
+          renderResumes();
+        }
+
+        showGluefulPullRefreshIndicator(true, "✓ Refreshed");
+        setTimeout(() => showGluefulPullRefreshIndicator(false), 700);
+      } catch (error) {
+        console.error("[Glueful] Pull-to-refresh failed:", error);
+        showGluefulPullRefreshIndicator(true, "Refresh failed");
+        setTimeout(() => showGluefulPullRefreshIndicator(false), 1000);
+      } finally {
+        gluefulPullRefreshing = false;
+      }
+    }
+
+    /*
+     * Only activate the gesture when the page is already at the
+     * very top and the user is pulling mostly vertically.
+     */
+    document.addEventListener("touchstart", event => {
+      if (window.innerWidth > 900) return;
+      if (!gluefulIsAtTop()) return;
+      if (!event.touches || event.touches.length !== 1) return;
+
+      gluefulPullStartY = event.touches[0].clientY;
+      gluefulPullStartX = event.touches[0].clientX;
+      gluefulPullTriggered = false;
+    }, {passive:true});
+
+    document.addEventListener("touchmove", event => {
+      if (window.innerWidth > 900) return;
+      if (gluefulPullStartY === null || gluefulPullStartX === null) return;
+      if (!event.touches || event.touches.length !== 1) return;
+      if (!gluefulIsAtTop()) return;
+
+      const currentY = event.touches[0].clientY;
+      const currentX = event.touches[0].clientX;
+
+      const deltaY = currentY - gluefulPullStartY;
+      const deltaX = currentX - gluefulPullStartX;
+
+      /* Ignore horizontal gestures. */
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        return;
+      }
+
+      if (deltaY > 12) {
+        const progress = Math.min(1, deltaY / GLUEFUL_PULL_THRESHOLD);
+
+        if (progress >= 1) {
+          gluefulPullTriggered = true;
+          showGluefulPullRefreshIndicator(true, "Release to refresh");
+        } else {
+          showGluefulPullRefreshIndicator(
+            true,
+            `Pull to refresh · ${Math.round(progress * 100)}%`
+          );
+        }
+      }
+    }, {passive:true});
+
+    document.addEventListener("touchend", () => {
+      if (window.innerWidth > 900) return;
+
+      const shouldRefresh = gluefulPullTriggered;
+
+      gluefulPullStartY = null;
+      gluefulPullStartX = null;
+      gluefulPullTriggered = false;
+
+      if (shouldRefresh) {
+        void refreshGluefulDashboard();
+      } else {
+        showGluefulPullRefreshIndicator(false);
+      }
+    }, {passive:true});
+
+    document.addEventListener("touchcancel", () => {
+      gluefulPullStartY = null;
+      gluefulPullStartX = null;
+      gluefulPullTriggered = false;
+      showGluefulPullRefreshIndicator(false);
+    }, {passive:true});
+
+        function renderDashboard() {
+
+      void refreshIngestionMonitor(false);
 
       const today =
         todayISO();
