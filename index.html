@@ -328,7 +328,7 @@
        viewer also ships its own +/- /FIT zoom controls (75%-300%). -->
 
   <title>Glueful</title>
-  <!-- V37 — Rich temporary resume editor + PDF/DOCX export + strict JD truth + modal scroll fix -->
+  <!-- V38 — Master resume editor import + widened modal + JD scroll fix + tailored resume application storage -->
   <!-- V26 — Fix official ATS same-host Apply URL validation -->
   <!-- V16 — Resume preview + automatic re-import on replacement + mobile resume actions -->
 
@@ -2938,7 +2938,10 @@
        Tailored edits are temporary and are never persisted.
     ====================================================== */
     .job-resume-editor-card{
-      max-height:94vh;
+      width:min(96vw, 1180px);
+      max-width:1180px;
+      height:min(96vh, 980px);
+      max-height:96vh;
       overflow:hidden;
       display:flex;
       flex-direction:column;
@@ -3104,6 +3107,9 @@
     }
     .job-resume-editor-page li{margin:2px 0}
     .job-resume-editor-page a{color:#245BDB;text-decoration:underline}
+    .job-resume-editor-page.job-resume-master-imported{
+      box-shadow:0 0 0 2px rgba(109,59,232,.12), 0 12px 35px rgba(0,0,0,.20);
+    }
 
     .job-resume-editor-actions{
       flex:0 0 auto;
@@ -3134,6 +3140,7 @@
       .job-resume-editor-card{
         width:100%;
         max-width:none;
+        height:96vh;
         max-height:96vh;
         border-radius:20px 20px 0 0;
       }
@@ -3186,6 +3193,9 @@
     }
 
     .job-detail-card{
+      width:min(96vw, 900px);
+      max-width:900px;
+      height:min(92vh, 900px);
       max-height:92vh;
       overflow:hidden;
       display:flex;
@@ -3193,9 +3203,18 @@
       min-height:0;
     }
 
+    #job-detail-content{
+      flex:1 1 auto;
+      min-height:0;
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+    }
+
     .job-detail-scroll{
       flex:1 1 auto;
       min-height:0;
+      height:0;
       overflow-y:auto;
       overscroll-behavior:contain;
       padding:20px;
@@ -3369,6 +3388,7 @@
       .modal-card.job-detail-card{
         width:100%;
         max-width:none;
+        height:94vh;
         max-height:94vh;
         border-radius:20px 20px 0 0;
         border-left:0;
@@ -10552,6 +10572,26 @@
       }
     }
 
+    async function getMasterResumeEditorHtml(masterText){
+      // Prefer the actual uploaded master file. DOCX can be converted to
+      // editable HTML while preserving headings, lists, emphasis and links.
+      try{
+        if(typeof ensureCandidateResumeCloudFile === "function"){
+          const file = await ensureCandidateResumeCloudFile();
+          if(file && String(file.name || "").toLowerCase().endsWith(".docx") && window.mammoth){
+            const buffer = await file.arrayBuffer();
+            const result = await window.mammoth.convertToHtml({arrayBuffer:buffer});
+            if(String(result?.value || "").trim()){
+              return {html:result.value, imported:true};
+            }
+          }
+        }
+      }catch(error){
+        console.warn("[Glueful Resume Editor] master visual import failed:", error);
+      }
+      return {html:resumeTextToEditorHtml(masterText), imported:false};
+    }
+
     async function openJobResumeEditor(id){
       const job = findActiveJobById(id);
       if(!job) return;
@@ -10586,13 +10626,15 @@
       const base = master || buildProfileResumeFallback();
 
       if(editor){
-        editor.innerHTML = resumeTextToEditorHtml(base);
+        const imported = await getMasterResumeEditorHtml(base);
+        editor.innerHTML = imported.html;
+        editor.classList.toggle("job-resume-master-imported", !!imported.imported);
         editor.contentEditable = "true";
       }
 
       if(noteEl){
         noteEl.textContent = master
-          ? "Temporary job-specific copy. Your master resume is never overwritten and this edit is never saved."
+          ? "Loaded from your Candidate Profile master resume. This job-specific copy is temporary and is never written back to the master."
           : "No readable master resume is available yet. Upload one in Candidate Profile.";
       }
 
@@ -10616,13 +10658,15 @@
         : null;
     }
 
-    function resetJobResumeToMaster(){
+    async function resetJobResumeToMaster(){
       const job = getCurrentJobResumeEditorJob();
       const editor = resumeEditorGet();
       if(!job || !editor) return;
 
       const master = gluefulMasterResumeText.trim() || buildProfileResumeFallback();
-      editor.innerHTML = resumeTextToEditorHtml(master);
+      const imported = await getMasterResumeEditorHtml(master);
+      editor.innerHTML = imported.html;
+      editor.classList.toggle("job-resume-master-imported", !!imported.imported);
       updateJobResumeEditorAts();
       editor.focus();
     }
@@ -10667,16 +10711,15 @@
       return sheet;
     }
 
-    async function downloadJobResumePdf(){
+    async function buildJobResumePdfBlob(){
       const job = getCurrentJobResumeEditorJob();
-      if(!job) return;
+      if(!job) throw new Error("No job selected.");
       if(!window.html2canvas || !window.jspdf?.jsPDF){
-        showError("PDF export is still loading. Please try again.");
-        return;
+        throw new Error("PDF export is still loading. Please try again.");
       }
 
       const sheet = resumeEditorCreateExportSheet();
-      if(!sheet) return;
+      if(!sheet) throw new Error("Could not prepare the resume for export.");
 
       try{
         await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
@@ -10713,12 +10756,28 @@
           pageIndex += 1;
         }
 
-        pdf.save(`glueful-${safeResumeFilePart(job.company,"company")}-${safeResumeFilePart(job.title,"resume")}-resume.pdf`);
-      }catch(error){
-        console.error("[Glueful Resume] PDF export failed:", error);
-        showError("Could not create the PDF. Your edits are still only in this temporary editor.");
+        return pdf.output("blob");
       }finally{
         sheet.remove();
+      }
+    }
+
+    async function downloadJobResumePdf(){
+      const job = getCurrentJobResumeEditorJob();
+      if(!job) return;
+      try{
+        const blob = await buildJobResumePdfBlob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `glueful-${safeResumeFilePart(job.company,"company")}-${safeResumeFilePart(job.title,"resume")}-resume.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(()=>URL.revokeObjectURL(url),1500);
+      }catch(error){
+        console.error("[Glueful Resume] PDF export failed:", error);
+        showError(error?.message || "Could not create the PDF.");
       }
     }
 
@@ -10851,18 +10910,148 @@
       if(format === "docx") return downloadJobResumeDocx();
     }
 
-    function applyFromJobResumeEditor(){
+    async function uploadTailoredResumeForApplication(job, blob){
+      if(!DATA_USER_ID) throw new Error("Please sign in before applying.");
+
+      const safeCompany = safeResumeFilePart(job.company,"company");
+      const safeTitle = safeResumeFilePart(job.title,"resume");
+      const fileName = `glueful-${safeCompany}-${safeTitle}-${Date.now()}-tailored.pdf`;
+      const path = `${DATA_USER_ID}/tailored/${fileName}`;
+      const file = new File([blob], fileName, {type:"application/pdf"});
+
+      const {error} = await supabaseClient.storage
+        .from(GLUEFUL_RESUME_BUCKET)
+        .upload(path, file, {
+          cacheControl:"3600",
+          contentType:"application/pdf",
+          upsert:false
+        });
+
+      if(error) throw error;
+
+      // Store a storage URI in public.applications. It is intentionally not
+      // a public URL: the application detail view resolves it to a short-lived
+      // signed URL when the user clicks "Open resume".
+      return {
+        path,
+        storageUri:`storage://${GLUEFUL_RESUME_BUCKET}/${path}`,
+        fileName
+      };
+    }
+
+    async function openApplicationResume(app){
+      const raw = String(app?.resumeUrl || "").trim();
+      if(!raw) return;
+
+      try{
+        if(raw.startsWith("storage://")){
+          const parsed = raw.match(/^storage:\/\/([^/]+)\/(.+)$/);
+          if(!parsed) throw new Error("Invalid stored resume reference.");
+          const bucket = parsed[1];
+          const path = parsed[2];
+          const {data,error} = await supabaseClient.storage
+            .from(bucket)
+            .createSignedUrl(path, 600);
+          if(error || !data?.signedUrl) throw error || new Error("Could not create a secure resume link.");
+          const popup = window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+          if(!popup) window.location.href = data.signedUrl;
+          return;
+        }
+
+        openExternal(raw);
+      }catch(error){
+        console.error("[Glueful Application] resume open failed:", error);
+        showError("Could not open the resume. The application record is still saved.");
+      }
+    }
+
+    async function createApplicationFromJobWithTailoredResume(job, storageInfo){
+      const app = normalizeApplication({
+        company:job.company || "",
+        role:job.title || "",
+        date:todayISO(),
+        status:"applied",
+        link:getBestJobApplyUrl(job) || job.sourceListingUrl || "",
+        jd:job.description || "",
+        resumeId:`tailored-${Date.now()}`,
+        resumeName:storageInfo.fileName,
+        resumeUrl:storageInfo.storageUri
+      });
+
+      // Do not add the generated temporary resume to the user's master
+      // resume/profile library. The application itself owns the reference.
+      if(!DATA_USER_ID || !cloudSyncReady){
+        applications.unshift(app);
+        writeLocalBackup();
+        return app;
+      }
+
+      const saved = await insertApplicationRow(app,{requireResumeUrl:true});
+      if(!saved || !saved.resumeUrl){
+        throw new Error("The application could not be saved with its tailored resume link. No employer page was opened.");
+      }
+      applications.unshift(saved);
+      writeLocalBackup();
+      return saved;
+    }
+
+    async function applyFromJobResumeEditor(){
       const job = getCurrentJobResumeEditorJob();
       if(!job) return;
 
-      // IMPORTANT: never persist the edited resume.
-      startJobApply(job.id);
+      const directApplicationUrl = getBestJobApplyUrl(job);
+      if(!directApplicationUrl){
+        showError(`No verified job-specific application link is available for ${job.company} — ${job.title}.`);
+        return;
+      }
+
+      const editorText = getJobResumeEditorText();
+      if(!editorText){
+        showError("Your tailored resume is empty.");
+        return;
+      }
+
+      const applyButton = document.querySelector(".job-resume-apply-btn");
+      if(applyButton){
+        applyButton.disabled = true;
+        applyButton.textContent = "Preparing application…";
+      }
+
+      try{
+        // 1. Render exactly what the user edited.
+        const pdfBlob = await buildJobResumePdfBlob();
+
+        // 2. Store that tailored PDF in the authenticated user's private
+        //    candidate-resumes bucket.
+        const storageInfo = await uploadTailoredResumeForApplication(job,pdfBlob);
+
+        // 3. Create the application record with the tailored resume reference.
+        await createApplicationFromJobWithTailoredResume(job,storageInfo);
+
+        // 4. Close the editor and take the user to the verified employer
+        //    application page.
+        closeJobResumeEditor();
+        closeJobDetails();
+        if(currentView === "applications") renderApplications();
+        if(typeof showSuccess === "function") showSuccess("Application saved with the tailored resume.");
+        openExternalJobUrl(directApplicationUrl, "application");
+      }catch(error){
+        console.error("[Glueful Apply] tailored resume application failed:",error);
+        showError(error?.message || "Could not save the tailored resume/application. The employer page was not opened.");
+      }finally{
+        if(applyButton){
+          applyButton.disabled = false;
+          applyButton.textContent = "Apply";
+        }
+      }
     }
 
     window.downloadJobResumePdf = downloadJobResumePdf;
     window.downloadJobResumeDocx = downloadJobResumeDocx;
     window.handleJobResumeDownload = handleJobResumeDownload;
     window.openJobResumeEditor = openJobResumeEditor;
+    window.openApplicationResume = openApplicationResume;
+    window.applyFromJobResumeEditor = applyFromJobResumeEditor;
 
     document.addEventListener("DOMContentLoaded", ()=>{
       loadJobUIState();
@@ -11684,7 +11873,8 @@ document.addEventListener("click", (event)=>{
 
 
     async function insertApplicationRow(
-      app
+      app,
+      options={}
     ) {
 
       if(!DATA_USER_ID) {
@@ -11713,6 +11903,7 @@ document.addEventListener("click", (event)=>{
          columns, retry with the core application fields. */
       if(
         error &&
+        !options.requireResumeUrl &&
         (
           "resume_name" in payload ||
           "resume_url" in payload
@@ -13865,9 +14056,7 @@ document.addEventListener("click", (event)=>{
                         class="secondary-btn"
                         style="margin-top:8px;"
                         onclick="
-                          openExternal(
-                            '${esc(app.resumeUrl)}'
-                          )
+                          openApplicationResume(app)
                         "
                       >
                         Open resume ↗
