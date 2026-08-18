@@ -19,7 +19,9 @@
   const FUNCTION_NAME = 'glueful-pdf-to-docx';
   const EDITOR_ID = 'job-resume-editor-text';
   const MODAL_ID = 'job-resume-editor-modal';
-  const DOCX_PREVIEW_TIMEOUT = 12000;
+  const DOCX_PREVIEW_TIMEOUT = 15000;
+  const DOCX_PREVIEW_JS = 'https://unpkg.com/docx-preview@0.4.0/dist/docx-preview.min.js';
+  const JSZIP_JS = 'https://unpkg.com/jszip@3.10.1/dist/jszip.min.js';
 
   const $ = (id) => document.getElementById(id);
   const editor = () => $(EDITOR_ID);
@@ -54,6 +56,48 @@
 
   function clearConversionUi() {
     document.querySelectorAll('.glueful-adobe-conversion-banner').forEach((n) => n.remove());
+  }
+
+  function loadScriptOnce(src, id) {
+    return new Promise((resolve, reject) => {
+      const existing = document.getElementById(id);
+      if (existing) {
+        if (existing.dataset.loaded === 'true') return resolve();
+        existing.addEventListener('load', () => resolve(), { once: true });
+        existing.addEventListener('error', () => reject(new Error(`Failed to load ${src}`)), { once: true });
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.id = id;
+      script.src = src;
+      script.async = true;
+      script.onload = () => {
+        script.dataset.loaded = 'true';
+        resolve();
+      };
+      script.onerror = () => reject(new Error(`Failed to load ${src}`));
+      document.head.appendChild(script);
+    });
+  }
+
+  async function ensureDocxPreview() {
+    if (window.gluefulDocxPreview?.renderAsync) return window.gluefulDocxPreview;
+
+    // The application already uses the `docx` global for DOCX generation.
+    // docx-preview also exposes a `docx` global, so preserve the existing
+    // generator before loading the renderer and restore it afterwards.
+    const existingDocxGenerator = window.docx;
+    await loadScriptOnce(JSZIP_JS, 'glueful-jszip-runtime');
+    await loadScriptOnce(DOCX_PREVIEW_JS, 'glueful-docx-preview-runtime');
+
+    if (!window.docx?.renderAsync) {
+      throw new Error('docx-preview did not expose renderAsync.');
+    }
+
+    window.gluefulDocxPreview = window.docx;
+    if (existingDocxGenerator) window.docx = existingDocxGenerator;
+    return window.gluefulDocxPreview;
   }
 
   async function waitForLibrary(name, timeout = DOCX_PREVIEW_TIMEOUT) {
@@ -133,8 +177,8 @@
   }
 
   async function renderDocxWithLayout(docxBuffer, ed) {
-    const docx = await waitForLibrary('docx');
-    if (typeof docx.renderAsync !== 'function') throw new Error('docx-preview renderAsync is unavailable.');
+    const docxPreview = await ensureDocxPreview();
+    if (typeof docxPreview.renderAsync !== 'function') throw new Error('docx-preview renderAsync is unavailable.');
 
     const styleHost = document.createElement('div');
     styleHost.className = 'glueful-docx-style-host';
@@ -153,7 +197,7 @@
     ed.setAttribute('role', 'textbox');
     ed.setAttribute('aria-multiline', 'true');
 
-    await docx.renderAsync(docxBuffer, renderHost, styleHost, {
+    await docxPreview.renderAsync(docxBuffer, renderHost, styleHost, {
       className: 'glueful-docx',
       inWrapper: true,
       hideWrapperOnPrint: false,
@@ -174,17 +218,14 @@
       debug: false
     });
 
-    const pages = renderHost.querySelectorAll('.docx-wrapper, .docx').length;
+    const pages = renderHost.querySelectorAll('.docx-wrapper > section, .docx > section').length;
     const images = renderHost.querySelectorAll('img').length;
     const tables = renderHost.querySelectorAll('table').length;
 
-    // Keep the generated Word page geometry intact. Do not apply the old
-    // Mammoth image normalization here: it could destroy document sizing.
+    // Do not rewrite Word page dimensions, table geometry, or image positions.
+    // Only prevent a media object from overflowing the editor viewport.
     renderHost.querySelectorAll('img').forEach((img) => {
-      img.removeAttribute('width');
-      img.removeAttribute('height');
       img.style.maxWidth = '100%';
-      img.style.height = 'auto';
       img.style.objectFit = 'contain';
     });
 
@@ -224,12 +265,14 @@
     const name = safeText(file.name).toLowerCase();
 
     if (name.endsWith('.docx')) {
+      const docxBuffer = await file.arrayBuffer();
       try {
-        return await renderDocxWithLayout(await file.arrayBuffer(), ed);
+        return await renderDocxWithLayout(docxBuffer, ed);
       } catch (layoutError) {
         console.warn('[Glueful Resume Studio] DOCX layout renderer failed; using Mammoth fallback:', layoutError);
-        ed.innerHTML = await docxToMammothHtml(await file.arrayBuffer());
-        return { html: ed.innerHTML, imported: true, pdfConverted: false, renderer: 'mammoth-fallback' };
+        const html = await docxToMammothHtml(docxBuffer);
+        ed.innerHTML = html;
+        return { html, imported: true, pdfConverted: false, renderer: 'mammoth-fallback' };
       }
     }
 
@@ -371,7 +414,7 @@
   }
 
   window.gluefulAdobeResumeStudio = {
-    version: '2.0.0',
+    version: '2.1.0',
     functionName: FUNCTION_NAME,
     pipeline: ['PDF master', 'Supabase glueful-pdf-to-docx', 'Adobe PDF Services', 'real DOCX', 'docx-preview layout renderer', 'existing contenteditable Word-style editor'],
     openJobResumeEditor,
