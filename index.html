@@ -4998,7 +4998,7 @@
               <div id="ingestion-jobs-added" class="ingestion-metric-value">—</div>
             </div>
             <div class="ingestion-metric">
-              <div class="ingestion-metric-label">Jobs updated · 24h</div>
+              <div class="ingestion-metric-label">Jobs verified · 24h</div>
               <div id="ingestion-jobs-updated" class="ingestion-metric-value">—</div>
             </div>
             <div class="ingestion-metric">
@@ -11801,11 +11801,16 @@ document.addEventListener("click", (event)=>{
       setIngestionText("ingestion-healthy-sources", formatIngestionNumber(healthySources));
       setIngestionText("ingestion-companies-failed", formatIngestionNumber(companiesFailed));
 
-      const discoveryRate10m = Number(summary?.companies_per_hour_10m);
-      const discoveryRate = Number(summary?.companies_per_hour);
-      const discoveryRate24h = Number(summary?.companies_per_hour_24h);
-      const etaHours = Number(summary?.eta_hours);
-      const etaHours24h = Number(summary?.eta_hours_24h);
+      const discoveryRate10m = summary?.companies_per_hour_10m == null
+        ? NaN : Number(summary.companies_per_hour_10m);
+      const discoveryRate = summary?.companies_per_hour == null
+        ? NaN : Number(summary.companies_per_hour);
+      const discoveryRate24h = summary?.companies_per_hour_24h == null
+        ? NaN : Number(summary.companies_per_hour_24h);
+      const etaHours = summary?.eta_hours == null
+        ? NaN : Number(summary.eta_hours);
+      const etaHours24h = summary?.eta_hours_24h == null
+        ? NaN : Number(summary.eta_hours_24h);
 
       const rateText = Number.isFinite(discoveryRate10m) && discoveryRate10m > 0
         ? `${discoveryRate10m.toLocaleString("en-US")} /h`
@@ -11864,28 +11869,24 @@ document.addEventListener("click", (event)=>{
          * tables through PostgREST/RLS and fixes authenticated-client
          * "permission denied for view ingestion_progress_summary".
          */
+        /*
+         * Single source of truth for the monitor.
+         * This RPC reads the live queue, job table, source registry and
+         * progress snapshots server-side, so dashboard numbers cannot
+         * become stale because one monitoring view was not refreshed.
+         */
         const { data, error } = await supabaseClient
-          .rpc("get_ingestion_progress_summary");
+          .rpc("get_ingestion_truth");
 
         if (error) throw error;
 
         const summary = Array.isArray(data) ? data[0] : data;
 
         if (!summary) {
-          throw new Error("No ingestion progress summary is available.");
+          throw new Error("No live ingestion metrics are available.");
         }
 
-        let rateSummary = null;
-        try {
-          rateSummary = await refreshIngestionRateSummary();
-        } catch (rateError) {
-          console.warn("[Glueful] Ingestion rate summary unavailable:", rateError);
-        }
-
-        renderIngestionMonitor({
-          ...summary,
-          ...(rateSummary || {})
-        });
+        renderIngestionMonitor(summary);
       } catch (error) {
         console.error("[Glueful] Ingestion monitor load failed:", error);
 
