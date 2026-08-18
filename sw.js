@@ -1,10 +1,7 @@
-const CACHE_NAME = "glueful-cache-v2-resume-adobe";
+const CACHE_NAME = "glueful-cache-v3-resume-adobe";
 const AUTHORITATIVE_RESUME_SCRIPT = "./glueful-resume-studio-adobe.js";
 const DOCX_FORENSICS_SCRIPT = "./glueful-resume-docx-forensics.js";
 
-/* Do not precache index.html/root: those responses must pass through the
-   network-first transformer below so deployments cannot be masked by a raw
-   old HTML document. */
 const ASSETS = [
   "./manifest.json",
   "./glueful-resume-studio-adobe.js",
@@ -39,8 +36,8 @@ async function buildAuthoritativeIndex(request, preloadResponse) {
   }
 
   const scripts = [
-    `<script src="${DOCX_FORENSICS_SCRIPT}" data-glueful-docx-forensics="1"></script>`,
-    `<script src="${AUTHORITATIVE_RESUME_SCRIPT}" data-glueful-authoritative-resume-studio="1"></script>`
+    `<script src="${DOCX_FORENSICS_SCRIPT}?v=20260819-2" data-glueful-docx-forensics="1"></script>`,
+    `<script src="${AUTHORITATIVE_RESUME_SCRIPT}?v=20260819-2" data-glueful-authoritative-resume-studio="1"></script>`
   ].join("\n");
   const marker = "</body>";
   const injected = html.includes(marker)
@@ -81,9 +78,7 @@ self.addEventListener("activate", (event) => {
     );
 
     if (self.registration.navigationPreload) {
-      try {
-        await self.registration.navigationPreload.enable();
-      } catch (_) {}
+      try { await self.registration.navigationPreload.enable(); } catch (_) {}
     }
 
     await self.clients.claim();
@@ -94,8 +89,6 @@ self.addEventListener("fetch", (event) => {
   const request = event.request;
   const url = new URL(request.url);
 
-  /* HTML is network-first so deployments are not masked by an old index.
-     A previously transformed index remains the offline fallback. */
   if (request.method === "GET" && request.mode === "navigate") {
     event.respondWith((async () => {
       try {
@@ -110,7 +103,6 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  /* The authoritative controller and its diagnostics are versioned static assets. */
   if (
     request.method === "GET" &&
     (url.pathname.endsWith("/glueful-resume-studio-adobe.js") ||
@@ -131,11 +123,9 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  /* Other static resources use cache-first with a network refresh. */
   if (request.method === "GET") {
     event.respondWith((async () => {
       const cached = await caches.match(request);
-
       try {
         const response = await fetch(request);
         if (response.ok) {
