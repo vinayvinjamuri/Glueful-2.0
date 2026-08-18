@@ -79,38 +79,17 @@ function gluefulDocAuthInstallStyles() {
       vertical-align: middle;
     }
 
-    /* FIX: header/layout tables must size to their content, exactly like
-       Word does, instead of being force-stretched to 100% in fixed columns.
-       A fixed 2-column 50/50 split is what was blowing the logo column up
-       to ~400px and shoving the name into the other half. */
     #glueful-docauth-editor .glueful-native-page table {
-      width: auto;
+      width: 100%;
       max-width: 100%;
       border-collapse: collapse;
-      table-layout: auto;
+      table-layout: fixed;
     }
 
     #glueful-docauth-editor .glueful-native-page td,
     #glueful-docauth-editor .glueful-native-page th {
       vertical-align: top;
       overflow-wrap: anywhere;
-    }
-
-    /* Any table cell that contains only an image (the logo cell pattern)
-       should shrink-to-fit like Word's autofit column, not stretch. */
-    #glueful-docauth-editor .glueful-native-page td:has(> img:only-child) {
-      width: 1%;
-      white-space: nowrap;
-    }
-
-    /* Hard cap on images sitting inside a table cell next to text.
-       This is the header-logo case. Body-content tables (rare in resumes)
-       are unaffected since this only fires inside <table><td><img>. */
-    #glueful-docauth-editor .glueful-native-page td img {
-      max-width: 96px;
-      max-height: 96px;
-      width: auto;
-      height: auto;
     }
 
     #glueful-docauth-editor .glueful-native-page p {
@@ -199,41 +178,6 @@ async function gluefulDocAuthRefreshTextCache() {
   });
 
   return gluefulDocAuthTextRefreshInFlight;
-}
-
-/*
- * FIX: fallback safety net for browsers where :has() table CSS above
- * doesn't apply cleanly (older WebViews), and to catch logo images that
- * are NOT inside a table (e.g. an anchored/floating image mammoth placed
- * as a bare inline <img> at the top of the document). We wait for each
- * image to actually load, then check its true naturalWidth. Anything
- * clearly logo-sized-but-rendered-huge near the top of the document gets
- * capped. Content images further down the page are left alone.
- */
-function gluefulDocAuthNormalizeImages(page) {
-  const allImages = Array.from(page.querySelectorAll("img"));
-  if (!allImages.length) return;
-
-  const HEADER_IMAGE_COUNT = 3; // only the first few images count as "header"
-  const HEADER_MAX_WIDTH_PX = 84;
-  const OVERSIZE_TRIGGER_PX = 160;
-
-  allImages.slice(0, HEADER_IMAGE_COUNT).forEach((img) => {
-    const applyCap = () => {
-      const w = img.naturalWidth || img.width;
-      if (w && w > OVERSIZE_TRIGGER_PX) {
-        img.style.width = HEADER_MAX_WIDTH_PX + "px";
-        img.style.height = "auto";
-        img.style.maxWidth = HEADER_MAX_WIDTH_PX + "px";
-      }
-    };
-
-    if (img.complete) {
-      applyCap();
-    } else {
-      img.addEventListener("load", applyCap, { once: true });
-    }
-  });
 }
 
 function gluefulDocAuthInlineRuns(node, docx) {
@@ -437,10 +381,6 @@ async function gluefulDocAuthOpenDocx(host, docxBuffer) {
     }
 
     page.innerHTML = html;
-
-    // FIX: cap oversized header images (logo) that Mammoth rendered at
-    // native pixel resolution with no Word sizing hint applied.
-    gluefulDocAuthNormalizeImages(page);
 
     gluefulDocAuthEditor = host;
     gluefulDocAuthTextCache = "";
