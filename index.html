@@ -328,12 +328,16 @@
        viewer also ships its own +/- /FIT zoom controls (75%-300%). -->
 
   <title>Glueful</title>
+  <!-- V37 — Rich temporary resume editor + PDF/DOCX export + strict JD truth + modal scroll fix -->
   <!-- V26 — Fix official ATS same-host Apply URL validation -->
   <!-- V16 — Resume preview + automatic re-import on replacement + mobile resume actions -->
 
   <!-- Resume parsing libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docx@9.5.1/build/index.umd.js"></script>
 
 
 <!-- Critical first-paint styling: prevents a white flash before the page CSS loads. -->
@@ -2928,15 +2932,24 @@
       text-align:center;
     }
 
-    /* Job-specific resume editor */
+    /* =====================================================
+       JOB-SPECIFIC RESUME DOCUMENT EDITOR
+       -----------------------------------------------------
+       Tailored edits are temporary and are never persisted.
+    ====================================================== */
     .job-resume-editor-card{
       max-height:94vh;
       overflow:hidden;
+      display:flex;
+      flex-direction:column;
     }
     .job-resume-editor-scroll{
+      flex:1 1 auto;
+      min-height:0;
       overflow-y:auto;
       padding:16px;
       -webkit-overflow-scrolling:touch;
+      overscroll-behavior:contain;
     }
     .job-resume-editor-job{
       display:flex;
@@ -2985,7 +2998,7 @@
       font-weight:800;
     }
     .job-ats-editor-note{
-      max-width:230px;
+      max-width:260px;
       color:var(--text-muted);
       font-size:10px;
       line-height:1.45;
@@ -3005,20 +3018,93 @@
       line-height:1.45;
     }
     .job-resume-master-note strong{color:var(--text)}
-    .job-resume-editor-text{
-      width:100%;
-      min-height:55vh;
+
+    .job-resume-toolbar{
+      position:sticky;
+      top:0;
+      z-index:5;
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      gap:5px;
       margin-top:12px;
-      resize:vertical;
+      padding:7px;
       border:1px solid var(--border);
-      border-radius:13px;
-      background:var(--bg);
-      color:var(--text);
-      padding:13px;
-      font-family:'Inter',sans-serif;
-      font-size:12px;
-      line-height:1.6;
+      border-radius:12px;
+      background:var(--card);
+      box-shadow:0 8px 20px rgba(0,0,0,.16);
     }
+    .job-resume-tool{
+      min-width:32px;
+      height:32px;
+      padding:0 8px;
+      border:1px solid var(--border);
+      border-radius:7px;
+      background:var(--surface);
+      color:var(--text);
+      font-size:11px;
+      font-weight:800;
+    }
+    .job-resume-tool:hover{
+      background:var(--card2);
+      border-color:#6d3be8;
+    }
+    .job-resume-tool-select{
+      height:32px;
+      max-width:115px;
+      padding:0 7px;
+      border:1px solid var(--border);
+      border-radius:7px;
+      background:var(--surface);
+      color:var(--text);
+      font-size:10px;
+      font-weight:700;
+    }
+    .job-resume-tool-divider{
+      width:1px;
+      height:22px;
+      background:var(--border);
+      margin:0 2px;
+    }
+    .job-resume-editor-page{
+      width:min(100%, 794px);
+      min-height:1123px;
+      margin:12px auto 4px;
+      padding:56px 58px;
+      border:1px solid #D9DEE7;
+      border-radius:2px;
+      background:#fff;
+      color:#151A23;
+      box-shadow:0 12px 35px rgba(0,0,0,.20);
+      font-family:Arial, Helvetica, sans-serif;
+      font-size:13px;
+      line-height:1.55;
+      outline:none;
+      overflow-wrap:anywhere;
+    }
+    .job-resume-editor-page:focus{
+      border-color:#8B6BF0;
+      box-shadow:0 0 0 2px rgba(139,107,240,.18), 0 12px 35px rgba(0,0,0,.20);
+    }
+    .job-resume-editor-page h1,
+    .job-resume-editor-page h2,
+    .job-resume-editor-page h3{
+      color:#11151C;
+      line-height:1.2;
+      margin:14px 0 7px;
+    }
+    .job-resume-editor-page h1{font-size:23px}
+    .job-resume-editor-page h2{font-size:17px}
+    .job-resume-editor-page h3{font-size:14px}
+    .job-resume-editor-page p{margin:0 0 7px}
+    .job-resume-editor-page ul,
+    .job-resume-editor-page ol{
+      margin:4px 0 8px;
+      padding-left:24px;
+    }
+    .job-resume-editor-page li{margin:2px 0}
+    .job-resume-editor-page a{color:#245BDB;text-decoration:underline}
+
     .job-resume-editor-actions{
       flex:0 0 auto;
       display:grid;
@@ -3028,19 +3114,41 @@
       border-top:1px solid var(--border);
       background:var(--card);
     }
-    .job-resume-editor-actions button{
+    .job-resume-editor-actions button,
+    .job-resume-editor-actions select{
       min-height:42px;
       border-radius:10px;
       font-size:11px;
       font-weight:800;
     }
-    .job-resume-apply-btn{
-      grid-column:1 / -1;
+    .job-resume-download-select{
+      width:100%;
+      padding:0 10px;
+      border:1px solid var(--border);
+      background:var(--surface);
+      color:var(--text);
     }
-    @media(max-width:600px){
+    .job-resume-apply-btn{grid-column:1 / -1}
+
+    @media(max-width:700px){
+      .job-resume-editor-card{
+        width:100%;
+        max-width:none;
+        max-height:96vh;
+        border-radius:20px 20px 0 0;
+      }
+      .job-resume-editor-page{
+        min-height:920px;
+        padding:38px 28px;
+        font-size:12px;
+      }
+      .job-resume-tool{
+        min-width:30px;
+        padding:0 6px;
+      }
+      .job-resume-tool-select{max-width:98px}
       .job-ats-editor-panel{align-items:flex-start}
       .job-ats-editor-note{max-width:180px}
-      .job-resume-editor-text{min-height:50vh}
     }
 
     .job-filter-sheet .modal-card{max-height:88vh;overflow:auto}
@@ -3080,13 +3188,19 @@
     .job-detail-card{
       max-height:92vh;
       overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      min-height:0;
     }
 
     .job-detail-scroll{
+      flex:1 1 auto;
+      min-height:0;
       overflow-y:auto;
       overscroll-behavior:contain;
       padding:20px;
       -webkit-overflow-scrolling:touch;
+      touch-action:pan-y;
     }
 
     .job-detail-hero{
@@ -3202,6 +3316,14 @@
       font-weight:700;
     }
 
+    .job-detail-jd-missing{
+      padding:12px;
+      border:1px solid rgba(242,184,75,.20);
+      border-radius:11px;
+      background:rgba(242,184,75,.07);
+    }
+    .job-detail-jd-missing p{color:var(--text-muted)}
+
     .job-detail-source{
       margin-top:20px;
       padding-top:14px;
@@ -3269,7 +3391,6 @@
       }
     }
 
-    .job-detail-card{max-height:90vh;overflow:auto}
     .job-detail-header{display:flex;gap:12px;align-items:flex-start}
     .job-detail-title{font-size:21px;line-height:1.2;font-weight:850;color:var(--text)}
     .job-detail-company{margin-top:4px;color:var(--text-muted);font-size:13px}
@@ -5574,19 +5695,58 @@
         </div>
 
         <div class="job-resume-master-note">
-          <strong>Master resume protected</strong>
-          <span>This is a job-specific copy. Saving it will not replace the resume uploaded in Candidate Profile.</span>
+          <strong>Temporary tailored copy</strong>
+          <span>Your master resume is protected. Nothing you edit here is saved to your profile or database. Download the finished copy when you are ready.</span>
         </div>
 
-        <textarea id="job-resume-editor-text" class="job-resume-editor-text"
-                  spellcheck="true"
-                  placeholder="Your Candidate Profile resume will appear here…"></textarea>
+        <div class="job-resume-toolbar" role="toolbar" aria-label="Resume editing tools">
+          <button class="job-resume-tool" type="button" onclick="resumeEditorCommand('bold')" title="Bold"><strong>B</strong></button>
+          <button class="job-resume-tool" type="button" onclick="resumeEditorCommand('italic')" title="Italic"><em>I</em></button>
+          <button class="job-resume-tool" type="button" onclick="resumeEditorCommand('underline')" title="Underline"><u>U</u></button>
+          <span class="job-resume-tool-divider"></span>
+          <select class="job-resume-tool-select" onchange="resumeEditorFormatBlock(this.value); this.value=''" aria-label="Text style">
+            <option value="">Style</option>
+            <option value="P">Normal</option>
+            <option value="H1">Heading 1</option>
+            <option value="H2">Heading 2</option>
+            <option value="H3">Heading 3</option>
+          </select>
+          <select class="job-resume-tool-select" onchange="resumeEditorCommand('fontSize', this.value); this.value=''" aria-label="Font size">
+            <option value="">Size</option>
+            <option value="2">Small</option>
+            <option value="3">Normal</option>
+            <option value="4">Large</option>
+            <option value="5">XL</option>
+          </select>
+          <button class="job-resume-tool" type="button" onclick="resumeEditorCommand('insertUnorderedList')" title="Bulleted list">• List</button>
+          <button class="job-resume-tool" type="button" onclick="resumeEditorCommand('insertOrderedList')" title="Numbered list">1. List</button>
+          <span class="job-resume-tool-divider"></span>
+          <button class="job-resume-tool" type="button" onclick="resumeEditorCommand('justifyLeft')" title="Align left">≡</button>
+          <button class="job-resume-tool" type="button" onclick="resumeEditorCommand('justifyCenter')" title="Center">≡</button>
+          <button class="job-resume-tool" type="button" onclick="resumeEditorCommand('justifyRight')" title="Align right">≡</button>
+          <button class="job-resume-tool" type="button" onclick="resumeEditorInsertLink()" title="Insert link">Link</button>
+          <button class="job-resume-tool" type="button" onclick="resumeEditorCommand('undo')" title="Undo">↶</button>
+          <button class="job-resume-tool" type="button" onclick="resumeEditorCommand('redo')" title="Redo">↷</button>
+          <button class="job-resume-tool" type="button" onclick="resumeEditorCommand('removeFormat')" title="Clear formatting">Clear</button>
+        </div>
+
+        <div id="job-resume-editor-text"
+             class="job-resume-editor-page"
+             contenteditable="true"
+             spellcheck="true"
+             role="textbox"
+             aria-multiline="true"
+             aria-label="Tailored resume editor"></div>
       </div>
 
       <div class="job-resume-editor-actions">
         <button class="secondary-btn" type="button" onclick="resetJobResumeToMaster()">Reset to master</button>
-        <button class="secondary-btn" type="button" onclick="downloadJobResumeVariant()">Download .txt</button>
-        <button class="primary-btn" type="button" onclick="saveJobResumeVariant()">Save tailored resume</button>
+        <select id="job-resume-download" class="job-resume-download-select" aria-label="Download tailored resume"
+                onchange="handleJobResumeDownload(this.value); this.value=''">
+          <option value="">Download ▼</option>
+          <option value="pdf">Download as PDF</option>
+          <option value="docx">Download as Word (.docx)</option>
+        </select>
         <button class="primary-btn job-resume-apply-btn" type="button" onclick="applyFromJobResumeEditor()">Apply</button>
       </div>
     </div>
@@ -8440,7 +8600,8 @@
     let gluefulMasterResumeText = "";
     let gluefulMasterResumeLoading = false;
     let gluefulJobResumeEditorId = null;
-    const GLUEFUL_JOB_RESUME_VARIANTS_KEY = "glueful_job_resume_variants_v1";
+    // Tailored resumes are intentionally TEMPORARY.
+    // They are never persisted to localStorage, Supabase, or the user profile.
     let gluefulJobResumeVariants = {};
 
     const GLUEFUL_JOB_FILTERS_DEFAULT = {
@@ -8532,7 +8693,7 @@
       // Verified-only: stable ID + company/title + specific source URL are mandatory.
       if(!title||!company||!sourceJobId||!sourceListingUrl) return null;
       const skills=normalizeJobList(job.skills||job.keywords);
-      const description=cleanJobHtml(job.description||job.summary||job.snippet||"");
+      const description=cleanJobHtml(job.description || job.job_description || job.jobDescription || "");
       const location=String(job.location||job.city||job.locationName||"Location not specified").trim();
       const workMode=String(job.workMode||job.work_mode||job.remoteType||job.remote||"Any").trim();
       const employment=String(job.employment||job.employmentType||job.type||"Any").trim();
@@ -8994,7 +9155,7 @@
         expiresAt:
           r.expires_at || r.expiresAt || r.expiration_date || r.expirationDate || r.valid_until || "",
         salary: r.salary || r.salary_range || r.salaryRange || r.pay || "",
-        description: cleanJobDescription(r.description || r.summary || r.snippet || ""),
+        description: cleanJobDescription(r.description || r.job_description || r.jobDescription || ""),
         skills: r.skills || r.keywords || [],
         responsibilities: r.responsibilities || [],
         requirements: r.requirements || [],
@@ -9453,36 +9614,10 @@
       }
     }
 
-    function getJobResumeVariantsStorageKey(){
-      const userId = window.__gluefulCurrentUser?.id || "anonymous";
-      return `${GLUEFUL_JOB_RESUME_VARIANTS_KEY}_${userId}`;
-    }
-
-    function loadJobResumeVariants(){
-      try{
-        const raw = JSON.parse(localStorage.getItem(getJobResumeVariantsStorageKey()) || "{}");
-        gluefulJobResumeVariants = raw && typeof raw === "object" ? raw : {};
-      }catch(e){
-        gluefulJobResumeVariants = {};
-      }
-    }
-
-    function saveJobResumeVariants(){
-      try{
-        localStorage.setItem(
-          getJobResumeVariantsStorageKey(),
-          JSON.stringify(gluefulJobResumeVariants)
-        );
-      }catch(e){
-        console.warn("[Glueful Jobs] Could not persist tailored resume variants:",e);
-      }
-    }
-
-    function getJobResumeVariant(job){
-      if(!job) return "";
-      const variant = gluefulJobResumeVariants[String(job.id)];
-      return typeof variant === "string" ? variant : "";
-    }
+    // Legacy compatibility only: no tailored-resume persistence.
+    function loadJobResumeVariants(){ gluefulJobResumeVariants = {}; }
+    function saveJobResumeVariants(){ /* intentionally empty */ }
+    function getJobResumeVariant(job){ return ""; }
 
     function buildProfileResumeFallback(){
       const profile = getJobSearchProfile() || {};
@@ -9564,7 +9699,23 @@
         );
     }
 
+    function hasReliableJobDescription(job){
+      if(!job) return false;
+      const description = cleanJobDescription(
+        job.description || job.job_description || job.jobDescription || ""
+      );
+      const structured = [
+        ...(Array.isArray(job.responsibilities) ? job.responsibilities : []),
+        ...(Array.isArray(job.requirements) ? job.requirements : []),
+        ...(Array.isArray(job.qualifications) ? job.qualifications : []),
+        ...(Array.isArray(job.preferredQualifications) ? job.preferredQualifications : [])
+      ].join(" ").trim();
+      // Short provider snippets/placeholders do not qualify as a reliable JD.
+      return description.length >= 80 || structured.length >= 120;
+    }
+
     function calculateJobAtsScore(job,resumeText){
+      if(!hasReliableJobDescription(job)) return null;
       const resume = atsNormalize(resumeText);
       if(!resume) return null;
 
@@ -9896,8 +10047,6 @@
     }
 
     function getJobAtsScore(job){
-      const variant = getJobResumeVariant(job);
-      if(variant.trim()) return calculateJobAtsScore(job,variant);
       if(!gluefulMasterResumeText.trim()) return null;
       return calculateJobAtsScore(job,gluefulMasterResumeText);
     }
@@ -9937,7 +10086,7 @@
           </div>
 
           <div class="job-expanded-content">
-            <div class="job-description">${esc(job.description||"Job description not provided by the source.")}</div>
+            <div class="job-description">${esc(job.description || "Verified job description unavailable from source.")}</div>
             ${skills ? `<div class="job-skills">${skills}</div>` : ""}
             <div class="job-actions">
               <button class="job-action details" type="button"
@@ -10068,7 +10217,6 @@
       closeProfile();
       document.querySelectorAll(".modal-overlay.open").forEach(m=>m.classList.remove("open"));
       loadJobUIState();
-      loadJobResumeVariants();
 
       const view = document.getElementById("jobs-view");
       if(view) view.style.display = "block";
@@ -10181,7 +10329,6 @@
 
       const applicationUrl = getBestJobApplyUrl(job);
       const ats = getJobAtsScore(job);
-      const variantExists = Boolean(getJobResumeVariant(job));
       const sourceLabel = job.sourceName || job.source || "Verified job source";
 
       const skillsHtml = job.skills?.length
@@ -10229,15 +10376,19 @@
             <div><strong>${Number(job.match||0)}% Match</strong> — based on your current Candidate Profile.</div>
             <div style="margin-top:5px;color:#B497FF;font-weight:800">
               ATS ${ats === null ? "…" : `${ats}%`}
-              ${variantExists ? " · tailored resume" : " · master resume"}
+               · master resume
             </div>
           </div>
 
-          ${job.description ? `
+          ${hasReliableJobDescription(job) ? `
             <div class="job-detail-block">
               <h4>About the job</h4>
               <p>${esc(job.description)}</p>
-            </div>` : ""}
+            </div>` : `
+            <div class="job-detail-block job-detail-jd-missing">
+              <h4>About the job</h4>
+              <p>Verified job description is not available from the source. Glueful will not generate or fabricate one.</p>
+            </div>`}
 
           ${renderJobDetailList("Responsibilities", job.responsibilities)}
           ${renderJobDetailList("Requirements", job.requirements)}
@@ -10273,7 +10424,7 @@
         <div class="job-detail-actions">
           <button class="secondary-btn" type="button"
                   onclick="openJobResumeEditor('${esc(job.id)}')">
-            ${variantExists ? "Edit tailored resume" : "Edit resume for this job"}
+            Edit resume for this job
           </button>
 
           ${applicationUrl
@@ -10317,14 +10468,97 @@
       openExternalJobUrl(directApplicationUrl, "application");
     }
 
+    function resumeEditorGet(){
+      return document.getElementById("job-resume-editor-text");
+    }
+
+    function resumeEditorFocus(){
+      const editor = resumeEditorGet();
+      if(editor) editor.focus();
+      return editor;
+    }
+
+    function resumeEditorCommand(command, value=null){
+      const editor = resumeEditorFocus();
+      if(!editor) return;
+      try{
+        document.execCommand(command, false, value);
+        updateJobResumeEditorAts();
+      }catch(error){
+        console.warn("[Glueful Resume Editor] command failed:", command, error);
+      }
+    }
+
+    function resumeEditorFormatBlock(tag){
+      const editor = resumeEditorFocus();
+      if(!editor || !tag) return;
+      try{
+        document.execCommand("formatBlock", false, `<${tag.toLowerCase()}>`);
+        updateJobResumeEditorAts();
+      }catch(error){
+        console.warn("[Glueful Resume Editor] format failed:", error);
+      }
+    }
+
+    function resumeEditorInsertLink(){
+      const editor = resumeEditorFocus();
+      if(!editor) return;
+      const url = window.prompt("Enter the URL:");
+      if(!url) return;
+      try{
+        const parsed = new URL(url, window.location.href);
+        if(!/^https?:$/.test(parsed.protocol)) throw new Error("Invalid protocol");
+        document.execCommand("createLink", false, parsed.href);
+      }catch(error){
+        showError("Please enter a valid http(s) URL.");
+      }
+    }
+
+    function resumeTextToEditorHtml(text){
+      const safe = esc(String(text || "").replace(/\r\n/g,"\n").replace(/\r/g,"\n"));
+      return safe.split("\n").map(line => line.trim()
+        ? `<p>${line}</p>`
+        : `<p><br></p>`
+      ).join("");
+    }
+
+    function getJobResumeEditorText(){
+      const editor = resumeEditorGet();
+      return editor ? String(editor.innerText || editor.textContent || "").trim() : "";
+    }
+
+    function getJobResumeEditorHtml(){
+      const editor = resumeEditorGet();
+      return editor ? String(editor.innerHTML || "").trim() : "";
+    }
+
+    function updateJobResumeEditorAts(){
+      const job = getCurrentJobResumeEditorJob();
+      const editor = resumeEditorGet();
+      const atsEl = document.getElementById("job-resume-editor-ats");
+      const noteEl = document.getElementById("job-resume-editor-ats-note");
+      if(!job || !editor) return;
+
+      const text = getJobResumeEditorText();
+      const score = text && hasReliableJobDescription(job)
+        ? calculateJobAtsScore(job,text)
+        : null;
+
+      if(atsEl) atsEl.textContent = score === null ? "—" : `${score}%`;
+      if(noteEl){
+        noteEl.textContent = score === null
+          ? "A reliable verified job description is required before Glueful calculates an ATS score."
+          : "ATS score updates instantly from the verified job description and the temporary resume copy you are editing.";
+      }
+    }
+
     async function openJobResumeEditor(id){
       const job = findActiveJobById(id);
       if(!job) return;
 
       gluefulJobResumeEditorId = String(job.id);
-      loadJobResumeVariants();
 
-      const editor = document.getElementById("job-resume-editor-text");
+      const editor = resumeEditorGet();
       const jobEl = document.getElementById("job-resume-editor-job");
       const atsEl = document.getElementById("job-resume-editor-ats");
       const noteEl = document.getElementById("job-resume-editor-ats-note");
@@ -10341,11 +10575,6 @@
         loadCompanyLogos();
       }
 
-      if(editor){
-        editor.value = "";
-        editor.disabled = true;
-      }
-
       if(atsEl) atsEl.textContent = "…";
       if(noteEl) noteEl.textContent = "Loading your master resume from Candidate Profile…";
 
@@ -10354,23 +10583,20 @@
         try{ master = (await ensureMasterResumeText() || "").trim(); }catch(e){}
       }
 
-      const variant = getJobResumeVariant(job);
-      const base = variant || master || buildProfileResumeFallback();
+      const base = master || buildProfileResumeFallback();
 
       if(editor){
-        editor.value = base;
-        editor.disabled = false;
+        editor.innerHTML = resumeTextToEditorHtml(base);
+        editor.contentEditable = "true";
       }
 
-      const score = base.trim() ? calculateJobAtsScore(job,base) : null;
-      if(atsEl) atsEl.textContent = score === null ? "—" : `${score}%`;
       if(noteEl){
-        noteEl.textContent = variant
-          ? "This job already has a saved tailored copy. Your master resume is unchanged."
-          : master
-            ? "This starts from your Candidate Profile master resume. Your master file is never overwritten."
-            : "No readable master resume is available yet. Upload one in Candidate Profile.";
+        noteEl.textContent = master
+          ? "Temporary job-specific copy. Your master resume is never overwritten and this edit is never saved."
+          : "No readable master resume is available yet. Upload one in Candidate Profile.";
       }
+
+      updateJobResumeEditorAts();
     }
 
     function closeJobResumeEditor(){
@@ -10379,6 +10605,8 @@
         try{ closeModal("job-resume-editor-modal"); }
         catch(e){ modal.classList.remove("open"); }
       }
+      const editor = resumeEditorGet();
+      if(editor) editor.innerHTML = "";
       gluefulJobResumeEditorId = null;
     }
 
@@ -10388,103 +10616,256 @@
         : null;
     }
 
-    function updateJobResumeEditorAts(){
-      const job = getCurrentJobResumeEditorJob();
-      const editor = document.getElementById("job-resume-editor-text");
-      const atsEl = document.getElementById("job-resume-editor-ats");
-      const noteEl = document.getElementById("job-resume-editor-ats-note");
-      if(!job || !editor) return;
-
-      const text = editor.value || "";
-      const score = text.trim() ? calculateJobAtsScore(job,text) : null;
-      if(atsEl) atsEl.textContent = score === null ? "—" : `${score}%`;
-      if(noteEl){
-        noteEl.textContent = score === null
-          ? "Add resume content to calculate the ATS score."
-          : "ATS score is calculated locally from this job description and the resume copy you are editing.";
-      }
-    }
-
-    function saveJobResumeVariant(){
-      const job = getCurrentJobResumeEditorJob();
-      const editor = document.getElementById("job-resume-editor-text");
-      if(!job || !editor) return;
-
-      const text = String(editor.value || "").trim();
-      if(!text){
-        showError("The job-specific resume cannot be empty.");
-        return;
-      }
-
-      gluefulJobResumeVariants[String(job.id)] = text;
-      saveJobResumeVariants();
-
-      const score = calculateJobAtsScore(job,text);
-      closeJobResumeEditor();
-      renderJobs();
-      openJobDetails(job.id);
-
-      const atsEl = document.querySelector("#job-detail-content .job-match-panel");
-      if(atsEl && score !== null){
-        // openJobDetails already renders the latest score; this is only a
-        // defensive refresh for browsers with a delayed paint.
-        atsEl.dataset.atsScore = String(score);
-      }
-    }
-
     function resetJobResumeToMaster(){
       const job = getCurrentJobResumeEditorJob();
-      const editor = document.getElementById("job-resume-editor-text");
+      const editor = resumeEditorGet();
       if(!job || !editor) return;
 
       const master = gluefulMasterResumeText.trim() || buildProfileResumeFallback();
-      editor.value = master;
-      delete gluefulJobResumeVariants[String(job.id)];
-      saveJobResumeVariants();
+      editor.innerHTML = resumeTextToEditorHtml(master);
       updateJobResumeEditorAts();
+      editor.focus();
     }
 
-    function downloadJobResumeVariant(){
-      const job = getCurrentJobResumeEditorJob();
-      const editor = document.getElementById("job-resume-editor-text");
-      if(!job || !editor) return;
+    function safeResumeFilePart(value, fallback){
+      const clean = String(value || fallback)
+        .replace(/[^a-z0-9]+/gi,"-")
+        .replace(/^-+|-+$/g,"")
+        .toLowerCase();
+      return clean || fallback;
+    }
 
-      const text = String(editor.value || "").trim();
-      if(!text){
-        showError("There is no resume content to download.");
+    function resumeEditorCreateExportSheet(){
+      const editor = resumeEditorGet();
+      if(!editor) return null;
+
+      const sheet = document.createElement("div");
+      sheet.id = "glueful-resume-export-sheet";
+      sheet.style.cssText = [
+        "position:fixed","left:-100000px","top:0","width:794px",
+        "min-height:1123px","padding:56px 58px","box-sizing:border-box",
+        "background:#fff","color:#151A23","font-family:Arial,Helvetica,sans-serif",
+        "font-size:13px","line-height:1.55","overflow:visible","z-index:-1"
+      ].join(";");
+
+      const style = document.createElement("style");
+      style.textContent = `
+        #glueful-resume-export-sheet h1,#glueful-resume-export-sheet h2,#glueful-resume-export-sheet h3{color:#11151C;line-height:1.2;margin:14px 0 7px}
+        #glueful-resume-export-sheet h1{font-size:23px}
+        #glueful-resume-export-sheet h2{font-size:17px}
+        #glueful-resume-export-sheet h3{font-size:14px}
+        #glueful-resume-export-sheet p{margin:0 0 7px}
+        #glueful-resume-export-sheet ul,#glueful-resume-export-sheet ol{margin:4px 0 8px;padding-left:24px}
+        #glueful-resume-export-sheet li{margin:2px 0}
+        #glueful-resume-export-sheet a{color:#245BDB;text-decoration:underline}
+      `;
+      sheet.appendChild(style);
+      const content = document.createElement("div");
+      content.innerHTML = getJobResumeEditorHtml();
+      sheet.appendChild(content);
+      document.body.appendChild(sheet);
+      return sheet;
+    }
+
+    async function downloadJobResumePdf(){
+      const job = getCurrentJobResumeEditorJob();
+      if(!job) return;
+      if(!window.html2canvas || !window.jspdf?.jsPDF){
+        showError("PDF export is still loading. Please try again.");
         return;
       }
 
-      const safeCompany = String(job.company||"job").replace(/[^a-z0-9]+/gi,"-").replace(/^-|-$/g,"").toLowerCase();
-      const safeTitle = String(job.title||"resume").replace(/[^a-z0-9]+/gi,"-").replace(/^-|-$/g,"").toLowerCase();
-      const blob = new Blob([text],{type:"text/plain;charset=utf-8"});
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `glueful-${safeCompany}-${safeTitle}-resume.txt`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      setTimeout(()=>URL.revokeObjectURL(url),1000);
+      const sheet = resumeEditorCreateExportSheet();
+      if(!sheet) return;
+
+      try{
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        const canvas = await window.html2canvas(sheet, {
+          scale:2,
+          backgroundColor:"#ffffff",
+          useCORS:true,
+          logging:false,
+          windowWidth:794
+        });
+
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({orientation:"portrait",unit:"pt",format:"a4"});
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const pagePixelHeight = Math.floor(canvas.width * pageHeight / pageWidth);
+
+        let offset = 0;
+        let pageIndex = 0;
+        while(offset < canvas.height){
+          const sliceHeight = Math.min(pagePixelHeight, canvas.height - offset);
+          const pageCanvas = document.createElement("canvas");
+          pageCanvas.width = canvas.width;
+          pageCanvas.height = sliceHeight;
+          const ctx = pageCanvas.getContext("2d");
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0,0,pageCanvas.width,pageCanvas.height);
+          ctx.drawImage(canvas,0,offset,canvas.width,sliceHeight,0,0,canvas.width,sliceHeight);
+
+          if(pageIndex > 0) pdf.addPage();
+          const pageImageHeight = sliceHeight * pageWidth / canvas.width;
+          pdf.addImage(pageCanvas.toDataURL("image/jpeg",0.94),"JPEG",0,0,pageWidth,pageImageHeight);
+          offset += sliceHeight;
+          pageIndex += 1;
+        }
+
+        pdf.save(`glueful-${safeResumeFilePart(job.company,"company")}-${safeResumeFilePart(job.title,"resume")}-resume.pdf`);
+      }catch(error){
+        console.error("[Glueful Resume] PDF export failed:", error);
+        showError("Could not create the PDF. Your edits are still only in this temporary editor.");
+      }finally{
+        sheet.remove();
+      }
+    }
+
+    function resumeEditorRunTextRuns(node, inherited={}){
+      const runs = [];
+      const walk = (current, style={...inherited}) => {
+        if(current.nodeType === Node.TEXT_NODE){
+          const value = current.nodeValue || "";
+          if(value) runs.push(new window.docx.TextRun({
+            text:value,
+            bold:Boolean(style.bold),
+            italics:Boolean(style.italics),
+            underline:style.underline ? {} : undefined,
+            size:style.size || 22
+          }));
+          return;
+        }
+        if(current.nodeType !== Node.ELEMENT_NODE) return;
+
+        const tag = current.tagName.toLowerCase();
+        const next = {...style};
+        if(tag==="strong" || tag==="b") next.bold = true;
+        if(tag==="em" || tag==="i") next.italics = true;
+        if(tag==="u") next.underline = true;
+        if(tag==="h1") next.size = 34;
+        if(tag==="h2") next.size = 28;
+        if(tag==="h3") next.size = 24;
+
+        Array.from(current.childNodes).forEach(child => walk(child,next));
+      };
+      Array.from(node.childNodes || []).forEach(child => walk(child,inherited));
+      return runs.length ? runs : [new window.docx.TextRun({text:""})];
+    }
+
+    function resumeEditorBuildDocxChildren(){
+      const editor = resumeEditorGet();
+      const d = window.docx;
+      if(!editor || !d) return [];
+
+      const children = [];
+      const addParagraph = (element, options={}) => {
+        children.push(new d.Paragraph({
+          children:resumeEditorRunTextRuns(element),
+          spacing:{after:options.after ?? 100},
+          heading:options.heading
+        }));
+      };
+
+      Array.from(editor.childNodes).forEach(node => {
+        if(node.nodeType === Node.TEXT_NODE){
+          const value = node.nodeValue?.trim();
+          if(value) children.push(new d.Paragraph({children:[new d.TextRun({text:value})]}));
+          return;
+        }
+        if(node.nodeType !== Node.ELEMENT_NODE) return;
+
+        const tag = node.tagName.toLowerCase();
+        if(tag==="ul" || tag==="ol"){
+          Array.from(node.children).forEach(li => {
+            children.push(new d.Paragraph({
+              children:resumeEditorRunTextRuns(li),
+              bullet:tag==="ul" ? {level:0} : undefined,
+              numbering:tag==="ol" ? {reference:"glueful-numbering",level:0} : undefined,
+              spacing:{after:70}
+            }));
+          });
+          return;
+        }
+
+        const heading = tag==="h1" ? d.HeadingLevel.HEADING_1
+          : tag==="h2" ? d.HeadingLevel.HEADING_2
+          : tag==="h3" ? d.HeadingLevel.HEADING_3
+          : undefined;
+
+        if(["p","div","h1","h2","h3","blockquote"].includes(tag)){
+          addParagraph(node,{heading});
+        }
+      });
+
+      return children.length ? children : [
+        new d.Paragraph({children:[new d.TextRun({text:""})]})
+      ];
+    }
+
+    async function downloadJobResumeDocx(){
+      const job = getCurrentJobResumeEditorJob();
+      if(!job) return;
+      if(!window.docx){
+        showError("Word export is still loading. Please try again.");
+        return;
+      }
+
+      try{
+        const d = window.docx;
+        const doc = new d.Document({
+          numbering:{
+            config:[{
+              reference:"glueful-numbering",
+              levels:[{
+                level:0,
+                format:"decimal",
+                text:"%1.",
+                alignment:d.AlignmentType.LEFT
+              }]
+            }]
+          },
+          sections:[{
+            properties:{page:{margin:{top:720,right:720,bottom:720,left:720}}},
+            children:resumeEditorBuildDocxChildren()
+          }]
+        });
+
+        const blob = await d.Packer.toBlob(doc);
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `glueful-${safeResumeFilePart(job.company,"company")}-${safeResumeFilePart(job.title,"resume")}-resume.docx`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(()=>URL.revokeObjectURL(url),1500);
+      }catch(error){
+        console.error("[Glueful Resume] DOCX export failed:", error);
+        showError("Could not create the Word document. Your edits remain temporary.");
+      }
+    }
+
+    async function handleJobResumeDownload(format){
+      if(format === "pdf") return downloadJobResumePdf();
+      if(format === "docx") return downloadJobResumeDocx();
     }
 
     function applyFromJobResumeEditor(){
       const job = getCurrentJobResumeEditorJob();
       if(!job) return;
 
-      const editor = document.getElementById("job-resume-editor-text");
-      const text = String(editor?.value || "").trim();
-      if(text){
-        gluefulJobResumeVariants[String(job.id)] = text;
-        saveJobResumeVariants();
-      }
-
+      // IMPORTANT: never persist the edited resume.
       startJobApply(job.id);
     }
 
+    window.downloadJobResumePdf = downloadJobResumePdf;
+    window.downloadJobResumeDocx = downloadJobResumeDocx;
+    window.handleJobResumeDownload = handleJobResumeDownload;
+    window.openJobResumeEditor = openJobResumeEditor;
+
     document.addEventListener("DOMContentLoaded", ()=>{
       loadJobUIState();
-      loadJobResumeVariants();
 
       // IMPORTANT: do not bind a second, un-debounced renderJobs() to this
       // input. The oninput="handleJobSearchInput()" attribute on the element
@@ -10506,6 +10887,7 @@
       const resumeEditor = document.getElementById("job-resume-editor-text");
       if(resumeEditor){
         resumeEditor.addEventListener("input", updateJobResumeEditorAts);
+        resumeEditor.addEventListener("keyup", updateJobResumeEditorAts);
       }
 
       renderJobs();
