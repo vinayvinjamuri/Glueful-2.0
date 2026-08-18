@@ -328,7 +328,7 @@
        viewer also ships its own +/- /FIT zoom controls (75%-300%). -->
 
   <title>Glueful</title>
-  <!-- V50: High-fidelity Word-style authoring; PDF masters are converted by the server-side PDF→DOCX engine before editing. -->
+  <!-- V49: PDF masters are converted internally to editable Word/DOCX before Resume Studio editing. -->
   <!-- V40 PREMIUM RESUME STUDIO — full-screen desktop + document-first mobile editor -->
   <!-- V38 — Master resume editor import + widened modal + JD scroll fix + tailored resume application storage -->
   <!-- V26 — Fix official ATS same-host Apply URL validation -->
@@ -340,8 +340,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/docx@9.5.1/build/index.umd.js"></script>
-  <!-- V50: high-fidelity Word-style document authoring bridge. Requires the companion JS file. -->
-  <script type="module" src="./glueful-resume-docauth-v50.js"></script>
 
 
 <!-- Critical first-paint styling: prevents a white flash before the page CSS loads. -->
@@ -6273,11 +6271,12 @@
         </div>
 
         <div id="job-resume-editor-text"
-             class="job-resume-editor-page glueful-docauth-host"
-             role="application"
-             aria-label="Glueful Word-style resume editor">
-          <div id="glueful-docauth-editor" class="glueful-docauth-editor"></div>
-        </div>
+             class="job-resume-editor-page"
+             contenteditable="true"
+             spellcheck="true"
+             role="textbox"
+             aria-multiline="true"
+             aria-label="Tailored resume editor"></div>
       </div>
 
       <div class="job-resume-editor-actions glueful-word-statusbar">
@@ -20280,8 +20279,20 @@ document.addEventListener("click", (event)=>{
      editing anymore. The original uploaded PDF remains the master.
 ============================================================ -->
 
-<style id="glueful-v49-word-editor-css">
-  /* Real Word-document editing surface */
+<!-- ============================================================
+     GLUEFUL V50 — HEADER-SAFE PDF -> WORD EDITOR
+     ------------------------------------------------------------
+     The existing Glueful app architecture is preserved. V50 replaces
+     only the V49 PDF/DOCX editor runtime and its editor-surface CSS.
+
+     Main fix: V49 blindly selected the first PDF image and imported it
+     into Word. V50 scores image candidates, rejects giant/full-width
+     graphics and obvious dark rectangles, and reconstructs a credible
+     first-page logo/header as an editable Word table.
+============================================================ -->
+
+<style id="glueful-v50-word-editor-css">
+  /* V50: stable Word-like document surface. */
   #job-resume-editor-modal .job-resume-editor-page.glueful-word-document-mode{
     width:min(210mm, calc(100vw - 48px)) !important;
     max-width:210mm !important;
@@ -20302,14 +20313,8 @@ document.addEventListener("click", (event)=>{
     font-size:11pt !important;
   }
 
-  #job-resume-editor-modal .glueful-word-document-mode:focus{
-    outline:none !important;
-  }
-
-  #job-resume-editor-modal .glueful-word-document-mode p{
-    margin:0 0 6pt;
-  }
-
+  #job-resume-editor-modal .glueful-word-document-mode:focus{outline:none !important;}
+  #job-resume-editor-modal .glueful-word-document-mode p{margin:0 0 6pt;}
   #job-resume-editor-modal .glueful-word-document-mode h1,
   #job-resume-editor-modal .glueful-word-document-mode h2,
   #job-resume-editor-modal .glueful-word-document-mode h3{
@@ -20320,6 +20325,30 @@ document.addEventListener("click", (event)=>{
   #job-resume-editor-modal .glueful-word-document-mode img{
     max-width:100% !important;
     height:auto !important;
+    display:block !important;
+  }
+
+  #job-resume-editor-modal .glueful-word-document-mode table{
+    width:100% !important;
+    max-width:100% !important;
+    border-collapse:collapse !important;
+    table-layout:fixed !important;
+    margin:0 0 10pt !important;
+  }
+
+  #job-resume-editor-modal .glueful-word-document-mode td{
+    vertical-align:top !important;
+    padding:0 !important;
+    border:0 !important;
+    overflow-wrap:anywhere !important;
+  }
+
+  #job-resume-editor-modal .glueful-word-document-mode table img{
+    max-width:115px !important;
+    max-height:90px !important;
+    width:auto !important;
+    height:auto !important;
+    object-fit:contain !important;
   }
 
   #job-resume-editor-modal .glueful-word-conversion-banner{
@@ -20336,19 +20365,6 @@ document.addEventListener("click", (event)=>{
     color:#ddd8ff;
     font:500 12px/1.2 Inter,Arial,sans-serif;
     box-shadow:0 8px 24px rgba(0,0,0,.18);
-  }
-
-  #job-resume-editor-modal .glueful-word-conversion-error{
-    margin:28px auto 120px;
-    width:min(210mm, calc(100vw - 48px));
-    min-height:120px;
-    padding:28px;
-    box-sizing:border-box;
-    border-radius:12px;
-    background:#fff;
-    color:#222;
-    box-shadow:0 10px 40px rgba(0,0,0,.24);
-    font:14px/1.55 Inter,Arial,sans-serif;
   }
 
   @media (max-width:700px){
@@ -20368,39 +20384,54 @@ document.addEventListener("click", (event)=>{
   }
 </style>
 
-<style id="glueful-v50-docauth-ui">
-/* V50 — real page-based Word-style editor host. The old contenteditable renderer is not used. */
-#job-resume-editor-modal .glueful-docauth-host{
-  width:100% !important; min-height:100% !important; padding:0 !important; margin:0 !important;
-  background:#2b2d31 !important; border:0 !important; box-shadow:none !important;
-  overflow:visible !important; display:block !important;
-}
-#job-resume-editor-modal .glueful-docauth-editor{
-  position:relative !important; width:100% !important; min-height:calc(100dvh - 128px) !important;
-  background:#2b2d31 !important;
-}
-#job-resume-editor-modal .glueful-docauth-loading{
-  min-height:calc(100dvh - 128px); display:flex; align-items:center; justify-content:center;
-  color:#c8cad0; font:600 14px Inter,Arial,sans-serif; text-align:center; padding:30px; box-sizing:border-box;
-}
-#job-resume-editor-modal .glueful-docauth-error{
-  max-width:720px; margin:70px auto; padding:22px; border:1px solid #5b2f3b; border-radius:12px;
-  background:#24191d; color:#ffd9df; font:600 13px/1.55 Inter,Arial,sans-serif;
-}
-#job-resume-editor-modal .job-resume-editor-toolbar{display:none !important}
-#job-resume-editor-modal .glueful-docauth-host + *{box-sizing:border-box}
-@media(max-width:700px){
-  #job-resume-editor-modal .glueful-docauth-editor{min-height:calc(100dvh - 124px) !important}
-}
-</style>
-
-<script id="glueful-v50-legacy-runtime">
+<script id="glueful-v50-pdf-to-word-runtime">
 (function(){
   "use strict";
 
-  const V49 = {
-    cache: new Map(),
-    conversionInFlight: null
+  /*
+   * ============================================================
+   * V50 CONFIG
+   * ============================================================
+   */
+
+  const V50 = {
+    cache: new WeakMap(),
+    conversionInFlight: null,
+
+    /*
+     * Header detection:
+     * The upper portion of page 1 is treated as the possible
+     * resume header. This is deliberately conservative.
+     */
+    headerFraction: 0.24,
+
+    /*
+     * A logo normally occupies only a small portion of the page.
+     * Very large images are normally backgrounds, banners, lines,
+     * screenshots, or decorative rectangles.
+     */
+    maxLogoPageFraction: 0.16,
+
+    /*
+     * Do not import tiny tracking pixels or accidental artifacts.
+     */
+    minImagePixels: 400,
+
+    /*
+     * Full-width image rejection.
+     */
+    maxFullWidthFraction: 0.82,
+
+    /*
+     * Black/dark rectangle rejection threshold.
+     * This is only used when image pixel data is available.
+     */
+    darkPixelRatioThreshold: 0.92,
+
+    /*
+     * Maximum number of candidate images we inspect.
+     */
+    maxImageCandidates: 12
   };
 
   function editor(){
@@ -20412,65 +20443,128 @@ document.addEventListener("click", (event)=>{
   }
 
   function removeConversionBanner(){
-    document.querySelectorAll(".glueful-word-conversion-banner").forEach(n=>n.remove());
+    document
+      .querySelectorAll(".glueful-word-conversion-banner")
+      .forEach(function(n){ n.remove(); });
   }
 
   function conversionBanner(message){
     removeConversionBanner();
-    const host = document.querySelector("#job-resume-editor-modal .job-resume-editor-scroll");
+
+    const host = document.querySelector(
+      "#job-resume-editor-modal .job-resume-editor-scroll"
+    ) || document.getElementById("job-resume-editor-modal");
+
     if(!host) return null;
+
     const el = document.createElement("div");
     el.className = "glueful-word-conversion-banner";
     el.textContent = message;
+
     host.insertBefore(el, host.firstChild);
+
     return el;
   }
 
-  function waitForLibrary(name, timeout=12000){
+  function waitForLibrary(name, timeout){
+    timeout = timeout || 12000;
+
     const started = Date.now();
-    return new Promise((resolve,reject)=>{
+
+    return new Promise(function(resolve,reject){
       (function poll(){
-        if(window[name]) return resolve(window[name]);
-        if(Date.now()-started >= timeout){
-          return reject(new Error(name + " did not finish loading."));
+        if(window[name]){
+          resolve(window[name]);
+          return;
         }
+
+        if(Date.now() - started >= timeout){
+          reject(new Error(name + " did not finish loading."));
+          return;
+        }
+
         setTimeout(poll,80);
       })();
     });
   }
 
+  /*
+   * ============================================================
+   * PDF FONT HELPERS
+   * ============================================================
+   */
+
   function pdfFontFamily(name){
-    const n=String(name||"").toLowerCase();
-    if(n.includes("times") || n.includes("roman")) return "Times New Roman";
-    if(n.includes("courier")) return "Courier New";
-    if(n.includes("georgia")) return "Georgia";
-    if(n.includes("calibri")) return "Calibri";
-    if(n.includes("cambria")) return "Cambria";
-    if(n.includes("garamond")) return "Garamond";
-    if(n.includes("helvetica") || n.includes("arial")) return "Arial";
+    const n = String(name || "").toLowerCase();
+
+    if(n.includes("times") || n.includes("roman")){
+      return "Times New Roman";
+    }
+
+    if(n.includes("courier")){
+      return "Courier New";
+    }
+
+    if(n.includes("georgia")){
+      return "Georgia";
+    }
+
+    if(n.includes("calibri")){
+      return "Calibri";
+    }
+
+    if(n.includes("cambria")){
+      return "Cambria";
+    }
+
+    if(n.includes("garamond")){
+      return "Garamond";
+    }
+
+    if(n.includes("helvetica") || n.includes("arial")){
+      return "Arial";
+    }
+
     return "Arial";
   }
 
   function pdfItemGeometry(viewport,item){
-    const t=item && item.transform ? item.transform : [1,0,0,1,0,0];
-    const tx=window.pdfjsLib.Util.transform(viewport.transform,t);
-    const size=Math.max(5,Math.hypot(tx[2],tx[3]));
+    const t = item && item.transform
+      ? item.transform
+      : [1,0,0,1,0,0];
+
+    const tx = window.pdfjsLib.Util.transform(
+      viewport.transform,
+      t
+    );
+
+    const size = Math.max(
+      5,
+      Math.hypot(tx[2],tx[3])
+    );
+
     return {
-      x:Number(tx[4]||0),
-      y:Number(tx[5]||0),
-      size,
-      width:Math.max(1,Number(item.width||0)*viewport.scale),
-      font:String(item.fontName||"")
+      x:Number(tx[4] || 0),
+      y:Number(tx[5] || 0),
+      size:size,
+      width:Math.max(
+        1,
+        Number(item.width || 0) * viewport.scale
+      ),
+      font:String(item.fontName || "")
     };
   }
 
   function groupPdfLines(content,viewport){
-    const items=(content.items||[])
-      .filter(item=>String(item.str||"").length)
-      .map(item=>{
-        const g=pdfItemGeometry(viewport,item);
+    const items = (content.items || [])
+      .filter(function(item){
+        return String(item.str || "").length;
+      })
+      .map(function(item){
+        const g = pdfItemGeometry(viewport,item);
+
         return {
-          text:String(item.str||""),
+          text:String(item.str || ""),
           x:g.x,
           baseline:g.y,
           size:g.size,
@@ -20479,558 +20573,2014 @@ document.addEventListener("click", (event)=>{
         };
       });
 
-    items.sort((a,b)=>{
-      const dy=Math.abs(a.baseline-b.baseline);
-      if(dy>3) return b.baseline-a.baseline;
-      return a.x-b.x;
+    items.sort(function(a,b){
+      const dy = Math.abs(a.baseline - b.baseline);
+
+      if(dy > 3){
+        return b.baseline - a.baseline;
+      }
+
+      return a.x - b.x;
     });
 
-    const lines=[];
+    const lines = [];
+
     for(const item of items){
-      const tolerance=Math.max(3,Math.min(7,item.size*.28));
-      let line=lines.find(l=>Math.abs(l.baseline-item.baseline)<=tolerance);
+      const tolerance = Math.max(
+        3,
+        Math.min(7,item.size * .28)
+      );
+
+      let line = lines.find(function(l){
+        return Math.abs(l.baseline - item.baseline) <= tolerance;
+      });
+
       if(!line){
-        line={baseline:item.baseline,items:[]};
+        line = {
+          baseline:item.baseline,
+          items:[]
+        };
+
         lines.push(line);
       }
+
       line.items.push(item);
-      line.baseline=(line.baseline*(line.items.length-1)+item.baseline)/line.items.length;
+
+      line.baseline =
+        (
+          line.baseline * (line.items.length - 1)
+          + item.baseline
+        ) / line.items.length;
     }
 
-    lines.sort((a,b)=>b.baseline-a.baseline);
-    lines.forEach(line=>line.items.sort((a,b)=>a.x-b.x));
+    /* PDF.js viewport coordinates are top-down after the page viewport
+       transform, so smaller baseline values are nearer the top of the page. */
+    lines.sort(function(a,b){
+      return a.baseline - b.baseline;
+    });
+
+    lines.forEach(function(line){
+      line.items.sort(function(a,b){
+        return a.x - b.x;
+      });
+    });
+
     return lines;
   }
 
   function inferHeadingSize(lines){
-    const sizes=[];
-    lines.forEach(l=>l.items.forEach(i=>{
-      if(Number.isFinite(i.size) && i.size>=6 && i.size<=40) sizes.push(i.size);
-    }));
-    if(!sizes.length) return 11;
-    sizes.sort((a,b)=>a-b);
-    return sizes[Math.floor(sizes.length*.45)] || sizes[0];
+    const sizes = [];
+
+    lines.forEach(function(l){
+      l.items.forEach(function(i){
+        if(
+          Number.isFinite(i.size) &&
+          i.size >= 6 &&
+          i.size <= 40
+        ){
+          sizes.push(i.size);
+        }
+      });
+    });
+
+    if(!sizes.length){
+      return 11;
+    }
+
+    sizes.sort(function(a,b){ return a-b; });
+
+    return sizes[
+      Math.floor(sizes.length * .45)
+    ] || sizes[0];
   }
 
   function makeDocxRun(d,item){
-    const text=String(item.text||"");
-    const n=String(item.font||"").toLowerCase();
+    const text = String(item.text || "");
+    const n = String(item.font || "").toLowerCase();
+
     return new d.TextRun({
-      text,
+      text:text,
       bold:/bold|black|heavy|semibold|demi/.test(n),
       italics:/italic|oblique/.test(n),
       font:pdfFontFamily(item.font),
-      size:Math.max(12,Math.round(item.size*2))
+      size:Math.max(
+        12,
+        Math.round(item.size * 2)
+      )
     });
   }
 
   function bulletInfo(text){
-    const m=String(text||"").match(/^\s*([•●○▪▫◦‣⁃*-])\s+(.*)$/);
-    return m ? {bullet:true,text:m[2]} : {bullet:false,text:String(text||"")};
+    const m = String(text || "").match(
+      /^\s*([•●○▪▫◦‣⁃*-])\s+(.*)$/
+    );
+
+    return m
+      ? {
+          bullet:true,
+          text:m[2]
+        }
+      : {
+          bullet:false,
+          text:String(text || "")
+        };
   }
 
-  async function extractFirstUsablePdfImage(page){
-    /* Best-effort logo/image preservation. PDF.js exposes image objects
-       through page.objs/commonObjs; this is intentionally optional so a
-       problematic image can never block text conversion. */
-    try{
-      const ops=await page.getOperatorList();
-      const targets=[
-        window.pdfjsLib.OPS.paintImageXObject,
-        window.pdfjsLib.OPS.paintJpegXObject,
-        window.pdfjsLib.OPS.paintInlineImageXObject
-      ];
-      for(let i=0;i<ops.fnArray.length;i++){
-        if(!targets.includes(ops.fnArray[i])) continue;
-        const args=ops.argsArray[i];
-        if(!args) continue;
+  /*
+   * ============================================================
+   * IMAGE HELPERS
+   * ============================================================
+   */
 
-        let img=null;
-        if(ops.fnArray[i]===window.pdfjsLib.OPS.paintInlineImageXObject){
-          img=args[0];
+  function getImageDimensions(img){
+    if(!img){
+      return {
+        width:0,
+        height:0
+      };
+    }
+
+    if(img.bitmap){
+      return {
+        width:Number(img.bitmap.width || 0),
+        height:Number(img.bitmap.height || 0)
+      };
+    }
+
+    return {
+      width:Number(img.width || 0),
+      height:Number(img.height || 0)
+    };
+  }
+
+  function imageByteLength(img){
+    try{
+      if(img && img.data){
+        return img.data.length;
+      }
+
+      if(img && img.bitmap){
+        return (
+          Number(img.bitmap.width || 0) *
+          Number(img.bitmap.height || 0) *
+          4
+        );
+      }
+    }catch(e){}
+
+    return 0;
+  }
+
+  function imageLooksLikeDarkRectangle(img){
+    /*
+     * Important:
+     * We DO NOT reject every dark logo.
+     *
+     * We only reject images that are:
+     *   - sufficiently large,
+     *   - mostly dark pixels,
+     *   - and therefore much more likely to be a black
+     *     rectangle/background than a small logo.
+     */
+
+    try{
+      if(!img || !img.data || !img.width || !img.height){
+        return false;
+      }
+
+      const width = Number(img.width);
+      const height = Number(img.height);
+
+      if(width < 20 || height < 20){
+        return false;
+      }
+
+      const raw = new Uint8ClampedArray(img.data);
+
+      let channels = 4;
+
+      if(raw.length === width * height * 3){
+        channels = 3;
+      }else if(raw.length !== width * height * 4){
+        return false;
+      }
+
+      /*
+       * Sample rather than scan every pixel.
+       */
+      const sampleStep = Math.max(
+        1,
+        Math.floor(
+          Math.sqrt((width * height) / 4000)
+        )
+      );
+
+      let samples = 0;
+      let dark = 0;
+
+      for(let y=0;y<height;y+=sampleStep){
+        for(let x=0;x<width;x+=sampleStep){
+          const p = (y * width + x) * channels;
+
+          const r = raw[p] || 0;
+          const g = raw[p+1] || 0;
+          const b = raw[p+2] || 0;
+
+          samples++;
+
+          if(
+            r < 35 &&
+            g < 35 &&
+            b < 35
+          ){
+            dark++;
+          }
+        }
+      }
+
+      if(!samples){
+        return false;
+      }
+
+      return (
+        dark / samples >=
+        V50.darkPixelRatioThreshold
+      );
+
+    }catch(e){
+      return false;
+    }
+  }
+
+  function imageToPngBytes(img){
+    return new Promise(async function(resolve){
+      try{
+        if(!img){
+          resolve(null);
+          return;
+        }
+
+        /*
+         * ImageBitmap path.
+         */
+        if(img.bitmap){
+          const c = document.createElement("canvas");
+
+          c.width = Number(img.bitmap.width || 0);
+          c.height = Number(img.bitmap.height || 0);
+
+          if(!c.width || !c.height){
+            resolve(null);
+            return;
+          }
+
+          const ctx = c.getContext("2d");
+
+          if(!ctx){
+            resolve(null);
+            return;
+          }
+
+          ctx.drawImage(
+            img.bitmap,
+            0,
+            0
+          );
+
+          const blob = await new Promise(function(r){
+            c.toBlob(r,"image/png");
+          });
+
+          if(!blob){
+            resolve(null);
+            return;
+          }
+
+          resolve(
+            new Uint8Array(
+              await blob.arrayBuffer()
+            )
+          );
+
+          return;
+        }
+
+        /*
+         * Raw PDF.js image data path.
+         */
+        if(
+          img.data &&
+          img.width &&
+          img.height
+        ){
+          const width = Number(img.width);
+          const height = Number(img.height);
+
+          const raw = new Uint8ClampedArray(
+            img.data
+          );
+
+          let rgba = raw;
+
+          if(
+            raw.length ===
+            width * height * 3
+          ){
+            rgba = new Uint8ClampedArray(
+              width * height * 4
+            );
+
+            for(
+              let p=0,q=0;
+              p<raw.length;
+              p+=3,q+=4
+            ){
+              rgba[q]   = raw[p];
+              rgba[q+1] = raw[p+1];
+              rgba[q+2] = raw[p+2];
+              rgba[q+3] = 255;
+            }
+          }
+
+          if(
+            rgba.length ===
+            width * height * 4
+          ){
+            const c = document.createElement("canvas");
+
+            c.width = width;
+            c.height = height;
+
+            const ctx = c.getContext("2d");
+
+            if(!ctx){
+              resolve(null);
+              return;
+            }
+
+            ctx.putImageData(
+              new ImageData(
+                rgba,
+                width,
+                height
+              ),
+              0,
+              0
+            );
+
+            const blob = await new Promise(function(r){
+              c.toBlob(r,"image/png");
+            });
+
+            if(blob){
+              resolve(
+                new Uint8Array(
+                  await blob.arrayBuffer()
+                )
+              );
+
+              return;
+            }
+          }
+        }
+      }catch(e){}
+
+      resolve(null);
+    });
+  }
+
+  /*
+   * Get PDF image objects plus their approximate transformation
+   * information.
+   *
+   * We intentionally keep this best-effort. If image geometry
+   * cannot be obtained, the converter simply ignores that image.
+   */
+  async function collectPdfImages(page,viewport){
+    const results = [];
+
+    try{
+      const pdfjs = window.pdfjsLib;
+
+      const ops = await page.getOperatorList();
+
+      const targets = [
+        pdfjs.OPS.paintImageXObject,
+        pdfjs.OPS.paintJpegXObject,
+        pdfjs.OPS.paintInlineImageXObject
+      ];
+
+      for(
+        let i=0;
+        i<ops.fnArray.length;
+        i++
+      ){
+        if(!targets.includes(ops.fnArray[i])){
+          continue;
+        }
+
+        const args = ops.argsArray[i];
+
+        if(!args){
+          continue;
+        }
+
+        let img = null;
+
+        /*
+         * Inline images are directly present in args[0].
+         */
+        if(
+          ops.fnArray[i] ===
+          pdfjs.OPS.paintInlineImageXObject
+        ){
+          img = args[0];
         }else{
-          const id=args[0];
-          img=await new Promise(resolve=>{
+          const id = args[0];
+
+          img = await new Promise(function(resolve){
             try{
-              if(page.objs && typeof page.objs.get==="function"){
-                const direct=page.objs.get(id);
-                if(direct) return resolve(direct);
+              if(
+                page.objs &&
+                typeof page.objs.get === "function"
+              ){
+                const direct = page.objs.get(id);
+
+                if(direct){
+                  resolve(direct);
+                  return;
+                }
               }
             }catch(e){}
+
             try{
-              if(page.commonObjs && typeof page.commonObjs.get==="function"){
-                const direct=page.commonObjs.get(id);
-                if(direct) return resolve(direct);
+              if(
+                page.commonObjs &&
+                typeof page.commonObjs.get === "function"
+              ){
+                const direct =
+                  page.commonObjs.get(id);
+
+                if(direct){
+                  resolve(direct);
+                  return;
+                }
               }
             }catch(e){}
+
             try{
-              page.objs.get(id,resolve);
-            }catch(e){ resolve(null); }
+              page.objs.get(
+                id,
+                resolve
+              );
+            }catch(e){
+              resolve(null);
+            }
           });
         }
 
-        if(!img) continue;
-
-        if(img.bitmap){
-          const c=document.createElement("canvas");
-          c.width=img.bitmap.width;
-          c.height=img.bitmap.height;
-          c.getContext("2d").drawImage(img.bitmap,0,0);
-          const blob=await new Promise(r=>c.toBlob(r,"image/png"));
-          if(blob) return new Uint8Array(await blob.arrayBuffer());
+        if(!img){
+          continue;
         }
 
-        if(img.data && img.width && img.height){
-          const c=document.createElement("canvas");
-          c.width=img.width;
-          c.height=img.height;
-          const ctx=c.getContext("2d");
-          const raw=new Uint8ClampedArray(img.data);
-          let rgba=raw;
-          if(raw.length===img.width*img.height*3){
-            rgba=new Uint8ClampedArray(img.width*img.height*4);
-            for(let p=0,q=0;p<raw.length;p+=3,q+=4){
-              rgba[q]=raw[p]; rgba[q+1]=raw[p+1]; rgba[q+2]=raw[p+2]; rgba[q+3]=255;
-            }
-          }
-          if(rgba.length===img.width*img.height*4){
-            ctx.putImageData(new ImageData(rgba,img.width,img.height),0,0);
-            const blob=await new Promise(r=>c.toBlob(r,"image/png"));
-            if(blob) return new Uint8Array(await blob.arrayBuffer());
-          }
+        const dimensions =
+          getImageDimensions(img);
+
+        if(
+          dimensions.width <= 0 ||
+          dimensions.height <= 0
+        ){
+          continue;
+        }
+
+        /*
+         * Save the image matrix if PDF.js supplied it.
+         *
+         * paintImageXObject args normally contain the image
+         * and the current graphics state contains the transform,
+         * but extracting every graphics-state transform is
+         * version-sensitive. We therefore use operator position
+         * only as a candidate signal and rely on page-level
+         * heuristics for the final decision.
+         */
+        results.push({
+          image:img,
+          width:dimensions.width,
+          height:dimensions.height,
+          bytes:imageByteLength(img)
+        });
+
+        if(
+          results.length >=
+          V50.maxImageCandidates
+        ){
+          break;
         }
       }
+
     }catch(e){
-      console.warn("[Glueful V49] optional PDF image extraction failed:",e);
+      console.warn(
+        "[Glueful V50] image collection failed:",
+        e
+      );
     }
-    return null;
+
+    return results;
   }
 
-  async function pdfToDocxBuffer(pdfBuffer){
-    const pdfjs=await waitForLibrary("pdfjsLib");
-    const d=await waitForLibrary("docx");
+  /*
+   * Select ONE credible logo/image.
+   *
+   * V49 selected the first image. That is the source of the
+   * black-rectangle/header corruption seen with some PDFs.
+   *
+   * V50 scores candidates instead.
+   */
+  async function chooseHeaderImage(
+    page,
+    viewport
+  ){
+    const images =
+      await collectPdfImages(
+        page,
+        viewport
+      );
+
+    if(!images.length){
+      return null;
+    }
+
+    const pageWidth =
+      Number(viewport.width || 0);
+
+    const pageHeight =
+      Number(viewport.height || 0);
+
+    if(!pageWidth || !pageHeight){
+      return null;
+    }
+
+    const pageArea =
+      pageWidth * pageHeight;
+
+    const candidates = [];
+
+    for(const candidate of images){
+      const w = Number(candidate.width || 0);
+      const h = Number(candidate.height || 0);
+
+      const area = w * h;
+
+      if(
+        area < V50.minImagePixels
+      ){
+        continue;
+      }
+
+      /*
+       * Reject giant images. These are much more likely to be:
+       * - full-page backgrounds
+       * - screenshots
+       * - decorative banners
+       * - scanned page images
+       */
+      if(
+        area >
+        pageArea * V50.maxLogoPageFraction
+      ){
+        continue;
+      }
+
+      /*
+       * Reject extreme full-width graphics.
+       */
+      if(
+        w >
+        pageWidth * V50.maxFullWidthFraction
+      ){
+        continue;
+      }
+
+      const aspect =
+        w / Math.max(1,h);
+
+      /*
+       * Convert to PNG only for candidates small enough to inspect.
+       */
+      let png = null;
+
+      try{
+        png = await imageToPngBytes(
+          candidate.image
+        );
+      }catch(e){
+        png = null;
+      }
+
+      /*
+       * If the actual image data says this is a giant dark
+       * rectangle, do not place it into the header.
+       */
+      if(
+        imageLooksLikeDarkRectangle(
+          candidate.image
+        )
+      ){
+        continue;
+      }
+
+      let score = 0;
+
+      /*
+       * Small image = more likely a logo/photo.
+       */
+      if(
+        area <= pageArea * .02
+      ){
+        score += 40;
+      }else if(
+        area <= pageArea * .06
+      ){
+        score += 25;
+      }else{
+        score += 8;
+      }
+
+      /*
+       * Square-ish images are common logos/photos.
+       */
+      if(
+        aspect >= .55 &&
+        aspect <= 1.8
+      ){
+        score += 30;
+      }else if(
+        aspect >= .35 &&
+        aspect <= 3
+      ){
+        score += 12;
+      }
+
+      /*
+       * Extremely thin graphics are usually rules/lines.
+       */
+      if(
+        aspect > 8 ||
+        aspect < .12
+      ){
+        score -= 80;
+      }
+
+      if(png){
+        score += 10;
+      }
+
+      candidates.push({
+        candidate:candidate,
+        score:score,
+        png:png
+      });
+    }
+
+    if(!candidates.length){
+      return null;
+    }
+
+    candidates.sort(function(a,b){
+      return b.score - a.score;
+    });
+
+    const best = candidates[0];
+
+    /*
+     * Conservative cutoff. If nothing looks like a logo,
+     * return no image rather than importing the wrong object.
+     */
+    if(best.score < 25){
+      return null;
+    }
+
+    return {
+      bytes:best.png,
+      width:best.candidate.width,
+      height:best.candidate.height,
+      score:best.score
+    };
+  }
+
+  /*
+   * ============================================================
+   * TEXT -> DOCX
+   * ============================================================
+   */
+
+  function buildTextParagraph(
+    d,
+    line,
+    bodySize,
+    previousBaseline
+  ){
+    if(!line || !line.items || !line.items.length){
+      return null;
+    }
+
+    const raw = line.items
+      .map(function(i){
+        return i.text;
+      })
+      .join("");
+
+    const info = bulletInfo(raw);
+
+    const first = line.items[0];
+
+    const maxSize = Math.max.apply(
+      Math,
+      line.items.map(function(i){
+        return i.size || bodySize;
+      })
+    );
+
+    const avgSize =
+      line.items.reduce(
+        function(s,i){
+          return s + (i.size || bodySize);
+        },
+        0
+      ) / line.items.length;
+
+    const isHeading =
+      maxSize >= bodySize * 1.28 &&
+      raw.trim().length <= 100;
+
+    const runs = [];
+
+    let xCursor = first.x;
+
+    line.items.forEach(
+      function(item,index){
+        if(index > 0){
+          const gap =
+            Math.max(
+              0,
+              item.x - xCursor
+            );
+
+          if(gap > 10){
+            runs.push(
+              new d.TextRun({
+                text:"\t"
+              })
+            );
+          }
+        }
+
+        runs.push(
+          makeDocxRun(
+            d,
+            item
+          )
+        );
+
+        xCursor =
+          item.x + item.width;
+      }
+    );
+
+    if(!runs.length){
+      return null;
+    }
+
+    const gapBefore =
+      previousBaseline === null
+        ? 0
+        : Math.max(
+            0,
+            Math.min(
+              360,
+              (
+                previousBaseline -
+                line.baseline -
+                avgSize
+              ) * 20
+            )
+          );
+
+    const paragraphOptions = {
+      children:runs,
+
+      spacing:{
+        before:Math.round(
+          gapBefore
+        ),
+
+        after:Math.max(
+          0,
+          Math.round(
+            avgSize * 1.2
+          )
+        ),
+
+        line:Math.max(
+          240,
+          Math.round(
+            avgSize * 20
+          )
+        )
+      }
+    };
+
+    if(info.bullet){
+      paragraphOptions.children = [
+        new d.TextRun({
+          text:info.text,
+          size:Math.max(
+            12,
+            Math.round(
+              avgSize * 2
+            )
+          ),
+          font:pdfFontFamily(
+            first.font
+          )
+        })
+      ];
+
+      paragraphOptions.bullet = {
+        level:0
+      };
+    }
+
+    if(isHeading){
+      paragraphOptions.heading =
+        maxSize >= bodySize * 1.75
+          ? d.HeadingLevel.HEADING_1
+          : maxSize >= bodySize * 1.48
+            ? d.HeadingLevel.HEADING_2
+            : d.HeadingLevel.HEADING_3;
+    }
+
+    /*
+     * Keep the PDF's approximate horizontal placement for
+     * ordinary paragraphs.
+     *
+     * NOTE:
+     * We intentionally do NOT use huge indentation for header
+     * content. Header content is reconstructed separately.
+     */
+    if(
+      first.x > 0 &&
+      first.x < 500
+    ){
+      paragraphOptions.indent = {
+        left:Math.round(
+          first.x * 20
+        )
+      };
+    }
+
+    return {
+      paragraph:
+        new d.Paragraph(
+          paragraphOptions
+        ),
+
+      baseline:line.baseline,
+
+      firstX:first.x,
+
+      text:raw,
+
+      maxSize:maxSize
+    };
+  }
+
+  /*
+   * ============================================================
+   * HEADER TEXT DETECTION
+   * ============================================================
+   */
+
+  function getHeaderLines(
+    lines,
+    viewport
+  ){
+    const pageHeight =
+      Number(viewport.height || 0);
+
+    if(!pageHeight){
+      return {
+        header:[],
+        body:lines
+      };
+    }
+
+    /*
+     * PDF.js viewport coordinates after transformation are
+     * ordered from top to bottom in our grouped representation.
+     *
+     * Use the first portion of the page rather than relying on
+     * exact y coordinates from one particular PDF.
+     */
+    const cutoff =
+      pageHeight *
+      V50.headerFraction;
+
+    const header = [];
+    const body = [];
+
+    for(const line of lines){
+      /* PDF.js viewport coordinates are measured from the top after
+       * page.getViewport({scale:1}) applies its transform. */
+      const topY = Number(line.baseline || 0);
+
+      if(
+        topY >= 0 &&
+        topY <= cutoff
+      ){
+        header.push(line);
+      }else{
+        body.push(line);
+      }
+    }
+
+    return {
+      header:header,
+      body:body
+    };
+  }
+
+  function chooseHeaderTextLines(
+    headerLines
+  ){
+    /*
+     * Only return meaningful text.
+     *
+     * We don't want a decorative one-character PDF object,
+     * a line, or an accidental glyph to become the header.
+     */
+    return headerLines.filter(
+      function(line){
+        const text =
+          line.items
+            .map(function(i){
+              return i.text;
+            })
+            .join("")
+            .trim();
+
+        return text.length >= 2;
+      }
+    );
+  }
+
+  /*
+   * ============================================================
+   * HEADER TABLE
+   * ============================================================
+   *
+   * Word tables are much more stable than absolute positioning
+   * when we want the logo and candidate name/contact information
+   * to remain editable.
+   */
+
+  function createHeaderTable(
+    d,
+    logo,
+    headerLines,
+    bodySize
+  ){
+    if(!logo || !logo.bytes || !headerLines.length){
+      return null;
+    }
+
+    const textChildren = [];
+
+    for(const line of headerLines){
+      const runs = [];
+      const maxSize = Math.max.apply(
+        Math,
+        line.items.map(function(i){
+          return i.size || bodySize;
+        })
+      );
+
+      line.items.forEach(function(item,index){
+        if(index > 0){
+          const previous = line.items[index-1];
+          const gap = Math.max(
+            0,
+            item.x - (previous.x + previous.width)
+          );
+
+          if(gap > 10){
+            runs.push(new d.TextRun({text:"\t"}));
+          }
+        }
+
+        const n = String(item.font || "").toLowerCase();
+
+        runs.push(new d.TextRun({
+          text:String(item.text || ""),
+          bold:/bold|black|heavy|semibold|demi/.test(n) || maxSize >= bodySize * 1.45,
+          italics:/italic|oblique/.test(n),
+          font:pdfFontFamily(item.font),
+          size:Math.max(12,Math.round((item.size || bodySize) * 2))
+        }));
+      });
+
+      if(runs.length){
+        textChildren.push(new d.Paragraph({
+          children:runs,
+          spacing:{
+            before:0,
+            after:80,
+            line:Math.max(240,Math.round((line.items[0]?.size || bodySize) * 20))
+          }
+        }));
+      }
+    }
+
+    if(!textChildren.length){
+      return null;
+    }
+
+    const sourceW = Number(logo.width || 1);
+    const sourceH = Number(logo.height || 1);
+    const aspect = sourceW / Math.max(1,sourceH);
+
+    const maxW = 115;
+    const maxH = 90;
+
+    let imageW = maxW;
+    let imageH = imageW / Math.max(.01,aspect);
+
+    if(imageH > maxH){
+      imageH = maxH;
+      imageW = imageH * aspect;
+    }
+
+    imageW = Math.max(18,Math.round(imageW));
+    imageH = Math.max(18,Math.round(imageH));
+
+    const imageCell = new d.TableCell({
+      width:{size:26,type:d.WidthType.PERCENTAGE},
+      children:[
+        new d.Paragraph({
+          children:[
+            new d.ImageRun({
+              data:logo.bytes,
+              transformation:{
+                width:imageW,
+                height:imageH
+              }
+            })
+          ],
+          spacing:{before:0,after:0}
+        })
+      ]
+    });
+
+    const textCell = new d.TableCell({
+      width:{size:74,type:d.WidthType.PERCENTAGE},
+      children:textChildren
+    });
+
+    return new d.Table({
+      width:{size:100,type:d.WidthType.PERCENTAGE},
+      borders:{
+        top:{style:d.BorderStyle.NONE,size:0,color:"FFFFFF"},
+        bottom:{style:d.BorderStyle.NONE,size:0,color:"FFFFFF"},
+        left:{style:d.BorderStyle.NONE,size:0,color:"FFFFFF"},
+        right:{style:d.BorderStyle.NONE,size:0,color:"FFFFFF"},
+        insideHorizontal:{style:d.BorderStyle.NONE,size:0,color:"FFFFFF"},
+        insideVertical:{style:d.BorderStyle.NONE,size:0,color:"FFFFFF"}
+      },
+      rows:[
+        new d.TableRow({
+          children:[imageCell,textCell]
+        })
+      ]
+    });
+  }
+
+  /*
+   * ============================================================
+   * PDF -> DOCX
+   * ============================================================
+   */
+
+  async function pdfToDocxBuffer(
+    pdfBuffer
+  ){
+    const pdfjs =
+      await waitForLibrary(
+        "pdfjsLib"
+      );
+
+    const d =
+      await waitForLibrary(
+        "docx"
+      );
+
     if(pdfjs.GlobalWorkerOptions){
-      pdfjs.GlobalWorkerOptions.workerSrc=
+      pdfjs.GlobalWorkerOptions.workerSrc =
         "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
     }
 
-    const pdf=await pdfjs.getDocument({data:pdfBuffer}).promise;
-    const sections=[];
+    const pdf =
+      await pdfjs.getDocument({
+        data:pdfBuffer
+      }).promise;
 
-    for(let pageNo=1;pageNo<=pdf.numPages;pageNo++){
-      const page=await pdf.getPage(pageNo);
-      const viewport=page.getViewport({scale:1});
-      const content=await page.getTextContent({includeMarkedContent:true});
-      const lines=groupPdfLines(content,viewport);
-      const bodySize=inferHeadingSize(lines);
+    const sections = [];
 
-      const children=[];
+    for(
+      let pageNo=1;
+      pageNo<=pdf.numPages;
+      pageNo++
+    ){
+      const page =
+        await pdf.getPage(
+          pageNo
+        );
 
-      /* Preserve a likely logo/photo when the PDF actually contains one.
-         It is inserted as an editable Word image; the original PDF remains
-         the protected master. */
-      const imageBytes=pageNo===1 ? await extractFirstUsablePdfImage(page) : null;
-      if(imageBytes){
-        try{
-          children.push(new d.Paragraph({
-            children:[
-              new d.ImageRun({
-                data:imageBytes,
-                transformation:{width:72,height:72}
-              })
-            ],
-            spacing:{after:100}
-          }));
-        }catch(e){
-          console.warn("[Glueful V49] image could not be placed in DOCX:",e);
-        }
-      }
-
-      let previousBaseline=null;
-
-      for(const line of lines){
-        if(!line.items.length) continue;
-
-        const raw=line.items.map(i=>i.text).join("");
-        const info=bulletInfo(raw);
-        const first=line.items[0];
-        const maxSize=Math.max(...line.items.map(i=>i.size||bodySize));
-        const avgSize=line.items.reduce((s,i)=>s+(i.size||bodySize),0)/line.items.length;
-        const isHeading=maxSize >= bodySize*1.28 && raw.trim().length<=100;
-
-        const runs=[];
-        let xCursor=first.x;
-
-        line.items.forEach((item,index)=>{
-          if(index>0){
-            const gap=Math.max(0,item.x-xCursor);
-            if(gap>10){
-              runs.push(new d.TextRun({text:"\t"}));
-            }else if(
-              !String(runs[runs.length-1]?.options?.text||"").endsWith(" ") &&
-              !item.text.startsWith(" ")
-            ){
-              /* PDF text chunks often already contain their own spaces.
-                 Do not aggressively insert spaces and corrupt email/URLs. */
-            }
-          }
-          runs.push(makeDocxRun(d,item));
-          xCursor=item.x+item.width;
+      const viewport =
+        page.getViewport({
+          scale:1
         });
 
-        if(!runs.length) continue;
+      const content =
+        await page.getTextContent({
+          includeMarkedContent:true
+        });
 
-        const gapBefore=previousBaseline===null
-          ? 0
-          : Math.max(0,Math.min(360,(previousBaseline-line.baseline-avgSize)*20));
+      const lines =
+        groupPdfLines(
+          content,
+          viewport
+        );
 
-        const paragraphOptions={
-          children:runs,
-          spacing:{
-            before:Math.round(gapBefore),
-            after:Math.max(0,Math.round(avgSize*1.2)),
-            line:Math.max(240,Math.round(avgSize*20))
+      const bodySize =
+        inferHeadingSize(
+          lines
+        );
+
+      const children = [];
+
+      /*
+       * ========================================================
+       * PAGE 1 HEADER
+       * ========================================================
+       */
+
+      let bodyLines = lines;
+
+      if(pageNo === 1){
+        try{
+          const split =
+            getHeaderLines(
+              lines,
+              viewport
+            );
+
+          const headerLines =
+            chooseHeaderTextLines(
+              split.header
+            );
+
+          /*
+           * Only attempt image selection when there is actual
+           * header text. This further reduces accidental image
+           * imports.
+           */
+          let logo = null;
+
+          if(headerLines.length){
+            logo =
+              await chooseHeaderImage(
+                page,
+                viewport
+              );
           }
-        };
 
-        /* Rebuild bullet line without the source bullet glyph when possible. */
-        if(info.bullet){
-          const cleanRuns=[new d.TextRun({text:info.text,size:Math.max(12,Math.round(avgSize*2)),font:pdfFontFamily(first.font)})];
-          paragraphOptions.children=cleanRuns;
-          paragraphOptions.bullet={level:0};
+          if(
+            logo &&
+            logo.bytes &&
+            headerLines.length
+          ){
+            const table =
+              createHeaderTable(
+                d,
+                logo,
+                headerLines,
+                bodySize
+              );
+
+            if(table){
+              children.push(table);
+
+              /*
+               * The header text has already been consumed by the
+               * table, so body starts after the header.
+               */
+              bodyLines =
+                split.body;
+            }
+          }
+        }catch(headerError){
+          /*
+           * Header reconstruction is optional.
+           *
+           * NEVER let a bad PDF image break the complete
+           * conversion. Fall back to normal text.
+           */
+          console.warn(
+            "[Glueful V50] header reconstruction failed; using text fallback:",
+            headerError
+          );
+
+          bodyLines = lines;
         }
-
-        if(isHeading){
-          paragraphOptions.heading=
-            maxSize>=bodySize*1.75 ? d.HeadingLevel.HEADING_1 :
-            maxSize>=bodySize*1.48 ? d.HeadingLevel.HEADING_2 :
-            d.HeadingLevel.HEADING_3;
-        }
-
-        /* Approximate original horizontal placement using a paragraph
-           left indent. PDF coordinates are points; DOCX uses twentieths
-           of a point (twips). */
-        if(first.x>0){
-          paragraphOptions.indent={left:Math.round(first.x*20)};
-        }
-
-        children.push(new d.Paragraph(paragraphOptions));
-        previousBaseline=line.baseline;
       }
 
+      /*
+       * ========================================================
+       * NORMAL BODY TEXT
+       * ========================================================
+       */
+
+      let previousBaseline = null;
+
+      for(const line of bodyLines){
+        const built =
+          buildTextParagraph(
+            d,
+            line,
+            bodySize,
+            previousBaseline
+          );
+
+        if(!built){
+          continue;
+        }
+
+        children.push(
+          built.paragraph
+        );
+
+        previousBaseline =
+          built.baseline;
+      }
+
+      /*
+       * Every PDF page becomes a DOCX section.
+       *
+       * This preserves page boundaries while still giving the
+       * editor ordinary editable Word content.
+       */
       sections.push({
         properties:{
           page:{
-            margin:{top:720,right:720,bottom:720,left:720}
+            margin:{
+              top:720,
+              right:720,
+              bottom:720,
+              left:720
+            }
           }
         },
-        children:children.length ? children : [
-          new d.Paragraph({children:[new d.TextRun({text:""})]})
-        ]
+
+        children:
+          children.length
+            ? children
+            : [
+                new d.Paragraph({
+                  children:[
+                    new d.TextRun({
+                      text:""
+                    })
+                  ]
+                })
+              ]
       });
     }
 
-    const doc=new d.Document({sections});
-    /* Browser-safe: docx.js exposes toBlob() in its UMD/browser build. */
-    const blob=await d.Packer.toBlob(doc);
+    const doc =
+      new d.Document({
+        sections:sections
+      });
+
+    /*
+     * Browser-safe docx.js API.
+     */
+    const blob =
+      await d.Packer.toBlob(
+        doc
+      );
+
     return await blob.arrayBuffer();
   }
 
-  async function pdfToWordHtml(pdfBuffer){
-    const key="pdf:"+pdfBuffer.byteLength;
-    if(V49.cache.has(key)) return V49.cache.get(key);
+  /*
+   * ============================================================
+   * PDF -> WORD HTML
+   * ============================================================
+   */
 
-    if(V49.conversionInFlight) return V49.conversionInFlight;
-
-    V49.conversionInFlight=(async()=>{
-      conversionBanner("Converting PDF to an editable Word document…");
-      if(note()) note().textContent="Converting your PDF to an editable Word document…";
-
-      const docxBuffer=await pdfToDocxBuffer(pdfBuffer);
-      const mammoth=await waitForLibrary("mammoth");
-      const result=await mammoth.convertToHtml({
-        arrayBuffer:docxBuffer
-      });
-
-      let html=String(result?.value||"").trim();
-      if(!html) throw new Error("The PDF did not produce editable Word content.");
-
-      /* Mammoth can return unsafe/oddly nested markup for unusual PDFs.
-         Keep only the normal document elements our editor understands. */
-      const holder=document.createElement("div");
-      holder.innerHTML=html;
-
-      holder.querySelectorAll("script,style,iframe,object,embed").forEach(n=>n.remove());
-
-      const root=document.createElement("div");
-      Array.from(holder.childNodes).forEach(n=>root.appendChild(n.cloneNode(true)));
-
-      html=root.innerHTML.trim();
-      if(!html) throw new Error("The converted Word document is empty.");
-
-      V49.cache.set(key,html);
-      return html;
-    })().finally(()=>{
-      V49.conversionInFlight=null;
-      removeConversionBanner();
-    });
-
-    return V49.conversionInFlight;
-  }
-
-  async function getSourceFile(){
-    let file=candidateResumeFile||null;
-
-    if(!file && typeof ensureCandidateResumeCloudFile==="function"){
-      file=await ensureCandidateResumeCloudFile();
+  async function pdfToWordHtml(
+    pdfBuffer
+  ){
+    /*
+     * IMPORTANT:
+     * Byte length alone can collide for two different PDFs.
+     * Keep a per-buffer conversion lock, but do not permanently
+     * cache unrelated files solely by size.
+     */
+    if(V50.cache.has(pdfBuffer)){
+      return V50.cache.get(pdfBuffer);
     }
 
-    if(!file && typeof loadCandidateResumeFromDevice==="function"){
-      try{ file=await loadCandidateResumeFromDevice(); }catch(e){
-        console.warn("[Glueful V49] device resume cache unavailable:",e);
+    if(V50.conversionInFlight){
+      return V50.conversionInFlight;
+    }
+
+    V50.conversionInFlight =
+      (async function(){
+        conversionBanner(
+          "Converting PDF to an editable Word document…"
+        );
+
+        if(note()){
+          note().textContent =
+            "Converting your PDF to an editable Word document…";
+        }
+
+        const docxBuffer =
+          await pdfToDocxBuffer(
+            pdfBuffer
+          );
+
+        const mammoth =
+          await waitForLibrary(
+            "mammoth"
+          );
+
+        const result =
+          await mammoth.convertToHtml({
+            arrayBuffer:docxBuffer
+          });
+
+        let html =
+          String(
+            result?.value || ""
+          ).trim();
+
+        if(!html){
+          throw new Error(
+            "The PDF did not produce editable Word content."
+          );
+        }
+
+        /*
+         * Sanitize conversion output.
+         */
+        const holder =
+          document.createElement(
+            "div"
+          );
+
+        holder.innerHTML =
+          html;
+
+        holder
+          .querySelectorAll(
+            "script,style,iframe,object,embed"
+          )
+          .forEach(function(n){
+            n.remove();
+          });
+
+        /*
+         * Remove accidental empty image elements.
+         */
+        holder
+          .querySelectorAll("img")
+          .forEach(function(img){
+            const src =
+              String(
+                img.getAttribute("src") || ""
+              ).trim();
+
+            if(!src){
+              img.remove();
+            }
+          });
+
+        /*
+         * Never allow a converted image to become a giant
+         * viewport-sized block.
+         */
+        holder
+          .querySelectorAll("img")
+          .forEach(function(img){
+            img.style.maxWidth = "100%";
+            img.style.height = "auto";
+            img.style.display = "block";
+          });
+
+        const root =
+          document.createElement(
+            "div"
+          );
+
+        Array.from(
+          holder.childNodes
+        ).forEach(function(n){
+          root.appendChild(
+            n.cloneNode(true)
+          );
+        });
+
+        html =
+          root.innerHTML.trim();
+
+        if(!html){
+          throw new Error(
+            "The converted Word document is empty."
+          );
+        }
+
+        V50.cache.set(
+          pdfBuffer,
+          html
+        );
+
+        return html;
+
+      })().finally(function(){
+        V50.conversionInFlight = null;
+        removeConversionBanner();
+      });
+
+    return V50.conversionInFlight;
+  }
+
+  /*
+   * ============================================================
+   * SOURCE FILE
+   * ============================================================
+   */
+
+  async function getSourceFile(){
+    let file =
+      typeof candidateResumeFile !== "undefined"
+        ? candidateResumeFile
+        : null;
+
+    if(
+      !file &&
+      typeof ensureCandidateResumeCloudFile ===
+        "function"
+    ){
+      file =
+        await ensureCandidateResumeCloudFile();
+    }
+
+    if(
+      !file &&
+      typeof loadCandidateResumeFromDevice ===
+        "function"
+    ){
+      try{
+        file =
+          await loadCandidateResumeFromDevice();
+      }catch(e){
+        console.warn(
+          "[Glueful V50] device resume cache unavailable:",
+          e
+        );
       }
     }
 
     return file;
   }
 
-  async function v49GetMasterResumeEditorHtml(masterText){
+  /*
+   * ============================================================
+   * MASTER RESUME -> EDITOR HTML
+   * ============================================================
+   */
+
+  async function v50GetMasterResumeEditorHtml(
+    masterText
+  ){
     try{
-      const file=await getSourceFile();
+      const file =
+        await getSourceFile();
 
       if(file){
-        const name=String(file.name||"").toLowerCase();
+        const name =
+          String(
+            file.name || ""
+          ).toLowerCase();
 
-        if(name.endsWith(".docx") && window.mammoth){
-          const buffer=await file.arrayBuffer();
-          const result=await window.mammoth.convertToHtml({arrayBuffer:buffer});
-          if(String(result?.value||"").trim()){
-            return {html:result.value,imported:true,word:true};
+        /*
+         * DOCX input:
+         * Mammoth already understands genuine Word documents.
+         */
+        if(
+          name.endsWith(".docx") &&
+          window.mammoth
+        ){
+          const buffer =
+            await file.arrayBuffer();
+
+          const result =
+            await window.mammoth.convertToHtml({
+              arrayBuffer:buffer
+            });
+
+          if(
+            String(
+              result?.value || ""
+            ).trim()
+          ){
+            return {
+              html:result.value,
+              imported:true,
+              word:true
+            };
           }
         }
 
-        if(name.endsWith(".pdf")){
-          const buffer=await file.arrayBuffer();
-          const html=await pdfToWordHtml(buffer);
-          return {html,imported:true,word:true,pdfConverted:true};
+        /*
+         * PDF input:
+         * PDF -> DOCX -> Mammoth HTML.
+         */
+        if(
+          name.endsWith(".pdf")
+        ){
+          const buffer =
+            await file.arrayBuffer();
+
+          const html =
+            await pdfToWordHtml(
+              buffer
+            );
+
+          return {
+            html:html,
+            imported:true,
+            word:true,
+            pdfConverted:true
+          };
         }
       }
+
     }catch(error){
-      console.error("[Glueful V49] PDF -> Word conversion failed:",error);
+      console.error(
+        "[Glueful V50] PDF -> Word conversion failed:",
+        error
+      );
+
       throw error;
     }
 
+    /*
+     * Text fallback.
+     */
     return {
-      html:typeof resumeTextToEditorHtml==="function"
-        ? resumeTextToEditorHtml(masterText)
-        : "<p></p>",
+      html:
+        typeof resumeTextToEditorHtml ===
+          "function"
+          ? resumeTextToEditorHtml(
+              masterText
+            )
+          : "<p></p>",
+
       imported:false,
       word:true
     };
   }
 
-  function prepareWordEditor(editor){
-    if(!editor) return;
-    editor.classList.remove(
+  /*
+   * ============================================================
+   * WORD EDITOR PREPARATION
+   * ============================================================
+   */
+
+  function prepareWordEditor(
+    editorElement
+  ){
+    if(!editorElement){
+      return;
+    }
+
+    editorElement.classList.remove(
       "job-resume-master-imported",
       "pdf-structured-canvas",
       "pdf-native-canvas"
     );
-    editor.classList.add("glueful-word-document-mode");
-    editor.contentEditable="true";
-    editor.setAttribute("role","textbox");
-    editor.setAttribute("aria-multiline","true");
-    editor.spellcheck=true;
+
+    editorElement.classList.add(
+      "glueful-word-document-mode"
+    );
+
+    editorElement.contentEditable = "true";
+
+    editorElement.setAttribute(
+      "role",
+      "textbox"
+    );
+
+    editorElement.setAttribute(
+      "aria-multiline",
+      "true"
+    );
+
+    editorElement.spellcheck = true;
   }
 
-  async function v49OpenJobResumeEditor(id){
-    const job=findActiveJobById(id);
-    if(!job) return;
+  /*
+   * ============================================================
+   * OPEN EDITOR
+   * ============================================================
+   */
 
-    gluefulJobResumeEditorId=String(job.id);
+  async function v50OpenJobResumeEditor(id){
+    /*
+     * This is the existing V49 Resume Studio lifecycle copied
+     * deliberately so the V50 converter is actually used.
+     *
+     * We do NOT redesign the modal, ATS panel, job panel, save
+     * flow, Apply flow, or master-resume protection.
+     */
+    const job =
+      typeof findActiveJobById === "function"
+        ? findActiveJobById(id)
+        : null;
 
-    const ed=editor();
-    const jobEl=document.getElementById("job-resume-editor-job");
-    const atsEl=document.getElementById("job-resume-editor-ats");
-
-    openModal("job-resume-editor-modal");
-
-    if(jobEl){
-      jobEl.innerHTML=`
-        ${renderCompanyLogo(job)}
-        <div class="job-resume-editor-job-copy">
-          <div class="job-resume-editor-job-title">${esc(job.title)}</div>
-          <div class="job-resume-editor-job-company">${esc(job.company)} · ${esc(job.location)}</div>
-        </div>`;
-      loadCompanyLogos();
+    if(!job){
+      return;
     }
 
-    if(atsEl) atsEl.textContent="…";
-    if(note()) note().textContent="Loading your master resume…";
+    if(typeof gluefulJobResumeEditorId !== "undefined"){
+      gluefulJobResumeEditorId =
+        String(job.id);
+    }else{
+      window.gluefulJobResumeEditorId =
+        String(job.id);
+    }
+
+    const ed = editor();
+    const jobEl =
+      document.getElementById(
+        "job-resume-editor-job"
+      );
+
+    const atsEl =
+      document.getElementById(
+        "job-resume-editor-ats"
+      );
+
+    if(typeof openModal === "function"){
+      openModal(
+        "job-resume-editor-modal"
+      );
+    }
+
+    if(jobEl){
+      const logoHtml =
+        typeof renderCompanyLogo === "function"
+          ? renderCompanyLogo(job)
+          : "";
+
+      const safeTitle =
+        typeof esc === "function"
+          ? esc(job.title)
+          : String(job.title || "");
+
+      const safeCompany =
+        typeof esc === "function"
+          ? esc(job.company)
+          : String(job.company || "");
+
+      const safeLocation =
+        typeof esc === "function"
+          ? esc(job.location)
+          : String(job.location || "");
+
+      jobEl.innerHTML = `
+        ${logoHtml}
+        <div class="job-resume-editor-job-copy">
+          <div class="job-resume-editor-job-title">${safeTitle}</div>
+          <div class="job-resume-editor-job-company">${safeCompany} · ${safeLocation}</div>
+        </div>`;
+
+      if(typeof loadCompanyLogos === "function"){
+        loadCompanyLogos();
+      }
+    }
+
+    if(atsEl){
+      atsEl.textContent = "…";
+    }
+
+    if(note()){
+      note().textContent =
+        "Loading your master resume…";
+    }
 
     if(ed){
-      ed.classList.remove("glueful-word-document-mode");
-      ed.innerHTML="<p style='padding:40px;text-align:center;color:#777;font-family:Inter,Arial,sans-serif'>Preparing editable Word document…</p>";
-      ed.contentEditable="true";
+      ed.classList.remove(
+        "glueful-word-document-mode"
+      );
+
+      ed.innerHTML =
+        "<p style='padding:40px;text-align:center;color:#777;font-family:Inter,Arial,sans-serif'>Preparing editable Word document…</p>";
+
+      ed.contentEditable = "true";
     }
 
     try{
-      let master=String(gluefulMasterResumeText||"").trim();
-      if(!master && typeof ensureMasterResumeText==="function"){
-        master=String(await ensureMasterResumeText()||"").trim();
+      let master =
+        String(
+          typeof gluefulMasterResumeText !== "undefined"
+            ? gluefulMasterResumeText
+            : ""
+        ).trim();
+
+      if(
+        !master &&
+        typeof ensureMasterResumeText ===
+          "function"
+      ){
+        master =
+          String(
+            await ensureMasterResumeText() || ""
+          ).trim();
       }
 
-      const base=master||buildProfileResumeFallback();
-      const imported=await v49GetMasterResumeEditorHtml(base);
+      const base =
+        master ||
+        (
+          typeof buildProfileResumeFallback ===
+            "function"
+            ? buildProfileResumeFallback()
+            : ""
+        );
+
+      /*
+       * THIS is the critical V50 difference:
+       * call the V50 PDF/DOCX converter directly.
+       */
+      const imported =
+        await v50GetMasterResumeEditorHtml(
+          base
+        );
 
       if(ed && ed.isConnected){
-        ed.innerHTML=imported.html||"<p></p>";
+        ed.innerHTML =
+          imported.html || "<p></p>";
+
         prepareWordEditor(ed);
+
         if(note()){
-          note().textContent=imported.pdfConverted
-            ? "PDF converted to an editable Word document. Your master resume remains protected."
-            : "Editable master resume loaded. Your master resume remains protected.";
+          note().textContent =
+            imported.pdfConverted
+              ? "PDF converted to an editable Word document. Your master resume remains protected."
+              : "Editable master resume loaded. Your master resume remains protected.";
         }
       }
+
     }catch(error){
-      console.error("[Glueful V49] Resume Studio load failed:",error);
+      console.error(
+        "[Glueful V50] Resume Studio load failed:",
+        error
+      );
 
       if(ed && ed.isConnected){
-        const base=String(gluefulMasterResumeText||"").trim()||buildProfileResumeFallback();
-        ed.innerHTML=typeof resumeTextToEditorHtml==="function"
-          ? resumeTextToEditorHtml(base)
-          : "<p></p>";
+        const base =
+          String(
+            typeof gluefulMasterResumeText !== "undefined"
+              ? gluefulMasterResumeText
+              : ""
+          ).trim() ||
+          (
+            typeof buildProfileResumeFallback ===
+              "function"
+              ? buildProfileResumeFallback()
+              : ""
+          );
+
+        ed.innerHTML =
+          typeof resumeTextToEditorHtml ===
+            "function"
+            ? resumeTextToEditorHtml(base)
+            : "<p></p>";
+
         prepareWordEditor(ed);
       }
 
       if(note()){
-        note().textContent="Word conversion failed, so Glueful loaded the editable text fallback. Your master resume was not changed.";
+        note().textContent =
+          "Word conversion failed, so Glueful loaded the editable text fallback. Your master resume was not changed.";
       }
-      showError(error?.message||"Could not convert the PDF into an editable Word document.");
+
+      if(typeof showError === "function"){
+        showError(
+          error?.message ||
+          "Could not convert the PDF into an editable Word document."
+        );
+      }
     }
 
-    updateJobResumeEditorAts();
-  }
-
-  async function v49ResetJobResumeToMaster(){
-    const ed=editor();
-    if(!ed) return;
-
-    try{
-      let master=String(gluefulMasterResumeText||"").trim();
-      if(!master && typeof ensureMasterResumeText==="function"){
-        master=String(await ensureMasterResumeText()||"").trim();
-      }
-
-      const imported=await v49GetMasterResumeEditorHtml(master||buildProfileResumeFallback());
-      ed.innerHTML=imported.html||"<p></p>";
-      prepareWordEditor(ed);
+    if(
+      typeof updateJobResumeEditorAts ===
+        "function"
+    ){
       updateJobResumeEditorAts();
+    }
+  }
+
+  async function v50ResetJobResumeToMaster(){
+    const ed = editor();
+
+    if(!ed){
+      return;
+    }
+
+    try{
+      let master =
+        String(
+          typeof gluefulMasterResumeText !== "undefined"
+            ? gluefulMasterResumeText
+            : ""
+        ).trim();
+
+      if(
+        !master &&
+        typeof ensureMasterResumeText ===
+          "function"
+      ){
+        master =
+          String(
+            await ensureMasterResumeText() || ""
+          ).trim();
+      }
+
+      const imported =
+        await v50GetMasterResumeEditorHtml(
+          master ||
+          (
+            typeof buildProfileResumeFallback ===
+              "function"
+              ? buildProfileResumeFallback()
+              : ""
+          )
+        );
+
+      ed.innerHTML =
+        imported.html || "<p></p>";
+
+      prepareWordEditor(ed);
+
+      if(
+        typeof updateJobResumeEditorAts ===
+          "function"
+      ){
+        updateJobResumeEditorAts();
+      }
+
       ed.focus();
+
     }catch(error){
-      console.error("[Glueful V49] Reset failed:",error);
-      showError(error?.message||"Could not reset the temporary resume.");
+      console.error(
+        "[Glueful V50] Reset failed:",
+        error
+      );
+
+      if(typeof showError === "function"){
+        showError(
+          error?.message ||
+          "Could not reset the temporary resume."
+        );
+      }
     }
   }
 
-  /* Replace the old PDF-native editing entry points. */
-  window.getMasterResumeEditorHtml=v49GetMasterResumeEditorHtml;
-  window.openJobResumeEditor=v49OpenJobResumeEditor;
-  window.resetJobResumeToMaster=v49ResetJobResumeToMaster;
+  /*
+   * ============================================================
+   * GLOBAL COMPATIBILITY API
+   * ============================================================
+   *
+   * V49's local conversion function cannot be overridden merely
+   * by assigning window.getMasterResumeEditorHtml because the
+   * original opener called its local v49GetMasterResumeEditorHtml.
+   *
+   * Therefore V50 installs the complete opener/reset entry points
+   * below and keeps the rest of Glueful's application architecture.
+   */
 
-  /* The existing code calls the function by its global name. Keep the
-     compatibility aliases explicit so older handlers cannot route a PDF
-     back into the canvas editor. */
-  window.gluefulV49PdfToWordHtml=pdfToWordHtml;
-  window.gluefulV49PdfToDocxBuffer=pdfToDocxBuffer;
+  window.gluefulV50PdfToDocxBuffer =
+    pdfToDocxBuffer;
 
-  /* Safe close cleanup. */
-  const originalClose=window.closeJobResumeEditor;
-  window.closeJobResumeEditor=function(){
-    removeConversionBanner();
-    const ed=editor();
-    if(ed){
-      ed.classList.remove("glueful-word-document-mode");
-      ed.innerHTML="";
-    }
-    if(typeof originalClose==="function") return originalClose.apply(this,arguments);
-  };
-  /* V50 high-fidelity authoring integration. PDF conversion is delegated to
-     the server-side conversion function so Adobe credentials never reach the browser. */
-  window.GLUEFUL_PDF_TO_DOCX_ENDPOINT = window.GLUEFUL_PDF_TO_DOCX_ENDPOINT ||
-    ((typeof SUPABASE_URL !== "undefined" && SUPABASE_URL) ? (SUPABASE_URL + "/functions/v1/glueful-pdf-to-docx") : "");
+  window.gluefulV50PdfToWordHtml =
+    pdfToWordHtml;
 
-  async function v50PdfToDocxBuffer(pdfBuffer){
-    const endpoint=String(window.GLUEFUL_PDF_TO_DOCX_ENDPOINT||"").trim();
-    if(!endpoint) throw new Error("High-fidelity PDF→Word conversion is not configured yet. Deploy the glueful-pdf-to-docx Supabase Edge Function first.");
-    const headers={"Content-Type":"application/pdf","Accept":"application/vnd.openxmlformats-officedocument.wordprocessingml.document"};
-    try{
-      const client=(typeof supabaseClient!=="undefined") ? supabaseClient : window.supabaseClient;
-      const session=client && (await client.auth.getSession());
-      const token=session?.data?.session?.access_token;
-      if(token) headers.Authorization=`Bearer ${token}`;
-    }catch(e){}
-    const response=await fetch(endpoint,{method:"POST",headers,body:pdfBuffer,credentials:"include"});
-    if(!response.ok){
-      let detail=""; try{detail=await response.text();}catch(e){}
-      throw new Error(`High-fidelity PDF→Word conversion failed (${response.status}). ${detail.slice(0,240)}`);
-    }
-    return await response.arrayBuffer();
+  window.gluefulV50GetMasterResumeEditorHtml =
+    v50GetMasterResumeEditorHtml;
+
+  window.gluefulV50PrepareWordEditor =
+    prepareWordEditor;
+
+  /*
+   * Compatibility aliases used by older Glueful code.
+   */
+  window.gluefulV49PdfToDocxBuffer =
+    pdfToDocxBuffer;
+
+  window.gluefulV49PdfToWordHtml =
+    pdfToWordHtml;
+
+  window.getMasterResumeEditorHtml =
+    v50GetMasterResumeEditorHtml;
+
+  window.openJobResumeEditor =
+    v50OpenJobResumeEditor;
+
+  window.resetJobResumeToMaster =
+    v50ResetJobResumeToMaster;
+
+  /*
+   * Safe close cleanup.
+   */
+  if(
+    typeof window.closeJobResumeEditor ===
+      "function" &&
+    typeof window.__gluefulV50OriginalCloseJobResumeEditor !==
+      "function"
+  ){
+    window.__gluefulV50OriginalCloseJobResumeEditor =
+      window.closeJobResumeEditor;
+
+    window.closeJobResumeEditor =
+      function(){
+        removeConversionBanner();
+
+        const ed =
+          editor();
+
+        if(ed){
+          ed.classList.remove(
+            "glueful-word-document-mode"
+          );
+        }
+
+        return window
+          .__gluefulV50OriginalCloseJobResumeEditor
+          .apply(
+            this,
+            arguments
+          );
+      };
   }
 
-  async function v50OpenDocxInAuthoring(docxBuffer){
-    if(!window.gluefulDocAuth || typeof window.gluefulDocAuth.openDocx!="function")
-      throw new Error("The Word document editor is still loading. Refresh once and try again.");
-    const host=document.getElementById("glueful-docauth-editor");
-    if(!host) throw new Error("Word editor host is missing.");
-    return await window.gluefulDocAuth.openDocx(host,docxBuffer);
-  }
+  /*
+   * ============================================================
+   * V50 DIAGNOSTICS
+   * ============================================================
+   */
 
-  function v50EditorText(){
-    try{
-      return String(window.gluefulDocAuth?.getText?.()||"").trim();
-    }catch(e){return "";}
-  }
+  window.gluefulV50ResumeConverterInfo =
+    function(){
+      return {
+        version:"V50",
 
-  async function v50ExportDocx(){
-    if(!window.gluefulDocAuth?.exportDocx) throw new Error("Word export is unavailable.");
-    return await window.gluefulDocAuth.exportDocx();
-  }
+        architecture:[
+          "PDF.js text extraction",
+          "PDF.js image candidate detection",
+          "Conservative header/logo detection",
+          "docx.js DOCX generation",
+          "Mammoth DOCX -> HTML",
+          "contenteditable Word editor"
+        ],
 
-  async function v50ExportPdf(){
-    if(!window.gluefulDocAuth?.exportPdf) throw new Error("PDF export is unavailable.");
-    return await window.gluefulDocAuth.exportPdf();
-  }
+        fixes:[
+          "No blind first-image import",
+          "No forced 72x72 logo",
+          "Reject giant/full-width graphics",
+          "Reject obvious black rectangles",
+          "Rebuild credible header as editable Word table",
+          "Keep original PDF as master"
+        ]
+      };
+    };
 
-  async function v50LoadSourceIntoAuthoring(file){
-    const name=String(file?.name||"").toLowerCase();
-    if(name.endsWith(".docx")) return v50OpenDocxInAuthoring(await file.arrayBuffer());
-    if(name.endsWith(".pdf")){
-      conversionBanner("Converting PDF to Word with the high-fidelity document engine…");
-      const docx=await v50PdfToDocxBuffer(await file.arrayBuffer());
-      removeConversionBanner();
-      return v50OpenDocxInAuthoring(docx);
-    }
-    throw new Error("Glueful Resume Studio currently supports PDF and DOCX masters for Word-style editing.");
-  }
-
-  const v50OriginalGetSourceFile=window.getSourceFile;
-
-  /* Override the V49 editor entry point only after the existing app has loaded. */
-  const v50OriginalOpenJobResumeEditor=window.openJobResumeEditor;
-  window.openJobResumeEditor=async function(id){
-    const result = typeof v50OriginalOpenJobResumeEditor==="function"
-      ? await v50OriginalOpenJobResumeEditor.apply(this,arguments) : undefined;
-    return result;
-  };
-
-  /* Replace source conversion for the V49 runtime with high-fidelity conversion. */
-  window.gluefulV50PdfToDocxBuffer=v50PdfToDocxBuffer;
-  window.gluefulV50ExportDocx=v50ExportDocx;
-  window.gluefulV50ExportPdf=v50ExportPdf;
-  window.gluefulV50EditorText=v50EditorText;
-  window.gluefulV50LoadSource=v50LoadSourceIntoAuthoring;
-
+  console.info(
+    "[Glueful V50] Header-safe PDF -> Word converter loaded."
+  );
 
 })();
 </script>
@@ -21110,141 +22660,5 @@ document.addEventListener("click", (event)=>{
 })();
 </script>
 
-
-<script id="glueful-v50-final-override">
-(function(){
-  "use strict";
-
-  async function getSource(){
-    if(typeof candidateResumeFile!=="undefined" && candidateResumeFile) return candidateResumeFile;
-    if(typeof ensureCandidateResumeCloudFile==="function") {
-      try{ const f=await ensureCandidateResumeCloudFile(); if(f) return f; }catch(e){ console.warn("[Glueful V50] cloud master lookup failed",e); }
-    }
-    if(typeof loadCandidateResumeFromDevice==="function") {
-      try{ const f=await loadCandidateResumeFromDevice(); if(f) return f; }catch(e){ console.warn("[Glueful V50] device master lookup failed",e); }
-    }
-    return null;
-  }
-
-  async function loadIntoAuthoring(file){
-    if(!file) throw new Error("No master resume file is available.");
-    const name=String(file.name||"").toLowerCase();
-    const host=document.getElementById("glueful-docauth-editor");
-    if(!host) throw new Error("Word editor host is missing.");
-    host.innerHTML='<div class="glueful-docauth-loading">Opening your resume in the Word-style editor…</div>';
-
-    if(name.endsWith(".pdf")){
-      if(typeof conversionBanner==="function") conversionBanner("Converting PDF to Word with the high-fidelity document engine…");
-      const docx=await window.gluefulV50PdfToDocxBuffer(await file.arrayBuffer());
-      if(typeof removeConversionBanner==="function") removeConversionBanner();
-      await window.gluefulDocAuth.openDocx(host,docx);
-      return;
-    }
-
-    if(name.endsWith(".docx")){
-      await window.gluefulDocAuth.openDocx(host,await file.arrayBuffer());
-      return;
-    }
-
-    throw new Error("Resume Studio supports PDF and DOCX master resumes for Word-style editing.");
-  }
-
-  window.openJobResumeEditor=async function(id){
-    const job=findActiveJobById(id);
-    if(!job) return;
-
-    gluefulJobResumeEditorId=String(job.id);
-    openModal("job-resume-editor-modal");
-
-    const jobEl=document.getElementById("job-resume-editor-job");
-    const atsEl=document.getElementById("job-resume-editor-ats");
-    const noteEl=document.getElementById("job-resume-editor-ats-note");
-    const host=document.getElementById("glueful-docauth-editor");
-
-    if(jobEl){
-      jobEl.innerHTML=`${renderCompanyLogo(job)}<div class="job-resume-editor-job-copy"><div class="job-resume-editor-job-title">${esc(job.title)}</div><div class="job-resume-editor-job-company">${esc(job.company)} · ${esc(job.location)}</div></div>`;
-      if(typeof loadCompanyLogos==="function") loadCompanyLogos();
-    }
-    if(atsEl) atsEl.textContent="…";
-    if(noteEl) noteEl.textContent="Preparing the high-fidelity Word editor…";
-    if(host) host.innerHTML='<div class="glueful-docauth-loading">Loading your master resume…</div>';
-
-    try{
-      const file=await getSource();
-      if(!file) throw new Error("No master resume file is available. Please upload your master resume first.");
-      await loadIntoAuthoring(file);
-      await window.gluefulDocAuth.refreshText();
-      if(noteEl) noteEl.textContent="Word-style editing. Your master resume remains protected.";
-      if(typeof updateJobResumeEditorAts==="function") updateJobResumeEditorAts();
-    }catch(error){
-      console.error("[Glueful V50] editor load failed",error);
-      if(host) host.innerHTML=`<div class="glueful-docauth-error"><strong>Resume could not be opened.</strong><br><br>${String(error?.message||error).replace(/[<>]/g,"")}</div>`;
-      if(noteEl) noteEl.textContent="The high-fidelity editor could not open this document.";
-      if(typeof showError==="function") showError(error?.message||"Could not open the resume in the Word editor.");
-    }
-  };
-
-  window.getJobResumeEditorText=function(){
-    return String(window.gluefulDocAuth?.getText?.()||"").trim();
-  };
-  window.getJobResumeEditorHtml=function(){ return ""; };
-
-  window.resetJobResumeToMaster=async function(){
-    try{
-      const file=await getSource();
-      await loadIntoAuthoring(file);
-      await window.gluefulDocAuth.refreshText();
-      if(typeof updateJobResumeEditorAts==="function") updateJobResumeEditorAts();
-    }catch(error){
-      console.error("[Glueful V50] reset failed",error);
-      if(typeof showError==="function") showError(error?.message||"Could not reset the resume.");
-    }
-  };
-
-  window.downloadJobResumeDocx=async function(){
-    try{
-      const job=getCurrentJobResumeEditorJob();
-      if(!job) return;
-      await window.gluefulDocAuth.refreshText();
-      const data=await window.gluefulDocAuth.exportDocx();
-      const blob=new Blob([data],{type:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
-      const url=URL.createObjectURL(blob), a=document.createElement("a");
-      a.href=url; a.download=`glueful-${safeResumeFilePart(job.company,"company")}-${safeResumeFilePart(job.title,"resume")}-resume.docx`;
-      document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1500);
-    }catch(e){ if(typeof showError==="function") showError(e?.message||"Could not export the Word document."); }
-  };
-
-  window.downloadJobResumePdf=async function(){
-    try{
-      const job=getCurrentJobResumeEditorJob();
-      if(!job) return;
-      await window.gluefulDocAuth.refreshText();
-      const data=await window.gluefulDocAuth.exportPdf();
-      const blob=new Blob([data],{type:"application/pdf"});
-      const url=URL.createObjectURL(blob), a=document.createElement("a");
-      a.href=url; a.download=`glueful-${safeResumeFilePart(job.company,"company")}-${safeResumeFilePart(job.title,"resume")}-resume.pdf`;
-      document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1500);
-    }catch(e){ if(typeof showError==="function") showError(e?.message||"Could not export the PDF."); }
-  };
-
-  const originalApply=window.applyFromJobResumeEditor;
-  window.applyFromJobResumeEditor=async function(){
-    if(typeof originalApply!=="function") throw new Error("Apply flow is unavailable.");
-    try{
-      await window.gluefulDocAuth.refreshText();
-      const old=window.buildJobResumePdfBlob;
-      window.buildJobResumePdfBlob=async()=>new Blob([await window.gluefulDocAuth.exportPdf()],{type:"application/pdf"});
-      try{ return await originalApply.apply(this,arguments); }
-      finally{ if(old) window.buildJobResumePdfBlob=old; }
-    }catch(error){
-      if(typeof showError==="function") showError(error?.message||"Could not prepare the edited resume.");
-    }
-  };
-
-  window.addEventListener("glueful:docauth-ready",()=>{
-    document.documentElement.dataset.gluefulDocAuthReady="true";
-  });
-})();
-</script>
 </body>
 </html>
