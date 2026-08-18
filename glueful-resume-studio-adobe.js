@@ -2,14 +2,10 @@
    GLUEFUL RESUME STUDIO — AUTHORITATIVE ADOBE/DOCX CONTROLLER
    ---------------------------------------------------------
    Runtime path:
-     PDF master
-       -> Supabase glueful-pdf-to-docx
-       -> Adobe PDF Services
-       -> real DOCX
-       -> docx-preview (layout-preserving HTML)
-       -> existing contenteditable Word-style editor
+     PDF master -> Supabase glueful-pdf-to-docx -> Adobe PDF Services
+     -> real DOCX -> docx-preview -> existing contenteditable editor
 
-   Mammoth remains as a semantic fallback only. The primary DOCX import
+   Mammoth remains a semantic fallback only. The primary DOCX import
    path uses docx-preview because Resume Studio needs page dimensions,
    headers/footers, tables, images, and Word-style layout fidelity.
    ========================================================= */
@@ -26,10 +22,7 @@
   const $ = (id) => document.getElementById(id);
   const editor = () => $(EDITOR_ID);
   const modal = () => $(MODAL_ID);
-
-  function safeText(value) {
-    return String(value ?? '').trim();
-  }
+  const safeText = (value) => String(value ?? '').trim();
 
   function showConversionNote(message) {
     const note = $('job-resume-editor-ats-note');
@@ -63,19 +56,15 @@
       const existing = document.getElementById(id);
       if (existing) {
         if (existing.dataset.loaded === 'true') return resolve();
-        existing.addEventListener('load', () => resolve(), { once: true });
+        existing.addEventListener('load', resolve, { once: true });
         existing.addEventListener('error', () => reject(new Error(`Failed to load ${src}`)), { once: true });
         return;
       }
-
       const script = document.createElement('script');
       script.id = id;
       script.src = src;
       script.async = true;
-      script.onload = () => {
-        script.dataset.loaded = 'true';
-        resolve();
-      };
+      script.onload = () => { script.dataset.loaded = 'true'; resolve(); };
       script.onerror = () => reject(new Error(`Failed to load ${src}`));
       document.head.appendChild(script);
     });
@@ -84,17 +73,11 @@
   async function ensureDocxPreview() {
     if (window.gluefulDocxPreview?.renderAsync) return window.gluefulDocxPreview;
 
-    // The application already uses the `docx` global for DOCX generation.
-    // docx-preview also exposes a `docx` global, so preserve the existing
-    // generator before loading the renderer and restore it afterwards.
     const existingDocxGenerator = window.docx;
     await loadScriptOnce(JSZIP_JS, 'glueful-jszip-runtime');
     await loadScriptOnce(DOCX_PREVIEW_JS, 'glueful-docx-preview-runtime');
 
-    if (!window.docx?.renderAsync) {
-      throw new Error('docx-preview did not expose renderAsync.');
-    }
-
+    if (!window.docx?.renderAsync) throw new Error('docx-preview did not expose renderAsync.');
     window.gluefulDocxPreview = window.docx;
     if (existingDocxGenerator) window.docx = existingDocxGenerator;
     return window.gluefulDocxPreview;
@@ -129,7 +112,6 @@
   async function convertPdfWithAdobe(pdfBuffer) {
     if (!(pdfBuffer instanceof ArrayBuffer)) throw new Error('Invalid PDF data.');
     if (!pdfBuffer.byteLength) throw new Error('The PDF is empty.');
-
     const bytes = new Uint8Array(pdfBuffer);
     if (bytes[0] !== 0x25 || bytes[1] !== 0x50 || bytes[2] !== 0x44 || bytes[3] !== 0x46) {
       throw new Error('The uploaded file does not appear to be a PDF.');
@@ -140,7 +122,6 @@
     if (!client?.auth || !config.url || !config.key) {
       throw new Error('Supabase authentication client is not available for PDF conversion.');
     }
-
     const { data: sessionData, error: sessionError } = await client.auth.getSession();
     if (sessionError || !sessionData?.session?.access_token) {
       throw new Error('Your Glueful session is unavailable. Please sign in again.');
@@ -165,12 +146,10 @@
       } catch (_) {}
       throw new Error(detail || `Adobe PDF conversion failed (${response.status}).`);
     }
-
     const contentType = String(response.headers.get('content-type') || '').toLowerCase();
     if (!contentType.includes('application/vnd.openxmlformats-officedocument.wordprocessingml.document')) {
       throw new Error('Adobe conversion returned an unexpected content type.');
     }
-
     const docxBuffer = await response.arrayBuffer();
     if (!docxBuffer.byteLength) throw new Error('Adobe conversion returned an empty DOCX.');
     return docxBuffer;
@@ -178,8 +157,6 @@
 
   async function renderDocxWithLayout(docxBuffer, ed) {
     const docxPreview = await ensureDocxPreview();
-    if (typeof docxPreview.renderAsync !== 'function') throw new Error('docx-preview renderAsync is unavailable.');
-
     const styleHost = document.createElement('div');
     styleHost.className = 'glueful-docx-style-host';
     styleHost.setAttribute('aria-hidden', 'true');
@@ -221,27 +198,15 @@
     const pages = renderHost.querySelectorAll('.docx-wrapper > section, .docx > section').length;
     const images = renderHost.querySelectorAll('img').length;
     const tables = renderHost.querySelectorAll('table').length;
-
-    // Do not rewrite Word page dimensions, table geometry, or image positions.
-    // Only prevent a media object from overflowing the editor viewport.
     renderHost.querySelectorAll('img').forEach((img) => {
       img.style.maxWidth = '100%';
       img.style.objectFit = 'contain';
     });
 
     console.info('[Glueful Resume Studio] DOCX layout render complete:', {
-      pages,
-      images,
-      tables,
-      renderer: 'docx-preview'
+      pages, images, tables, renderer: 'docx-preview'
     });
-
-    return {
-      html: renderHost.innerHTML,
-      imported: true,
-      pdfConverted: true,
-      renderer: 'docx-preview'
-    };
+    return { html: renderHost.innerHTML, imported: true, pdfConverted: true, renderer: 'docx-preview' };
   }
 
   async function docxToMammothHtml(docxBuffer) {
@@ -249,11 +214,9 @@
     const result = await mammoth.convertToHtml({ arrayBuffer: docxBuffer });
     const html = safeText(result?.value);
     if (!html) throw new Error('The converted Word document did not contain editable content.');
-
     if (Array.isArray(result?.messages) && result.messages.length) {
       console.info('[Glueful Resume Studio] Mammoth fallback messages:', result.messages);
     }
-
     const holder = document.createElement('div');
     holder.innerHTML = html;
     holder.querySelectorAll('script,style,iframe,object,embed').forEach((node) => node.remove());
@@ -289,7 +252,6 @@
         return { html, imported: true, pdfConverted: true, renderer: 'mammoth-fallback' };
       }
     }
-
     return null;
   }
 
@@ -306,10 +268,8 @@
   async function loadMasterIntoEditor() {
     const ed = editor();
     if (!ed) throw new Error('Resume editor surface is missing.');
-
     let master = safeText(window.gluefulMasterResumeText);
     if (!master && typeof window.ensureMasterResumeText === 'function') master = safeText(await window.ensureMasterResumeText());
-
     const base = master || (typeof window.buildProfileResumeFallback === 'function' ? safeText(window.buildProfileResumeFallback()) : '');
     const imported = await sourceFileToEditor(await getSourceFile(), ed);
 
@@ -330,26 +290,22 @@
           : '<p><br></p>')
         .join('');
     }
-
     preparePlainEditor(ed);
     showConversionNote(master
       ? 'Loaded from your Candidate Profile master resume. This job-specific copy is temporary.'
       : 'No readable master resume is available yet. Upload one in Candidate Profile.');
-
     return { html: ed.innerHTML, imported: false, pdfConverted: false, renderer: 'plain-fallback' };
   }
 
   async function openJobResumeEditor(id) {
     const job = typeof window.findActiveJobById === 'function' ? window.findActiveJobById(id) : null;
     if (!job) return;
-
     window.gluefulJobResumeEditorId = String(job.id);
     if (typeof window.openModal === 'function') window.openModal(MODAL_ID);
 
     const jobEl = $('job-resume-editor-job');
     const ats = $('job-resume-editor-ats');
     const ed = editor();
-
     if (jobEl) {
       const logoHtml = typeof window.renderCompanyLogo === 'function' ? window.renderCompanyLogo(job) : '';
       const escape = (value) => String(value ?? '')
@@ -358,7 +314,6 @@
       jobEl.innerHTML = `${logoHtml}<div class="job-resume-editor-job-copy"><div class="job-resume-editor-job-title">${escape(job.title)}</div><div class="job-resume-editor-job-company">${escape(job.company)} · ${escape(job.location)}</div></div>`;
       if (typeof window.loadCompanyLogos === 'function') window.loadCompanyLogos();
     }
-
     if (ats) ats.textContent = '…';
     if (ed) {
       ed.innerHTML = '<p style="padding:40px;text-align:center;color:#777;font-family:Inter,Arial,sans-serif">Preparing editable Word document…</p>';
@@ -370,7 +325,6 @@
       await loadMasterIntoEditor();
     } catch (error) {
       console.error('[Glueful Resume Studio Adobe] load failed:', error);
-
       if (ed) {
         let master = safeText(window.gluefulMasterResumeText);
         if (!master && typeof window.buildProfileResumeFallback === 'function') master = safeText(window.buildProfileResumeFallback());
@@ -379,7 +333,6 @@
           : `<p>${master.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`;
         preparePlainEditor(ed);
       }
-
       showConversionNote('Adobe PDF conversion failed. The editable text fallback was loaded; your master resume was not changed.');
       if (typeof window.showError === 'function') window.showError(error?.message || 'Could not convert the PDF into an editable Word document.');
     } finally {
@@ -397,7 +350,6 @@
   async function resetJobResumeToMaster() {
     const ed = editor();
     if (!ed) return;
-
     try {
       clearConversionUi();
       await loadMasterIntoEditor();
@@ -414,13 +366,12 @@
   }
 
   window.gluefulAdobeResumeStudio = {
-    version: '2.1.0',
+    version: '2.2.0',
     functionName: FUNCTION_NAME,
     pipeline: ['PDF master', 'Supabase glueful-pdf-to-docx', 'Adobe PDF Services', 'real DOCX', 'docx-preview layout renderer', 'existing contenteditable Word-style editor'],
     openJobResumeEditor,
     resetJobResumeToMaster
   };
-
   window.openJobResumeEditor = openJobResumeEditor;
   window.resetJobResumeToMaster = resetJobResumeToMaster;
   console.info('[Glueful Resume Studio] authoritative DOCX layout controller loaded.');
