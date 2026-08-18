@@ -2938,10 +2938,11 @@
        Tailored edits are temporary and are never persisted.
     ====================================================== */
     .job-resume-editor-card{
-      width:min(96vw, 1180px);
-      max-width:1180px;
-      height:min(96vh, 980px);
-      max-height:96vh;
+      width:min(98vw, 1500px);
+      max-width:1500px;
+      height:min(97vh, 1100px);
+      max-height:97vh;
+      min-height:0;
       overflow:hidden;
       display:flex;
       flex-direction:column;
@@ -2949,10 +2950,12 @@
     .job-resume-editor-scroll{
       flex:1 1 auto;
       min-height:0;
-      overflow-y:auto;
-      padding:16px;
+      overflow:auto;
+      padding:18px 22px 28px;
       -webkit-overflow-scrolling:touch;
       overscroll-behavior:contain;
+      touch-action:pan-y;
+      background:linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,0));
     }
     .job-resume-editor-job{
       display:flex;
@@ -2964,198 +2967,182 @@
       background:var(--surface);
     }
     .job-resume-editor-job-copy{min-width:0}
-    .job-resume-editor-job-title{
-      color:var(--text);
-      font-size:13px;
-      font-weight:850;
-      line-height:1.3;
-    }
-    .job-resume-editor-job-company{
-      margin-top:3px;
-      color:var(--text-muted);
-      font-size:10.5px;
-    }
-    .job-ats-editor-panel{
-      margin-top:12px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      padding:12px;
-      border-radius:13px;
-      background:rgba(109,59,232,.09);
-      border:1px solid rgba(109,59,232,.20);
-    }
-    .job-ats-editor-label{
-      color:var(--text-faint);
-      font-size:9px;
-      text-transform:uppercase;
-      letter-spacing:.06em;
-      font-weight:800;
-    }
-    .job-ats-editor-score{
-      margin-top:2px;
-      color:#B497FF;
-      font-family:'JetBrains Mono',monospace;
-      font-size:24px;
-      font-weight:800;
-    }
-    .job-ats-editor-note{
-      max-width:260px;
-      color:var(--text-muted);
-      font-size:10px;
-      line-height:1.45;
-      text-align:right;
-    }
-    .job-resume-master-note{
-      display:flex;
-      flex-direction:column;
-      gap:3px;
-      margin-top:12px;
-      padding:10px 11px;
-      border:1px solid var(--border);
-      border-radius:11px;
-      background:var(--surface);
-      color:var(--text-muted);
-      font-size:10px;
-      line-height:1.45;
-    }
+    .job-resume-editor-job-title{color:var(--text);font-size:13px;font-weight:850;line-height:1.3}
+    .job-resume-editor-job-company{margin-top:3px;color:var(--text-muted);font-size:10.5px}
+    .job-ats-editor-panel{margin-top:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border-radius:13px;background:rgba(109,59,232,.09);border:1px solid rgba(109,59,232,.20)}
+    .job-ats-editor-label{color:var(--text-faint);font-size:9px;text-transform:uppercase;letter-spacing:.06em;font-weight:800}
+    .job-ats-editor-score{margin-top:2px;color:#B497FF;font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:800}
+    .job-ats-editor-note{max-width:420px;color:var(--text-muted);font-size:10px;line-height:1.45;text-align:right}
+    .job-resume-master-note{display:flex;flex-direction:column;gap:3px;margin-top:12px;padding:10px 11px;border:1px solid var(--border);border-radius:11px;background:var(--surface);color:var(--text-muted);font-size:10px;line-height:1.45}
     .job-resume-master-note strong{color:var(--text)}
 
     .job-resume-toolbar{
       position:sticky;
       top:0;
-      z-index:5;
+      z-index:20;
       display:flex;
       flex-wrap:wrap;
       align-items:center;
       gap:5px;
       margin-top:12px;
-      padding:7px;
-      border:1px solid var(--border);
-      border-radius:12px;
-      background:var(--card);
-      box-shadow:0 8px 20px rgba(0,0,0,.16);
+      padding:9px;
+      border:1px solid rgba(255,255,255,.09);
+      border-radius:14px;
+      background:rgba(20,23,31,.94);
+      backdrop-filter:blur(18px);
+      -webkit-backdrop-filter:blur(18px);
+      box-shadow:0 12px 32px rgba(0,0,0,.25);
     }
-    .job-resume-tool{
-      min-width:32px;
-      height:32px;
-      padding:0 8px;
-      border:1px solid var(--border);
-      border-radius:7px;
-      background:var(--surface);
-      color:var(--text);
-      font-size:11px;
-      font-weight:800;
-    }
-    .job-resume-tool:hover{
-      background:var(--card2);
-      border-color:#6d3be8;
-    }
-    .job-resume-tool-select{
-      height:32px;
-      max-width:115px;
-      padding:0 7px;
-      border:1px solid var(--border);
-      border-radius:7px;
-      background:var(--surface);
-      color:var(--text);
-      font-size:10px;
-      font-weight:700;
-    }
-    .job-resume-tool-divider{
-      width:1px;
-      height:22px;
-      background:var(--border);
-      margin:0 2px;
-    }
+    .job-resume-tool{min-width:34px;height:34px;padding:0 9px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:11px;font-weight:800;cursor:pointer}
+    .job-resume-tool:hover{background:var(--card2);border-color:#6d3be8}
+    .job-resume-tool:active{transform:translateY(1px)}
+    .job-resume-tool-select{height:34px;max-width:125px;padding:0 8px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:10px;font-weight:700}
+    .job-resume-tool-divider{width:1px;height:23px;background:var(--border);margin:0 3px}
+
     .job-resume-editor-page{
-      width:min(100%, 794px);
-      min-height:1123px;
-      margin:12px auto 4px;
-      padding:56px 58px;
+      width:min(100%, 850px);
+      min-height:1200px;
+      margin:18px auto 10px;
+      padding:64px 68px;
+      box-sizing:border-box;
       border:1px solid #D9DEE7;
-      border-radius:2px;
+      border-radius:3px;
       background:#fff;
       color:#151A23;
-      box-shadow:0 12px 35px rgba(0,0,0,.20);
+      box-shadow:0 18px 50px rgba(0,0,0,.28);
       font-family:Arial, Helvetica, sans-serif;
       font-size:13px;
       line-height:1.55;
       outline:none;
       overflow-wrap:anywhere;
     }
-    .job-resume-editor-page:focus{
-      border-color:#8B6BF0;
-      box-shadow:0 0 0 2px rgba(139,107,240,.18), 0 12px 35px rgba(0,0,0,.20);
+    .job-resume-editor-page:focus{border-color:#8B6BF0;box-shadow:0 0 0 2px rgba(139,107,240,.18),0 18px 50px rgba(0,0,0,.28)}
+    .job-resume-editor-page h1,.job-resume-editor-page h2,.job-resume-editor-page h3{color:#11151C;line-height:1.2;margin:14px 0 7px}
+    .job-resume-editor-page h1{font-size:23px}.job-resume-editor-page h2{font-size:17px}.job-resume-editor-page h3{font-size:14px}
+    .job-resume-editor-page p{margin:0 0 7px}.job-resume-editor-page ul,.job-resume-editor-page ol{margin:4px 0 8px;padding-left:24px}.job-resume-editor-page li{margin:2px 0}.job-resume-editor-page a{color:#245BDB;text-decoration:underline}
+
+    /* Exact-layout PDF import: each page keeps the original PDF coordinate system.
+       Text runs are editable in place instead of being flattened into paragraphs. */
+    .job-resume-editor-page.pdf-structured-canvas{
+      width:100%;
+      min-height:0;
+      margin:18px auto 10px;
+      padding:0;
+      border:0;
+      border-radius:0;
+      background:transparent;
+      box-shadow:none;
+      overflow:visible;
     }
-    .job-resume-editor-page h1,
-    .job-resume-editor-page h2,
-    .job-resume-editor-page h3{
-      color:#11151C;
-      line-height:1.2;
-      margin:14px 0 7px;
+    .job-resume-pdf-page{
+      position:relative;
+      margin:0 auto 24px;
+      background:#fff;
+      border:1px solid #D9DEE7;
+      box-shadow:0 18px 50px rgba(0,0,0,.24);
+      overflow:hidden;
+      transform-origin:top center;
     }
-    .job-resume-editor-page h1{font-size:23px}
-    .job-resume-editor-page h2{font-size:17px}
-    .job-resume-editor-page h3{font-size:14px}
-    .job-resume-editor-page p{margin:0 0 7px}
-    .job-resume-editor-page ul,
-    .job-resume-editor-page ol{
-      margin:4px 0 8px;
-      padding-left:24px;
+    .job-resume-pdf-run{
+      position:absolute;
+      display:block;
+      margin:0;
+      padding:0;
+      color:#111;
+      background:transparent;
+      border:0;
+      outline:none;
+      white-space:pre;
+      overflow:visible;
+      min-width:1px;
+      line-height:1;
+      cursor:text;
     }
-    .job-resume-editor-page li{margin:2px 0}
-    .job-resume-editor-page a{color:#245BDB;text-decoration:underline}
-    .job-resume-editor-page.job-resume-master-imported{
-      box-shadow:0 0 0 2px rgba(109,59,232,.12), 0 12px 35px rgba(0,0,0,.20);
-    }
+    .job-resume-pdf-run:focus{z-index:50;background:rgba(109,59,232,.08);box-shadow:0 0 0 1px rgba(109,59,232,.35);border-radius:2px}
+    .job-resume-pdf-run:hover{background:rgba(109,59,232,.035)}
+    .job-resume-pdf-run a{color:inherit;text-decoration:underline}
+    .job-resume-pdf-page .job-resume-pdf-run::selection{background:rgba(109,59,232,.25)}
 
     .job-resume-editor-actions{
       flex:0 0 auto;
       display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:8px;
-      padding:10px 16px max(12px, env(safe-area-inset-bottom));
+      grid-template-columns:1fr 1.25fr;
+      gap:10px;
+      padding:10px 18px max(12px, env(safe-area-inset-bottom));
       border-top:1px solid var(--border);
       background:var(--card);
+      position:relative;
+      z-index:30;
     }
-    .job-resume-editor-actions button,
-    .job-resume-editor-actions select{
-      min-height:42px;
-      border-radius:10px;
-      font-size:11px;
-      font-weight:800;
-    }
-    .job-resume-download-select{
-      width:100%;
-      padding:0 10px;
-      border:1px solid var(--border);
-      background:var(--surface);
-      color:var(--text);
-    }
+    .job-resume-editor-actions button{min-height:44px;border-radius:11px;font-size:11px;font-weight:800}
     .job-resume-apply-btn{grid-column:1 / -1}
 
+    .job-resume-download-wrap{position:relative;min-width:0}
+    .job-resume-download-trigger{
+      width:100%;
+      min-height:44px;
+      padding:0 13px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      border:1px solid var(--border);
+      border-radius:11px;
+      background:linear-gradient(180deg,var(--surface),var(--card2,var(--surface)));
+      color:var(--text);
+      font-size:11px;
+      font-weight:850;
+      cursor:pointer;
+      box-shadow:0 8px 20px rgba(0,0,0,.12);
+    }
+    .job-resume-download-trigger:hover{border-color:#6d3be8;background:var(--card2,var(--surface))}
+    .job-resume-download-trigger .download-chevron{transition:transform .18s ease;opacity:.75}
+    .job-resume-download-wrap.open .download-chevron{transform:rotate(180deg)}
+    .job-resume-download-menu{
+      position:absolute;
+      left:0;
+      right:0;
+      bottom:calc(100% + 8px);
+      z-index:100;
+      display:none;
+      padding:6px;
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:13px;
+      background:rgba(24,27,36,.98);
+      box-shadow:0 22px 55px rgba(0,0,0,.42);
+      backdrop-filter:blur(18px);
+      -webkit-backdrop-filter:blur(18px);
+    }
+    .job-resume-download-wrap.open .job-resume-download-menu{display:block}
+    .job-resume-download-option{
+      width:100%;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:11px 12px;
+      border:0;
+      border-radius:9px;
+      background:transparent;
+      color:#fff;
+      text-align:left;
+      font-size:11px;
+      font-weight:750;
+      cursor:pointer;
+    }
+    .job-resume-download-option:hover{background:rgba(109,59,232,.20)}
+    .job-resume-download-option .download-icon{width:22px;height:22px;display:grid;place-items:center;border-radius:7px;background:rgba(255,255,255,.08);font-size:12px}
+    .job-resume-download-option small{display:block;margin-top:2px;color:rgba(255,255,255,.55);font-size:9px;font-weight:600}
+
     @media(max-width:700px){
-      .job-resume-editor-card{
-        width:100%;
-        max-width:none;
-        height:96vh;
-        max-height:96vh;
-        border-radius:20px 20px 0 0;
-      }
-      .job-resume-editor-page{
-        min-height:920px;
-        padding:38px 28px;
-        font-size:12px;
-      }
-      .job-resume-tool{
-        min-width:30px;
-        padding:0 6px;
-      }
+      .job-resume-editor-card{width:100%;max-width:none;height:100dvh;max-height:100dvh;border-radius:20px 20px 0 0}
+      .job-resume-editor-scroll{padding:12px 10px 20px}
+      .job-resume-editor-page{min-height:920px;padding:38px 28px;font-size:12px}
+      .job-resume-pdf-page{margin-bottom:16px}
+      .job-resume-tool{min-width:30px;padding:0 6px}
       .job-resume-tool-select{max-width:98px}
       .job-ats-editor-panel{align-items:flex-start}
       .job-ats-editor-note{max-width:180px}
+      .job-resume-editor-actions{grid-template-columns:1fr 1fr;padding-left:10px;padding-right:10px}
     }
 
     .job-filter-sheet .modal-card{max-height:88vh;overflow:auto}
@@ -3204,22 +3191,26 @@
     }
 
     #job-detail-content{
-      flex:1 1 auto;
+      flex:1 1 0;
       min-height:0;
+      height:100%;
       overflow:hidden;
       display:flex;
       flex-direction:column;
     }
 
     .job-detail-scroll{
-      flex:1 1 auto;
+      flex:1 1 0;
       min-height:0;
-      height:0;
-      overflow-y:auto;
+      height:auto;
+      max-height:none;
+      overflow-y:scroll;
+      overflow-x:hidden;
       overscroll-behavior:contain;
       padding:20px;
       -webkit-overflow-scrolling:touch;
       touch-action:pan-y;
+      scrollbar-gutter:stable;
     }
 
     .job-detail-hero{
@@ -5761,12 +5752,21 @@
 
       <div class="job-resume-editor-actions">
         <button class="secondary-btn" type="button" onclick="resetJobResumeToMaster()">Reset to master</button>
-        <select id="job-resume-download" class="job-resume-download-select" aria-label="Download tailored resume"
-                onchange="handleJobResumeDownload(this.value); this.value=''">
-          <option value="">Download ▼</option>
-          <option value="pdf">Download as PDF</option>
-          <option value="docx">Download as Word (.docx)</option>
-        </select>
+        <div class="job-resume-download-wrap" id="job-resume-download-wrap">
+          <button class="job-resume-download-trigger" type="button" onclick="toggleJobResumeDownloadMenu(event)" aria-haspopup="menu" aria-expanded="false">
+            <span>Download</span><span class="download-chevron">⌄</span>
+          </button>
+          <div class="job-resume-download-menu" role="menu">
+            <button class="job-resume-download-option" type="button" role="menuitem" onclick="handleJobResumeDownload('pdf')">
+              <span class="download-icon">↓</span>
+              <span><strong>Download as PDF</strong><small>Professional A4 PDF</small></span>
+            </button>
+            <button class="job-resume-download-option" type="button" role="menuitem" onclick="handleJobResumeDownload('docx')">
+              <span class="download-icon">W</span>
+              <span><strong>Download as Word</strong><small>Editable .docx document</small></span>
+            </button>
+          </div>
+        </div>
         <button class="primary-btn job-resume-apply-btn" type="button" onclick="applyFromJobResumeEditor()">Apply</button>
       </div>
     </div>
@@ -10581,6 +10581,28 @@
     // font size; pass 2 uses the document's most common ("body") font size
     // as a baseline to classify each line as a heading, bullet, or
     // paragraph text, and preserves bold/italic/links inline.
+    function resumePdfFontFamily(fontName){
+      const n = String(fontName || '').toLowerCase();
+      if(n.includes('times')) return '"Times New Roman", Times, serif';
+      if(n.includes('courier')) return '"Courier New", Courier, monospace';
+      if(n.includes('georgia')) return 'Georgia, serif';
+      if(n.includes('calibri')) return 'Calibri, Arial, sans-serif';
+      if(n.includes('helvetica') || n.includes('arial')) return 'Arial, Helvetica, sans-serif';
+      return 'Arial, Helvetica, sans-serif';
+    }
+
+    function pdfRunStyle(item, scale, pageHeight){
+      const fontSize = Math.max(5, Number(item.fontSize || item.height || 10) * scale);
+      const x = Number(item.x || 0) * scale;
+      const y = Math.max(0, (pageHeight - Number(item.y || 0) - Number(item.height || item.fontSize || 10))) * scale;
+      const width = Math.max(1, Number(item.width || 0) * scale);
+      return {fontSize,x,y,width};
+    }
+
+    // PDF import keeps the original PDF page coordinate system instead of
+    // flattening everything into generic paragraphs. Each PDF text run is
+    // positioned where it appeared in the master document, so headings,
+    // contact blocks, bullets, columns and spacing remain visually faithful.
     async function pdfToStructuredHtml(buffer){
       if(!window.pdfjsLib) throw new Error("PDF parser is still loading.");
       if(window.pdfjsLib.GlobalWorkerOptions){
@@ -10588,132 +10610,72 @@
           "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
       }
       const pdf = await window.pdfjsLib.getDocument({data:buffer}).promise;
-
-      const pageLines = [];
-      const allSizes = [];
+      const pages = [];
+      const targetWidth = 850;
 
       for(let pageNo=1; pageNo<=pdf.numPages; pageNo++){
         const page = await pdf.getPage(pageNo);
-        const [content, annotations] = await Promise.all([
-          page.getTextContent(),
-          page.getAnnotations({intent:"display"}).catch(()=>[])
-        ]);
-
-        const linkRects = (annotations || [])
+        const viewport = page.getViewport({scale:1});
+        const scale = targetWidth / viewport.width;
+        const pageWidth = viewport.width * scale;
+        const pageHeight = viewport.height * scale;
+        const content = await page.getTextContent({includeMarkedContent:true});
+        const annotations = await page.getAnnotations({intent:"display"}).catch(()=>[]);
+        const links = (annotations || [])
           .filter(a => a && a.subtype === "Link" && (a.url || a.unsafeUrl) && Array.isArray(a.rect))
-          .map(a => ({rect:a.rect, url:a.url || a.unsafeUrl}));
+          .map(a => ({rect:a.rect,url:a.url || a.unsafeUrl}));
 
         const items = content.items
-          .filter(it => String(it.str || "").trim())
+          .filter(it => String(it.str || '').length)
           .map(it => {
-            const size = Math.abs(it.transform?.[3]) || Math.abs(it.transform?.[0]) || Number(it.height) || 10;
-            const rawFontName = String(it.fontName || "");
-            let resolvedFontName = rawFontName;
+            const transform = it.transform || [1,0,0,1,0,0];
+            const fontSize = Math.max(5, Math.abs(Number(transform[3] || transform[0] || it.height || 10)));
+            const x = Number(transform[4] || 0);
+            const y = Number(transform[5] || 0);
+            const height = Math.max(fontSize, Number(it.height || fontSize));
+            const width = Math.max(0, Number(it.width || 0));
+            let resolvedFont = String(it.fontName || '');
             try{
               const fontObj = page.commonObjs.get(it.fontName);
-              resolvedFontName = fontObj?.name || fontObj?.fallbackName || rawFontName;
+              resolvedFont = fontObj?.name || fontObj?.fallbackName || resolvedFont;
             }catch(e){}
-            const bold = /bold|black|heavy|semibold/i.test(resolvedFontName);
-            const italic = /italic|oblique/i.test(resolvedFontName);
-            const x = Number(it.transform?.[4] || 0);
-            const y = Number(it.transform?.[5] || 0);
-            let url = "";
-            for(const lr of linkRects){
-              const [rx1,ry1,rx2,ry2] = lr.rect;
-              if(x >= rx1-2 && x <= rx2+2 && y >= ry1-2 && y <= ry2+2){ url = lr.url; break; }
+            const bold = /bold|black|heavy|semibold|demi/i.test(resolvedFont);
+            const italic = /italic|oblique/i.test(resolvedFont);
+            let url = '';
+            for(const link of links){
+              const [rx1,ry1,rx2,ry2] = link.rect;
+              if(x >= rx1-3 && x <= rx2+3 && y >= ry1-4 && y <= ry2+4){ url = link.url; break; }
             }
-            return {text:String(it.str).trim(), x, y, size, bold, italic, url};
+            return {text:String(it.str),x,y,height,width,fontSize,bold,italic,font:resolvedFont,url};
           });
 
-        const lines = [];
-        for(const it of items){
-          let line = lines.find(l => Math.abs(l.y - it.y) <= Math.max(2, it.size * 0.3));
-          if(!line){ line = {y:it.y, items:[]}; lines.push(line); }
-          line.items.push(it);
-        }
-        lines.sort((a,b) => b.y - a.y);
-        for(const line of lines){
-          line.items.sort((a,b) => a.x - b.x);
-          line.text = line.items.map(i => i.text).join(" ").replace(/\s+/g," ").trim();
-          line.size = Math.round(Math.max(...line.items.map(i => i.size)));
-          line.bold = line.items.filter(i => i.bold).length >= Math.max(1, line.items.length * 0.6);
-          line.x = Math.min(...line.items.map(i => i.x));
-          if(line.text) allSizes.push(line.size);
-        }
-        pageLines.push(lines.filter(l => l.text));
+        pages.push({pageWidth,pageHeight,originalWidth:viewport.width,originalHeight:viewport.height,scale,items});
       }
 
-      if(!pageLines.some(p => p.length)) return "";
+      if(!pages.some(p=>p.items.length)) return '';
 
-      const freq = {};
-      allSizes.forEach(s => { freq[s] = (freq[s] || 0) + 1; });
-      const bodySize = Number(Object.entries(freq).sort((a,b) => b[1]-a[1])[0]?.[0]) || 10;
-      const leftMargin = Math.min(...pageLines.flat().map(l => l.x));
-      const bulletRe = /^[•▪‣◦∙·●○\-\*]\s+/;
+      const pageHtml = pages.map((page,pageIndex)=>{
+        const runs = page.items.map((item,runIndex)=>{
+          const pos = pdfRunStyle(item, page.scale, page.originalHeight);
+          const style = [
+            `left:${pos.x.toFixed(2)}px`,
+            `top:${pos.y.toFixed(2)}px`,
+            `font-size:${pos.fontSize.toFixed(2)}px`,
+            `font-family:${resumePdfFontFamily(item.font)}`,
+            `font-weight:${item.bold ? 700 : 400}`,
+            `font-style:${item.italic ? 'italic' : 'normal'}`,
+            `width:${Math.max(pos.width, pos.fontSize*.35).toFixed(2)}px`
+          ].join(';');
+          const escaped = esc(item.text).replace(/ /g,'&nbsp;');
+          const inner = item.url
+            ? `<a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${escaped}</a>`
+            : escaped;
+          return `<span class="job-resume-pdf-run" data-page="${pageIndex+1}" data-run="${runIndex}" style="${style}">${inner}</span>`;
+        }).join('');
+        return `<div class="job-resume-pdf-page" data-pdf-page="${pageIndex+1}" style="width:${page.pageWidth.toFixed(2)}px;height:${page.pageHeight.toFixed(2)}px">${runs}</div>`;
+      }).join('');
 
-      const lineToInlineHtml = (line) => line.items.map(it => {
-        let t = esc(it.text);
-        if(it.bold) t = `<strong>${t}</strong>`;
-        if(it.italic) t = `<em>${t}</em>`;
-        if(it.url){
-          try{
-            const parsed = new URL(it.url);
-            if(/^https?:$/.test(parsed.protocol)) t = `<a href="${esc(parsed.href)}">${t}</a>`;
-          }catch(e){}
-        }
-        return t;
-      }).join(" ").replace(/\s+/g," ").trim();
-
-      const html = [];
-      let paragraphBuffer = [];
-      const flushParagraph = () => {
-        if(paragraphBuffer.length){
-          html.push(`<p>${paragraphBuffer.join(" ")}</p>`);
-          paragraphBuffer = [];
-        }
-      };
-
-      pageLines.forEach((lines, pageIdx) => {
-        if(pageIdx > 0){
-          flushParagraph();
-          html.push('<p style="page-break-before:always"><br></p>');
-        }
-        let prevY = null;
-        lines.forEach(line => {
-          const sizeRatio = line.size / bodySize;
-          const gap = prevY === null ? 0 : Math.abs(prevY - line.y);
-          prevY = line.y;
-
-          if(bulletRe.test(line.text)){
-            flushParagraph();
-            const cleaned = lineToInlineHtml(line).replace(bulletRe, "");
-            const last = html[html.length - 1];
-            if(last && last.startsWith("<ul>")){
-              html[html.length - 1] = last.replace("</ul>", `<li>${cleaned}</li></ul>`);
-            }else{
-              html.push(`<ul><li>${cleaned}</li></ul>`);
-            }
-            return;
-          }
-
-          if(sizeRatio >= 1.55){
-            flushParagraph();
-            html.push(`<h1>${lineToInlineHtml(line)}</h1>`);
-          }else if(sizeRatio >= 1.25 || (line.bold && sizeRatio >= 1.05)){
-            flushParagraph();
-            html.push(`<h2>${lineToInlineHtml(line)}</h2>`);
-          }else if(line.bold && sizeRatio >= 0.95 && line.text.length < 70 && gap > bodySize * 0.9){
-            flushParagraph();
-            html.push(`<h3>${lineToInlineHtml(line)}</h3>`);
-          }else{
-            if(gap > bodySize * 1.6 && paragraphBuffer.length) flushParagraph();
-            paragraphBuffer.push(lineToInlineHtml(line));
-          }
-        });
-        flushParagraph();
-      });
-
-      return html.join("");
+      return `<div class="job-resume-pdf-pages">${pageHtml}</div>`;
     }
 
     async function getMasterResumeEditorHtml(masterText){
@@ -10783,6 +10745,7 @@
         const imported = await getMasterResumeEditorHtml(base);
         editor.innerHTML = imported.html;
         editor.classList.toggle("job-resume-master-imported", !!imported.imported);
+        editor.classList.toggle("pdf-structured-canvas", !!imported.imported && /<div class="job-resume-pdf-pages">/.test(imported.html));
         editor.contentEditable = "true";
       }
 
@@ -10802,7 +10765,7 @@
         catch(e){ modal.classList.remove("open"); }
       }
       const editor = resumeEditorGet();
-      if(editor) editor.innerHTML = "";
+      if(editor){ editor.innerHTML = ""; editor.classList.remove("pdf-structured-canvas","job-resume-master-imported"); }
       gluefulJobResumeEditorId = null;
     }
 
@@ -10821,6 +10784,7 @@
       const imported = await getMasterResumeEditorHtml(master);
       editor.innerHTML = imported.html;
       editor.classList.toggle("job-resume-master-imported", !!imported.imported);
+      editor.classList.toggle("pdf-structured-canvas", !!imported.imported && /<div class="job-resume-pdf-pages">/.test(imported.html));
       updateJobResumeEditorAts();
       editor.focus();
     }
@@ -10837,28 +10801,27 @@
       const editor = resumeEditorGet();
       if(!editor) return null;
 
-      const sheet = document.createElement("div");
-      sheet.id = "glueful-resume-export-sheet";
-      sheet.style.cssText = [
-        "position:fixed","left:-100000px","top:0","width:794px",
-        "min-height:1123px","padding:56px 58px","box-sizing:border-box",
-        "background:#fff","color:#151A23","font-family:Arial,Helvetica,sans-serif",
-        "font-size:13px","line-height:1.55","overflow:visible","z-index:-1"
-      ].join(";");
+      const structured = editor.classList.contains('pdf-structured-canvas');
+      const sheet = document.createElement('div');
+      sheet.id = 'glueful-resume-export-sheet';
+      sheet.style.cssText = structured
+        ? 'position:fixed;left:-100000px;top:0;width:850px;box-sizing:border-box;background:transparent;color:#111;overflow:visible;z-index:-1;'
+        : 'position:fixed;left:-100000px;top:0;width:794px;min-height:1123px;padding:56px 58px;box-sizing:border-box;background:#fff;color:#151A23;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.55;overflow:visible;z-index:-1;';
 
-      const style = document.createElement("style");
+      const style = document.createElement('style');
       style.textContent = `
+        #glueful-resume-export-sheet .job-resume-pdf-page{position:relative;margin:0 auto 24px;background:#fff;border:0;box-shadow:none;overflow:hidden}
+        #glueful-resume-export-sheet .job-resume-pdf-run{position:absolute;display:block;margin:0;padding:0;color:#111;background:transparent;border:0;outline:none;white-space:pre;overflow:visible;line-height:1;min-width:1px}
+        #glueful-resume-export-sheet .job-resume-pdf-run a{color:inherit;text-decoration:underline}
         #glueful-resume-export-sheet h1,#glueful-resume-export-sheet h2,#glueful-resume-export-sheet h3{color:#11151C;line-height:1.2;margin:14px 0 7px}
-        #glueful-resume-export-sheet h1{font-size:23px}
-        #glueful-resume-export-sheet h2{font-size:17px}
-        #glueful-resume-export-sheet h3{font-size:14px}
+        #glueful-resume-export-sheet h1{font-size:23px} #glueful-resume-export-sheet h2{font-size:17px} #glueful-resume-export-sheet h3{font-size:14px}
         #glueful-resume-export-sheet p{margin:0 0 7px}
         #glueful-resume-export-sheet ul,#glueful-resume-export-sheet ol{margin:4px 0 8px;padding-left:24px}
         #glueful-resume-export-sheet li{margin:2px 0}
-        #glueful-resume-export-sheet a{color:#245BDB;text-decoration:underline}
       `;
       sheet.appendChild(style);
-      const content = document.createElement("div");
+
+      const content = document.createElement('div');
       content.innerHTML = getJobResumeEditorHtml();
       sheet.appendChild(content);
       document.body.appendChild(sheet);
@@ -10972,6 +10935,35 @@
       if(!editor || !d) return [];
 
       const children = [];
+
+      if(editor.classList.contains('pdf-structured-canvas')){
+        editor.querySelectorAll('.job-resume-pdf-page').forEach((page, pageIndex)=>{
+          const runs = Array.from(page.querySelectorAll('.job-resume-pdf-run')).sort((a,b)=>{
+            const ay=parseFloat(a.style.top||'0'), by=parseFloat(b.style.top||'0');
+            if(Math.abs(ay-by)>2) return ay-by;
+            return parseFloat(a.style.left||'0')-parseFloat(b.style.left||'0');
+          });
+          let line=[];
+          let lastTop=null;
+          const flush=()=>{
+            const value=line.join('').replace(/\u00a0/g,' ').trim();
+            if(value) children.push(new d.Paragraph({children:[new d.TextRun({text:value})],spacing:{after:70}}));
+            line=[];
+          };
+          runs.forEach(run=>{
+            const top=parseFloat(run.style.top||'0');
+            if(lastTop!==null && Math.abs(top-lastTop)>8) flush();
+            line.push(run.innerText || run.textContent || '');
+            lastTop=top;
+          });
+          flush();
+          if(pageIndex < editor.querySelectorAll('.job-resume-pdf-page').length-1){
+            children.push(new d.Paragraph({pageBreakBefore:true,children:[new d.TextRun({text:''})]}));
+          }
+        });
+        return children;
+      }
+
       const addParagraph = (element, options={}) => {
         children.push(new d.Paragraph({
           children:resumeEditorRunTextRuns(element),
@@ -11059,7 +11051,30 @@
       }
     }
 
+    function toggleJobResumeDownloadMenu(event){
+      event?.stopPropagation();
+      const wrap = document.getElementById('job-resume-download-wrap');
+      if(!wrap) return;
+      const open = wrap.classList.toggle('open');
+      const trigger = wrap.querySelector('.job-resume-download-trigger');
+      if(trigger) trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
+    function closeJobResumeDownloadMenu(){
+      const wrap = document.getElementById('job-resume-download-wrap');
+      if(!wrap) return;
+      wrap.classList.remove('open');
+      const trigger = wrap.querySelector('.job-resume-download-trigger');
+      if(trigger) trigger.setAttribute('aria-expanded','false');
+    }
+
+    document.addEventListener('click', event=>{
+      const wrap = document.getElementById('job-resume-download-wrap');
+      if(wrap && !wrap.contains(event.target)) closeJobResumeDownloadMenu();
+    });
+
     async function handleJobResumeDownload(format){
+      closeJobResumeDownloadMenu();
       if(format === "pdf") return downloadJobResumePdf();
       if(format === "docx") return downloadJobResumeDocx();
     }
@@ -11203,6 +11218,7 @@
     window.downloadJobResumePdf = downloadJobResumePdf;
     window.downloadJobResumeDocx = downloadJobResumeDocx;
     window.handleJobResumeDownload = handleJobResumeDownload;
+    window.toggleJobResumeDownloadMenu = toggleJobResumeDownloadMenu;
     window.openJobResumeEditor = openJobResumeEditor;
     window.openApplicationResume = openApplicationResume;
     window.applyFromJobResumeEditor = applyFromJobResumeEditor;
