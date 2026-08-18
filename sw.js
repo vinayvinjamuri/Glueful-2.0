@@ -1,5 +1,6 @@
 const CACHE_NAME = "glueful-cache-v2-resume-adobe";
 const AUTHORITATIVE_RESUME_SCRIPT = "./glueful-resume-studio-adobe.js";
+const DOCX_FORENSICS_SCRIPT = "./glueful-resume-docx-forensics.js";
 
 /* Do not precache index.html/root: those responses must pass through the
    network-first transformer below so deployments cannot be masked by a raw
@@ -7,6 +8,7 @@ const AUTHORITATIVE_RESUME_SCRIPT = "./glueful-resume-studio-adobe.js";
 const ASSETS = [
   "./manifest.json",
   "./glueful-resume-studio-adobe.js",
+  "./glueful-resume-docx-forensics.js",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
   "./icons/icon-180.png",
@@ -28,7 +30,7 @@ async function buildAuthoritativeIndex(request, preloadResponse) {
 
   const html = await response.text();
 
-  if (html.includes(AUTHORITATIVE_RESUME_SCRIPT)) {
+  if (html.includes(AUTHORITATIVE_RESUME_SCRIPT) && html.includes(DOCX_FORENSICS_SCRIPT)) {
     return new Response(html, {
       status: response.status,
       statusText: response.statusText,
@@ -36,11 +38,14 @@ async function buildAuthoritativeIndex(request, preloadResponse) {
     });
   }
 
-  const script = `<script src="${AUTHORITATIVE_RESUME_SCRIPT}" data-glueful-authoritative-resume-studio="1"></script>`;
+  const scripts = [
+    `<script src="${DOCX_FORENSICS_SCRIPT}" data-glueful-docx-forensics="1"></script>`,
+    `<script src="${AUTHORITATIVE_RESUME_SCRIPT}" data-glueful-authoritative-resume-studio="1"></script>`
+  ].join("\n");
   const marker = "</body>";
   const injected = html.includes(marker)
-    ? html.replace(marker, `${script}\n${marker}`)
-    : `${html}\n${script}`;
+    ? html.replace(marker, `${scripts}\n${marker}`)
+    : `${html}\n${scripts}`;
 
   const headers = new Headers(response.headers);
   headers.set("Content-Type", "text/html; charset=UTF-8");
@@ -105,8 +110,12 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  /* The authoritative controller is a versioned static asset. */
-  if (request.method === "GET" && url.pathname.endsWith("/glueful-resume-studio-adobe.js")) {
+  /* The authoritative controller and its diagnostics are versioned static assets. */
+  if (
+    request.method === "GET" &&
+    (url.pathname.endsWith("/glueful-resume-studio-adobe.js") ||
+     url.pathname.endsWith("/glueful-resume-docx-forensics.js"))
+  ) {
     event.respondWith((async () => {
       try {
         const response = await fetch(request, { cache: "no-store" });
