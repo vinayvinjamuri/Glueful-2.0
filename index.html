@@ -10572,17 +10572,171 @@
       }
     }
 
+    // Reconstructs a structured, editable document from a PDF master resume
+    // instead of flattening it to plain-text paragraphs. PDFs carry no
+    // native "heading"/"bullet" tags, so this infers structure from what a
+    // PDF *does* expose per text run: font size, bold/italic (from the
+    // resolved font name), x/y position, and link annotations. Two passes:
+    // pass 1 groups text items into lines per page and records every line's
+    // font size; pass 2 uses the document's most common ("body") font size
+    // as a baseline to classify each line as a heading, bullet, or
+    // paragraph text, and preserves bold/italic/links inline.
+    async function pdfToStructuredHtml(buffer){
+      if(!window.pdfjsLib) throw new Error("PDF parser is still loading.");
+      if(window.pdfjsLib.GlobalWorkerOptions){
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+          "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+      }
+      const pdf = await window.pdfjsLib.getDocument({data:buffer}).promise;
+
+      const pageLines = [];
+      const allSizes = [];
+
+      for(let pageNo=1; pageNo<=pdf.numPages; pageNo++){
+        const page = await pdf.getPage(pageNo);
+        const [content, annotations] = await Promise.all([
+          page.getTextContent(),
+          page.getAnnotations({intent:"display"}).catch(()=>[])
+        ]);
+
+        const linkRects = (annotations || [])
+          .filter(a => a && a.subtype === "Link" && (a.url || a.unsafeUrl) && Array.isArray(a.rect))
+          .map(a => ({rect:a.rect, url:a.url || a.unsafeUrl}));
+
+        const items = content.items
+          .filter(it => String(it.str || "").trim())
+          .map(it => {
+            const size = Math.abs(it.transform?.[3]) || Math.abs(it.transform?.[0]) || Number(it.height) || 10;
+            const rawFontName = String(it.fontName || "");
+            let resolvedFontName = rawFontName;
+            try{
+              const fontObj = page.commonObjs.get(it.fontName);
+              resolvedFontName = fontObj?.name || fontObj?.fallbackName || rawFontName;
+            }catch(e){}
+            const bold = /bold|black|heavy|semibold/i.test(resolvedFontName);
+            const italic = /italic|oblique/i.test(resolvedFontName);
+            const x = Number(it.transform?.[4] || 0);
+            const y = Number(it.transform?.[5] || 0);
+            let url = "";
+            for(const lr of linkRects){
+              const [rx1,ry1,rx2,ry2] = lr.rect;
+              if(x >= rx1-2 && x <= rx2+2 && y >= ry1-2 && y <= ry2+2){ url = lr.url; break; }
+            }
+            return {text:String(it.str).trim(), x, y, size, bold, italic, url};
+          });
+
+        const lines = [];
+        for(const it of items){
+          let line = lines.find(l => Math.abs(l.y - it.y) <= Math.max(2, it.size * 0.3));
+          if(!line){ line = {y:it.y, items:[]}; lines.push(line); }
+          line.items.push(it);
+        }
+        lines.sort((a,b) => b.y - a.y);
+        for(const line of lines){
+          line.items.sort((a,b) => a.x - b.x);
+          line.text = line.items.map(i => i.text).join(" ").replace(/\s+/g," ").trim();
+          line.size = Math.round(Math.max(...line.items.map(i => i.size)));
+          line.bold = line.items.filter(i => i.bold).length >= Math.max(1, line.items.length * 0.6);
+          line.x = Math.min(...line.items.map(i => i.x));
+          if(line.text) allSizes.push(line.size);
+        }
+        pageLines.push(lines.filter(l => l.text));
+      }
+
+      if(!pageLines.some(p => p.length)) return "";
+
+      const freq = {};
+      allSizes.forEach(s => { freq[s] = (freq[s] || 0) + 1; });
+      const bodySize = Number(Object.entries(freq).sort((a,b) => b[1]-a[1])[0]?.[0]) || 10;
+      const leftMargin = Math.min(...pageLines.flat().map(l => l.x));
+      const bulletRe = /^[•▪‣◦∙·●○\-\*]\s+/;
+
+      const lineToInlineHtml = (line) => line.items.map(it => {
+        let t = esc(it.text);
+        if(it.bold) t = `<strong>${t}</strong>`;
+        if(it.italic) t = `<em>${t}</em>`;
+        if(it.url){
+          try{
+            const parsed = new URL(it.url);
+            if(/^https?:$/.test(parsed.protocol)) t = `<a href="${esc(parsed.href)}">${t}</a>`;
+          }catch(e){}
+        }
+        return t;
+      }).join(" ").replace(/\s+/g," ").trim();
+
+      const html = [];
+      let paragraphBuffer = [];
+      const flushParagraph = () => {
+        if(paragraphBuffer.length){
+          html.push(`<p>${paragraphBuffer.join(" ")}</p>`);
+          paragraphBuffer = [];
+        }
+      };
+
+      pageLines.forEach((lines, pageIdx) => {
+        if(pageIdx > 0){
+          flushParagraph();
+          html.push('<p style="page-break-before:always"><br></p>');
+        }
+        let prevY = null;
+        lines.forEach(line => {
+          const sizeRatio = line.size / bodySize;
+          const gap = prevY === null ? 0 : Math.abs(prevY - line.y);
+          prevY = line.y;
+
+          if(bulletRe.test(line.text)){
+            flushParagraph();
+            const cleaned = lineToInlineHtml(line).replace(bulletRe, "");
+            const last = html[html.length - 1];
+            if(last && last.startsWith("<ul>")){
+              html[html.length - 1] = last.replace("</ul>", `<li>${cleaned}</li></ul>`);
+            }else{
+              html.push(`<ul><li>${cleaned}</li></ul>`);
+            }
+            return;
+          }
+
+          if(sizeRatio >= 1.55){
+            flushParagraph();
+            html.push(`<h1>${lineToInlineHtml(line)}</h1>`);
+          }else if(sizeRatio >= 1.25 || (line.bold && sizeRatio >= 1.05)){
+            flushParagraph();
+            html.push(`<h2>${lineToInlineHtml(line)}</h2>`);
+          }else if(line.bold && sizeRatio >= 0.95 && line.text.length < 70 && gap > bodySize * 0.9){
+            flushParagraph();
+            html.push(`<h3>${lineToInlineHtml(line)}</h3>`);
+          }else{
+            if(gap > bodySize * 1.6 && paragraphBuffer.length) flushParagraph();
+            paragraphBuffer.push(lineToInlineHtml(line));
+          }
+        });
+        flushParagraph();
+      });
+
+      return html.join("");
+    }
+
     async function getMasterResumeEditorHtml(masterText){
       // Prefer the actual uploaded master file. DOCX can be converted to
       // editable HTML while preserving headings, lists, emphasis and links.
+      // PDFs are reconstructed via pdfToStructuredHtml instead of being
+      // flattened to plain text.
       try{
         if(typeof ensureCandidateResumeCloudFile === "function"){
           const file = await ensureCandidateResumeCloudFile();
-          if(file && String(file.name || "").toLowerCase().endsWith(".docx") && window.mammoth){
+          const name = String(file?.name || "").toLowerCase();
+          if(file && name.endsWith(".docx") && window.mammoth){
             const buffer = await file.arrayBuffer();
             const result = await window.mammoth.convertToHtml({arrayBuffer:buffer});
             if(String(result?.value || "").trim()){
               return {html:result.value, imported:true};
+            }
+          }
+          if(file && name.endsWith(".pdf") && window.pdfjsLib){
+            const buffer = await file.arrayBuffer();
+            const structured = await pdfToStructuredHtml(buffer);
+            if(String(structured || "").trim()){
+              return {html:structured, imported:true};
             }
           }
         }
