@@ -8015,6 +8015,37 @@
     }
 
     async function downloadCandidateResumeFromCloud() {
+      if(!candidateResumeCloudMeta?.path) return null;
+
+      /*
+       * V45 FIX: use Supabase Storage's native download API first.
+       * The previous implementation generated a signed URL and then called
+       * fetch() on that URL. On some desktop/mobile browsers that could leave
+       * the Resume Studio waiting indefinitely, which produced a completely
+       * blank editor even though the master resume existed.
+       */
+      try {
+        const {data, error} = await supabaseClient.storage
+          .from(GLUEFUL_RESUME_BUCKET)
+          .download(candidateResumeCloudMeta.path);
+
+        if(!error && data) {
+          const file = new File([data], candidateResumeCloudMeta.name || 'Resume', {
+            type:candidateResumeCloudMeta.type || data.type || 'application/octet-stream',
+            lastModified:Date.now()
+          });
+          candidateResumePersisted = {
+            name:file.name,
+            size:file.size,
+            savedAt:candidateResumeCloudMeta.uploadedAt || ''
+          };
+          return file;
+        }
+      } catch(nativeDownloadError) {
+        console.warn('[Glueful Resume] native Storage download failed; trying signed URL fallback.', nativeDownloadError);
+      }
+
+      /* Keep the signed-URL route as a compatibility fallback. */
       const url = await getCandidateResumeSignedUrl();
       const response = await fetch(url, {cache:'no-store'});
       if(!response.ok) throw new Error(`Resume download failed (${response.status}).`);
@@ -11304,22 +11335,34 @@
     }
 
     async function getMasterResumeEditorHtml(masterText){
-      // Prefer the actual uploaded master file. DOCX can be converted to
-      // editable HTML while preserving headings, lists, emphasis and links.
-      // PDFs are reconstructed via pdfToStructuredHtml instead of being
-      // flattened to plain text.
+      // Prefer the actual uploaded master file. The lookup order is deliberately
+      // resilient: in-memory file -> cloud file -> local device cache.
+      // This prevents Resume Studio from becoming blank when one storage path
+      // is temporarily unavailable.
       try{
-        if(typeof ensureCandidateResumeCloudFile === "function"){
-          const file = await ensureCandidateResumeCloudFile();
+        let file = candidateResumeFile || null;
+
+        if(!file && typeof ensureCandidateResumeCloudFile === "function"){
+          file = await ensureCandidateResumeCloudFile();
+        }
+
+        if(!file && typeof loadCandidateResumeFromDevice === "function"){
+          try{ file = await loadCandidateResumeFromDevice(); }catch(localError){
+            console.warn("[Glueful Resume Editor] local resume cache unavailable:", localError);
+          }
+        }
+
+        if(file){
           const name = String(file?.name || "").toLowerCase();
-          if(file && name.endsWith(".docx") && window.mammoth){
+          if(name.endsWith(".docx") && window.mammoth){
             const buffer = await file.arrayBuffer();
             const result = await window.mammoth.convertToHtml({arrayBuffer:buffer});
             if(String(result?.value || "").trim()){
               return {html:result.value, imported:true};
             }
           }
-          if(file && name.endsWith(".pdf") && window.pdfjsLib){
+
+          if(name.endsWith(".pdf") && window.pdfjsLib){
             const buffer = await file.arrayBuffer();
             const structured = await pdfToStructuredHtml(buffer);
             if(String(structured || "").trim()){
@@ -11328,9 +11371,9 @@
           }
         }
       }catch(error){
-        console.warn("[Glueful Resume Editor] master visual import failed:", error);
+        console.warn("[Glueful Resume Editor] master visual import failed; using editable text fallback:", error);
       }
-      return {html:resumeTextToEditorHtml(masterText), imported:false};
+      return {html:resumeTextToEditorHtml(masterText), imported:false, native:false};
     }
 
     async function openJobResumeEditor(id){
@@ -11367,19 +11410,36 @@
       const base = master || buildProfileResumeFallback();
 
       if(editor){
-        const imported = await getMasterResumeEditorHtml(base);
-        editor.innerHTML = imported.html;
-        editor.classList.toggle("job-resume-master-imported", !!imported.imported);
-        editor.classList.toggle("pdf-structured-canvas", !!imported.imported && /<div class="job-resume-pdf-pages/.test(imported.html));
-        editor.classList.toggle("pdf-native-canvas", !!imported.native);
-        editor.contentEditable = imported.native ? "false" : "true";
-        if(imported.native && window.gluefulPdfNativeMarkRuns) window.gluefulPdfNativeMarkRuns(editor);
+        /* V45: never leave the editor blank while the original file is loading.
+         * Paint a usable fallback immediately, then replace it with the exact
+         * PDF/DOCX representation when the source file finishes loading. */
+        editor.innerHTML = base
+          ? resumeTextToEditorHtml(base)
+          : '<p style="padding:40px;text-align:center;color:#777">Loading your master resume…</p>';
+        editor.classList.remove("job-resume-master-imported","pdf-structured-canvas","pdf-native-canvas");
+        editor.contentEditable = "true";
+
+        if(noteEl) noteEl.textContent = "Loading your master resume…";
+
+        try{
+          const imported = await getMasterResumeEditorHtml(base);
+          if(imported?.html && editor.isConnected){
+            editor.innerHTML = imported.html;
+            editor.classList.toggle("job-resume-master-imported", !!imported.imported);
+            editor.classList.toggle("pdf-structured-canvas", !!imported.imported && /<div class="job-resume-pdf-pages/.test(imported.html));
+            editor.classList.toggle("pdf-native-canvas", !!imported.native);
+            editor.contentEditable = imported.native ? "false" : "true";
+            if(imported.native && window.gluefulPdfNativeMarkRuns) window.gluefulPdfNativeMarkRuns(editor);
+          }
+        }catch(importError){
+          console.warn("[Glueful Resume Editor] async master import failed; keeping fallback editor:", importError);
+        }
       }
 
       if(noteEl){
         noteEl.textContent = master
-          ? "Loaded from your Candidate Profile master resume. This job-specific copy is temporary and is never written back to the master."
-          : "No readable master resume is available yet. Upload one in Candidate Profile.";
+          ? "Master resume loaded. Your job-specific copy is temporary and is never written back to the master."
+          : "Loading the original master resume…";
       }
 
       updateJobResumeEditorAts();
@@ -19382,7 +19442,7 @@ document.addEventListener("click", (event)=>{
 </script>\n
 <style id="glueful-v44-pdf-native-word-ui">
 /* =========================================================
-   GLUEFUL V44 — PDF-NATIVE RESUME STUDIO
+   GLUEFUL V45 — PDF-NATIVE RESUME STUDIO
    The master PDF is the visual source of truth.
    ========================================================= */
 
