@@ -4570,487 +4570,340 @@
 </style>
 
 
-<style id="glueful-v40-premium-resume-studio">
+<style id="glueful-v42-wordstyle-resume-studio">
 /* =========================================================
-   GLUEFUL V40 — PREMIUM RESUME STUDIO
-   Integrated directly into index_v40.
-   No changes to the master-resume persistence model.
+   GLUEFUL V42 — WORD-STYLE RESUME STUDIO
+   Desktop: true document workspace.
+   Mobile: responsive document workspace.
+   The editor itself stays A4/Word-like; the surrounding app chrome
+   is kept compact so the resume gets the majority of the viewport.
    ========================================================= */
 
-@media (min-width: 701px) {
-  #job-resume-editor-modal {
-    padding: 0 !important;
-    align-items: stretch !important;
-    justify-content: stretch !important;
-  }
-
-  #job-resume-editor-modal .job-resume-editor-card {
-    width: 100vw !important;
-    max-width: none !important;
-    height: 100vh !important;
-    max-height: none !important;
-    min-height: 0 !important;
-    border-radius: 0 !important;
-    border: 0 !important;
-    box-shadow: none !important;
-  }
-
-  #job-resume-editor-modal .modal-header {
-    flex: 0 0 64px !important;
-    min-height: 64px !important;
-    padding: 0 24px !important;
-  }
-
-  #job-resume-editor-modal .job-resume-editor-scroll {
-    flex: 1 1 auto !important;
-    min-height: 0 !important;
-    overflow: auto !important;
-    padding: 18px 32px 90px !important;
-    -webkit-overflow-scrolling: touch !important;
-    overscroll-behavior: contain !important;
-  }
-
-  #job-resume-editor-modal .job-resume-editor-job,
-  #job-resume-editor-modal .job-ats-editor-panel,
-  #job-resume-editor-modal .job-resume-master-note {
-    width: min(1100px, 100%) !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-  }
-
-  #job-resume-editor-modal .job-resume-editor-job {
-    margin-bottom: 10px !important;
-  }
-
-  #job-resume-editor-modal .job-ats-editor-panel {
-    margin-top: 0 !important;
-    margin-bottom: 10px !important;
-  }
-
-  #job-resume-editor-modal .job-resume-master-note {
-    margin-top: 0 !important;
-    margin-bottom: 10px !important;
-  }
-
-  #job-resume-editor-modal .job-resume-toolbar {
-    position: sticky !important;
-    top: 0 !important;
-    z-index: 40 !important;
-    width: min(1100px, 100%) !important;
-    margin: 0 auto !important;
-    flex-wrap: nowrap !important;
-    overflow-x: auto !important;
-    scrollbar-width: thin !important;
-    border-radius: 12px !important;
-  }
-
-  #job-resume-editor-modal .job-resume-editor-page {
-    width: min(900px, 100%) !important;
-    min-height: 1273px !important;
-    margin: 18px auto 40px !important;
-    padding: 72px 82px !important;
-    border-radius: 2px !important;
-    box-shadow: 0 22px 60px rgba(0,0,0,.34) !important;
-  }
-
-  #job-resume-editor-modal .job-resume-editor-page.pdf-structured-canvas {
-    width: min(900px, 100%) !important;
-    padding: 0 !important;
-    min-height: 0 !important;
-    box-shadow: none !important;
-  }
-
-  #job-resume-editor-modal .job-resume-pdf-page {
-    width: 100% !important;
-  }
-
-  #job-resume-editor-modal .job-resume-editor-actions {
-    flex: 0 0 72px !important;
-    min-height: 72px !important;
-    grid-template-columns: 220px minmax(240px,320px) minmax(180px,260px) !important;
-    align-items: center !important;
-    gap: 10px !important;
-    padding: 10px 22px !important;
-  }
-
-  #job-resume-editor-modal .job-resume-apply-btn {
-    grid-column: auto !important;
-  }
-
-  #job-resume-editor-modal .job-resume-download-wrap {
-    grid-column: auto !important;
-  }
+#job-resume-editor-modal .job-resume-editor-card{
+  background:#151922 !important;
 }
 
-@media (max-width: 700px) {
-  #job-resume-editor-modal {
-    padding: 0 !important;
-    align-items: stretch !important;
-    justify-content: stretch !important;
+@media (min-width:701px){
+  #job-resume-editor-modal{
+    padding:0 !important;
+    align-items:stretch !important;
+    justify-content:stretch !important;
+    background:#10131A !important;
   }
 
-  #job-resume-editor-modal .job-resume-editor-card {
-    width: 100vw !important;
-    max-width: none !important;
-    height: 100dvh !important;
-    max-height: none !important;
-    border-radius: 0 !important;
-    border: 0 !important;
-    overflow: hidden !important;
+  #job-resume-editor-modal .job-resume-editor-card{
+    width:100vw !important;
+    max-width:none !important;
+    height:100vh !important;
+    max-height:none !important;
+    min-height:0 !important;
+    border:0 !important;
+    border-radius:0 !important;
+    box-shadow:none !important;
   }
 
-  #job-resume-editor-modal .modal-header {
-    flex: 0 0 58px !important;
-    min-height: 58px !important;
-    padding: 0 12px !important;
+  #job-resume-editor-modal .modal-header{
+    flex:0 0 58px !important;
+    min-height:58px !important;
+    padding:0 22px !important;
+    background:#11151D !important;
   }
 
-  #job-resume-editor-modal .modal-title {
-    font-size: 15px !important;
+  #job-resume-editor-modal .job-resume-editor-scroll{
+    flex:1 1 auto !important;
+    min-height:0 !important;
+    overflow:auto !important;
+    padding:0 0 86px !important;
+    background:#20242C !important;
+    -webkit-overflow-scrolling:touch !important;
+    overscroll-behavior:contain !important;
   }
 
-  #job-resume-editor-modal .modal-subtitle {
-    font-size: 9px !important;
+  /* Compact Word-like document context row. */
+  #job-resume-editor-modal .job-resume-editor-job{
+    width:100% !important;
+    margin:0 !important;
+    min-height:48px !important;
+    padding:7px 22px !important;
+    border:0 !important;
+    border-bottom:1px solid #303642 !important;
+    border-radius:0 !important;
+    background:#181C24 !important;
   }
 
-  /* Mobile is document-first: job metadata and ATS stay out of the editing
-     viewport so the resume gets maximum screen real estate. */
+  #job-resume-editor-modal .job-resume-editor-job .company-logo-wrap{
+    width:32px !important;
+    height:32px !important;
+    flex-basis:32px !important;
+    border-radius:8px !important;
+  }
+
+  #job-resume-editor-modal .job-resume-editor-job-title{font-size:12px !important}
+  #job-resume-editor-modal .job-resume-editor-job-company{font-size:9px !important}
+
+  #job-resume-editor-modal .job-ats-editor-panel{
+    width:100% !important;
+    margin:0 !important;
+    padding:6px 22px !important;
+    min-height:42px !important;
+    border:0 !important;
+    border-bottom:1px solid #303642 !important;
+    border-radius:0 !important;
+    background:#171B24 !important;
+  }
+  #job-resume-editor-modal .job-ats-editor-score{font-size:18px !important}
+  #job-resume-editor-modal .job-ats-editor-note{max-width:none !important;font-size:9px !important}
+
+  #job-resume-editor-modal .job-resume-master-note{
+    width:100% !important;
+    margin:0 !important;
+    padding:6px 22px !important;
+    min-height:34px !important;
+    border:0 !important;
+    border-bottom:1px solid #303642 !important;
+    border-radius:0 !important;
+    background:#141820 !important;
+    font-size:9px !important;
+  }
+
+  /* Toolbar spans the workspace, like Word's editing ribbon/tool strip. */
+  #job-resume-editor-modal .job-resume-toolbar{
+    position:sticky !important;
+    top:0 !important;
+    z-index:40 !important;
+    width:100% !important;
+    margin:0 !important;
+    min-height:52px !important;
+    padding:8px 18px !important;
+    flex-wrap:nowrap !important;
+    overflow-x:auto !important;
+    border:0 !important;
+    border-bottom:1px solid #353B47 !important;
+    border-radius:0 !important;
+    background:rgba(20,24,32,.97) !important;
+    box-shadow:0 5px 16px rgba(0,0,0,.22) !important;
+    scrollbar-width:thin !important;
+  }
+
+  #job-resume-editor-modal .job-resume-tool,
+  #job-resume-editor-modal .job-resume-tool-select{
+    height:36px !important;
+  }
+
+  /* The actual document: A4 proportions and Word-like white page. */
+  #job-resume-editor-modal .job-resume-editor-page:not(.pdf-structured-canvas){
+    width:794px !important;
+    min-height:1123px !important;
+    margin:28px auto 48px !important;
+    padding:58px 60px !important;
+    border:1px solid #D7DCE5 !important;
+    border-radius:0 !important;
+    background:#fff !important;
+    color:#161616 !important;
+    box-shadow:0 14px 38px rgba(0,0,0,.34) !important;
+    font-family:"Times New Roman",Times,serif !important;
+    font-size:14px !important;
+    line-height:1.38 !important;
+  }
+
+  #job-resume-editor-modal .job-resume-editor-page:not(.pdf-structured-canvas) p{
+    margin:0 0 8px !important;
+  }
+  #job-resume-editor-modal .job-resume-editor-page:not(.pdf-structured-canvas) h1{
+    font-size:22px !important;
+    margin:0 0 5px !important;
+  }
+  #job-resume-editor-modal .job-resume-editor-page:not(.pdf-structured-canvas) h2{
+    font-size:14px !important;
+    margin:15px 0 5px !important;
+  }
+  #job-resume-editor-modal .job-resume-editor-page:not(.pdf-structured-canvas) h3{
+    font-size:13px !important;
+    margin:11px 0 4px !important;
+  }
+
+  /* PDF masters are converted to clean Word-style editable HTML in V42. */
+  #job-resume-editor-modal .job-resume-editor-page.pdf-structured-canvas{
+    width:794px !important;
+    min-height:1123px !important;
+    margin:28px auto 48px !important;
+    padding:58px 60px !important;
+    border:1px solid #D7DCE5 !important;
+    border-radius:0 !important;
+    background:#fff !important;
+    color:#161616 !important;
+    box-shadow:0 14px 38px rgba(0,0,0,.34) !important;
+    font-family:"Times New Roman",Times,serif !important;
+    font-size:14px !important;
+    line-height:1.38 !important;
+    overflow:visible !important;
+  }
+
+  #job-resume-editor-modal .job-resume-pdf-pages{
+    width:100% !important;
+  }
+
+  #job-resume-editor-modal .job-resume-pdf-page{
+    position:static !important;
+    width:100% !important;
+    min-height:0 !important;
+    height:auto !important;
+    margin:0 !important;
+    border:0 !important;
+    box-shadow:none !important;
+    background:transparent !important;
+    overflow:visible !important;
+  }
+
+  #job-resume-editor-modal .job-resume-pdf-run{
+    position:static !important;
+    display:block !important;
+    width:auto !important;
+    height:auto !important;
+    margin:0 0 7px !important;
+    padding:0 !important;
+    white-space:normal !important;
+    overflow:visible !important;
+    line-height:1.38 !important;
+    font-family:"Times New Roman",Times,serif !important;
+    font-size:14px !important;
+    color:#161616 !important;
+  }
+
+  #job-resume-editor-modal .job-resume-editor-actions{
+    flex:0 0 64px !important;
+    min-height:64px !important;
+    grid-template-columns:220px 300px minmax(180px,260px) !important;
+    align-items:center !important;
+    gap:10px !important;
+    padding:8px 18px !important;
+    background:#11151D !important;
+    border-top:1px solid #303642 !important;
+  }
+  #job-resume-editor-modal .job-resume-apply-btn{grid-column:auto !important}
+  #job-resume-editor-modal .job-resume-download-wrap{grid-column:auto !important}
+}
+
+@media (max-width:700px){
+  #job-resume-editor-modal{
+    padding:0 !important;
+    align-items:stretch !important;
+    justify-content:stretch !important;
+  }
+  #job-resume-editor-modal .job-resume-editor-card{
+    width:100vw !important;
+    height:100dvh !important;
+    max-height:none !important;
+    border:0 !important;
+    border-radius:0 !important;
+  }
+  #job-resume-editor-modal .modal-header{
+    flex:0 0 56px !important;
+    min-height:56px !important;
+    padding:0 12px !important;
+  }
+  #job-resume-editor-modal .job-resume-editor-scroll{
+    padding:0 0 132px !important;
+    background:#20242C !important;
+  }
   #job-resume-editor-modal .job-resume-editor-job,
   #job-resume-editor-modal .job-ats-editor-panel,
-  #job-resume-editor-modal .job-resume-master-note {
-    display: none !important;
+  #job-resume-editor-modal .job-resume-master-note{
+    display:none !important;
   }
-
-  #job-resume-editor-modal .job-resume-editor-scroll {
-    padding: 10px 8px 142px !important;
-    overflow: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    overscroll-behavior: contain !important;
-    touch-action: pan-y !important;
+  #job-resume-editor-modal .job-resume-toolbar{
+    position:fixed !important;
+    left:0 !important;
+    right:0 !important;
+    bottom:70px !important;
+    top:auto !important;
+    z-index:10050 !important;
+    width:100vw !important;
+    min-height:56px !important;
+    margin:0 !important;
+    padding:7px 8px !important;
+    flex-wrap:nowrap !important;
+    overflow-x:auto !important;
+    border-radius:0 !important;
+    border-left:0 !important;
+    border-right:0 !important;
+    box-shadow:0 -10px 28px rgba(0,0,0,.35) !important;
   }
-
-  #job-resume-editor-modal .job-resume-toolbar {
-    position: fixed !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 70px !important;
-    top: auto !important;
-    z-index: 10050 !important;
-    width: 100vw !important;
-    min-height: 58px !important;
-    margin: 0 !important;
-    padding: 7px 8px !important;
-    border-radius: 0 !important;
-    border-left: 0 !important;
-    border-right: 0 !important;
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
-    flex-wrap: nowrap !important;
-    scrollbar-width: none !important;
-    box-shadow: 0 -12px 32px rgba(0,0,0,.38) !important;
+  #job-resume-editor-modal .job-resume-editor-page:not(.pdf-structured-canvas){
+    width:calc(100vw - 20px) !important;
+    min-height:1123px !important;
+    margin:12px auto 28px !important;
+    padding:46px 30px 70px !important;
+    border-radius:0 !important;
+    font-family:"Times New Roman",Times,serif !important;
+    font-size:12px !important;
+    line-height:1.42 !important;
   }
-
-  #job-resume-editor-modal .job-resume-toolbar::-webkit-scrollbar {
-    display: none;
+  #job-resume-editor-modal .job-resume-editor-page.pdf-structured-canvas{
+    width:calc(100vw - 20px) !important;
+    min-height:0 !important;
+    margin:12px auto 28px !important;
+    padding:46px 30px 70px !important;
+    border:1px solid #D7DCE5 !important;
+    background:#fff !important;
+    box-shadow:0 12px 30px rgba(0,0,0,.3) !important;
   }
-
-  #job-resume-editor-modal .job-resume-tool {
-    flex: 0 0 auto !important;
-    min-width: 42px !important;
-    height: 44px !important;
-    padding: 0 10px !important;
-    font-size: 12px !important;
+  #job-resume-editor-modal .job-resume-pdf-page{
+    position:static !important;
+    width:100% !important;
+    height:auto !important;
+    min-height:0 !important;
+    margin:0 !important;
+    border:0 !important;
+    box-shadow:none !important;
+    background:transparent !important;
   }
-
-  #job-resume-editor-modal .job-resume-tool-select {
-    flex: 0 0 auto !important;
-    height: 44px !important;
-    min-width: 88px !important;
-    max-width: 112px !important;
+  #job-resume-editor-modal .job-resume-pdf-run{
+    position:static !important;
+    display:block !important;
+    width:auto !important;
+    margin:0 0 6px !important;
+    white-space:normal !important;
+    line-height:1.42 !important;
+    font-family:"Times New Roman",Times,serif !important;
+    font-size:12px !important;
   }
-
-  #job-resume-editor-modal .job-resume-tool-divider {
-    flex: 0 0 1px !important;
-    height: 28px !important;
+  #job-resume-editor-modal .job-resume-editor-actions{
+    position:fixed !important;
+    left:0 !important;
+    right:0 !important;
+    bottom:0 !important;
+    z-index:10051 !important;
+    height:70px !important;
+    min-height:70px !important;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
+    padding:7px 9px max(7px,env(safe-area-inset-bottom)) !important;
+    gap:7px !important;
   }
-
-  #job-resume-editor-modal .job-resume-editor-page {
-    width: calc(100vw - 16px) !important;
-    min-height: 1123px !important;
-    margin: 2px auto 26px !important;
-    padding: 48px 30px 72px !important;
-    font-size: 11px !important;
-    line-height: 1.5 !important;
-    border-radius: 2px !important;
-    box-shadow: 0 14px 38px rgba(0,0,0,.32) !important;
-  }
-
-  #job-resume-editor-modal .job-resume-editor-page.pdf-structured-canvas {
-    width: calc(100vw - 16px) !important;
-    min-height: 0 !important;
-    padding: 0 !important;
-    margin-top: 2px !important;
-    box-shadow: none !important;
-  }
-
-  #job-resume-editor-modal .job-resume-pdf-page {
-    width: 100% !important;
-    margin-bottom: 16px !important;
-    box-shadow: 0 12px 32px rgba(0,0,0,.28) !important;
-  }
-
-  #job-resume-editor-modal .job-resume-editor-actions {
-    position: fixed !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    z-index: 10051 !important;
-    height: 70px !important;
-    min-height: 70px !important;
-    grid-template-columns: minmax(0,1fr) minmax(0,1fr) !important;
-    gap: 7px !important;
-    padding: 7px 9px max(7px, env(safe-area-inset-bottom)) !important;
-  }
-
-  #job-resume-editor-modal .job-resume-editor-actions .secondary-btn {
-    display: none !important;
-  }
-
+  #job-resume-editor-modal .job-resume-editor-actions .secondary-btn{display:none !important}
   #job-resume-editor-modal .job-resume-download-wrap,
-  #job-resume-editor-modal .job-resume-apply-btn {
-    grid-column: auto !important;
-    min-width: 0 !important;
-  }
-
+  #job-resume-editor-modal .job-resume-apply-btn{grid-column:auto !important;min-width:0 !important}
   #job-resume-editor-modal .job-resume-download-trigger,
-  #job-resume-editor-modal .job-resume-apply-btn {
-    width: 100% !important;
-    min-height: 52px !important;
-  }
-
-  #job-resume-editor-modal .job-resume-download-menu {
-    position: fixed !important;
-    left: 9px !important;
-    right: 9px !important;
-    bottom: 77px !important;
-    width: auto !important;
-  }
-
-  #job-resume-editor-modal .job-resume-download-option {
-    min-height: 52px !important;
-  }
+  #job-resume-editor-modal .job-resume-apply-btn{width:100% !important;min-height:52px !important}
 }
 
-/* Premium editor interaction polish */
-#job-resume-editor-modal .job-resume-editor-page {
-  caret-color: #6D3BE8;
-  -webkit-user-select: text;
-  user-select: text;
-}
-
-#job-resume-editor-modal .job-resume-editor-page:focus {
-  outline: none !important;
-}
-
-#job-resume-editor-modal .job-resume-tool:focus-visible,
-#job-resume-editor-modal .job-resume-tool-select:focus-visible,
-#job-resume-editor-modal .job-resume-download-trigger:focus-visible,
-#job-resume-editor-modal .job-resume-apply-btn:focus-visible {
-  outline: 2px solid #8B6BF0 !important;
-  outline-offset: 2px !important;
-}
-
-.glueful-editor-extra {
-  flex: 0 0 auto;
-}
-
-.glueful-editor-color {
-  flex: 0 0 42px;
-  width: 42px;
-  height: 34px;
-  padding: 3px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface);
-  cursor: pointer;
-}
-
-@media (max-width:700px) {
-  .glueful-editor-color {
-    height: 44px;
-    width: 44px;
-    flex-basis: 44px;
-  }
-}
-
-/* =============================================================
-   GLUEFUL V41 — WORD-STYLE RESUME STUDIO / RESPONSIVE DOCUMENT
-   -------------------------------------------------------------
-   Regression-safe presentation layer for the existing editor:
-   - Desktop opens as a true full-window document workspace.
-   - Resume uses a stable A4 coordinate system (794 x 1123 CSS px).
-   - The document is centered like Word instead of being pushed to one side.
-   - Imported PDF text keeps its original relative positions.
-   - Mobile scales the complete A4 page uniformly instead of squeezing
-     individual text runs, preventing overlap/misalignment.
-   - Existing Supabase, ATS, Apply, download, and master-resume logic is
-     intentionally left untouched.
-============================================================= */
-#job-resume-editor-modal .job-resume-editor-scroll {
-  background: #252525 !important;
-}
-
-#job-resume-editor-modal .job-resume-editor-scroll > * {
-  max-width: 1100px;
-}
-
-#job-resume-editor-modal .job-resume-toolbar {
-  background: rgba(32,32,32,.96) !important;
-  border-color: rgba(255,255,255,.14) !important;
-  box-shadow: 0 8px 22px rgba(0,0,0,.28) !important;
-}
-
-#job-resume-editor-modal .job-resume-editor-page:not(.pdf-structured-canvas) {
-  width: 794px !important;
-  min-height: 1123px !important;
-  max-width: 794px !important;
-  margin: 22px auto 46px !important;
-  padding: 56px 58px !important;
-  border: 1px solid #cfd4dc !important;
-  border-radius: 0 !important;
-  background: #fff !important;
-  color: #151515 !important;
-  box-shadow: 0 18px 42px rgba(0,0,0,.36) !important;
-  font-family: Arial, Helvetica, sans-serif !important;
-  font-size: 13px !important;
-  line-height: 1.45 !important;
-  overflow: visible !important;
-}
-
-#job-resume-editor-modal .job-resume-editor-page:not(.pdf-structured-canvas) h1 {
-  font-size: 22px !important;
-  line-height: 1.18 !important;
-}
-#job-resume-editor-modal .job-resume-editor-page:not(.pdf-structured-canvas) h2 {
-  font-size: 16px !important;
-  line-height: 1.2 !important;
-}
-#job-resume-editor-modal .job-resume-editor-page:not(.pdf-structured-canvas) h3 {
-  font-size: 14px !important;
-  line-height: 1.2 !important;
-}
-
-#job-resume-editor-modal .job-resume-editor-page.pdf-structured-canvas {
-  width: 100% !important;
-  max-width: 100% !important;
-  min-height: 0 !important;
-  margin: 0 auto 46px !important;
-  padding: 0 !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  overflow: visible !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-}
-
-#job-resume-editor-modal .job-resume-pdf-pages {
-  width: 794px !important;
-  max-width: none !important;
-  margin: 22px auto 0 !important;
-  transform-origin: top center !important;
-  zoom: var(--glueful-pdf-zoom, 1) !important;
-}
-
-#job-resume-editor-modal .job-resume-pdf-page {
-  width: 794px !important;
-  min-width: 794px !important;
-  max-width: 794px !important;
-  background: #fff !important;
-  border: 1px solid #cfd4dc !important;
-  border-radius: 0 !important;
-  box-shadow: 0 18px 42px rgba(0,0,0,.36) !important;
-  margin: 0 auto 24px !important;
-}
-
-#job-resume-editor-modal .job-resume-pdf-run {
-  -webkit-user-select: text !important;
-  user-select: text !important;
-}
-
-#job-resume-editor-modal .job-resume-editor-scroll {
-  scrollbar-gutter: stable;
-}
-
-#job-resume-editor-modal .word-align {
-  display:flex !important;
-  flex-direction:column !important;
-  justify-content:center !important;
-  gap:3px !important;
-}
-#job-resume-editor-modal .word-align span {
-  display:block;
-  height:2px;
-  border-radius:2px;
-  background:currentColor;
-}
-#job-resume-editor-modal .word-align-left span:nth-child(1),
-#job-resume-editor-modal .word-align-left span:nth-child(2),
-#job-resume-editor-modal .word-align-left span:nth-child(3){width:15px;margin-left:0}
-#job-resume-editor-modal .word-align-center span:nth-child(1),
-#job-resume-editor-modal .word-align-center span:nth-child(2),
-#job-resume-editor-modal .word-align-center span:nth-child(3){width:15px;margin-left:auto;margin-right:auto}
-#job-resume-editor-modal .word-align-right span:nth-child(1),
-#job-resume-editor-modal .word-align-right span:nth-child(2),
-#job-resume-editor-modal .word-align-right span:nth-child(3){width:15px;margin-left:auto}
-
-
-@media (min-width: 701px) {
-  #job-resume-editor-modal .job-resume-editor-scroll {
-    padding: 18px 32px 84px !important;
-  }
-
-  #job-resume-editor-modal .job-resume-toolbar {
-    max-width: 1100px !important;
-  }
-
-  #job-resume-editor-modal .job-resume-editor-page:not(.pdf-structured-canvas) {
-    margin-top: 22px !important;
-  }
-}
-
-@media (max-width: 700px) {
-  #job-resume-editor-modal .job-resume-editor-scroll {
-    background: #252525 !important;
-    padding: 8px 8px 142px !important;
-  }
-
-  #job-resume-editor-modal .job-resume-editor-page:not(.pdf-structured-canvas) {
-    width: 100% !important;
-    max-width: 100% !important;
-    min-height: 0 !important;
-    margin: 8px auto 28px !important;
-    padding: 34px 28px !important;
-    font-size: 11px !important;
-    line-height: 1.42 !important;
-  }
-
-  #job-resume-editor-modal .job-resume-pdf-pages {
-    margin-top: 8px !important;
-  }
-
-  #job-resume-editor-modal .job-resume-pdf-page {
-    margin-bottom: 16px !important;
-    box-shadow: 0 12px 28px rgba(0,0,0,.30) !important;
-  }
-}
+#job-resume-editor-modal .job-resume-editor-page{caret-color:#6D3BE8;user-select:text;-webkit-user-select:text}
+#job-resume-editor-modal .job-resume-editor-page:focus{outline:none !important}
 </style>
 
 </head>
 
 
+
+<style id="glueful-v42-resume-import-polish">
+#job-resume-editor-modal .resume-import-line{display:block;margin:0 0 6px;line-height:1.38;min-height:1em}
+#job-resume-editor-modal .resume-import-heading{margin-top:13px;margin-bottom:5px;letter-spacing:.01em}
+#job-resume-editor-modal .resume-import-bullet{display:flex;gap:8px;margin-bottom:4px;padding-left:8px}
+#job-resume-editor-modal .resume-import-bullet-mark{flex:0 0 10px}
+#glueful-resume-export-sheet .resume-import-line{display:block;margin:0 0 6px;line-height:1.38}
+#glueful-resume-export-sheet .resume-import-heading{margin-top:13px;margin-bottom:5px}
+#glueful-resume-export-sheet .resume-import-bullet{display:flex;gap:8px;margin-bottom:4px;padding-left:8px}
+</style>
 <body>
 
   <!-- =====================================================
@@ -6212,9 +6065,9 @@
           <button class="job-resume-tool" type="button" onclick="resumeEditorCommand('insertUnorderedList')" title="Bulleted list">• List</button>
           <button class="job-resume-tool" type="button" onclick="resumeEditorCommand('insertOrderedList')" title="Numbered list">1. List</button>
           <span class="job-resume-tool-divider"></span>
-          <button class="job-resume-tool word-align word-align-left" type="button" onclick="resumeEditorCommand('justifyLeft')" title="Align left"><span></span><span></span><span></span></button>
-          <button class="job-resume-tool word-align word-align-center" type="button" onclick="resumeEditorCommand('justifyCenter')" title="Center"><span></span><span></span><span></span></button>
-          <button class="job-resume-tool word-align word-align-right" type="button" onclick="resumeEditorCommand('justifyRight')" title="Align right"><span></span><span></span><span></span></button>
+          <button class="job-resume-tool" type="button" onclick="resumeEditorCommand('justifyLeft')" title="Align left">≡</button>
+          <button class="job-resume-tool" type="button" onclick="resumeEditorCommand('justifyCenter')" title="Center">≡</button>
+          <button class="job-resume-tool" type="button" onclick="resumeEditorCommand('justifyRight')" title="Align right">≡</button>
           <button class="job-resume-tool" type="button" onclick="resumeEditorInsertLink()" title="Insert link">Link</button>
           <button class="job-resume-tool" type="button" onclick="resumeEditorCommand('undo')" title="Undo">↶</button>
           <button class="job-resume-tool" type="button" onclick="resumeEditorCommand('redo')" title="Redo">↷</button>
@@ -11089,73 +10942,108 @@
         window.pdfjsLib.GlobalWorkerOptions.workerSrc =
           "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
       }
+
       const pdf = await window.pdfjsLib.getDocument({data:buffer}).promise;
-      const pages = [];
-      const targetWidth = 794;
+      const pageHtml = [];
 
       for(let pageNo=1; pageNo<=pdf.numPages; pageNo++){
         const page = await pdf.getPage(pageNo);
         const viewport = page.getViewport({scale:1});
-        const scale = targetWidth / viewport.width;
-        const pageWidth = viewport.width * scale;
-        const pageHeight = viewport.height * scale;
         const content = await page.getTextContent({includeMarkedContent:true});
-        const annotations = await page.getAnnotations({intent:"display"}).catch(()=>[]);
-        const links = (annotations || [])
-          .filter(a => a && a.subtype === "Link" && (a.url || a.unsafeUrl) && Array.isArray(a.rect))
-          .map(a => ({rect:a.rect,url:a.url || a.unsafeUrl}));
 
-        const items = content.items
-          .filter(it => String(it.str || '').length)
+        const raw = content.items
+          .filter(it => String(it.str || '').trim().length)
           .map(it => {
             const transform = it.transform || [1,0,0,1,0,0];
-            const fontSize = Math.max(5, Math.abs(Number(transform[3] || transform[0] || it.height || 10)));
+            const fontSize = Math.max(6, Math.abs(Number(transform[3] || transform[0] || it.height || 10)));
             const x = Number(transform[4] || 0);
             const y = Number(transform[5] || 0);
-            const height = Math.max(fontSize, Number(it.height || fontSize));
             const width = Math.max(0, Number(it.width || 0));
-            let resolvedFont = String(it.fontName || '');
+            let fontName = String(it.fontName || '');
             try{
               const fontObj = page.commonObjs.get(it.fontName);
-              resolvedFont = fontObj?.name || fontObj?.fallbackName || resolvedFont;
+              fontName = fontObj?.name || fontObj?.fallbackName || fontName;
             }catch(e){}
-            const bold = /bold|black|heavy|semibold|demi/i.test(resolvedFont);
-            const italic = /italic|oblique/i.test(resolvedFont);
-            let url = '';
-            for(const link of links){
-              const [rx1,ry1,rx2,ry2] = link.rect;
-              if(x >= rx1-3 && x <= rx2+3 && y >= ry1-4 && y <= ry2+4){ url = link.url; break; }
-            }
-            return {text:String(it.str),x,y,height,width,fontSize,bold,italic,font:resolvedFont,url};
+            return {
+              text:String(it.str || '').replace(/\s+/g,' ').trim(),
+              x,y,width,fontSize,
+              bold:/bold|black|heavy|semibold|demi/i.test(fontName),
+              italic:/italic|oblique/i.test(fontName)
+            };
           });
 
-        pages.push({pageWidth,pageHeight,originalWidth:viewport.width,originalHeight:viewport.height,scale,items});
+        if(!raw.length) continue;
+
+        /*
+         * PDF text extraction is intentionally reflowed here instead of
+         * placing hundreds of absolutely-positioned spans. That old model
+         * is what caused the cramped/overlapping appearance in Chrome.
+         * A resume is a document, so we reconstruct its visual lines and
+         * let the browser perform normal Word-style wrapping.
+         */
+        const sorted = raw.sort((a,b)=>{
+          const ay = -a.y;
+          const by = -b.y;
+          if(Math.abs(ay-by) > 3) return ay-by;
+          return a.x-b.x;
+        });
+
+        const lines = [];
+        for(const item of sorted){
+          let line = lines.find(l => Math.abs(l.y-item.y) <= Math.max(2.5,item.fontSize*.35));
+          if(!line){
+            line = {y:item.y,items:[]};
+            lines.push(line);
+          }
+          line.items.push(item);
+          line.y = line.items.reduce((sum,v)=>sum+v.y,0)/line.items.length;
+        }
+
+        lines.sort((a,b)=>b.y-a.y);
+
+        const bodyFont = raw
+          .map(v=>v.fontSize)
+          .sort((a,b)=>a-b)[Math.floor(raw.length*.5)] || 11;
+
+        const renderedLines = lines.map(line=>{
+          line.items.sort((a,b)=>a.x-b.x);
+          let text='';
+          for(const item of line.items){
+            if(!text){ text=item.text; continue; }
+            const previous=line.items[line.items.indexOf(item)-1];
+            const gap=item.x-(previous.x+previous.width);
+            const needsSpace = gap > Math.max(1.2,item.fontSize*.08) &&
+              !/^[,.;:!?)]/.test(item.text) && !/[\/(]$/.test(text);
+            text += (needsSpace ? ' ' : '') + item.text;
+          }
+          text=text.replace(/\s+/g,' ').trim();
+
+          const maxSize=Math.max(...line.items.map(v=>v.fontSize));
+          const bold=line.items.some(v=>v.bold);
+          const italic=line.items.some(v=>v.italic);
+          const uppercase=text.length>3 && text===text.toUpperCase() && /[A-Z]/.test(text);
+          const looksHeading=uppercase || maxSize >= bodyFont*1.18 || (bold && text.length<55);
+          const bullet=/^[•●▪◦*-]\s*/.test(text);
+          const cleanBullet=text.replace(/^[•●▪◦*-]\s*/,'');
+
+          let style=`font-size:${Math.max(10,Math.min(15,maxSize*1.18)).toFixed(1)}px;`;
+          if(bold || looksHeading) style+='font-weight:700;';
+          if(italic) style+='font-style:italic;';
+
+          if(bullet){
+            return `<div class="resume-import-line resume-import-bullet" style="${style}"><span class="resume-import-bullet-mark">•</span><span>${esc(cleanBullet)}</span></div>`;
+          }
+          if(looksHeading){
+            return `<div class="resume-import-line resume-import-heading" style="${style}">${esc(text)}</div>`;
+          }
+          return `<div class="resume-import-line" style="${style}">${esc(text)}</div>`;
+        }).join('');
+
+        pageHtml.push(`<section class="job-resume-pdf-page resume-import-page" data-pdf-page="${pageNo}">${renderedLines}</section>`);
       }
 
-      if(!pages.some(p=>p.items.length)) return '';
-
-      const pageHtml = pages.map((page,pageIndex)=>{
-        const runs = page.items.map((item,runIndex)=>{
-          const pos = pdfRunStyle(item, page.scale, page.originalHeight);
-          const style = [
-            `left:${pos.x.toFixed(2)}px`,
-            `top:${pos.y.toFixed(2)}px`,
-            `font-size:${pos.fontSize.toFixed(2)}px`,
-            `font-family:${resumePdfFontFamily(item.font)}`,
-            `font-weight:${item.bold ? 700 : 400}`,
-            `font-style:${item.italic ? 'italic' : 'normal'}`,
-            `width:${Math.max(pos.width, pos.fontSize*.35).toFixed(2)}px`
-          ].join(';');
-          const escaped = esc(item.text).replace(/ /g,'&nbsp;');
-          const inner = item.url
-            ? `<a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${escaped}</a>`
-            : escaped;
-          return `<span class="job-resume-pdf-run" data-page="${pageIndex+1}" data-run="${runIndex}" style="${style}">${inner}</span>`;
-        }).join('');
-        return `<div class="job-resume-pdf-page" data-pdf-page="${pageIndex+1}" style="width:${page.pageWidth.toFixed(2)}px;height:${page.pageHeight.toFixed(2)}px">${runs}</div>`;
-      }).join('');
-
-      return `<div class="job-resume-pdf-pages">${pageHtml}</div>`;
+      if(!pageHtml.length) return '';
+      return `<div class="job-resume-pdf-pages">${pageHtml.join('')}</div>`;
     }
 
     async function getMasterResumeEditorHtml(masterText){
@@ -11186,25 +11074,6 @@
         console.warn("[Glueful Resume Editor] master visual import failed:", error);
       }
       return {html:resumeTextToEditorHtml(masterText), imported:false};
-    }
-
-    function updateJobResumePdfResponsiveScale(){
-      const editor = resumeEditorGet();
-      if(!editor || !editor.classList.contains("pdf-structured-canvas")) return;
-
-      const scroll = editor.closest(".job-resume-editor-scroll");
-      const available = Math.max(280, (scroll?.clientWidth || window.innerWidth) - 16);
-      const scale = Math.min(1, available / 794);
-      editor.style.setProperty("--glueful-pdf-zoom", scale.toFixed(4));
-    }
-
-    let gluefulResumePdfResizeTimer = null;
-    function scheduleJobResumePdfResponsiveScale(){
-      if(gluefulResumePdfResizeTimer) cancelAnimationFrame(gluefulResumePdfResizeTimer);
-      gluefulResumePdfResizeTimer = requestAnimationFrame(()=>{
-        gluefulResumePdfResizeTimer = null;
-        updateJobResumePdfResponsiveScale();
-      });
     }
 
     async function openJobResumeEditor(id){
@@ -11246,7 +11115,6 @@
         editor.classList.toggle("job-resume-master-imported", !!imported.imported);
         editor.classList.toggle("pdf-structured-canvas", !!imported.imported && /<div class="job-resume-pdf-pages">/.test(imported.html));
         editor.contentEditable = "true";
-        scheduleJobResumePdfResponsiveScale();
       }
 
       if(noteEl){
@@ -11285,7 +11153,6 @@
       editor.innerHTML = imported.html;
       editor.classList.toggle("job-resume-master-imported", !!imported.imported);
       editor.classList.toggle("pdf-structured-canvas", !!imported.imported && /<div class="job-resume-pdf-pages">/.test(imported.html));
-      scheduleJobResumePdfResponsiveScale();
       updateJobResumeEditorAts();
       editor.focus();
     }
@@ -11306,13 +11173,12 @@
       const sheet = document.createElement('div');
       sheet.id = 'glueful-resume-export-sheet';
       sheet.style.cssText = structured
-        ? 'position:fixed;left:-100000px;top:0;width:794px;box-sizing:border-box;background:transparent;color:#111;overflow:visible;z-index:-1;'
+        ? 'position:fixed;left:-100000px;top:0;width:850px;box-sizing:border-box;background:transparent;color:#111;overflow:visible;z-index:-1;'
         : 'position:fixed;left:-100000px;top:0;width:794px;min-height:1123px;padding:56px 58px;box-sizing:border-box;background:#fff;color:#151A23;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.55;overflow:visible;z-index:-1;';
 
       const style = document.createElement('style');
       style.textContent = `
-        #glueful-resume-export-sheet .job-resume-pdf-pages{width:794px}
-        #glueful-resume-export-sheet .job-resume-pdf-page{width:794px !important;position:relative;margin:0 auto 24px;background:#fff;border:0;box-shadow:none;overflow:hidden}
+        #glueful-resume-export-sheet .job-resume-pdf-page{position:relative;margin:0 auto 24px;background:#fff;border:0;box-shadow:none;overflow:hidden}
         #glueful-resume-export-sheet .job-resume-pdf-run{position:absolute;display:block;margin:0;padding:0;color:#111;background:transparent;border:0;outline:none;white-space:pre;overflow:visible;line-height:1;min-width:1px}
         #glueful-resume-export-sheet .job-resume-pdf-run a{color:inherit;text-decoration:underline}
         #glueful-resume-export-sheet h1,#glueful-resume-export-sheet h2,#glueful-resume-export-sheet h3{color:#11151C;line-height:1.2;margin:14px 0 7px}
@@ -11724,9 +11590,6 @@
     window.openJobResumeEditor = openJobResumeEditor;
     window.openApplicationResume = openApplicationResume;
     window.applyFromJobResumeEditor = applyFromJobResumeEditor;
-
-    window.addEventListener("resize", scheduleJobResumePdfResponsiveScale, {passive:true});
-    window.addEventListener("orientationchange", scheduleJobResumePdfResponsiveScale, {passive:true});
 
     document.addEventListener("DOMContentLoaded", ()=>{
       loadJobUIState();
