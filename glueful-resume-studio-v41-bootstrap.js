@@ -2,6 +2,11 @@
 (function(){
   'use strict';
 
+  if (window.GLUEFUL_RESUME_CANONICAL_RENDERER === true) {
+    console.info('[Glueful Resume Studio] legacy V41/V54 bootstrap skipped; Architecture E is authoritative.');
+    return;
+  }
+
   try{
     if(!window.__gluefulV41BodyObserverGuard){
       const NativeObserve = MutationObserver.prototype.observe;
