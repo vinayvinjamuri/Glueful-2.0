@@ -1,0 +1,1 @@
+Resume Studio PDF conversion uses the existing top-level Supabase client through glueful-resume-studio-supabase-bridge.js. The original index.html declares supabaseClient as a top-level const, so window.supabaseClient is undefined even though the client exists. The Adobe controller now checks the bridged client first and reports authentication/session failures precisely.
