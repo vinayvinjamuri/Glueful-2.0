@@ -2,7 +2,7 @@
 (function(){
   'use strict';
 
-  const DIRECT_FIXED_BOOTSTRAP = './glueful-resume-fixed-page-bootstrap.js';
+  const DIRECT_FIXED_BOOTSTRAP = './glueful-resume-fixed-page-bootstrap.js?v=20260819-fixedpdf10';
   const DIRECT_FIXED_ID = 'glueful-resume-fixed-page-bootstrap-direct';
 
   function fixedPdfScheduled(){
