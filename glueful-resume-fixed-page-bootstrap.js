@@ -1,7 +1,7 @@
 /* Glueful Resume Studio fixed-PDF bootstrap. Loaded directly and defensively by the service worker. */
 (function(){
 'use strict';
-const VERSION='20260820-fixedpdf22';
+const VERSION='20260820-fixedpdf23';
 window.__gluefulFixedPdfScheduled=true;
 window.__GLUEFUL_RENDER_DEBUG__=Object.assign(window.__GLUEFUL_RENDER_DEBUG__||{}, {
   renderer:'fixed-pdf', fixedLoaded:true, fixedReady:false, fixedScheduled:true,
@@ -16,7 +16,8 @@ const ASSETS=[
   ['./glueful-resume-pdf-layout-importer.js','glueful-fixed-pdf-importer-runtime'],
   ['./glueful-resume-fixed-page-renderer.js','glueful-fixed-page-renderer-runtime'],
   ['./glueful-resume-fixed-page-ux-v6.js','glueful-fixed-page-ux-v6-runtime'],
-  ['./glueful-resume-fixed-page-controller.js','glueful-fixed-page-controller-runtime']
+  ['./glueful-resume-fixed-page-controller.js','glueful-fixed-page-controller-runtime'],
+  ['./glueful-resume-vector-docx-export.js','glueful-vector-docx-export-runtime']
 ];
 let realOpen=null,realReset=null,authorityWatchdog=null;
 let repairInFlight=null,repairCooldownUntil=0,repairAttempts=0;
