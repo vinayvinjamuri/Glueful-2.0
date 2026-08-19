@@ -2,7 +2,7 @@ name: Resume Studio header regression v2
 
 on:
   push:
-    branches: [fix/resume-studio-header-visual-regression-v2]
+    branches: [fix/resume-studio-header-visual-regression-v2, 'fix/resume-word-margins-logo-v3']
   pull_request:
     paths:
       - 'glueful-resume-*.js'
@@ -29,11 +29,12 @@ jobs:
           set -e
           grep -q "_rels/" glueful-resume-header-fidelity-v2.js
           grep -q "document.xml" glueful-resume-header-fidelity-v2.js
+          grep -q "legacy VML" glueful-resume-header-fidelity-v2.js
           grep -q "dataUrl" glueful-resume-header-fidelity-v2.js
           grep -q "794px" glueful-resume-studio-v41-bootstrap.js
-          grep -q "padding:48px 48px 54px" glueful-resume-studio-v41-bootstrap.js
+          grep -q "padding:24px 24px 36px" glueful-resume-studio-v41-bootstrap.js
           grep -q "glueful-resume-header-fidelity-v2.js" sw.js
-          grep -q "glueful-cache-v11-resume-header-fidelity-v2" sw.js
+          grep -q "glueful-cache-v12-resume-word-margins-logo" sw.js
       - name: Ensure legacy reconstruction is not authoritative
         run: |
           set -e
