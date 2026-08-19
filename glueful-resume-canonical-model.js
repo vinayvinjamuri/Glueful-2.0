@@ -3,14 +3,11 @@
    Architecture E foundation:
    DOCX/PDF import -> canonical model -> deterministic page renderer
    -> separate editing surface.
-
-   This file contains only the document model. It is intentionally
-   independent from contenteditable, docx-preview, and application UI.
    ========================================================= */
 (function () {
   'use strict';
 
-  const VERSION = 1;
+  const VERSION = 2;
 
   const DEFAULT_PAGE = Object.freeze({
     widthPt: 595.28,
@@ -20,7 +17,8 @@
     marginBottomPt: 54,
     marginLeftPt: 54,
     headerDistancePt: 20,
-    footerDistancePt: 20
+    footerDistancePt: 20,
+    columnCount: 1
   });
 
   const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
@@ -76,7 +74,9 @@
       yPt: properties.yPt == null ? null : Number(properties.yPt),
       anchor: properties.anchor || 'inline',
       wrap: properties.wrap || 'inline',
-      behindText: !!properties.behindText
+      behindText: !!properties.behindText,
+      horizontalReference: properties.horizontalReference || 'margin',
+      verticalReference: properties.verticalReference || 'paragraph'
     };
   }
 
@@ -123,11 +123,7 @@
   }
 
   function createDocument(properties = {}) {
-    const firstPage = createPage(1, {
-      ...DEFAULT_PAGE,
-      ...(properties.page || {})
-    });
-
+    const firstPage = createPage(1, { ...DEFAULT_PAGE, ...(properties.page || {}) });
     return {
       model: 'glueful-resume-document',
       version: VERSION,
@@ -169,9 +165,7 @@
   function toPlainText(document) {
     const pages = (document?.pages || []).map((page) => {
       return (page.blocks || []).map((block) => {
-        if (block.type === 'paragraph') return (block.runs || []).map((run) => run.text).join('');
-        if (block.type === 'rule') return '';
-        if (block.type === 'image') return '';
+        if (block.type === 'paragraph') return (block.runs || []).map((run) => run.text || '').join('');
         return '';
       }).filter((line) => line !== '').join('\n');
     });
@@ -185,6 +179,7 @@
     (document?.pages || []).forEach((page, index) => {
       if (!(page.widthPt > 0) || !(page.heightPt > 0)) errors.push(`Page ${index + 1} has invalid geometry.`);
       if (page.marginLeftPt < 0 || page.marginRightPt < 0 || page.marginTopPt < 0 || page.marginBottomPt < 0) errors.push(`Page ${index + 1} has negative margins.`);
+      if (!Number.isFinite(page.columnCount) || page.columnCount < 1) errors.push(`Page ${index + 1} has invalid column count.`);
     });
     return { valid: errors.length === 0, errors };
   }
@@ -197,6 +192,7 @@
     next.pages.forEach((page, index) => {
       Object.assign(page, DEFAULT_PAGE, page, { number: index + 1 });
       if (!Array.isArray(page.blocks)) page.blocks = [];
+      if (!Number.isFinite(page.columnCount) || page.columnCount < 1) page.columnCount = 1;
     });
     return next;
   }
