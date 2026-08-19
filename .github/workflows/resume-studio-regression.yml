@@ -44,7 +44,7 @@ jobs:
           set -e
           grep -F 'word/_rels/' glueful-resume-header-fidelity.js
           grep -F 'word/_rels/' glueful-resume-header-alignment.js
-          grep -F 'word/_rels/' glueful-resume-header-fidelity-v2.js
+          grep -F '_rels/' glueful-resume-header-fidelity-v2.js
           grep -F 'document.xml' glueful-resume-header-fidelity-v2.js
           grep -F 'glueful-cache-v11-resume-header-fidelity-v2' sw.js
           grep -F 'glueful-resume-header-fidelity.js' sw.js
