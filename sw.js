@@ -1,4 +1,4 @@
-const CACHE_NAME = "glueful-cache-v13-resume-word-header-v3";
+const CACHE_NAME = "glueful-cache-v14-resume-word-fidelity-v4";
 const AUTHORITATIVE_RESUME_SCRIPT = "./glueful-resume-studio-adobe.js";
 const DOCX_FORENSICS_SCRIPT = "./glueful-resume-docx-forensics.js";
 const MOBILE_LAYOUT_SCRIPT = "./glueful-resume-studio-mobile-layout.js";
@@ -42,7 +42,7 @@ async function buildAuthoritativeIndex(request, preloadResponse) {
   if (!html.includes(MOBILE_LAYOUT_SCRIPT)) scripts.push(`<script src="${MOBILE_LAYOUT_SCRIPT}?v=20260819-8" data-glueful-mobile-layout="1"></script>`);
   if (!html.includes(HEADER_FIDELITY_SCRIPT)) scripts.push(`<script src="${HEADER_FIDELITY_SCRIPT}?v=20260819-5" data-glueful-header-fidelity="1"></script>`);
   if (!html.includes(HEADER_ALIGNMENT_SCRIPT)) scripts.push(`<script src="${HEADER_ALIGNMENT_SCRIPT}?v=20260819-4" data-glueful-header-alignment="1"></script>`);
-  if (!html.includes(HEADER_FIDELITY_SCRIPT + "?v=20260819-6")) scripts.push(`<script src="${HEADER_FIDELITY_V3_SCRIPT}?v=20260819-1" data-glueful-header-fidelity-v3="1"></script>`);
+  if (!html.includes(`${HEADER_FIDELITY_V3_SCRIPT}?v=`)) scripts.push(`<script src="${HEADER_FIDELITY_V3_SCRIPT}?v=20260819-2" data-glueful-header-fidelity-v4="1"></script>`);
   if (!html.includes(RENDER_DIAGNOSTICS_SCRIPT)) scripts.push(`<script src="${RENDER_DIAGNOSTICS_SCRIPT}?v=20260819-7" data-glueful-render-diagnostics="1"></script>`);
   if (!scripts.length) return new Response(html, { status: response.status, statusText: response.statusText, headers: response.headers });
   const marker = "</body>";
