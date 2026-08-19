@@ -1,8 +1,8 @@
-/* Glueful Resume Studio V54 bootstrap patch. */
+/* Glueful Resume Studio V55 bootstrap patch. */
 (function(){
   'use strict';
 
-  const DIRECT_FIXED_BOOTSTRAP = './glueful-resume-fixed-page-bootstrap.js?v=20260819-fixedpdf10';
+  const DIRECT_FIXED_BOOTSTRAP = './glueful-resume-fixed-page-bootstrap.js?v=20260819-fixedpdf13';
   const DIRECT_FIXED_ID = 'glueful-resume-fixed-page-bootstrap-direct';
 
   function fixedPdfScheduled(){
@@ -19,15 +19,15 @@
       const NativeObserve = MutationObserver.prototype.observe;
       MutationObserver.prototype.observe = function(target, options){
         if(target === document.body && options && options.childList && options.subtree) return;
-        return NativeObserve.call(this, target, options);
+        return NativeObserve.call(this,target,options);
       };
       window.__gluefulV41BodyObserverGuard = true;
     }
   }catch(error){
-    console.warn('[Glueful Resume Studio V41] bootstrap guard failed:', error);
+    console.warn('[Glueful Resume Studio V41] bootstrap guard failed:',error);
   }
 
-  const STYLE_ID = 'glueful-resume-studio-v54-fix';
+  const STYLE_ID = 'glueful-resume-studio-v55-fix';
   const EDITOR_ID = 'job-resume-editor-text';
   let editorObserver = null;
   let normalizeQueued = false;
@@ -40,7 +40,7 @@
     if(window.openJobResumeEditor !== fixed.open){
       window.openJobResumeEditor = fixed.open;
     }
-    if(typeof fixed.reset === 'function' && typeof window.resetJobResumeToMaster === 'function' && window.resetJobResumeToMaster !== fixed.reset){
+    if(typeof fixed.reset === 'function' && window.resetJobResumeToMaster !== fixed.reset){
       window.resetJobResumeToMaster = () => fixed.reset(window.gluefulJobResumeEditorId);
     }
     const legacyStyle=document.getElementById(STYLE_ID);
@@ -57,7 +57,7 @@
     enforceFixedPdfAuthority();
   }
 
-  function installV54Styles(){
+  function installV55Styles(){
     if(fixedPdfScheduled()) return;
     if(document.getElementById(STYLE_ID)) return;
     const style = document.createElement('style');
@@ -135,7 +135,7 @@
       startFixedAuthorityWatchdog();
       return;
     }
-    installV54Styles();
+    installV55Styles();
     if(!attachEditorObserver()){
       const timer=setInterval(()=>{if(fixedPdfScheduled()){clearInterval(timer);startFixedAuthorityWatchdog();return;}if(attachEditorObserver()) clearInterval(timer);},250);
       setTimeout(()=>clearInterval(timer),30000);
@@ -160,7 +160,7 @@
     }
     if(fixedPdfScheduled()){
       startFixedAuthorityWatchdog();
-      console.info('[Glueful Resume Studio] V54 legacy bootstrap skipped; fixed-PDF runtime owns Resume Studio.');
+      console.info('[Glueful Resume Studio] V55 legacy bootstrap skipped; fixed-PDF runtime owns Resume Studio.');
       return;
     }
     try{
