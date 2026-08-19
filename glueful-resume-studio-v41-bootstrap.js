@@ -2,8 +2,16 @@
 (function(){
   'use strict';
 
+  const DIRECT_FIXED_BOOTSTRAP = './glueful-resume-fixed-page-bootstrap.js';
+  const DIRECT_FIXED_ID = 'glueful-resume-fixed-page-bootstrap-direct';
+
   function fixedPdfScheduled(){
     return window.__gluefulFixedPdfScheduled === true || window.__gluefulFixedPdfReady === true;
+  }
+
+  function forceFixedPdf(){
+    try{return new URLSearchParams(window.location.search).get('resumeRenderer') === 'fixed-pdf';}
+    catch(_){return false;}
   }
 
   try{
@@ -29,17 +37,12 @@
     if(!fixedPdfScheduled()) return;
     const fixed=window.gluefulFixedPdfResumeStudio;
     if(!fixed || typeof fixed.open !== 'function') return;
-
-    /* A legacy controller can load after the fixed bootstrap because the
-       service worker injects the fixed runtime at navigation time. Keep the
-       fixed controller authoritative until the page is unloaded. */
     if(window.openJobResumeEditor !== fixed.open){
       window.openJobResumeEditor = fixed.open;
     }
     if(typeof fixed.reset === 'function' && typeof window.resetJobResumeToMaster === 'function' && window.resetJobResumeToMaster !== fixed.reset){
       window.resetJobResumeToMaster = () => fixed.reset(window.gluefulJobResumeEditorId);
     }
-
     const legacyStyle=document.getElementById(STYLE_ID);
     if(legacyStyle) legacyStyle.remove();
     if(editorObserver){
@@ -96,25 +99,6 @@
     return true;
   }
 
-  function boot(){
-    if(fixedPdfScheduled()){
-      startFixedAuthorityWatchdog();
-      return;
-    }
-    installV54Styles();
-    if(!attachEditorObserver()){
-      const timer=setInterval(()=>{if(fixedPdfScheduled()){clearInterval(timer);startFixedAuthorityWatchdog();return;}if(attachEditorObserver()) clearInterval(timer);},250);
-      setTimeout(()=>clearInterval(timer),30000);
-    }
-  }
-
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true});
-  else boot();
-
-  const FORENSICS_SRC = './glueful-resume-docx-forensics.js';
-  const CONTROLLER_SRC = './glueful-resume-studio-adobe.js';
-  const HEADER_V3_SRC = './glueful-resume-header-fidelity-v3.js';
-
   function loadResumeStudioAsset(src,id){
     return new Promise((resolve,reject)=>{
       const existing=document.getElementById(id);
@@ -135,7 +119,45 @@
     });
   }
 
+  async function ensureDirectFixedPdfRuntime(){
+    if(!forceFixedPdf() || fixedPdfScheduled()) return;
+    try{
+      await loadResumeStudioAsset(DIRECT_FIXED_BOOTSTRAP,DIRECT_FIXED_ID);
+      console.info('[Glueful Resume Studio] fixed-PDF runtime loaded directly from Resume Studio route.');
+    }catch(error){
+      console.error('[Glueful Resume Studio] direct fixed-PDF bootstrap failed:',error);
+    }
+  }
+
+  async function boot(){
+    await ensureDirectFixedPdfRuntime();
+    if(fixedPdfScheduled()){
+      startFixedAuthorityWatchdog();
+      return;
+    }
+    installV54Styles();
+    if(!attachEditorObserver()){
+      const timer=setInterval(()=>{if(fixedPdfScheduled()){clearInterval(timer);startFixedAuthorityWatchdog();return;}if(attachEditorObserver()) clearInterval(timer);},250);
+      setTimeout(()=>clearInterval(timer),30000);
+    }
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>void boot(),{once:true});
+  else void boot();
+
+  const FORENSICS_SRC = './glueful-resume-docx-forensics.js';
+  const CONTROLLER_SRC = './glueful-resume-studio-adobe.js';
+  const HEADER_V3_SRC = './glueful-resume-header-fidelity-v3.js';
+
   async function installAuthoritativeResumeStudio(){
+    if(forceFixedPdf()){
+      await ensureDirectFixedPdfRuntime();
+      if(fixedPdfScheduled()){
+        startFixedAuthorityWatchdog();
+        console.info('[Glueful Resume Studio] fixed-PDF route is authoritative; legacy DOCX controller skipped.');
+        return;
+      }
+    }
     if(fixedPdfScheduled()){
       startFixedAuthorityWatchdog();
       console.info('[Glueful Resume Studio] V54 legacy bootstrap skipped; fixed-PDF runtime owns Resume Studio.');
