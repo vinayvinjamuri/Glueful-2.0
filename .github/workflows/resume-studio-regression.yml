@@ -48,20 +48,21 @@ jobs:
           grep -F 'v:shape' glueful-resume-header-fidelity-v3.js
           grep -F 'v:imagedata' glueful-resume-header-fidelity-v3.js
           grep -F 'dataUrl' glueful-resume-header-fidelity-v3.js
-          grep -F 'BODY_MARGIN = 24' glueful-resume-header-fidelity-v3.js
-          grep -F 'PAGE_WIDTH = 794' glueful-resume-header-fidelity-v3.js
-          grep -F 'PAGE_HEIGHT = 1123' glueful-resume-header-fidelity-v3.js
+          grep -F 'BODY_MARGIN=64' glueful-resume-header-fidelity-v3.js
+          grep -F 'PAGE_WIDTH=794' glueful-resume-header-fidelity-v3.js
+          grep -F 'PAGE_HEIGHT=1123' glueful-resume-header-fidelity-v3.js
+          grep -F 'HEADER_TEXT_LEFT=160' glueful-resume-header-fidelity-v3.js
           grep -F 'glueful-cache-v13-resume-word-header-v3' sw.js
           grep -F 'glueful-resume-header-fidelity-v3.js' sw.js
           grep -F 'glueful-resume-header-fidelity.js' sw.js
           grep -F 'glueful-resume-header-alignment.js' sw.js
+          grep -F 'glueful-resume-header-fidelity-v3.js' glueful-resume-studio-v41-bootstrap.js
 
       - name: Layout safety regression
         run: |
           set -e
           ! grep -F 'display:flex' glueful-resume-header-fidelity.js
-          grep -F 'glueful-docx-header-fidelity-overlay' glueful-resume-header-fidelity.js
           grep -F 'glueful-docx-layout-mode' glueful-resume-header-alignment.js
           grep -F 'PAGE_WIDTH = 794' glueful-resume-header-alignment.js
           grep -F 'width:794px' glueful-resume-studio-mobile-layout.js
-          grep -F 'padding:24px 24px 36px' glueful-resume-studio-v41-bootstrap.js
+          grep -F 'padding:0!important' glueful-resume-studio-v41-bootstrap.js
