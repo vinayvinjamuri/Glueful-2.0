@@ -1,13 +1,10 @@
 /* =========================================================
-   GLUEFUL RESUME STUDIO — MOBILE VIEW + SAFE IMAGE RECOVERY
+   GLUEFUL RESUME STUDIO — MOBILE VIEWPORT LAYER
    ---------------------------------------------------------
-   Evidence-driven runtime compatibility layer:
-   - keeps the desktop DOCX renderer unchanged
-   - makes the 794px Word page usable on mobile
-   - restores native pinch gestures for the document viewport
-   - exposes mobile zoom / fit-width / fit-page controls
-   - only recovers a missing image when the Adobe DOCX contains
-     exactly one media image and docx-preview rendered no images
+   Mobile-only viewport behavior.
+   The Adobe/docx-preview document and header-fidelity runtime remain
+   authoritative for resume content, alignment, images, and positioning.
+   This file must never reconstruct or move resume header/body content.
    ========================================================= */
 (function () {
   'use strict';
@@ -25,6 +22,7 @@
 
   function injectStyles() {
     if ($('glueful-resume-mobile-layout-style')) return;
+
     const style = document.createElement('style');
     style.id = 'glueful-resume-mobile-layout-style';
     style.textContent = `
@@ -37,9 +35,8 @@
         transform-origin:top left!important;
         touch-action:pan-x pan-y pinch-zoom!important;
       }
-      #${MODAL_ID} .glueful-mobile-view-controls{
-        display:none;
-      }
+      #${MODAL_ID} .glueful-mobile-view-controls{display:none;}
+
       @media(max-width:700px){
         #${MODAL_ID} .job-resume-editor-scroll{
           padding:8px 8px 210px!important;
@@ -87,28 +84,7 @@
           font:700 11px/1 'JetBrains Mono',monospace!important;
           color:#f5f7fb!important;
         }
-        #${MODAL_ID} .job-resume-editor-actions{
-          bottom:0!important;
-        }
-        #${MODAL_ID} .glueful-docx-header-recovered{
-          display:flex!important;
-          align-items:flex-start!important;
-          gap:12px!important;
-          width:100%!important;
-          box-sizing:border-box!important;
-          margin:0 0 14px!important;
-        }
-        #${MODAL_ID} .glueful-docx-header-recovered img{
-          flex:0 0 auto!important;
-          width:68px!important;
-          height:68px!important;
-          max-width:68px!important;
-          object-fit:contain!important;
-        }
-        #${MODAL_ID} .glueful-docx-header-recovered .glueful-docx-header-text{
-          min-width:0!important;
-          flex:1 1 auto!important;
-        }
+        #${MODAL_ID} .job-resume-editor-actions{bottom:0!important;}
       }
     `;
     document.head.appendChild(style);
@@ -127,6 +103,7 @@
     el.dataset.gluefulMobileZoom = String(next);
     el.dataset.v41Zoom = String(next);
     el.style.zoom = (next / 100).toFixed(3);
+
     const label = $('glueful-mobile-zoom-value');
     if (label) label.textContent = `${next}%`;
     const desktopLabel = $('glueful-zoom-value');
@@ -155,6 +132,7 @@
   function installControls() {
     const modal = $(MODAL_ID);
     if (!modal || !isMobile() || modal.querySelector('.glueful-mobile-view-controls')) return;
+
     const controls = document.createElement('div');
     controls.className = 'glueful-mobile-view-controls';
     controls.setAttribute('aria-label', 'Mobile document view controls');
@@ -165,6 +143,7 @@
       <button type="button" data-action="fit-width">Fit</button>
       <button type="button" data-action="fit-page">Page</button>
     `;
+
     controls.addEventListener('click', (event) => {
       const action = event.target?.dataset?.action;
       if (action === 'zoom-out') setZoomPercent(currentZoom() - 10);
@@ -172,6 +151,7 @@
       if (action === 'fit-width') fitWidth();
       if (action === 'fit-page') fitPage();
     });
+
     modal.appendChild(controls);
   }
 
@@ -183,6 +163,7 @@
     const host = scrollHost();
     if (!host || host.dataset.gluefulPinchInstalled === '1') return;
     host.dataset.gluefulPinchInstalled = '1';
+
     let startDistance = 0;
     let startZoom = 100;
 
@@ -198,8 +179,7 @@
       const [a, b] = event.touches;
       const distance = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
       if (!distance) return;
-      const ratio = distance / startDistance;
-      setZoomPercent(startZoom * ratio);
+      setZoomPercent(startZoom * (distance / startDistance));
       event.preventDefault();
     }, { passive: false });
 
@@ -208,70 +188,21 @@
     host.addEventListener('touchcancel', reset, { passive: true });
   }
 
-  async function recoverSingleDocxImageIfNeeded() {
-    const report = window.gluefulResumeDocxForensics;
-    const buffer = window.gluefulLastAdobeDocxBuffer;
-    const ed = editor();
-    if (!ed || !buffer || ed.classList.contains('glueful-docx-image-recovered')) return;
-    if (ed.querySelector('img')) return;
-
-    let JSZip = window.JSZip;
-    if (!JSZip) {
-      try {
-        const response = await fetch('https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js', { cache: 'no-store' });
-        if (!response.ok) return;
-        const code = await response.text();
-        (0, eval)(code);
-        JSZip = window.JSZip;
-      } catch (_) { return; }
-    }
-    if (!JSZip) return;
-
-    try {
-      const zip = await JSZip.loadAsync(buffer);
-      const mediaNames = Object.keys(zip.files).filter((name) => /^word\/media\//i.test(name) && !zip.files[name].dir);
-      if (mediaNames.length !== 1) return; // deterministic safety: no first-image heuristic
-
-      const mediaName = mediaNames[0];
-      const data = await zip.files[mediaName].async('base64');
-      const ext = (mediaName.split('.').pop() || 'png').toLowerCase();
-      const mime = ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : ext === 'gif' ? 'image/gif' : ext === 'svg' ? 'image/svg+xml' : 'image/png';
-      const dataUrl = `data:${mime};base64,${data}`;
-
-      const page = ed.querySelector('.docx-wrapper > section, .docx > section') || ed.querySelector('.docx') || ed;
-      const blocks = Array.from(page.children).filter((node) => node.textContent.trim()).slice(0, 4);
-      if (!blocks.length) return;
-
-      const header = document.createElement('div');
-      header.className = 'glueful-docx-header-recovered';
-      const img = document.createElement('img');
-      img.src = dataUrl;
-      img.alt = 'Resume header logo';
-      img.draggable = true;
-      const text = document.createElement('div');
-      text.className = 'glueful-docx-header-text';
-      blocks.forEach((node) => text.appendChild(node));
-      header.append(img, text);
-      page.insertBefore(header, page.firstChild);
-      ed.classList.add('glueful-docx-image-recovered');
-      console.info('[Glueful Resume Studio] Recovered the only DOCX media image into the document header.', { mediaName, source: report || null });
-    } catch (error) {
-      console.warn('[Glueful Resume Studio] Safe DOCX image recovery skipped:', error);
-    }
-  }
-
-  let recoverObserver;
+  let observer;
   function boot() {
     injectStyles();
     const modal = $(MODAL_ID);
     if (!modal) return;
+
     const refresh = () => {
       if (!modal.classList.contains('open')) {
         removeControls();
         return;
       }
+
       installControls();
       installPinchZoom();
+
       if (isMobile() && !editor()?.dataset.gluefulMobileFitted) {
         setTimeout(() => {
           fitWidth();
@@ -279,18 +210,34 @@
           if (el) el.dataset.gluefulMobileFitted = '1';
         }, 80);
       }
-      void recoverSingleDocxImageIfNeeded();
     };
 
-    if (!recoverObserver) {
-      recoverObserver = new MutationObserver(refresh);
-      recoverObserver.observe(modal, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+    if (!observer) {
+      observer = new MutationObserver(refresh);
+      observer.observe(modal, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['class']
+      });
     }
-    window.addEventListener('resize', () => { if (isMobile() && modal.classList.contains('open')) fitWidth(); }, { passive: true });
-    window.addEventListener('orientationchange', () => setTimeout(() => { if (isMobile() && modal.classList.contains('open')) fitWidth(); }, 250), { passive: true });
+
+    window.addEventListener('resize', () => {
+      if (isMobile() && modal.classList.contains('open')) fitWidth();
+    }, { passive: true });
+
+    window.addEventListener('orientationchange', () => {
+      setTimeout(() => {
+        if (isMobile() && modal.classList.contains('open')) fitWidth();
+      }, 250);
+    }, { passive: true });
+
     refresh();
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
-  else boot();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot, { once: true });
+  } else {
+    boot();
+  }
 })();
