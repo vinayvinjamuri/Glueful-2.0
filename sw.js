@@ -1,8 +1,10 @@
-const CACHE_NAME = "glueful-cache-v15-resume-canonical-e";
+const CACHE_NAME = "glueful-cache-v16-resume-canonical-e2";
 const CANONICAL_BOOTSTRAP = "./glueful-resume-studio-canonical-bootstrap.js";
 const CANONICAL_MODEL = "./glueful-resume-canonical-model.js";
 const CANONICAL_IMPORTER = "./glueful-resume-docx-importer-v2.js";
 const CANONICAL_RENDERER = "./glueful-resume-canonical-renderer.js";
+const CANONICAL_EDITING = "./glueful-resume-canonical-editing.js";
+const CANONICAL_EXPORT = "./glueful-resume-canonical-export.js";
 const CANONICAL_CONTROLLER = "./glueful-resume-studio-canonical-controller.js";
 const MOBILE_LAYOUT_SCRIPT = "./glueful-resume-studio-mobile-layout.js";
 const RENDER_DIAGNOSTICS_SCRIPT = "./glueful-resume-render-diagnostics.js";
@@ -13,6 +15,8 @@ const ASSETS = [
   CANONICAL_MODEL,
   CANONICAL_IMPORTER,
   CANONICAL_RENDERER,
+  CANONICAL_EDITING,
+  CANONICAL_EXPORT,
   CANONICAL_CONTROLLER,
   MOBILE_LAYOUT_SCRIPT,
   RENDER_DIAGNOSTICS_SCRIPT,
@@ -36,7 +40,7 @@ async function buildAuthoritativeIndex(request, preloadResponse) {
   const html = await response.text();
   const scripts = [];
   const add = (src, attribute) => {
-    if (!html.includes(src)) scripts.push(`<script src="${src}?v=20260819-e1" data-glueful-runtime="${attribute}"></script>`);
+    if (!html.includes(src)) scripts.push(`<script src="${src}?v=20260819-e2" data-glueful-runtime="${attribute}"></script>`);
   };
   add(CANONICAL_BOOTSTRAP, "canonical-bootstrap");
   add(MOBILE_LAYOUT_SCRIPT, "mobile-layout");
@@ -106,6 +110,8 @@ self.addEventListener("fetch", (event) => {
     url.pathname.endsWith("/glueful-resume-canonical-model.js") ||
     url.pathname.endsWith("/glueful-resume-docx-importer-v2.js") ||
     url.pathname.endsWith("/glueful-resume-canonical-renderer.js") ||
+    url.pathname.endsWith("/glueful-resume-canonical-editing.js") ||
+    url.pathname.endsWith("/glueful-resume-canonical-export.js") ||
     url.pathname.endsWith("/glueful-resume-studio-canonical-controller.js") ||
     url.pathname.endsWith("/glueful-resume-studio-mobile-layout.js") ||
     url.pathname.endsWith("/glueful-resume-render-diagnostics.js")
