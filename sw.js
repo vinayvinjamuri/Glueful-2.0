@@ -1,5 +1,4 @@
-const CACHE_NAME="glueful-cache-v26-resume-fixed-page";
-const AUTHORITATIVE_RESUME_SCRIPT="./glueful-resume-studio-adobe.js";
+const CACHE_NAME="glueful-cache-v27-resume-fixed-page";
 const DOCX_FORENSICS_SCRIPT="./glueful-resume-docx-forensics.js";
 const RENDER_DIAGNOSTICS_SCRIPT="./glueful-resume-render-diagnostics.js";
 const FIXED_PDF_BOOTSTRAP="./glueful-resume-fixed-page-bootstrap.js";
@@ -13,11 +12,13 @@ async function networkResponse(request,preloadResponse){const p=await preloadRes
 function stripCompetingResumeRuntime(html){return html
  .replace(/<script[^>]+src=["'][^"']*glueful-resume-studio-adobe\.js(?:\?[^"']*)?["'][^>]*><\/script>/gi,"")
  .replace(/<script[^>]+src=["'][^"']*glueful-resume-studio-mobile-layout\.js(?:\?[^"']*)?["'][^>]*><\/script>/gi,"")
- .replace(/<script[^>]+src=["'][^"']*glueful-resume-header-(?:fidelity|alignment)[^"']*\.js(?:\?[^"']*)?["'][^>]*><\/script>/gi,"");}
+ .replace(/<script[^>]+src=["'][^"']*glueful-resume-header-(?:fidelity|alignment)[^"']*\.js(?:\?[^"']*)?["'][^>]*><\/script>/gi,"")
+ .replace(/<script\b[^>]*>[\s\S]*?window\.openJobResumeEditor\s*=\s*[\s\S]*?<\/script>/gi,"")
+ .replace(/<script\b[^>]*id=["']glueful-v50-pdf-to-word-runtime["'][^>]*>[\s\S]*?<\/script>/gi,"");}
 async function buildAuthoritativeIndex(request,preloadResponse){const response=await networkResponse(request,preloadResponse);if(!response?.ok)return response;const type=response.headers.get("content-type")||"";if(!type.includes("text/html"))return response;let html=await response.text();html=stripCompetingResumeRuntime(html);const scripts=[],add=(src,v,data)=>{if(!html.includes(src))scripts.push(`<script src="${src}?v=${v}" data-glueful-runtime="${data}"></script>`)};
-if(!html.includes(DOCX_FORENSICS_SCRIPT))add(DOCX_FORENSICS_SCRIPT,"20260820-2","docx-forensics");
-if(!html.includes(RENDER_DIAGNOSTICS_SCRIPT))add(RENDER_DIAGNOSTICS_SCRIPT,"20260820-2","render-diagnostics");
-add(FIXED_PDF_BOOTSTRAP,"20260820-fixedpdf16","fixed-pdf-bootstrap");
+if(!html.includes(DOCX_FORENSICS_SCRIPT))add(DOCX_FORENSICS_SCRIPT,"20260820-3","docx-forensics");
+if(!html.includes(RENDER_DIAGNOSTICS_SCRIPT))add(RENDER_DIAGNOSTICS_SCRIPT,"20260820-3","render-diagnostics");
+add(FIXED_PDF_BOOTSTRAP,"20260820-fixedpdf17","fixed-pdf-bootstrap");
 const block=scripts.join("\n"),marker="</body>",injected=html.includes(marker)?html.replace(marker,`${block}\n${marker}`):`${html}\n${block}`,headers=new Headers(response.headers);headers.set("Content-Type","text/html; charset=UTF-8");headers.set("Cache-Control","no-store, no-cache, must-revalidate");return new Response(injected,{status:response.status,statusText:response.statusText,headers})}
 async function cacheIndexResponse(request,response){if(!response?.ok)return;try{const c=await caches.open(CACHE_NAME);await c.put(request,response.clone())}catch(e){console.warn("[Glueful SW] index cache write failed:",e)}}
 self.addEventListener("install",e=>e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()).catch(err=>{console.warn("[Glueful SW] resume runtime cache precache failed:",err);return self.skipWaiting()})));
