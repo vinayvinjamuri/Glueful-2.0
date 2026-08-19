@@ -1,4 +1,4 @@
-const CACHE_NAME="glueful-cache-v31-resume-vector-docx";
+const CACHE_NAME="glueful-cache-v32-resume-docx-export";
 const RENDER_DIAGNOSTICS_SCRIPT="./glueful-resume-render-diagnostics.js";
 const FIXED_PDF_BOOTSTRAP="./glueful-resume-fixed-page-bootstrap.js";
 const FIXED_PDF_MODEL="./glueful-resume-layout-model.js";
@@ -17,10 +17,12 @@ function stripCompetingResumeRuntime(html){return html
  .replace(/window\.openJobResumeEditor\s*=\s*openJobResumeEditor\s*;/g,"window.__gluefulLegacyResumeEditorOpen = openJobResumeEditor;")
  .replace(/window\.openJobResumeEditor\s*=\s*v50OpenJobResumeEditor\s*;/g,"window.__gluefulLegacyResumeEditorOpen = v50OpenJobResumeEditor;")
  .replace(/window\.resetJobResumeToMaster\s*=\s*v50ResetJobResumeToMaster\s*;/g,"window.__gluefulLegacyResumeEditorReset = v50ResetJobResumeToMaster;")
- .replace(/querySelectorAll\(\s*['"]\.job-resume-pdf-page['"]\s*\)/g,"querySelectorAll('.job-resume-pdf-page, .glueful-fixed-page')");}
+ .replace(/querySelectorAll\(\s*['"]\.job-resume-pdf-page['"]\s*\)/g,"querySelectorAll('.job-resume-pdf-page, .glueful-fixed-page')")
+ .replace(/https:\/\/cdn\.jsdelivr\.net\/npm\/docx@9\.5\.1\/build\/index\.umd\.js/g,"https://cdn.jsdelivr.net/npm/docx@9.7.1/build/index.umd.js");}
 async function buildAuthoritativeIndex(request,preloadResponse){const response=await networkResponse(request,preloadResponse);if(!response?.ok)return response;const type=response.headers.get("content-type")||"";if(!type.includes("text/html"))return response;let html=await response.text();html=stripCompetingResumeRuntime(html);const scripts=[],add=(src,v,data)=>{if(!html.includes(src))scripts.push(`<script src="${src}?v=${v}" data-glueful-runtime="${data}"></script>`)};
-if(!html.includes(RENDER_DIAGNOSTICS_SCRIPT))add(RENDER_DIAGNOSTICS_SCRIPT,"20260820-8","render-diagnostics");
-add(FIXED_PDF_BOOTSTRAP,"20260820-fixedpdf23","fixed-pdf-bootstrap");
+if(!html.includes(RENDER_DIAGNOSTICS_SCRIPT))add(RENDER_DIAGNOSTICS_SCRIPT,"20260820-9","render-diagnostics");
+add(FIXED_PDF_BOOTSTRAP,"20260820-fixedpdf24","fixed-pdf-bootstrap");
+add(FIXED_PDF_DOCX_EXPORT,"20260820-vector-docx-v1.1","vector-docx-export");
 const block=scripts.join("\n"),marker="</body>",injected=html.includes(marker)?html.replace(marker,`${block}\n${marker}`):`${html}\n${block}`,headers=new Headers(response.headers);headers.set("Content-Type","text/html; charset=UTF-8");headers.set("Cache-Control","no-store, no-cache, must-revalidate");return new Response(injected,{status:response.status,statusText:response.statusText,headers})}
 async function cacheIndexResponse(request,response){if(!response?.ok)return;try{const c=await caches.open(CACHE_NAME);await c.put(request,response.clone())}catch(e){console.warn("[Glueful SW] index cache write failed:",e)}}
 self.addEventListener("install",e=>e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()).catch(err=>{console.warn("[Glueful SW] resume runtime cache precache failed:",err);return self.skipWaiting()})));
