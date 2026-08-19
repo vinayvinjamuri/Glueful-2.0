@@ -1,45 +1,45 @@
 name: Resume Studio header regression v3
-
 on:
   push:
-    branches: [fix/resume-studio-header-visual-regression-v2, 'fix/resume-word-margins-logo-v3']
+    branches: [fix/resume-studio-header-visual-regression-v2, 'fix/resume-word-margins-logo-v3', 'feature/resume-studio-canonical-renderer']
   pull_request:
     paths:
       - 'glueful-resume-*.js'
       - 'glueful-resume-studio-v41-bootstrap.js'
       - 'sw.js'
       - '.github/workflows/resume-header-regression-v2.yml'
-
+permissions:
+  contents: read
 jobs:
   regression:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Validate JavaScript syntax
+      - name: Validate canonical runtime syntax
         run: |
           set -e
-          node --check glueful-resume-header-fidelity-v2.js
-          node --check glueful-resume-header-fidelity-v3.js
-          node --check glueful-resume-header-fidelity.js
-          node --check glueful-resume-header-alignment.js
-          node --check glueful-resume-studio-v41-bootstrap.js
-          node --check glueful-resume-studio-adobe.js
+          node --check glueful-resume-canonical-model.js
+          node --check glueful-resume-docx-importer-v2.js
+          node --check glueful-resume-canonical-renderer-v2.js
+          node --check glueful-resume-canonical-editing.js
+          node --check glueful-resume-canonical-export.js
+          node --check glueful-resume-studio-canonical-bootstrap.js
+          node --check glueful-resume-studio-canonical-controller.js
           node --check sw.js
-      - name: Validate Word geometry and logo invariants
+      - name: Validate Word page and image model invariants
         run: |
           set -e
-          grep -q "PAGE_WIDTH=794" glueful-resume-header-fidelity-v3.js
-          grep -q "PAGE_HEIGHT=1123" glueful-resume-header-fidelity-v3.js
-          grep -q "BODY_MARGIN=64" glueful-resume-header-fidelity-v3.js
-          grep -q "v:shape" glueful-resume-header-fidelity-v3.js
-          grep -q "v:imagedata" glueful-resume-header-fidelity-v3.js
-          grep -q "dataUrl" glueful-resume-header-fidelity-v3.js
-          grep -q "glueful-resume-header-fidelity-v3.js" sw.js
-          grep -q "glueful-cache-v13-resume-word-header-v3" sw.js
-          grep -q "glueful-resume-header-fidelity-v3.js" glueful-resume-studio-v41-bootstrap.js
-      - name: Ensure Adobe DOCX renderer remains authoritative
+          grep -q "widthPt" glueful-resume-canonical-model.js
+          grep -q "heightPt" glueful-resume-canonical-model.js
+          grep -q "xPt" glueful-resume-canonical-model.js
+          grep -q "horizontalReference" glueful-resume-canonical-model.js
+          grep -q "glueful-canonical-floating-image" glueful-resume-canonical-renderer-v2.js
+          grep -q "glueful-canonical-table" glueful-resume-canonical-renderer-v2.js
+          grep -q "glueful-resume-canonical-renderer-v2.js" sw.js
+      - name: Ensure canonical renderer is authoritative
         run: |
           set -e
-          ! grep -R "PDF.js.*docx.js\|docx.js.*Mammoth" glueful-resume-studio-adobe.js
-          grep -q "glueful-pdf-to-docx" glueful-resume-studio-adobe.js
-          grep -q "docx-preview" glueful-resume-studio-adobe.js
+          ! grep -F "renderAsync" glueful-resume-studio-canonical-controller.js
+          ! grep -F "docx-preview" glueful-resume-studio-canonical-controller.js
+          grep -q "glueful-pdf-to-docx" glueful-resume-studio-canonical-controller.js
+          ! grep -q "glueful-resume-header-fidelity-v3.js" sw.js
