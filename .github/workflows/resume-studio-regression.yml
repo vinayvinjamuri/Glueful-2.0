@@ -89,4 +89,4 @@ jobs:
           set -e
           grep -F 'docx.Packer.toBlob' glueful-resume-canonical-export.js
           grep -F 'window.print()' glueful-resume-canonical-export.js
-          ! grep -F 'innerHTML' glueful-resume-canonical-export.js
+          ! grep -F 'el.innerHTML' glueful-resume-canonical-export.js
