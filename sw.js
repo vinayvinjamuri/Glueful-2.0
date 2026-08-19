@@ -1,4 +1,4 @@
-const CACHE_NAME = "glueful-cache-v6-resume-header-fidelity";
+const CACHE_NAME = "glueful-cache-v7-fast-startup";
 const AUTHORITATIVE_RESUME_SCRIPT = "./glueful-resume-studio-adobe.js";
 const DOCX_FORENSICS_SCRIPT = "./glueful-resume-docx-forensics.js";
 const HEADER_FIDELITY_SCRIPT = "./glueful-resume-header-fidelity.js";
@@ -8,8 +8,6 @@ const ASSETS = [
   "./glueful-resume-studio-adobe.js",
   "./glueful-resume-docx-forensics.js",
   "./glueful-resume-studio-mobile-layout.js",
-  "./glueful-resume-render-diagnostics.js",
-  "./glueful-resume-header-fidelity.js",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
   "./icons/icon-180.png",
@@ -60,8 +58,12 @@ async function buildAuthoritativeIndex(request, preloadResponse) {
 
 async function cacheIndexResponse(request, response) {
   if (!response || !response.ok) return;
-  const cache = await caches.open(CACHE_NAME);
-  await cache.put(request, response.clone());
+  try {
+    const cache = await caches.open(CACHE_NAME);
+    await cache.put(request, response.clone());
+  } catch (error) {
+    console.warn("[Glueful SW] index cache write failed:", error);
+  }
 }
 
 self.addEventListener("install", (event) => {
@@ -69,6 +71,10 @@ self.addEventListener("install", (event) => {
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(ASSETS))
       .then(() => self.skipWaiting())
+      .catch((error) => {
+        console.warn("[Glueful SW] asset precache failed; continuing with network startup:", error);
+        return self.skipWaiting();
+      })
   );
 });
 
@@ -97,7 +103,7 @@ self.addEventListener("fetch", (event) => {
     event.respondWith((async () => {
       try {
         const response = await buildAuthoritativeIndex(request, event.preloadResponse);
-        await cacheIndexResponse(request, response);
+        event.waitUntil(cacheIndexResponse(request, response));
         return response;
       } catch (error) {
         console.warn("[Glueful SW] navigation network fetch failed:", error);
@@ -118,8 +124,12 @@ self.addEventListener("fetch", (event) => {
       try {
         const response = await fetch(request, { cache: "no-store" });
         if (response.ok) {
-          const cache = await caches.open(CACHE_NAME);
-          await cache.put(request, response.clone());
+          event.waitUntil((async () => {
+            try {
+              const cache = await caches.open(CACHE_NAME);
+              await cache.put(request, response.clone());
+            } catch (_) {}
+          })());
         }
         return response;
       } catch (_) {
@@ -135,8 +145,12 @@ self.addEventListener("fetch", (event) => {
       try {
         const response = await fetch(request);
         if (response.ok) {
-          const cache = await caches.open(CACHE_NAME);
-          await cache.put(request, response.clone());
+          event.waitUntil((async () => {
+            try {
+              const cache = await caches.open(CACHE_NAME);
+              await cache.put(request, response.clone());
+            } catch (_) {}
+          })());
         }
         return response;
       } catch (_) {
