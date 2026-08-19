@@ -1,13 +1,17 @@
-const CACHE_NAME = "glueful-cache-v7-fast-startup";
+const CACHE_NAME = "glueful-cache-v8-resume-fidelity";
 const AUTHORITATIVE_RESUME_SCRIPT = "./glueful-resume-studio-adobe.js";
 const DOCX_FORENSICS_SCRIPT = "./glueful-resume-docx-forensics.js";
+const MOBILE_LAYOUT_SCRIPT = "./glueful-resume-studio-mobile-layout.js";
 const HEADER_FIDELITY_SCRIPT = "./glueful-resume-header-fidelity.js";
+const RENDER_DIAGNOSTICS_SCRIPT = "./glueful-resume-render-diagnostics.js";
 
 const ASSETS = [
   "./manifest.json",
   "./glueful-resume-studio-adobe.js",
   "./glueful-resume-docx-forensics.js",
   "./glueful-resume-studio-mobile-layout.js",
+  "./glueful-resume-header-fidelity.js",
+  "./glueful-resume-render-diagnostics.js",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
   "./icons/icon-180.png",
@@ -28,8 +32,25 @@ async function buildAuthoritativeIndex(request, preloadResponse) {
   if (!contentType.includes("text/html")) return response;
 
   const html = await response.text();
+  const scripts = [];
 
-  if (html.includes(AUTHORITATIVE_RESUME_SCRIPT) && html.includes(DOCX_FORENSICS_SCRIPT)) {
+  if (!html.includes(DOCX_FORENSICS_SCRIPT)) {
+    scripts.push(`<script src="${DOCX_FORENSICS_SCRIPT}?v=20260819-4" data-glueful-docx-forensics="1"></script>`);
+  }
+  if (!html.includes(AUTHORITATIVE_RESUME_SCRIPT)) {
+    scripts.push(`<script src="${AUTHORITATIVE_RESUME_SCRIPT}?v=20260819-4" data-glueful-authoritative-resume-studio="1"></script>`);
+  }
+  if (!html.includes(MOBILE_LAYOUT_SCRIPT)) {
+    scripts.push(`<script src="${MOBILE_LAYOUT_SCRIPT}?v=20260819-5" data-glueful-mobile-layout="1"></script>`);
+  }
+  if (!html.includes(HEADER_FIDELITY_SCRIPT)) {
+    scripts.push(`<script src="${HEADER_FIDELITY_SCRIPT}?v=20260819-2" data-glueful-header-fidelity="1"></script>`);
+  }
+  if (!html.includes(RENDER_DIAGNOSTICS_SCRIPT)) {
+    scripts.push(`<script src="${RENDER_DIAGNOSTICS_SCRIPT}?v=20260819-4" data-glueful-render-diagnostics="1"></script>`);
+  }
+
+  if (!scripts.length) {
     return new Response(html, {
       status: response.status,
       statusText: response.statusText,
@@ -37,14 +58,11 @@ async function buildAuthoritativeIndex(request, preloadResponse) {
     });
   }
 
-  const scripts = [
-    `<script src="${DOCX_FORENSICS_SCRIPT}?v=20260819-2" data-glueful-docx-forensics="1"></script>`,
-    `<script src="${AUTHORITATIVE_RESUME_SCRIPT}?v=20260819-2" data-glueful-authoritative-resume-studio="1"></script>`
-  ].join("\n");
   const marker = "</body>";
+  const scriptBlock = scripts.join("\n");
   const injected = html.includes(marker)
-    ? html.replace(marker, `${scripts}\n${marker}`)
-    : `${html}\n${scripts}`;
+    ? html.replace(marker, `${scriptBlock}\n${marker}`)
+    : `${html}\n${scriptBlock}`;
 
   const headers = new Headers(response.headers);
   headers.set("Content-Type", "text/html; charset=UTF-8");
@@ -117,6 +135,7 @@ self.addEventListener("fetch", (event) => {
     request.method === "GET" &&
     (url.pathname.endsWith("/glueful-resume-studio-adobe.js") ||
      url.pathname.endsWith("/glueful-resume-docx-forensics.js") ||
+     url.pathname.endsWith("/glueful-resume-studio-mobile-layout.js") ||
      url.pathname.endsWith("/glueful-resume-header-fidelity.js") ||
      url.pathname.endsWith("/glueful-resume-render-diagnostics.js"))
   ) {
