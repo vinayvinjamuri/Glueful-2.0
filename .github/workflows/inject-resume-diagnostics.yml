@@ -1,0 +1,38 @@
+name: Inject Resume Studio diagnostics
+
+on:
+  push:
+    branches: [fix/resume-studio-exact-error-diagnostics]
+
+permissions:
+  contents: write
+
+jobs:
+  inject:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inject diagnostic script into index
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          marker = '<script src="./glueful-resume-render-diagnostics.js?v=20260819-1"></script>'
+          if marker not in s:
+              anchor = '<script src="./glueful-resume-studio-adobe.js?v=20260819-1"></script>'
+              if anchor not in s:
+                  raise SystemExit('Adobe controller marker not found')
+              s = s.replace(anchor, anchor + '\n' + marker, 1)
+              p.write_text(s, encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then
+            echo 'No index change required.'
+            exit 0
+          fi
+          git commit -m 'debug: load exact Resume Studio diagnostics'
+          git push
