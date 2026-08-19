@@ -2,7 +2,10 @@
 (function(){
   'use strict';
 
-  if (window.GLUEFUL_RESUME_CANONICAL_RENDERER === true) {
+  const canonicalRuntimePresent = () => window.GLUEFUL_RESUME_CANONICAL_RENDERER === true;
+  const canonicalRuntimeScheduled = () => !!document.querySelector('script[data-glueful-runtime="canonical-bootstrap"]');
+
+  if (canonicalRuntimePresent() || canonicalRuntimeScheduled()) {
     console.info('[Glueful Resume Studio] legacy V41/V54 bootstrap skipped; Architecture E is authoritative.');
     return;
   }
@@ -42,7 +45,7 @@
 
   function normalizeImportedResume(){
     const editor=document.getElementById(EDITOR_ID);
-    if(!editor||!editor.innerHTML.trim()||editor.classList.contains('glueful-docx-layout-mode')) return;
+    if(!editor||!editor.innerHTML.trim()||editor.classList.contains('glueful-docx-layout-mode')||editor.classList.contains('glueful-canonical-document-host')) return;
     const firstImage=editor.querySelector('img');
     if(firstImage){firstImage.removeAttribute('width');firstImage.removeAttribute('height');}
   }
