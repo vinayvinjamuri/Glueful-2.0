@@ -51,12 +51,12 @@ jobs:
           grep -F 'BODY_MARGIN=64' glueful-resume-header-fidelity-v3.js
           grep -F 'PAGE_WIDTH=794' glueful-resume-header-fidelity-v3.js
           grep -F 'PAGE_HEIGHT=1123' glueful-resume-header-fidelity-v3.js
-          grep -F 'HEADER_TEXT_LEFT=160' glueful-resume-header-fidelity-v3.js
+          grep -F 'HEADER_TEXT_LEFT=BODY_MARGIN+LOGO_SIZE+14' glueful-resume-header-fidelity-v3.js
           grep -F 'glueful-cache-v13-resume-word-header-v3' sw.js
           grep -F 'glueful-resume-header-fidelity-v3.js' sw.js
           grep -F 'glueful-resume-header-fidelity.js' sw.js
           grep -F 'glueful-resume-header-alignment.js' sw.js
-          grep -F 'glueful-resume-header-fidelity-v3.js' glueful-resume-studio-v41-bootstrap.js
+          grep -F 'HEADER_V3_SRC' glueful-resume-studio-v41-bootstrap.js
 
       - name: Layout safety regression
         run: |
