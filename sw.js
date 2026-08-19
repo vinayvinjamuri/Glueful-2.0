@@ -14,7 +14,7 @@ async function buildAuthoritativeIndex(request,preloadResponse){const response=a
 if(!html.includes(DOCX_FORENSICS_SCRIPT))add(DOCX_FORENSICS_SCRIPT,"20260820-1","docx-forensics");
 if(!html.includes(AUTHORITATIVE_RESUME_SCRIPT))add(AUTHORITATIVE_RESUME_SCRIPT,"20260820-1","authoritative-resume-studio");
 if(!html.includes(RENDER_DIAGNOSTICS_SCRIPT))add(RENDER_DIAGNOSTICS_SCRIPT,"20260820-1","render-diagnostics");
-add(FIXED_PDF_BOOTSTRAP,"20260820-fixedpdf14","fixed-pdf-bootstrap");
+add(FIXED_PDF_BOOTSTRAP,"20260820-fixedpdf15","fixed-pdf-bootstrap");
 const block=scripts.join("\n"),marker="</body>",injected=html.includes(marker)?html.replace(marker,`${block}\n${marker}`):`${html}\n${block}`,headers=new Headers(response.headers);headers.set("Content-Type","text/html; charset=UTF-8");return new Response(injected,{status:response.status,statusText:response.statusText,headers})}
 async function cacheIndexResponse(request,response){if(!response?.ok)return;try{const c=await caches.open(CACHE_NAME);await c.put(request,response.clone())}catch(e){console.warn("[Glueful SW] index cache write failed:",e)}}
 self.addEventListener("install",e=>e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()).catch(err=>{console.warn("[Glueful SW] resume runtime cache precache failed:",err);return self.skipWaiting()})));
