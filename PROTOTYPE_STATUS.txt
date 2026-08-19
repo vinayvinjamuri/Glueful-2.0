@@ -1,0 +1,1 @@
+Architecture E fixed-page prototype only. Production main remains on the stable Adobe DOCX/docx-preview runtime.
