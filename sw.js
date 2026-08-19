@@ -1,4 +1,4 @@
-const CACHE_NAME = "glueful-cache-v4-resume-adobe";
+const CACHE_NAME = "glueful-cache-v5-resume-adobe";
 const AUTHORITATIVE_RESUME_SCRIPT = "./glueful-resume-studio-adobe.js";
 const DOCX_FORENSICS_SCRIPT = "./glueful-resume-docx-forensics.js";
 
@@ -6,6 +6,7 @@ const ASSETS = [
   "./manifest.json",
   "./glueful-resume-studio-adobe.js",
   "./glueful-resume-docx-forensics.js",
+  "./glueful-resume-studio-mobile-layout.js",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
   "./icons/icon-180.png",
