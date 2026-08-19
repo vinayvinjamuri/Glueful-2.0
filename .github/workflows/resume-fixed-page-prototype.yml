@@ -37,7 +37,7 @@ jobs:
             'glueful-resume-fixed-page-controller.js':['gluefulFixedPdfResumeStudio','fitToViewport','fixed-page-pdf-v4','getBoundingClientRect','dataset.fixedPdfAutoZoom'],
             'glueful-resume-fixed-page-bootstrap.js':['glueful-resume-fixed-page-controller.js','20260819-fixedpdf6','__gluefulFixedPdfScheduled'],
             'glueful-resume-studio-v41-bootstrap.js':['fixedPdfScheduled','fixed-PDF runtime owns Resume Studio','if(fixedPdfScheduled()) return'],
-            'sw.js':['glueful-cache-v19-resume-fixed-pdf-authority','20260819-fixedpdf6','fixed-pdf-bootstrap','fixed-pdf-model','fixed-pdf-importer','fixed-pdf-renderer','fixed-pdf-controller']
+            'sw.js':['glueful-cache-v19-resume-fixed-pdf-authority','20260819-fixedpdf6','FIXED_PDF_BOOTSTRAP','FIXED_PDF_MODEL','FIXED_PDF_IMPORTER','FIXED_PDF_RENDERER','FIXED_PDF_CONTROLLER']
           };
           for(const [file,needles] of Object.entries(checks)){
             const text=fs.readFileSync(file,'utf8');
