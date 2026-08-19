@@ -1,6 +1,11 @@
 /* GLUEFUL RESUME STUDIO — exact runtime diagnostics
  * This is intentionally diagnostic-only. It does not alter conversion,
  * editor content, master resume data, or layout.
+ *
+ * IMPORTANT: the fixed-PDF bootstrap is loaded directly from this runtime
+ * as well as defensively through the service worker. This removes the
+ * first-load/service-worker-control race that previously allowed the legacy
+ * Adobe controller to remain authoritative.
  */
 (function () {
   'use strict';
@@ -47,10 +52,33 @@
   window.addEventListener('glueful:resume-render-error', (event) => show(event.detail));
   tick();
 
-  /* Header fidelity runs after the authoritative DOCX renderer and the
-     mobile compatibility layer. It restores only header-linked images and
-     deliberately leaves body paragraph flow/alignment untouched. */
+  function loadFixedPdfBootstrap() {
+    if (document.getElementById('glueful-fixed-pdf-bootstrap-direct')) return;
+    const script = document.createElement('script');
+    script.id = 'glueful-fixed-pdf-bootstrap-direct';
+    script.src = './glueful-resume-fixed-page-bootstrap.js?v=20260820-fixedpdf19';
+    script.async = false;
+    script.dataset.gluefulRuntime = 'fixed-pdf-direct';
+    script.onload = () => console.info('[Glueful Resume Studio] FIXED PDF bootstrap loaded directly from page runtime.');
+    script.onerror = () => console.error('[Glueful Resume Studio] FIXED PDF bootstrap direct load failed.');
+    (document.body || document.head).appendChild(script);
+  }
+
+  /*
+   * Do not depend on service-worker control for the authoritative renderer.
+   * The SW remains a cache/injection defence, but the page itself guarantees
+   * that the fixed-PDF runtime is loaded on every normal app load.
+   */
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadFixedPdfBootstrap, { once: true });
+  } else {
+    loadFixedPdfBootstrap();
+  }
+
+  /* Header fidelity is a legacy DOCX fallback. It must not run against the
+     fixed-PDF editor because the original PDF artwork is already authoritative. */
   function loadHeaderFidelity() {
+    if (window.__gluefulFixedPdfScheduled || window.__gluefulFixedPdfReady) return;
     if (window.gluefulResumeHeaderFidelity) return;
     if (document.getElementById('glueful-resume-header-fidelity-script')) return;
     const script = document.createElement('script');
@@ -62,9 +90,6 @@
     document.head.appendChild(script);
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadHeaderFidelity, { once: true });
-  } else {
-    loadHeaderFidelity();
-  }
+  /* Give the fixed bootstrap a moment to set its synchronous authority flag. */
+  setTimeout(loadHeaderFidelity, 0);
 })();
