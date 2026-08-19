@@ -2,349 +2,38 @@
    GLUEFUL RESUME STUDIO — DOCX -> CANONICAL MODEL IMPORTER V2
    Direct WordprocessingML import. No docx-preview dependency.
    ========================================================= */
-(function () {
-  'use strict';
-
-  const M = () => window.gluefulResumeCanonicalModel;
-  const W_NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
-  const R_NS = 'http://schemas.openxmlformats.org/package/2006/relationships';
-  const A_NS = 'http://schemas.openxmlformats.org/drawingml/2006/main';
-  const VML_NS = 'urn:schemas-microsoft-com:vml';
-  const EMU_PER_PT = 12700;
-
-  const attr = (node, name) => {
-    if (!node) return null;
-    return node.getAttribute(`w:${name}`) ?? node.getAttribute(name);
-  };
-  const child = (node, localName) => Array.from(node?.children || []).find((n) => n.localName === localName) || null;
-  const children = (node, localName) => Array.from(node?.children || []).filter((n) => !localName || n.localName === localName);
-  const numeric = (value, fallback = 0) => {
-    const n = Number(value);
-    return Number.isFinite(n) ? n : fallback;
-  };
-  const escPath = (value) => String(value || '').replace(/\\/g, '/');
-
-  async function readXml(zip, path) {
-    const file = zip.file(path);
-    if (!file) return null;
-    const raw = await file.async('text');
-    return new DOMParser().parseFromString(raw, 'application/xml');
-  }
-
-  async function relationships(zip, path) {
-    const doc = await readXml(zip, path);
-    const map = new Map();
-    if (!doc) return map;
-    Array.from(doc.getElementsByTagNameNS(R_NS, 'Relationship')).forEach((rel) => map.set(rel.getAttribute('Id'), {
-      target: rel.getAttribute('Target') || '',
-      type: rel.getAttribute('Type') || '',
-      targetMode: rel.getAttribute('TargetMode') || ''
-    }));
-    return map;
-  }
-
-  function resolvePart(baseFile, target) {
-    if (!target || /^https?:/i.test(target)) return target || '';
-    const base = escPath(baseFile).split('/').slice(0, -1);
-    const pieces = base.concat(escPath(target).split('/'));
-    const out = [];
-    for (const piece of pieces) {
-      if (!piece || piece === '.') continue;
-      if (piece === '..') out.pop();
-      else out.push(piece);
-    }
-    return out.join('/');
-  }
-
-  async function dataUrl(zip, path) {
-    const file = zip.file(path);
-    if (!file) return '';
-    const bytes = await file.async('uint8array');
-    let binary = '';
-    for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-    const ext = String(path).split('.').pop().toLowerCase();
-    const mime = ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : ext === 'gif' ? 'image/gif' : ext === 'svg' ? 'image/svg+xml' : 'image/png';
-    return `data:${mime};base64,${btoa(binary)}`;
-  }
-
-  function borderSpec(node) {
-    if (!node) return null;
-    const val = String(attr(node, 'val') || '').toLowerCase();
-    if (!val || val === 'nil' || val === 'none') return null;
-    const colorValue = attr(node, 'color');
-    return {
-      style: val,
-      color: colorValue && colorValue !== 'auto' ? `#${String(colorValue).replace(/^#/, '')}` : '#808080',
-      sizePt: Math.max(.25, numeric(attr(node, 'sz'), 6) / 8),
-      spacePt: numeric(attr(node, 'space'), 0)
-    };
-  }
-
-  function paragraphBorder(pBdr) {
-    if (!pBdr) return null;
-    const border = {
-      top: borderSpec(child(pBdr, 'top')),
-      right: borderSpec(child(pBdr, 'right')),
-      bottom: borderSpec(child(pBdr, 'bottom')),
-      left: borderSpec(child(pBdr, 'left'))
-    };
-    return Object.values(border).some(Boolean) ? border : null;
-  }
-
-  function runProps(rPr, inherited = {}) {
-    const rFonts = child(rPr, 'rFonts');
-    const size = child(rPr, 'sz');
-    const color = child(rPr, 'color');
-    const underline = child(rPr, 'u');
-    const vert = child(rPr, 'vertAlign');
-    return {
-      fontFamily: attr(rFonts, 'ascii') || attr(rFonts, 'hAnsi') || attr(rFonts, 'eastAsia') || inherited.fontFamily || 'Times New Roman',
-      fontSizePt: size ? numeric(attr(size, 'val'), 22) / 2 : (inherited.fontSizePt || 11),
-      bold: !!child(rPr, 'b') || !!inherited.bold,
-      italic: !!child(rPr, 'i') || !!inherited.italic,
-      underline: !!underline || !!inherited.underline,
-      color: color && attr(color, 'val') && attr(color, 'val') !== 'auto' ? `#${attr(color, 'val')}` : (inherited.color || '#202124'),
-      verticalAlign: attr(vert, 'val') || inherited.verticalAlign || 'baseline'
-    };
-  }
-
-  function paragraphProps(pPr, styleMap) {
-    const spacing = child(pPr, 'spacing');
-    const ind = child(pPr, 'ind');
-    const jc = child(pPr, 'jc');
-    const style = child(pPr, 'pStyle');
-    const styleProps = styleMap.get(attr(style, 'val')) || {};
-    const line = spacing ? numeric(attr(spacing, 'line'), 240) : 240;
-    return {
-      ...styleProps,
-      alignment: String(attr(jc, 'val') || styleProps.alignment || 'left').toLowerCase(),
-      styleId: attr(style, 'val') || styleProps.styleId || null,
-      beforeSpacingPt: spacing ? numeric(attr(spacing, 'before'), 0) / 20 : (styleProps.beforeSpacingPt || 0),
-      afterSpacingPt: spacing ? numeric(attr(spacing, 'after'), 0) / 20 : (styleProps.afterSpacingPt || 0),
-      lineSpacing: Math.max(.2, line / 240),
-      lineRule: String(attr(spacing, 'lineRule') || 'auto').toLowerCase(),
-      leftIndentPt: ind ? numeric(attr(ind, 'left'), 0) / 20 : (styleProps.leftIndentPt || 0),
-      rightIndentPt: ind ? numeric(attr(ind, 'right'), 0) / 20 : (styleProps.rightIndentPt || 0),
-      firstLineIndentPt: ind ? (numeric(attr(ind, 'firstLine'), 0) || -numeric(attr(ind, 'hanging'), 0)) / 20 : (styleProps.firstLineIndentPt || 0),
-      keepWithNext: !!child(pPr, 'keepNext'),
-      keepLines: !!child(pPr, 'keepLines'),
-      pageBreakBefore: !!child(pPr, 'pageBreakBefore'),
-      border: paragraphBorder(child(pPr, 'pBdr'))
-    };
-  }
-
-  function styleMap(stylesXml) {
-    const map = new Map();
-    if (!stylesXml) return map;
-    Array.from(stylesXml.getElementsByTagNameNS(W_NS, 'style')).forEach((style) => {
-      const id = attr(style, 'styleId');
-      if (!id) return;
-      const pPr = child(style, 'pPr');
-      const rPr = child(style, 'rPr');
-      const value = {};
-      if (pPr) Object.assign(value, paragraphProps(pPr, new Map()));
-      if (rPr) Object.assign(value, runProps(rPr));
-      map.set(id, value);
-    });
-    return map;
-  }
-
-  async function imageFromDrawing(runNode, zip, rels, basePath) {
-    const drawing = child(runNode, 'drawing');
-    const pict = child(runNode, 'pict');
-    let rid = '';
-    let extent = null;
-    let anchored = false;
-    let behindText = false;
-
-    if (drawing) {
-      const inline = child(drawing, 'inline');
-      const anchor = child(drawing, 'anchor');
-      const container = inline || anchor;
-      anchored = !!anchor;
-      extent = child(container, 'extent');
-      const blip = container?.getElementsByTagNameNS(A_NS, 'blip')?.[0];
-      rid = blip?.getAttribute('r:embed') || blip?.getAttribute('embed') || '';
-      const wrap = container ? Array.from(container.children || []).find((n) => /^wrap/i.test(n.localName)) : null;
-      behindText = wrap?.localName === 'wrapNone' || !!container?.getElementsByTagNameNS(A_NS, 'positionH')?.length;
-    } else if (pict) {
-      const imageData = pict.getElementsByTagNameNS(VML_NS, 'imagedata')?.[0];
-      rid = imageData?.getAttribute('r:id') || imageData?.getAttribute('id') || '';
-      const style = imageData?.parentElement?.getAttribute('style') || '';
-      const width = /width\s*:\s*([\d.]+)pt/i.exec(style)?.[1];
-      const height = /height\s*:\s*([\d.]+)pt/i.exec(style)?.[1];
-      extent = { getAttribute: (key) => key === 'cx' ? (numeric(width, 0) * EMU_PER_PT) : (numeric(height, 0) * EMU_PER_PT) };
-    }
-
-    if (!rid) return null;
-    const relation = rels.get(rid);
-    if (!relation || relation.targetMode === 'External') return null;
-    const target = resolvePart(basePath, relation.target);
-    const src = await dataUrl(zip, target);
-    if (!src) return null;
-
-    return M().createImage({
-      src,
-      name: target.split('/').pop() || 'image',
-      widthPt: numeric(extent?.getAttribute('cx'), 0) / EMU_PER_PT,
-      heightPt: numeric(extent?.getAttribute('cy'), 0) / EMU_PER_PT,
-      anchor: anchored ? 'anchor' : 'inline',
-      wrap: anchored ? 'floating' : 'inline',
-      behindText
-    });
-  }
-
-  async function paragraph(node, context) {
-    const pPr = child(node, 'pPr');
-    const p = M().createParagraph(paragraphProps(pPr, context.styles));
-    let inheritedRun = context.styles.get(p.styleId) || {};
-    for (const nodeChild of Array.from(node.children || [])) {
-      if (nodeChild.localName !== 'r' && nodeChild.localName !== 'hyperlink') continue;
-      const runNodes = nodeChild.localName === 'r' ? [nodeChild] : children(nodeChild, 'r');
-      for (const runNode of runNodes) {
-        const props = runProps(child(runNode, 'rPr'), inheritedRun);
-        inheritedRun = props;
-        const texts = children(runNode).filter((n) => n.localName === 't' || n.localName === 'instrText');
-        texts.forEach((t) => p.runs.push(M().createRun(t.textContent || '', props)));
-        children(runNode, 'tab').forEach(() => p.runs.push(M().createRun('\t', props)));
-        const br = child(runNode, 'br');
-        if (br && String(attr(br, 'type') || '').toLowerCase() === 'page') p.pageBreakBefore = true;
-        const drawingImage = await imageFromDrawing(runNode, context.zip, context.rels, context.basePath);
-        if (drawingImage) p.runs.push(drawingImage);
-      }
-    }
-    if (!p.runs.length) p.runs.push(M().createRun('', inheritedRun));
-
-    const numPr = child(pPr, 'numPr');
-    if (numPr) {
-      p.bullet = {
-        ilvl: numeric(attr(child(numPr, 'ilvl'), 'val'), 0),
-        numId: attr(child(numPr, 'numId'), 'val') || null
-      };
-    }
-    return p;
-  }
-
-  async function table(node, context) {
-    const model = { id: `table-${Math.random().toString(36).slice(2)}`, type: 'table', rows: [] };
-    for (const tr of children(node, 'tr')) {
-      const cells = [];
-      for (const tc of children(tr, 'tc')) {
-        const blocks = [];
-        for (const p of children(tc, 'p')) blocks.push(await paragraph(p, context));
-        cells.push({ blocks });
-      }
-      model.rows.push(cells);
-    }
-    return model;
-  }
-
-  async function bodyBlocks(body, context) {
-    const out = [];
-    let sectPr = null;
-    for (const node of Array.from(body?.children || [])) {
-      if (node.localName === 'p') out.push(await paragraph(node, context));
-      else if (node.localName === 'tbl') out.push(await table(node, context));
-      else if (node.localName === 'sectPr') sectPr = node;
-    }
-    return { blocks: out, sectPr };
-  }
-
-  function pageGeometry(sectPr) {
-    const page = { ...M().DEFAULT_PAGE };
-    const size = child(sectPr, 'pgSz');
-    const margins = child(sectPr, 'pgMar');
-    if (size) {
-      page.widthPt = numeric(attr(size, 'w'), 11906) / 20;
-      page.heightPt = numeric(attr(size, 'h'), 16838) / 20;
-    }
-    if (margins) {
-      page.marginTopPt = numeric(attr(margins, 'top'), 108) / 20;
-      page.marginRightPt = numeric(attr(margins, 'right'), 108) / 20;
-      page.marginBottomPt = numeric(attr(margins, 'bottom'), 108) / 20;
-      page.marginLeftPt = numeric(attr(margins, 'left'), 108) / 20;
-      page.headerDistancePt = numeric(attr(margins, 'header'), 20) / 20;
-      page.footerDistancePt = numeric(attr(margins, 'footer'), 20) / 20;
-    }
-    return page;
-  }
-
-  async function headerFooter(zip, rels, relId, kind) {
-    if (!relId) return null;
-    const rel = rels.get(relId);
-    if (!rel) return null;
-    const path = resolvePart('word/document.xml', rel.target);
-    const doc = await readXml(zip, path);
-    if (!doc) return null;
-    const root = doc.getElementsByTagNameNS(W_NS, kind === 'header' ? 'hdr' : 'ftr')[0];
-    if (!root) return null;
-    const partRels = await relationships(zip, `word/_rels/${path.replace(/^word\//, '')}.rels`);
-    const { blocks } = await bodyBlocks(root, { zip, rels: partRels, basePath: path, styles: new Map() });
-    const container = kind === 'header' ? M().createHeader() : M().createFooter();
-    container.blocks = blocks;
-    return container;
-  }
-
-  async function importDocx(buffer, options = {}) {
-    if (!buffer) throw new Error('DOCX buffer is required.');
-    if (!window.JSZip) throw new Error('JSZip is required for canonical DOCX import.');
-    const zip = await window.JSZip.loadAsync(buffer);
-    const documentXml = await readXml(zip, 'word/document.xml');
-    if (!documentXml) throw new Error('DOCX is missing word/document.xml.');
-    const stylesXml = await readXml(zip, 'word/styles.xml');
-    const styles = styleMap(stylesXml);
-    const rels = await relationships(zip, 'word/_rels/document.xml.rels');
-    const body = documentXml.getElementsByTagNameNS(W_NS, 'body')[0];
-    if (!body) throw new Error('DOCX body is missing.');
-
-    const model = M().createDocument({ sourceType: 'docx', sourceName: options.sourceName || '' });
-    const parsed = await bodyBlocks(body, { zip, rels, basePath: 'word/document.xml', styles });
-    Object.assign(model.pages[0], pageGeometry(parsed.sectPr));
-
-    const headerRef = children(parsed.sectPr, 'headerReference')[0];
-    const footerRef = children(parsed.sectPr, 'footerReference')[0];
-    if (headerRef) model.pages[0].header = await headerFooter(zip, rels, attr(headerRef, 'id'), 'header');
-    if (footerRef) model.pages[0].footer = await headerFooter(zip, rels, attr(footerRef, 'id'), 'footer');
-
-    let page = model.pages[0];
-    for (const block of parsed.blocks) {
-      if (block.type === 'paragraph' && block.pageBreakBefore) {
-        page = M().createPage(model.pages.length + 1, page);
-        page.header = model.pages[0].header ? M().clone(model.pages[0].header) : null;
-        page.footer = model.pages[0].footer ? M().clone(model.pages[0].footer) : null;
-        model.pages.push(page);
-        block.pageBreakBefore = false;
-      }
-      page.blocks.push(block);
-    }
-
-    model.metadata.importDiagnostics = {
-      importer: 'wordprocessingml-v2',
-      sourceName: options.sourceName || '',
-      paragraphCount: count(model, 'paragraph'),
-      tableCount: count(model, 'table'),
-      imageCount: countImages(model),
-      headerPresent: !!model.pages[0].header,
-      footerPresent: !!model.pages[0].footer
-    };
-
-    return M().normalize(model);
-  }
-
-  function count(model, type) {
-    let total = 0;
-    M().walkBlocks(model, (block) => { if (block.type === type) total += 1; });
-    return total;
-  }
-
-  function countImages(model) {
-    let total = 0;
-    M().walkBlocks(model, (block) => {
-      if (block.type === 'image') total += 1;
-      if (block.type === 'paragraph') total += (block.runs || []).filter((run) => run.type === 'image').length;
-    });
-    return total;
-  }
-
-  window.gluefulResumeDocxImporterV2 = { importDocx };
+(function(){
+'use strict';
+const M=()=>window.gluefulResumeCanonicalModel;
+const W_NS='http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+const R_NS='http://schemas.openxmlformats.org/package/2006/relationships';
+const A_NS='http://schemas.openxmlformats.org/drawingml/2006/main';
+const VML_NS='urn:schemas-microsoft-com:vml';
+const EMU_PER_PT=12700;
+const attr=(n,name)=>n?(n.getAttribute(`w:${name}`)??n.getAttribute(name)):null;
+const child=(n,l)=>Array.from(n?.children||[]).find(x=>x.localName===l)||null;
+const children=(n,l)=>Array.from(n?.children||[]).filter(x=>!l||x.localName===l);
+const numeric=(v,f=0)=>Number.isFinite(Number(v))?Number(v):f;
+const escPath=v=>String(v||'').replace(/\\/g,'/');
+async function readXml(zip,path){const f=zip.file(path);if(!f)return null;return new DOMParser().parseFromString(await f.async('text'),'application/xml')}
+async function relationships(zip,path){const doc=await readXml(zip,path),map=new Map();if(!doc)return map;Array.from(doc.getElementsByTagNameNS(R_NS,'Relationship')).forEach(r=>map.set(r.getAttribute('Id'),{target:r.getAttribute('Target')||'',type:r.getAttribute('Type')||'',targetMode:r.getAttribute('TargetMode')||''}));return map}
+function resolvePart(base,target){if(!target||/^https?:/i.test(target))return target||'';const out=[];for(const p of escPath(base).split('/').slice(0,-1).concat(escPath(target).split('/'))){if(!p||p==='.')continue;if(p==='..')out.pop();else out.push(p)}return out.join('/')}
+async function dataUrl(zip,path){const f=zip.file(path);if(!f)return'';const bytes=await f.async('uint8array');let binary='';for(let i=0;i<bytes.length;i+=0x8000)binary+=String.fromCharCode(...bytes.subarray(i,i+0x8000));const ext=String(path).split('.').pop().toLowerCase();const mime=ext==='jpg'||ext==='jpeg'?'image/jpeg':ext==='gif'?'image/gif':ext==='svg'?'image/svg+xml':'image/png';return`data:${mime};base64,${btoa(binary)}`}
+function borderSpec(n){if(!n)return null;const val=String(attr(n,'val')||'').toLowerCase();if(!val||val==='nil'||val==='none')return null;const c=attr(n,'color');return{style:val,color:c&&c!=='auto'?`#${String(c).replace(/^#/,'')}`:'#808080',sizePt:Math.max(.25,numeric(attr(n,'sz'),6)/8),spacePt:numeric(attr(n,'space'),0)}}
+function paragraphBorder(p){if(!p)return null;const b={top:borderSpec(child(p,'top')),right:borderSpec(child(p,'right')),bottom:borderSpec(child(p,'bottom')),left:borderSpec(child(p,'left'))};return Object.values(b).some(Boolean)?b:null}
+function runProps(r,inherited={}){const f=child(r,'rFonts'),s=child(r,'sz'),c=child(r,'color'),u=child(r,'u'),v=child(r,'vertAlign');return{fontFamily:attr(f,'ascii')||attr(f,'hAnsi')||attr(f,'eastAsia')||inherited.fontFamily||'Times New Roman',fontSizePt:s?numeric(attr(s,'val'),22)/2:(inherited.fontSizePt||11),bold:!!child(r,'b')||!!inherited.bold,italic:!!child(r,'i')||!!inherited.italic,underline:!!u||!!inherited.underline,color:c&&attr(c,'val')&&attr(c,'val')!=='auto'?`#${attr(c,'val')}`:(inherited.color||'#202124'),verticalAlign:attr(v,'val')||inherited.verticalAlign||'baseline'}}
+function paragraphProps(pPr,styles){const spacing=child(pPr,'spacing'),ind=child(pPr,'ind'),jc=child(pPr,'jc'),style=child(pPr,'pStyle'),sp=styles.get(attr(style,'val'))||{},line=spacing?numeric(attr(spacing,'line'),240):240;return{...sp,alignment:String(attr(jc,'val')||sp.alignment||'left').toLowerCase(),styleId:attr(style,'val')||sp.styleId||null,beforeSpacingPt:spacing?numeric(attr(spacing,'before'),0)/20:(sp.beforeSpacingPt||0),afterSpacingPt:spacing?numeric(attr(spacing,'after'),0)/20:(sp.afterSpacingPt||0),lineSpacing:Math.max(.2,line/240),lineRule:String(attr(spacing,'lineRule')||'auto').toLowerCase(),leftIndentPt:ind?numeric(attr(ind,'left'),0)/20:(sp.leftIndentPt||0),rightIndentPt:ind?numeric(attr(ind,'right'),0)/20:(sp.rightIndentPt||0),firstLineIndentPt:ind?(numeric(attr(ind,'firstLine'),0)||-numeric(attr(ind,'hanging'),0))/20:(sp.firstLineIndentPt||0),keepWithNext:!!child(pPr,'keepNext'),keepLines:!!child(pPr,'keepLines'),pageBreakBefore:!!child(pPr,'pageBreakBefore'),border:paragraphBorder(child(pPr,'pBdr'))}}
+function styleMap(xml){const map=new Map();if(!xml)return map;Array.from(xml.getElementsByTagNameNS(W_NS,'style')).forEach(s=>{const id=attr(s,'styleId');if(!id)return;const p=child(s,'pPr'),r=child(s,'rPr'),v={};if(p)Object.assign(v,paragraphProps(p,new Map()));if(r)Object.assign(v,runProps(r));map.set(id,v)});return map}
+function positionData(container,page){const posH=container?.getElementsByTagNameNS(W_NS,'positionH')?.[0]||container?.getElementsByTagNameNS(A_NS,'positionH')?.[0];const posV=container?.getElementsByTagNameNS(W_NS,'positionV')?.[0]||container?.getElementsByTagNameNS(A_NS,'positionV')?.[0];const align=h=>String(child(h,'align')?.textContent||'').trim().toLowerCase()||null;const offset=h=>numeric(child(h,'posOffset')?.textContent,0)/EMU_PER_PT;return{horizontalAlign:align(posH),verticalAlign:align(posV),xPt:offset(posH),yPt:offset(posV),horizontalReference:posH?.getAttribute('relativeFrom')||'margin',verticalReference:posV?.getAttribute('relativeFrom')||'paragraph'}}
+async function imageFromDrawing(runNode,zip,rels,basePath){const drawing=child(runNode,'drawing'),pict=child(runNode,'pict');let rid='',extent=null,container=null,anchored=false,behindText=false;if(drawing){const inline=child(drawing,'inline'),anchor=child(drawing,'anchor');container=inline||anchor;anchored=!!anchor;extent=child(container,'extent');const blip=container?.getElementsByTagNameNS(A_NS,'blip')?.[0];rid=blip?.getAttribute('r:embed')||blip?.getAttribute('embed')||'';const wrap=Array.from(container?.children||[]).find(n=>/^wrap/i.test(n.localName));behindText=wrap?.localName==='wrapNone'}else if(pict){const imageData=pict.getElementsByTagNameNS(VML_NS,'imagedata')?.[0];rid=imageData?.getAttribute('r:id')||imageData?.getAttribute('id')||'';const style=imageData?.parentElement?.getAttribute('style')||'';const width=/width\s*:\s*([\d.]+)pt/i.exec(style)?.[1],height=/height\s*:\s*([\d.]+)pt/i.exec(style)?.[1];extent={getAttribute:k=>k==='cx'?numeric(width)*EMU_PER_PT:numeric(height)*EMU_PER_PT}}
+if(!rid)return null;const rel=rels.get(rid);if(!rel||rel.targetMode==='External')return null;const target=resolvePart(basePath,rel.target),src=await dataUrl(zip,target);if(!src)return null;const pos=anchored?positionData(container):{};return M().createImage({src,name:target.split('/').pop()||'image',widthPt:numeric(extent?.getAttribute('cx'),0)/EMU_PER_PT,heightPt:numeric(extent?.getAttribute('cy'),0)/EMU_PER_PT,anchor:anchored?'anchor':'inline',wrap:anchored?'floating':'inline',behindText,horizontalAlign:pos.horizontalAlign,verticalAlign:pos.verticalAlign,xPt:pos.xPt,yPt:pos.yPt,horizontalReference:pos.horizontalReference,verticalReference:pos.verticalReference})}
+async function paragraph(node,ctx){const pPr=child(node,'pPr'),p=M().createParagraph(paragraphProps(pPr,ctx.styles));let inherited=ctx.styles.get(p.styleId)||{};for(const nc of Array.from(node.children||[])){if(nc.localName!=='r'&&nc.localName!=='hyperlink')continue;for(const rn of nc.localName==='r'?[nc]:children(nc,'r')){const props=runProps(child(rn,'rPr'),inherited);inherited=props;children(rn).filter(n=>n.localName==='t'||n.localName==='instrText').forEach(t=>p.runs.push(M().createRun(t.textContent||'',props)));children(rn,'tab').forEach(()=>p.runs.push(M().createRun('\t',props)));const br=child(rn,'br');if(br&&String(attr(br,'type')||'').toLowerCase()==='page')p.pageBreakBefore=true;const img=await imageFromDrawing(rn,ctx.zip,ctx.rels,ctx.basePath);if(img)p.runs.push(img)}}if(!p.runs.length)p.runs.push(M().createRun('',inherited));const num=child(pPr,'numPr');if(num)p.bullet={ilvl:numeric(attr(child(num,'ilvl'),'val'),0),numId:attr(child(num,'numId'),'val')||null};return p}
+async function table(node,ctx){const tablePr=child(node,'tblPr'),grid=child(node,'tblGrid'),model=M().createTable({});const width=child(tablePr,'tblW');if(width)model.widthPt=numeric(attr(width,'w'),0)/20;const layout=child(tablePr,'tblLayout');if(layout)model.layout=attr(layout,'type')||'fixed';const jc=child(tablePr,'jc');if(jc)model.alignment=attr(jc,'val')||'left';const borders=child(tablePr,'tblBorders');if(borders)model.borders={top:borderSpec(child(borders,'top')),right:borderSpec(child(borders,'right')),bottom:borderSpec(child(borders,'bottom')),left:borderSpec(child(borders,'left')),insideH:borderSpec(child(borders,'insideH')),insideV:borderSpec(child(borders,'insideV'))};const mar=child(tablePr,'tblCellMar');if(mar)model.cellMargins={top:numeric(attr(child(mar,'top'),'w'),0)/20,right:numeric(attr(child(mar,'right'),'w'),0)/20,bottom:numeric(attr(child(mar,'bottom'),'w'),0)/20,left:numeric(attr(child(mar,'left'),'w'),0)/20};if(grid)model.columnWidthsPt=children(grid,'gridCol').map(c=>numeric(attr(c,'w'),0)/20);for(const tr of children(node,'tr')){const cells=[];for(const tc of children(tr,'tc')){const tcPr=child(tc,'tcPr'),cell=M().createTableCell({});const w=child(tcPr,'tcW');if(w)cell.widthPt=numeric(attr(w,'w'),0)/20;const gs=child(tcPr,'gridSpan');if(gs)cell.colSpan=Math.max(1,numeric(attr(gs,'val'),1));const rs=child(tcPr,'vMerge');if(rs&&attr(rs,'val')==='restart')cell.rowSpan=1;const va=child(tcPr,'vAlign');if(va)cell.verticalAlign=attr(va,'val')||'top';const shd=child(tcPr,'shd');if(shd&&attr(shd,'fill'))cell.shading=`#${attr(shd,'fill')}`;for(const p of children(tc,'p'))cell.blocks.push(await paragraph(p,ctx));cells.push(cell)}model.rows.push(cells)}return model}
+async function bodyBlocks(body,ctx){const out=[];let sectPr=null;for(const n of Array.from(body?.children||[])){if(n.localName==='p')out.push(await paragraph(n,ctx));else if(n.localName==='tbl')out.push(await table(n,ctx));else if(n.localName==='sectPr')sectPr=n}return{blocks:out,sectPr}}
+function pageGeometry(sect){const p={...M().DEFAULT_PAGE},size=child(sect,'pgSz'),mar=child(sect,'pgMar'),cols=child(sect,'cols');if(size){p.widthPt=numeric(attr(size,'w'),11906)/20;p.heightPt=numeric(attr(size,'h'),16838)/20;p.orientation=attr(size,'orient')||'portrait'}if(mar){p.marginTopPt=numeric(attr(mar,'top'),108)/20;p.marginRightPt=numeric(attr(mar,'right'),108)/20;p.marginBottomPt=numeric(attr(mar,'bottom'),108)/20;p.marginLeftPt=numeric(attr(mar,'left'),108)/20;p.headerDistancePt=numeric(attr(mar,'header'),20)/20;p.footerDistancePt=numeric(attr(mar,'footer'),20)/20}if(cols){p.columnCount=Math.max(1,numeric(attr(cols,'num'),1))}return p}
+async function headerFooter(zip,rels,relId,kind){if(!relId)return null;const rel=rels.get(relId);if(!rel)return null;const path=resolvePart('word/document.xml',rel.target),doc=await readXml(zip,path);if(!doc)return null;const root=doc.getElementsByTagNameNS(W_NS,kind==='header'?'hdr':'ftr')[0];if(!root)return null;const partRels=await relationships(zip,path.replace(/[^/]+$/,'_rels/')+path.split('/').pop()+'.rels');const {blocks}=await bodyBlocks(root,{zip,rels:partRels,basePath:path,styles:new Map()});const c=kind==='header'?M().createHeader():M().createFooter();c.blocks=blocks;return c}
+async function importDocx(buffer,options={}){if(!buffer)throw new Error('DOCX buffer is required.');if(!window.JSZip)throw new Error('JSZip is required for canonical DOCX import.');const zip=await window.JSZip.loadAsync(buffer),xml=await readXml(zip,'word/document.xml');if(!xml)throw new Error('DOCX is missing word/document.xml.');const styles=styleMap(await readXml(zip,'word/styles.xml')),rels=await relationships(zip,'word/_rels/document.xml.rels'),body=xml.getElementsByTagNameNS(W_NS,'body')[0];if(!body)throw new Error('DOCX body is missing.');const model=M().createDocument({sourceType:'docx',sourceName:options.sourceName||''}),parsed=await bodyBlocks(body,{zip,rels,basePath:'word/document.xml',styles});Object.assign(model.pages[0],pageGeometry(parsed.sectPr));const hr=children(parsed.sectPr,'headerReference')[0],fr=children(parsed.sectPr,'footerReference')[0];if(hr)model.pages[0].header=await headerFooter(zip,rels,attr(hr,'id'),'header');if(fr)model.pages[0].footer=await headerFooter(zip,rels,attr(fr,'id'),'footer');let page=model.pages[0];for(const block of parsed.blocks){if(block.type==='paragraph'&&block.pageBreakBefore){page=M().createPage(model.pages.length+1,page);page.header=model.pages[0].header?M().clone(model.pages[0].header):null;page.footer=model.pages[0].footer?M().clone(model.pages[0].footer):null;model.pages.push(page);block.pageBreakBefore=false}page.blocks.push(block)}model.metadata.importDiagnostics={importer:'wordprocessingml-v2',sourceName:options.sourceName||'',paragraphCount:count(model,'paragraph'),tableCount:count(model,'table'),imageCount:countImages(model),headerPresent:!!model.pages[0].header,footerPresent:!!model.pages[0].footer};return M().normalize(model)}
+function count(model,type){let n=0;M().walkBlocks(model,b=>{if(b.type===type)n++});return n}
+function countImages(model){let n=0;M().walkBlocks(model,b=>{if(b.type==='image')n++;if(b.type==='paragraph')n+=(b.runs||[]).filter(r=>r.type==='image').length});return n}
+window.gluefulResumeDocxImporterV2={importDocx};
 })();
