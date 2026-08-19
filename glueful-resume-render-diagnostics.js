@@ -56,7 +56,7 @@
     if (document.getElementById('glueful-fixed-pdf-bootstrap-direct')) return;
     const script = document.createElement('script');
     script.id = 'glueful-fixed-pdf-bootstrap-direct';
-    script.src = './glueful-resume-fixed-page-bootstrap.js?v=20260820-fixedpdf19';
+    script.src = './glueful-resume-fixed-page-bootstrap.js?v=20260820-fixedpdf20';
     script.async = false;
     script.dataset.gluefulRuntime = 'fixed-pdf-direct';
     script.onload = () => console.info('[Glueful Resume Studio] FIXED PDF bootstrap loaded directly from page runtime.');
