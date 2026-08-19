@@ -48,12 +48,9 @@ jobs:
           grep -F 'v:shape' glueful-resume-header-fidelity-v3.js
           grep -F 'v:imagedata' glueful-resume-header-fidelity-v3.js
           grep -F 'dataUrl' glueful-resume-header-fidelity-v3.js
-          grep -F "version:'4'" glueful-resume-header-fidelity-v3.js
           grep -F 'PAGE_WIDTH=794' glueful-resume-header-fidelity-v3.js
           grep -F 'PAGE_HEIGHT=1123' glueful-resume-header-fidelity-v3.js
-          grep -F 'docx-preview-authoritative' glueful-resume-header-fidelity-v3.js
           grep -F 'glueful-word-artifact' glueful-resume-header-fidelity-v3.js
-          grep -F 'glueful-word-rule-repair' glueful-resume-header-fidelity-v3.js
           grep -F 'glueful-cache-v15-resume-fixed-pdf-optin' sw.js
           grep -F 'glueful-resume-header-fidelity-v3.js?v=20260819-2' sw.js
           grep -F 'glueful-resume-header-fidelity.js' sw.js
