@@ -44,7 +44,7 @@ jobs:
       - name: Word fidelity, logo, and rule regression
         run: |
           set -e
-          grep -F 'word/_rels/' glueful-resume-header-fidelity-v3.js
+          grep -F 'relPath(part)' glueful-resume-header-fidelity-v3.js
           grep -F 'v:shape' glueful-resume-header-fidelity-v3.js
           grep -F 'v:imagedata' glueful-resume-header-fidelity-v3.js
           grep -F 'PAGE_WIDTH=794' glueful-resume-header-fidelity-v3.js
