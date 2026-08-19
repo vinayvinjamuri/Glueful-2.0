@@ -1,4 +1,4 @@
-const CACHE_NAME = "glueful-cache-v15-resume-fixed-pdf-optin";
+const CACHE_NAME = "glueful-cache-v16-resume-fixed-pdf-default";
 const AUTHORITATIVE_RESUME_SCRIPT = "./glueful-resume-studio-adobe.js";
 const DOCX_FORENSICS_SCRIPT = "./glueful-resume-docx-forensics.js";
 const MOBILE_LAYOUT_SCRIPT = "./glueful-resume-studio-mobile-layout.js";
@@ -23,6 +23,7 @@ const ASSETS = [
   HEADER_FIDELITY_V2_SCRIPT,
   HEADER_FIDELITY_V3_SCRIPT,
   RENDER_DIAGNOSTICS_SCRIPT,
+  ...FIXED_PDF_ASSETS,
   "./icons/icon-192.png",
   "./icons/icon-512.png",
   "./icons/icon-180.png",
@@ -32,7 +33,7 @@ async function networkResponse(request, preloadResponse){const preloaded=await p
 async function buildAuthoritativeIndex(request, preloadResponse){
   const response=await networkResponse(request,preloadResponse);if(!response||!response.ok)return response;
   const contentType=response.headers.get("content-type")||"";if(!contentType.includes("text/html"))return response;
-  const html=await response.text(),scripts=[],url=new URL(request.url),fixedPdf=url.searchParams.get("resumeRenderer")==="fixed-pdf";
+  const html=await response.text(),scripts=[];
   const add=(src,v,data)=>{if(!html.includes(src))scripts.push(`<script src="${src}?v=${v}" data-glueful-runtime="${data}"></script>`)};
   if(!html.includes(DOCX_FORENSICS_SCRIPT))add(DOCX_FORENSICS_SCRIPT,"20260819-7","docx-forensics");
   if(!html.includes(AUTHORITATIVE_RESUME_SCRIPT))add(AUTHORITATIVE_RESUME_SCRIPT,"20260819-7","authoritative-resume-studio");
@@ -41,13 +42,11 @@ async function buildAuthoritativeIndex(request, preloadResponse){
   if(!html.includes(HEADER_ALIGNMENT_SCRIPT))add(HEADER_ALIGNMENT_SCRIPT,"20260819-4","header-alignment");
   if(!html.includes(`${HEADER_FIDELITY_V3_SCRIPT}?v=`))add(HEADER_FIDELITY_V3_SCRIPT,"20260819-2","header-fidelity-v4");
   if(!html.includes(RENDER_DIAGNOSTICS_SCRIPT))add(RENDER_DIAGNOSTICS_SCRIPT,"20260819-7","render-diagnostics");
-  if(fixedPdf) {
-    add(FIXED_PDF_BOOTSTRAP,"20260819-fixedpdf2","fixed-pdf-bootstrap");
-    add(FIXED_PDF_MODEL,"20260819-fixedpdf2","fixed-pdf-model");
-    add(FIXED_PDF_IMPORTER,"20260819-fixedpdf2","fixed-pdf-importer");
-    add(FIXED_PDF_RENDERER,"20260819-fixedpdf2","fixed-pdf-renderer");
-    add(FIXED_PDF_CONTROLLER,"20260819-fixedpdf2","fixed-pdf-controller");
-  }
+  add(FIXED_PDF_BOOTSTRAP,"20260819-fixedpdf3","fixed-pdf-bootstrap");
+  add(FIXED_PDF_MODEL,"20260819-fixedpdf3","fixed-pdf-model");
+  add(FIXED_PDF_IMPORTER,"20260819-fixedpdf3","fixed-pdf-importer");
+  add(FIXED_PDF_RENDERER,"20260819-fixedpdf3","fixed-pdf-renderer");
+  add(FIXED_PDF_CONTROLLER,"20260819-fixedpdf3","fixed-pdf-controller");
   if(!scripts.length)return new Response(html,{status:response.status,statusText:response.statusText,headers:response.headers});
   const block=scripts.join("\n"),marker="</body>",injected=html.includes(marker)?html.replace(marker,`${block}\n${marker}`):`${html}\n${block}`,headers=new Headers(response.headers);headers.set("Content-Type","text/html; charset=UTF-8");
   return new Response(injected,{status:response.status,statusText:response.statusText,headers});
