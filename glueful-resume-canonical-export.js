@@ -55,11 +55,21 @@
     if (block.firstLineIndentPt > 0) indent.firstLine = Math.round(block.firstLineIndentPt * 20);
     if (block.firstLineIndentPt < 0) indent.hanging = Math.round(Math.abs(block.firstLineIndentPt) * 20);
 
+    const border = block.border?.bottom ? {
+      bottom: {
+        color: String(block.border.bottom.color || '#808080').replace('#', ''),
+        size: Math.max(1, Math.round(Number(block.border.bottom.sizePt || .75) * 8)),
+        style: block.border.bottom.style === 'double' ? 'double' : 'single',
+        space: Math.max(0, Math.round(Number(block.border.bottom.spacePt || 0)))
+      }
+    } : undefined;
+
     const options = {
       children: (block.runs || []).map((run) => runToDocx(run, docx)),
       spacing,
       indent,
-      alignment: block.alignment === 'both' ? docx.AlignmentType.JUSTIFIED : block.alignment === 'center' ? docx.AlignmentType.CENTER : block.alignment === 'right' ? docx.AlignmentType.RIGHT : docx.AlignmentType.LEFT
+      alignment: block.alignment === 'both' ? docx.AlignmentType.JUSTIFIED : block.alignment === 'center' ? docx.AlignmentType.CENTER : block.alignment === 'right' ? docx.AlignmentType.RIGHT : docx.AlignmentType.LEFT,
+      border
     };
     if (block.pageBreakBefore) options.pageBreakBefore = true;
     if (block.bullet) options.bullet = { level: Number(block.bullet.ilvl || 0) };
@@ -92,7 +102,7 @@
     if (!model) throw new Error('No canonical resume model is active.');
 
     const first = model.pages?.[0] || M().DEFAULT_PAGE;
-    const sections = (model.pages || []).map((page, index) => {
+    const sections = (model.pages || []).map((page) => {
       const properties = {
         page: {
           size: { width: Math.round(page.widthPt * 20), height: Math.round(page.heightPt * 20) },
@@ -112,11 +122,14 @@
       return properties;
     });
 
-    const document = new docx.Document({ sections, styles: { default: { document: { run: { font: first?.fontFamily || 'Times New Roman', size: Math.round(Number(model.settings?.defaultFontSizePt || 11) * 2) } } } } });
-    const blob = await docx.Packer.toBlob(document);
+    const doc = new docx.Document({
+      sections,
+      styles: { default: { document: { run: { font: first?.fontFamily || 'Times New Roman', size: Math.round(Number(model.settings?.defaultFontSizePt || 11) * 2) } } } }
+    });
+    const blob = await docx.Packer.toBlob(doc);
     const name = String(model.metadata?.sourceName || 'resume').replace(/\.(pdf|docx)$/i, '') || 'resume';
     const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
+    const anchor = window.document.createElement('a');
     anchor.href = url;
     anchor.download = `${name}-edited.docx`;
     anchor.click();
@@ -126,33 +139,36 @@
 
   function exportPdf(model = R()?.getActiveModel?.()) {
     if (!model) throw new Error('No canonical resume model is active.');
-    const host = document.getElementById('job-resume-editor-text');
-    if (!host) throw new Error('Resume editor surface is missing.');
-    const printable = document.createElement('div');
-    printable.id = 'glueful-canonical-print-sheet';
-    printable.innerHTML = '<div class="glueful-canonical-print-pages"></div>';
-    const pagesHost = printable.firstElementChild;
     const state = R()?.getState?.();
     const surface = state?.surface;
     if (!surface) throw new Error('Canonical renderer surface is not available.');
+
+    const printable = window.document.createElement('div');
+    printable.id = 'glueful-canonical-print-sheet';
+    const pagesHost = window.document.createElement('div');
+    pagesHost.className = 'glueful-canonical-print-pages';
     pagesHost.appendChild(surface.cloneNode(true));
+    printable.appendChild(pagesHost);
 
     const first = model.pages?.[0] || M().DEFAULT_PAGE;
     const widthIn = Number(first.widthPt || 595.28) / 72;
     const heightIn = Number(first.heightPt || 841.89) / 72;
-    const style = document.createElement('style');
+    const style = window.document.createElement('style');
     style.textContent = `
       @page { size: ${widthIn}in ${heightIn}in; margin:0; }
       html,body{margin:0!important;padding:0!important;background:#fff!important;}
       #glueful-canonical-print-sheet{position:fixed;inset:0;background:#fff;z-index:2147483647;overflow:auto;}
-      #glueful-canonical-print-sheet .glueful-canonical-surface{display:flex!important;align-items:center!important;gap:0!important;min-width:0!important;padding:0!important;margin:0!important;}
+      #glueful-canonical-print-sheet .glueful-canonical-surface{display:flex!important;align-items:flex-start!important;gap:0!important;min-width:0!important;padding:0!important;margin:0!important;}
       #glueful-canonical-print-sheet .glueful-canonical-page{box-shadow:none!important;border:0!important;break-after:page;page-break-after:always;}
       #glueful-canonical-print-sheet .glueful-canonical-editable{outline:none!important;}
-      @media print{#glueful-canonical-print-sheet{position:static;overflow:visible;} #glueful-canonical-print-sheet .glueful-canonical-page:last-child{break-after:auto;page-break-after:auto;}}
+      @media print{#glueful-canonical-print-sheet{position:static;overflow:visible;}#glueful-canonical-print-sheet .glueful-canonical-page:last-child{break-after:auto;page-break-after:auto;}}
     `;
     printable.appendChild(style);
-    document.body.appendChild(printable);
-    const cleanup = () => { printable.remove(); window.removeEventListener('afterprint', cleanup); };
+    window.document.body.appendChild(printable);
+    const cleanup = () => {
+      printable.remove();
+      window.removeEventListener('afterprint', cleanup);
+    };
     window.addEventListener('afterprint', cleanup, { once: true });
     window.print();
     setTimeout(cleanup, 15000);
