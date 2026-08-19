@@ -5,6 +5,7 @@ on:
   pull_request:
     branches: ['main']
     paths:
+      - 'sw.js'
       - 'glueful-resume-layout-model.js'
       - 'glueful-resume-pdf-layout-importer.js'
       - 'glueful-resume-fixed-page-renderer.js'
@@ -22,6 +23,7 @@ jobs:
         run: |
           set -e
           for f in \
+            sw.js \
             glueful-resume-layout-model.js \
             glueful-resume-pdf-layout-importer.js \
             glueful-resume-fixed-page-renderer.js \
@@ -38,15 +40,16 @@ jobs:
             'glueful-resume-pdf-layout-importer.js':['pdf-fixed-page-v2','original-pdf','PT_TO_PX','createMask','maskForLine'],
             'glueful-resume-fixed-page-renderer.js':['glueful-fixed-page','glueful-fixed-mask','glueful-fixed-text','fixed-page-pdf-v2'],
             'glueful-resume-fixed-page-controller.js':['gluefulFixedPdfResumeStudio','resumeRenderer','fixed-pdf','renderPdf','printPdf'],
-            'glueful-resume-fixed-page-bootstrap.js':['glueful-resume-fixed-page-controller.js','resumeRenderer']
+            'glueful-resume-fixed-page-bootstrap.js':['glueful-resume-fixed-page-controller.js','resumeRenderer'],
+            'sw.js':['glueful-cache-v15-resume-fixed-pdf-optin','resumeRenderer','fixed-pdf-bootstrap','fixed-pdf-model','fixed-pdf-importer','fixed-pdf-renderer','fixed-pdf-controller']
           };
           for(const [file,needles] of Object.entries(checks)){
             const text=fs.readFileSync(file,'utf8');
             for(const n of needles) if(!text.includes(n)) throw new Error(`${file} missing ${n}`);
           }
           const sw=fs.readFileSync('sw.js','utf8');
-          for(const name of ['glueful-resume-layout-model.js','glueful-resume-pdf-layout-importer.js','glueful-resume-fixed-page-renderer.js','glueful-resume-fixed-page-controller.js','glueful-resume-fixed-page-bootstrap.js']){
-            if(sw.includes(name)) throw new Error(`Prototype must not be production-injected: ${name}`);
-          }
-          console.log('Fixed-page prototype isolation and model contracts passed');
+          if(!/url\.searchParams\.get\("resumeRenderer"\)==="fixed-pdf"/.test(sw)) throw new Error('Fixed-PDF injection is not query-gated');
+          const indexScripts=fs.readFileSync('glueful-resume-fixed-page-bootstrap.js','utf8');
+          if(!indexScripts.includes('resumeRenderer')||!indexScripts.includes('fixed-pdf')) throw new Error('Prototype bootstrap is not opt-in');
+          console.log('Fixed-page prototype contracts and safe opt-in route passed');
           NODE
