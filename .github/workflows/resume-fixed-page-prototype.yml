@@ -8,6 +8,8 @@ on:
       - 'glueful-resume-layout-model.js'
       - 'glueful-resume-pdf-layout-importer.js'
       - 'glueful-resume-fixed-page-renderer.js'
+      - 'glueful-resume-fixed-page-controller.js'
+      - 'glueful-resume-fixed-page-bootstrap.js'
       - '.github/workflows/resume-fixed-page-prototype.yml'
 permissions:
   contents: read
@@ -19,24 +21,32 @@ jobs:
       - name: Syntax checks
         run: |
           set -e
-          node --check glueful-resume-layout-model.js
-          node --check glueful-resume-pdf-layout-importer.js
-          node --check glueful-resume-fixed-page-renderer.js
+          for f in \
+            glueful-resume-layout-model.js \
+            glueful-resume-pdf-layout-importer.js \
+            glueful-resume-fixed-page-renderer.js \
+            glueful-resume-fixed-page-controller.js \
+            glueful-resume-fixed-page-bootstrap.js; do
+            node --check "$f"
+          done
       - name: Architecture invariants
         run: |
           node <<'NODE'
           const fs=require('fs');
-          const files={
-            'glueful-resume-layout-model.js':['glueful-resume-layout-document','createPage','createText'],
-            'glueful-resume-pdf-layout-importer.js':['pdf-fixed-page-v1','original-pdf','getDocument'],
-            'glueful-resume-fixed-page-renderer.js':['glueful-fixed-page','contentEditable','794px','1123px']
+          const checks={
+            'glueful-resume-layout-model.js':['glueful-resume-layout-document','createMask','maskWidth','maskHeight','sourceItems'],
+            'glueful-resume-pdf-layout-importer.js':['pdf-fixed-page-v2','original-pdf','PT_TO_PX','createMask','maskForLine'],
+            'glueful-resume-fixed-page-renderer.js':['glueful-fixed-page','glueful-fixed-mask','glueful-fixed-text','fixed-page-pdf-v2'],
+            'glueful-resume-fixed-page-controller.js':['gluefulFixedPdfResumeStudio','resumeRenderer','fixed-pdf','renderPdf','printPdf'],
+            'glueful-resume-fixed-page-bootstrap.js':['glueful-resume-fixed-page-controller.js','resumeRenderer']
           };
-          for(const [file,needles] of Object.entries(files)){
+          for(const [file,needles] of Object.entries(checks)){
             const text=fs.readFileSync(file,'utf8');
             for(const n of needles) if(!text.includes(n)) throw new Error(`${file} missing ${n}`);
           }
           const sw=fs.readFileSync('sw.js','utf8');
-          if(sw.includes('glueful-resume-pdf-layout-importer.js')) throw new Error('Prototype importer must not be production-injected');
-          if(sw.includes('glueful-resume-fixed-page-renderer.js')) throw new Error('Prototype renderer must not be production-injected');
-          console.log('Fixed-page prototype isolation checks passed');
+          for(const name of ['glueful-resume-layout-model.js','glueful-resume-pdf-layout-importer.js','glueful-resume-fixed-page-renderer.js','glueful-resume-fixed-page-controller.js','glueful-resume-fixed-page-bootstrap.js']){
+            if(sw.includes(name)) throw new Error(`Prototype must not be production-injected: ${name}`);
+          }
+          console.log('Fixed-page prototype isolation and model contracts passed');
           NODE
