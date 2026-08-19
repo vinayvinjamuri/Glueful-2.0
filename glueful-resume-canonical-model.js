@@ -1,218 +1,26 @@
 /* =========================================================
    GLUEFUL RESUME STUDIO — CANONICAL DOCUMENT MODEL
-   Architecture E foundation:
-   DOCX/PDF import -> canonical model -> deterministic page renderer
-   -> separate editing surface.
+   Architecture E foundation.
    ========================================================= */
-(function () {
-  'use strict';
-
-  const VERSION = 2;
-
-  const DEFAULT_PAGE = Object.freeze({
-    widthPt: 595.28,
-    heightPt: 841.89,
-    marginTopPt: 54,
-    marginRightPt: 54,
-    marginBottomPt: 54,
-    marginLeftPt: 54,
-    headerDistancePt: 20,
-    footerDistancePt: 20,
-    columnCount: 1
-  });
-
-  const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
-  const clone = (value) => JSON.parse(JSON.stringify(value));
-  const uid = (prefix) => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-
-  function createRun(text = '', properties = {}) {
-    return {
-      id: uid('run'),
-      type: 'run',
-      text: String(text ?? ''),
-      fontFamily: properties.fontFamily || 'Times New Roman',
-      fontSizePt: clamp(properties.fontSizePt || 11, 4, 96),
-      bold: !!properties.bold,
-      italic: !!properties.italic,
-      underline: !!properties.underline,
-      color: properties.color || '#202124',
-      verticalAlign: properties.verticalAlign || 'baseline'
-    };
-  }
-
-  function createParagraph(properties = {}) {
-    return {
-      id: uid('p'),
-      type: 'paragraph',
-      alignment: properties.alignment || 'left',
-      styleId: properties.styleId || null,
-      beforeSpacingPt: Number(properties.beforeSpacingPt || 0),
-      afterSpacingPt: Number(properties.afterSpacingPt || 0),
-      lineSpacing: properties.lineSpacing == null ? 1 : Number(properties.lineSpacing),
-      lineRule: properties.lineRule || 'auto',
-      leftIndentPt: Number(properties.leftIndentPt || 0),
-      rightIndentPt: Number(properties.rightIndentPt || 0),
-      firstLineIndentPt: Number(properties.firstLineIndentPt || 0),
-      keepWithNext: !!properties.keepWithNext,
-      keepLines: !!properties.keepLines,
-      pageBreakBefore: !!properties.pageBreakBefore,
-      border: properties.border ? clone(properties.border) : null,
-      bullet: properties.bullet ? clone(properties.bullet) : null,
-      runs: []
-    };
-  }
-
-  function createImage(properties = {}) {
-    return {
-      id: uid('img'),
-      type: 'image',
-      src: properties.src || '',
-      name: properties.name || '',
-      widthPt: Number(properties.widthPt || 0),
-      heightPt: Number(properties.heightPt || 0),
-      xPt: properties.xPt == null ? null : Number(properties.xPt),
-      yPt: properties.yPt == null ? null : Number(properties.yPt),
-      anchor: properties.anchor || 'inline',
-      wrap: properties.wrap || 'inline',
-      behindText: !!properties.behindText,
-      horizontalReference: properties.horizontalReference || 'margin',
-      verticalReference: properties.verticalReference || 'paragraph'
-    };
-  }
-
-  function createRule(properties = {}) {
-    return {
-      id: uid('rule'),
-      type: 'rule',
-      thicknessPt: Number(properties.thicknessPt || 0.75),
-      color: properties.color || '#808080',
-      widthPercent: Number(properties.widthPercent || 100),
-      spacingBeforePt: Number(properties.spacingBeforePt || 0),
-      spacingAfterPt: Number(properties.spacingAfterPt || 0)
-    };
-  }
-
-  function createHeader(properties = {}) {
-    return {
-      id: uid('header'),
-      type: 'header',
-      distancePt: Number(properties.distancePt || 20),
-      blocks: []
-    };
-  }
-
-  function createFooter(properties = {}) {
-    return {
-      id: uid('footer'),
-      type: 'footer',
-      distancePt: Number(properties.distancePt || 20),
-      blocks: []
-    };
-  }
-
-  function createPage(number = 1, properties = {}) {
-    const page = { ...DEFAULT_PAGE, ...clone(properties), number };
-    return {
-      id: uid('page'),
-      type: 'page',
-      ...page,
-      header: null,
-      footer: null,
-      blocks: []
-    };
-  }
-
-  function createDocument(properties = {}) {
-    const firstPage = createPage(1, { ...DEFAULT_PAGE, ...(properties.page || {}) });
-    return {
-      model: 'glueful-resume-document',
-      version: VERSION,
-      metadata: {
-        sourceType: properties.sourceType || 'unknown',
-        sourceName: properties.sourceName || '',
-        importedAt: new Date().toISOString(),
-        compatibility: 'word-layout'
-      },
-      settings: {
-        defaultFontFamily: 'Times New Roman',
-        defaultFontSizePt: 11,
-        unit: 'pt'
-      },
-      pages: [firstPage]
-    };
-  }
-
-  function walkBlocks(document, visitor) {
-    (document?.pages || []).forEach((page) => {
-      (page.blocks || []).forEach((block) => visitor(block, page));
-      [page.header, page.footer].forEach((container) => {
-        (container?.blocks || []).forEach((block) => visitor(block, page, container));
-      });
-    });
-  }
-
-  function findNode(document, id) {
-    let found = null;
-    walkBlocks(document, (block) => {
-      if (block.id === id) found = block;
-      if (found || block.type !== 'paragraph') return;
-      const run = (block.runs || []).find((item) => item.id === id);
-      if (run) found = run;
-    });
-    return found;
-  }
-
-  function toPlainText(document) {
-    const pages = (document?.pages || []).map((page) => {
-      return (page.blocks || []).map((block) => {
-        if (block.type === 'paragraph') return (block.runs || []).map((run) => run.text || '').join('');
-        return '';
-      }).filter((line) => line !== '').join('\n');
-    });
-    return pages.filter(Boolean).join('\n\n');
-  }
-
-  function validate(document) {
-    const errors = [];
-    if (!document || document.model !== 'glueful-resume-document') errors.push('Invalid canonical document model.');
-    if (!Array.isArray(document?.pages) || !document.pages.length) errors.push('Document has no pages.');
-    (document?.pages || []).forEach((page, index) => {
-      if (!(page.widthPt > 0) || !(page.heightPt > 0)) errors.push(`Page ${index + 1} has invalid geometry.`);
-      if (page.marginLeftPt < 0 || page.marginRightPt < 0 || page.marginTopPt < 0 || page.marginBottomPt < 0) errors.push(`Page ${index + 1} has negative margins.`);
-      if (!Number.isFinite(page.columnCount) || page.columnCount < 1) errors.push(`Page ${index + 1} has invalid column count.`);
-    });
-    return { valid: errors.length === 0, errors };
-  }
-
-  function normalize(document) {
-    const next = clone(document || createDocument());
-    next.model = 'glueful-resume-document';
-    next.version = VERSION;
-    if (!Array.isArray(next.pages) || !next.pages.length) next.pages = [createPage(1)];
-    next.pages.forEach((page, index) => {
-      Object.assign(page, DEFAULT_PAGE, page, { number: index + 1 });
-      if (!Array.isArray(page.blocks)) page.blocks = [];
-      if (!Number.isFinite(page.columnCount) || page.columnCount < 1) page.columnCount = 1;
-    });
-    return next;
-  }
-
-  window.gluefulResumeCanonicalModel = {
-    VERSION,
-    DEFAULT_PAGE,
-    createRun,
-    createParagraph,
-    createImage,
-    createRule,
-    createHeader,
-    createFooter,
-    createPage,
-    createDocument,
-    clone,
-    findNode,
-    walkBlocks,
-    toPlainText,
-    validate,
-    normalize
-  };
+(function(){
+'use strict';
+const VERSION=3;
+const DEFAULT_PAGE=Object.freeze({widthPt:595.28,heightPt:841.89,marginTopPt:54,marginRightPt:54,marginBottomPt:54,marginLeftPt:54,headerDistancePt:20,footerDistancePt:20,columnCount:1});
+const clamp=(v,min,max)=>Math.max(min,Math.min(max,Number(v)||0));
+const clone=v=>JSON.parse(JSON.stringify(v));
+const uid=p=>`${p}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`;
+function createRun(text='',p={}){return{id:uid('run'),type:'run',text:String(text??''),fontFamily:p.fontFamily||'Times New Roman',fontSizePt:clamp(p.fontSizePt||11,4,96),bold:!!p.bold,italic:!!p.italic,underline:!!p.underline,color:p.color||'#202124',verticalAlign:p.verticalAlign||'baseline'}}
+function createParagraph(p={}){return{id:uid('p'),type:'paragraph',alignment:p.alignment||'left',styleId:p.styleId||null,beforeSpacingPt:Number(p.beforeSpacingPt||0),afterSpacingPt:Number(p.afterSpacingPt||0),lineSpacing:p.lineSpacing==null?1:Number(p.lineSpacing),lineRule:p.lineRule||'auto',leftIndentPt:Number(p.leftIndentPt||0),rightIndentPt:Number(p.rightIndentPt||0),firstLineIndentPt:Number(p.firstLineIndentPt||0),keepWithNext:!!p.keepWithNext,keepLines:!!p.keepLines,pageBreakBefore:!!p.pageBreakBefore,border:p.border?clone(p.border):null,bullet:p.bullet?clone(p.bullet):null,runs:[]}}
+function createImage(p={}){return{id:uid('img'),type:'image',src:p.src||'',name:p.name||'',widthPt:Number(p.widthPt||0),heightPt:Number(p.heightPt||0),xPt:p.xPt==null?null:Number(p.xPt),yPt:p.yPt==null?null:Number(p.yPt),anchor:p.anchor||'inline',wrap:p.wrap||'inline',behindText:!!p.behindText,horizontalReference:p.horizontalReference||'margin',verticalReference:p.verticalReference||'paragraph',horizontalAlign:p.horizontalAlign||null,verticalAlign:p.verticalAlign||null}}
+function createRule(p={}){return{id:uid('rule'),type:'rule',thicknessPt:Number(p.thicknessPt||.75),color:p.color||'#808080',widthPercent:Number(p.widthPercent||100),spacingBeforePt:Number(p.spacingBeforePt||0),spacingAfterPt:Number(p.spacingAfterPt||0)}}
+function createHeader(p={}){return{id:uid('header'),type:'header',distancePt:Number(p.distancePt||20),blocks:[]}}
+function createFooter(p={}){return{id:uid('footer'),type:'footer',distancePt:Number(p.distancePt||20),blocks:[]}}
+function createPage(number=1,p={}){const page={...DEFAULT_PAGE,...clone(p),number};return{id:uid('page'),type:'page',...page,header:null,footer:null,blocks:[]}}
+function createDocument(p={}){return{model:'glueful-resume-document',version:VERSION,metadata:{sourceType:p.sourceType||'unknown',sourceName:p.sourceName||'',importedAt:new Date().toISOString(),compatibility:'word-layout'},settings:{defaultFontFamily:'Times New Roman',defaultFontSizePt:11,unit:'pt'},pages:[createPage(1,{...DEFAULT_PAGE,...(p.page||{})})]}}
+function walkBlocks(document,visitor){(document?.pages||[]).forEach(page=>{(page.blocks||[]).forEach(b=>visitor(b,page));[page.header,page.footer].forEach(c=>(c?.blocks||[]).forEach(b=>visitor(b,page,c)))})}
+function findNode(document,id){let found=null;walkBlocks(document,b=>{if(b.id===id)found=b;if(found||b.type!=='paragraph')return;const run=(b.runs||[]).find(x=>x.id===id);if(run)found=run});return found}
+function toPlainText(document){return(document?.pages||[]).map(page=>(page.blocks||[]).map(b=>b.type==='paragraph'?(b.runs||[]).map(r=>r.text||'').join(''):'').filter(x=>x!=='').join('\n')).filter(Boolean).join('\n\n')}
+function validate(document){const errors=[];if(!document||document.model!=='glueful-resume-document')errors.push('Invalid canonical document model.');if(!Array.isArray(document?.pages)||!document.pages.length)errors.push('Document has no pages.');(document?.pages||[]).forEach((p,i)=>{if(!(p.widthPt>0)||!(p.heightPt>0))errors.push(`Page ${i+1} has invalid geometry.`);if([p.marginLeftPt,p.marginRightPt,p.marginTopPt,p.marginBottomPt].some(x=>x<0))errors.push(`Page ${i+1} has negative margins.`);if(!Number.isFinite(p.columnCount)||p.columnCount<1)errors.push(`Page ${i+1} has invalid column count.`)});return{valid:errors.length===0,errors}}
+function normalize(document){const next=clone(document||createDocument());next.model='glueful-resume-document';next.version=VERSION;if(!Array.isArray(next.pages)||!next.pages.length)next.pages=[createPage(1)];next.pages.forEach((p,i)=>{Object.assign(p,DEFAULT_PAGE,p,{number:i+1});if(!Array.isArray(p.blocks))p.blocks=[];if(!Number.isFinite(p.columnCount)||p.columnCount<1)p.columnCount=1});return next}
+window.gluefulResumeCanonicalModel={VERSION,DEFAULT_PAGE,createRun,createParagraph,createImage,createRule,createHeader,createFooter,createPage,createDocument,clone,findNode,walkBlocks,toPlainText,validate,normalize};
 })();
