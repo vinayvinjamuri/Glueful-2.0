@@ -2,6 +2,10 @@
 (function(){
   'use strict';
 
+  function fixedPdfScheduled(){
+    return window.__gluefulFixedPdfScheduled === true || window.__gluefulFixedPdfReady === true;
+  }
+
   try{
     if(!window.__gluefulV41BodyObserverGuard){
       const NativeObserve = MutationObserver.prototype.observe;
@@ -21,6 +25,7 @@
   let normalizeQueued = false;
 
   function installV54Styles(){
+    if(fixedPdfScheduled()) return;
     if(document.getElementById(STYLE_ID)) return;
     const style = document.createElement('style');
     style.id = STYLE_ID;
@@ -36,6 +41,7 @@
   }
 
   function normalizeImportedResume(){
+    if(fixedPdfScheduled()) return;
     const editor=document.getElementById(EDITOR_ID);
     if(!editor||!editor.innerHTML.trim()||editor.classList.contains('glueful-docx-layout-mode')) return;
     const firstImage=editor.querySelector('img');
@@ -43,12 +49,14 @@
   }
 
   function queueNormalize(){
+    if(fixedPdfScheduled()) return;
     if(normalizeQueued) return;
     normalizeQueued=true;
     requestAnimationFrame(()=>{normalizeQueued=false;normalizeImportedResume();});
   }
 
   function attachEditorObserver(){
+    if(fixedPdfScheduled()) return true;
     const editor=document.getElementById(EDITOR_ID);
     if(!editor) return false;
     if(editorObserver) return true;
@@ -59,9 +67,10 @@
   }
 
   function boot(){
+    if(fixedPdfScheduled()) return;
     installV54Styles();
     if(!attachEditorObserver()){
-      const timer=setInterval(()=>{if(attachEditorObserver()) clearInterval(timer);},250);
+      const timer=setInterval(()=>{if(fixedPdfScheduled()){clearInterval(timer);return;}if(attachEditorObserver()) clearInterval(timer);},250);
       setTimeout(()=>clearInterval(timer),30000);
     }
   }
@@ -94,9 +103,15 @@
   }
 
   async function installAuthoritativeResumeStudio(){
+    if(fixedPdfScheduled()){
+      console.info('[Glueful Resume Studio] V54 legacy bootstrap skipped; fixed-PDF runtime owns Resume Studio.');
+      return;
+    }
     try{
       await loadResumeStudioAsset(FORENSICS_SRC,'glueful-resume-docx-forensics-runtime');
+      if(fixedPdfScheduled()) return;
       await loadResumeStudioAsset(CONTROLLER_SRC,'glueful-resume-studio-adobe-runtime');
+      if(fixedPdfScheduled()) return;
       await loadResumeStudioAsset(HEADER_V3_SRC,'glueful-resume-header-fidelity-v3-runtime');
       console.info('[Glueful Resume Studio] deterministic authoritative loader installed:',window.gluefulAdobeResumeStudio?.version||'unknown','header-v3=',!!window.gluefulResumeHeaderFidelityV3);
     }catch(error){
