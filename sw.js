@@ -1,157 +1,19 @@
-const CACHE_NAME = "glueful-cache-v16-resume-canonical-e2";
+const CACHE_NAME = "glueful-cache-v17-resume-canonical-e3";
 const CANONICAL_BOOTSTRAP = "./glueful-resume-studio-canonical-bootstrap.js";
 const CANONICAL_MODEL = "./glueful-resume-canonical-model.js";
 const CANONICAL_IMPORTER = "./glueful-resume-docx-importer-v2.js";
-const CANONICAL_RENDERER = "./glueful-resume-canonical-renderer.js";
+const CANONICAL_RENDERER = "./glueful-resume-canonical-renderer-v2.js";
 const CANONICAL_EDITING = "./glueful-resume-canonical-editing.js";
 const CANONICAL_EXPORT = "./glueful-resume-canonical-export.js";
 const CANONICAL_CONTROLLER = "./glueful-resume-studio-canonical-controller.js";
 const MOBILE_LAYOUT_SCRIPT = "./glueful-resume-studio-mobile-layout.js";
 const RENDER_DIAGNOSTICS_SCRIPT = "./glueful-resume-render-diagnostics.js";
-
-const ASSETS = [
-  "./manifest.json",
-  CANONICAL_BOOTSTRAP,
-  CANONICAL_MODEL,
-  CANONICAL_IMPORTER,
-  CANONICAL_RENDERER,
-  CANONICAL_EDITING,
-  CANONICAL_EXPORT,
-  CANONICAL_CONTROLLER,
-  MOBILE_LAYOUT_SCRIPT,
-  RENDER_DIAGNOSTICS_SCRIPT,
-  "./icons/icon-192.png",
-  "./icons/icon-512.png",
-  "./icons/icon-180.png",
-  "./icons/icon-maskable-512.png"
-];
-
-async function networkResponse(request, preloadResponse) {
-  const preloaded = await preloadResponse;
-  if (preloaded) return preloaded;
-  return fetch(request);
-}
-
-async function buildAuthoritativeIndex(request, preloadResponse) {
-  const response = await networkResponse(request, preloadResponse);
-  if (!response || !response.ok) return response;
-  const contentType = response.headers.get("content-type") || "";
-  if (!contentType.includes("text/html")) return response;
-  const html = await response.text();
-  const scripts = [];
-  const add = (src, attribute) => {
-    if (!html.includes(src)) scripts.push(`<script src="${src}?v=20260819-e2" data-glueful-runtime="${attribute}"></script>`);
-  };
-  add(CANONICAL_BOOTSTRAP, "canonical-bootstrap");
-  add(MOBILE_LAYOUT_SCRIPT, "mobile-layout");
-  add(RENDER_DIAGNOSTICS_SCRIPT, "render-diagnostics");
-  if (!scripts.length) return new Response(html, { status: response.status, statusText: response.statusText, headers: response.headers });
-  const marker = "</body>";
-  const block = scripts.join("\n");
-  const injected = html.includes(marker) ? html.replace(marker, `${block}\n${marker}`) : `${html}\n${block}`;
-  const headers = new Headers(response.headers);
-  headers.set("Content-Type", "text/html; charset=UTF-8");
-  return new Response(injected, { status: response.status, statusText: response.statusText, headers });
-}
-
-async function cacheIndexResponse(request, response) {
-  if (!response || !response.ok) return;
-  try {
-    const cache = await caches.open(CACHE_NAME);
-    await cache.put(request, response.clone());
-  } catch (error) {
-    console.warn("[Glueful SW] index cache write failed:", error);
-  }
-}
-
-self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(ASSETS))
-      .then(() => self.skipWaiting())
-      .catch((error) => {
-        console.warn("[Glueful SW] canonical asset precache failed; continuing with network startup:", error);
-        return self.skipWaiting();
-      })
-  );
-});
-
-self.addEventListener("activate", (event) => {
-  event.waitUntil((async () => {
-    const keys = await caches.keys();
-    await Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)));
-    if (self.registration.navigationPreload) {
-      try { await self.registration.navigationPreload.enable(); } catch (_) {}
-    }
-    await self.clients.claim();
-  })());
-});
-
-self.addEventListener("fetch", (event) => {
-  const request = event.request;
-  const url = new URL(request.url);
-
-  if (request.method === "GET" && request.mode === "navigate") {
-    event.respondWith((async () => {
-      try {
-        const response = await buildAuthoritativeIndex(request, event.preloadResponse);
-        event.waitUntil(cacheIndexResponse(request, response));
-        return response;
-      } catch (error) {
-        console.warn("[Glueful SW] navigation fetch failed:", error);
-        return (await caches.match(request)) || Response.error();
-      }
-    })());
-    return;
-  }
-
-  if (request.method === "GET" && (
-    url.pathname.endsWith("/glueful-resume-studio-canonical-bootstrap.js") ||
-    url.pathname.endsWith("/glueful-resume-canonical-model.js") ||
-    url.pathname.endsWith("/glueful-resume-docx-importer-v2.js") ||
-    url.pathname.endsWith("/glueful-resume-canonical-renderer.js") ||
-    url.pathname.endsWith("/glueful-resume-canonical-editing.js") ||
-    url.pathname.endsWith("/glueful-resume-canonical-export.js") ||
-    url.pathname.endsWith("/glueful-resume-studio-canonical-controller.js") ||
-    url.pathname.endsWith("/glueful-resume-studio-mobile-layout.js") ||
-    url.pathname.endsWith("/glueful-resume-render-diagnostics.js")
-  )) {
-    event.respondWith((async () => {
-      try {
-        const response = await fetch(request, { cache: "no-store" });
-        if (response.ok) {
-          event.waitUntil((async () => {
-            try {
-              const cache = await caches.open(CACHE_NAME);
-              await cache.put(request, response.clone());
-            } catch (_) {}
-          })());
-        }
-        return response;
-      } catch (_) {
-        return (await caches.match(request)) || Response.error();
-      }
-    })());
-    return;
-  }
-
-  if (request.method === "GET") {
-    event.respondWith((async () => {
-      const cached = await caches.match(request);
-      try {
-        const response = await fetch(request);
-        if (response.ok) {
-          event.waitUntil((async () => {
-            try {
-              const cache = await caches.open(CACHE_NAME);
-              await cache.put(request, response.clone());
-            } catch (_) {}
-          })());
-        }
-        return response;
-      } catch (_) {
-        return cached || Response.error();
-      }
-    })());
-  }
-});
+const ASSETS = ["./manifest.json",CANONICAL_BOOTSTRAP,CANONICAL_MODEL,CANONICAL_IMPORTER,CANONICAL_RENDERER,CANONICAL_EDITING,CANONICAL_EXPORT,CANONICAL_CONTROLLER,MOBILE_LAYOUT_SCRIPT,RENDER_DIAGNOSTICS_SCRIPT,"./icons/icon-192.png","./icons/icon-512.png","./icons/icon-180.png","./icons/icon-maskable-512.png"];
+async function networkResponse(request,preloadResponse){const preloaded=await preloadResponse;if(preloaded)return preloaded;return fetch(request)}
+async function buildAuthoritativeIndex(request,preloadResponse){const response=await networkResponse(request,preloadResponse);if(!response||!response.ok)return response;const contentType=response.headers.get("content-type")||"";if(!contentType.includes("text/html"))return response;const html=await response.text();const scripts=[];const add=(src,attribute)=>{if(!html.includes(src))scripts.push(`<script src="${src}?v=20260819-e4" data-glueful-runtime="${attribute}"></script>`)};add(CANONICAL_BOOTSTRAP,"canonical-bootstrap");add(MOBILE_LAYOUT_SCRIPT,"mobile-layout");add(RENDER_DIAGNOSTICS_SCRIPT,"render-diagnostics");if(!scripts.length)return new Response(html,{status:response.status,statusText:response.statusText,headers:response.headers});const marker="</body>",block=scripts.join("\n"),injected=html.includes(marker)?html.replace(marker,`${block}\n${marker}`):`${html}\n${block}`,headers=new Headers(response.headers);headers.set("Content-Type","text/html; charset=UTF-8");return new Response(injected,{status:response.status,statusText:response.statusText,headers})}
+async function cacheIndexResponse(request,response){if(!response||!response.ok)return;try{const cache=await caches.open(CACHE_NAME);await cache.put(request,response.clone())}catch(error){console.warn("[Glueful SW] index cache write failed:",error)}}
+self.addEventListener("install",event=>{event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()).catch(error=>{console.warn("[Glueful SW] canonical asset precache failed; continuing with network startup:",error);return self.skipWaiting()}))});
+self.addEventListener("activate",event=>{event.waitUntil((async()=>{const keys=await caches.keys();await Promise.all(keys.filter(key=>key!==CACHE_NAME).map(key=>caches.delete(key)));if(self.registration.navigationPreload){try{await self.registration.navigationPreload.enable()}catch(_){}}await self.clients.claim()})())});
+self.addEventListener("fetch",event=>{const request=event.request,url=new URL(request.url);if(request.method==="GET"&&request.mode==="navigate"){event.respondWith((async()=>{try{const response=await buildAuthoritativeIndex(request,event.preloadResponse);event.waitUntil(cacheIndexResponse(request,response));return response}catch(error){console.warn("[Glueful SW] navigation fetch failed:",error);return(await caches.match(request))||Response.error()}})());return}
+if(request.method==="GET"&&(url.pathname.endsWith("/glueful-resume-studio-canonical-bootstrap.js")||url.pathname.endsWith("/glueful-resume-canonical-model.js")||url.pathname.endsWith("/glueful-resume-docx-importer-v2.js")||url.pathname.endsWith("/glueful-resume-canonical-renderer-v2.js")||url.pathname.endsWith("/glueful-resume-canonical-editing.js")||url.pathname.endsWith("/glueful-resume-canonical-export.js")||url.pathname.endsWith("/glueful-resume-studio-canonical-controller.js")||url.pathname.endsWith("/glueful-resume-studio-mobile-layout.js")||url.pathname.endsWith("/glueful-resume-render-diagnostics.js"))){event.respondWith((async()=>{try{const response=await fetch(request,{cache:"no-store"});if(response.ok)event.waitUntil((async()=>{try{const cache=await caches.open(CACHE_NAME);await cache.put(request,response.clone())}catch(_){}})());return response}catch(_){return(await caches.match(request))||Response.error()}})());return}
+if(request.method==="GET"){event.respondWith((async()=>{const cached=await caches.match(request);try{const response=await fetch(request);if(response.ok)event.waitUntil((async()=>{try{const cache=await caches.open(CACHE_NAME);await cache.put(request,response.clone())}catch(_){}})());return response}catch(_){return cached||Response.error()}})())}});
