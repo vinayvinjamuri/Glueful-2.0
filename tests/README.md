@@ -1,1 +1,3 @@
-Resume Studio regression suite covers controller load order, authenticated Supabase client resolution, Adobe PDF-to-DOCX path, docx-preview rendering, service-worker cache invalidation, and JavaScript syntax checks.
+Resume Studio regression suite covers controller load order, authenticated Supabase client resolution, Adobe PDF-to-DOCX path, docx-preview rendering, service-worker cache invalidation, JavaScript syntax checks, DOCX header relationship resolution, logo placement invariants, and desktop/mobile Word-page geometry preservation.
+
+The header regression specifically verifies that DOCX header relationships resolve from `word/_rels/headerN.xml.rels`, that the real header image is restored without a synthetic flex wrapper, and that the mobile renderer continues to scale the same 794px Word page rather than creating a second layout.
