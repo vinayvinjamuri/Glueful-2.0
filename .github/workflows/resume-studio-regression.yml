@@ -10,6 +10,7 @@ on:
       - 'glueful-resume-header-fidelity.js'
       - 'glueful-resume-header-alignment.js'
       - 'glueful-resume-header-fidelity-v2.js'
+      - 'glueful-resume-header-fidelity-v3.js'
       - 'glueful-resume-render-diagnostics.js'
       - 'glueful-resume-studio-v41-bootstrap.js'
       - 'sw.js'
@@ -33,24 +34,27 @@ jobs:
             glueful-resume-header-fidelity.js \
             glueful-resume-header-alignment.js \
             glueful-resume-header-fidelity-v2.js \
+            glueful-resume-header-fidelity-v3.js \
             glueful-resume-render-diagnostics.js \
             glueful-resume-studio-v41-bootstrap.js \
             sw.js; do
             node --check "$f"
           done
 
-      - name: Header relationship regression
+      - name: Word master geometry and logo regression
         run: |
           set -e
-          grep -F 'word/_rels/' glueful-resume-header-fidelity.js
-          grep -F 'word/_rels/' glueful-resume-header-alignment.js
-          grep -F 'word/_rels/' glueful-resume-header-fidelity-v2.js
-          grep -F 'document.xml' glueful-resume-header-fidelity-v2.js
-          grep -F 'legacy VML' glueful-resume-header-fidelity-v2.js
-          grep -F 'glueful-cache-v12-resume-word-margins-logo' sw.js
+          grep -F 'word/_rels/' glueful-resume-header-fidelity-v3.js
+          grep -F 'v:shape' glueful-resume-header-fidelity-v3.js
+          grep -F 'v:imagedata' glueful-resume-header-fidelity-v3.js
+          grep -F 'dataUrl' glueful-resume-header-fidelity-v3.js
+          grep -F 'BODY_MARGIN = 24' glueful-resume-header-fidelity-v3.js
+          grep -F 'PAGE_WIDTH = 794' glueful-resume-header-fidelity-v3.js
+          grep -F 'PAGE_HEIGHT = 1123' glueful-resume-header-fidelity-v3.js
+          grep -F 'glueful-cache-v13-resume-word-header-v3' sw.js
+          grep -F 'glueful-resume-header-fidelity-v3.js' sw.js
           grep -F 'glueful-resume-header-fidelity.js' sw.js
           grep -F 'glueful-resume-header-alignment.js' sw.js
-          grep -F 'glueful-resume-header-fidelity-v2.js' sw.js
 
       - name: Layout safety regression
         run: |
