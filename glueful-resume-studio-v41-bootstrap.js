@@ -1,4 +1,4 @@
-/* Glueful Resume Studio V53 bootstrap patch. */
+/* Glueful Resume Studio V54 bootstrap patch. */
 (function(){
   'use strict';
 
@@ -15,18 +15,18 @@
     console.warn('[Glueful Resume Studio V41] bootstrap guard failed:', error);
   }
 
-  const STYLE_ID = 'glueful-resume-studio-v53-fix';
+  const STYLE_ID = 'glueful-resume-studio-v54-fix';
   const EDITOR_ID = 'job-resume-editor-text';
   let editorObserver = null;
   let normalizeQueued = false;
 
-  function installV53Styles(){
+  function installV54Styles(){
     if(document.getElementById(STYLE_ID)) return;
     const style = document.createElement('style');
     style.id = STYLE_ID;
     style.textContent = `
       #job-resume-editor-modal .job-resume-editor-scroll{overflow:auto!important;align-items:flex-start!important;justify-content:flex-start!important;padding:20px 24px 40px!important;box-sizing:border-box!important;}
-      #job-resume-editor-modal #job-resume-editor-text{flex:0 0 794px!important;width:794px!important;min-width:794px!important;max-width:794px!important;min-height:1123px!important;box-sizing:border-box!important;margin:0 auto!important;padding:48px 48px 54px!important;background:#fff!important;color:#202124!important;border:1px solid #d8dce4!important;border-radius:2px!important;box-shadow:0 12px 34px rgba(15,23,42,.18)!important;overflow:visible!important;text-align:left!important;word-break:normal!important;overflow-wrap:break-word!important;font-family:"Times New Roman",Times,serif!important;font-size:11pt!important;line-height:1.18!important;}
+      #job-resume-editor-modal #job-resume-editor-text{flex:0 0 794px!important;width:794px!important;min-width:794px!important;max-width:794px!important;min-height:1123px!important;box-sizing:border-box!important;margin:0 auto!important;padding:24px 24px 36px!important;background:#fff!important;color:#202124!important;border:1px solid #d8dce4!important;border-radius:2px!important;box-shadow:0 12px 34px rgba(15,23,42,.18)!important;overflow:visible!important;text-align:left!important;word-break:normal!important;overflow-wrap:break-word!important;font-family:"Times New Roman",Times,serif!important;font-size:11pt!important;line-height:1.18!important;}
       #job-resume-editor-modal #job-resume-editor-text p{margin:0 0 7px!important;padding:0!important;}
       #job-resume-editor-modal #job-resume-editor-text h1,#job-resume-editor-modal #job-resume-editor-text h2,#job-resume-editor-modal #job-resume-editor-text h3{line-height:1.12!important;margin-top:12px!important;margin-bottom:7px!important;}
       #job-resume-editor-modal #job-resume-editor-text img{max-width:100%!important;height:auto!important;object-fit:contain!important;vertical-align:top!important;}
@@ -90,7 +90,7 @@
   }
 
   function boot(){
-    installV53Styles();
+    installV54Styles();
     if(!attachEditorObserver()){
       const timer=setInterval(()=>{if(attachEditorObserver()) clearInterval(timer);},250);
       setTimeout(()=>clearInterval(timer),30000);
