@@ -30,14 +30,14 @@ jobs:
           node <<'NODE'
           const fs=require('fs');
           const checks={
-            'glueful-resume-canonical-model.js':['glueful-resume-document','horizontalReference','xPt','createTable','createTableCell','columnWidthsPt','differentFirstPageHeader','sectionAfter'],
-            'glueful-resume-docx-importer-v2.js':['wordprocessingml','word/document.xml','gridCol','tblCellMar','positionH','positionV','sectPr','settings.xml','headerReference','footerReference','continuous','nextPage'],
-            'glueful-resume-canonical-renderer-v2.js':['glueful-canonical-page','glueful-canonical-editable','glueful-canonical-floating-image','glueful-canonical-table','cellMargins','pageHeaderFor','pageFooterFor','overflow','lineRule'],
+            'glueful-resume-canonical-model.js':['glueful-resume-document','horizontalReference','xPt','createTable','createTableCell','columnWidthsPt','differentFirstPageHeader','sectionAfter','tabs'],
+            'glueful-resume-docx-importer-v2.js':['wordprocessingml','word/document.xml','gridCol','tblCellMar','positionH','positionV','sectPr','settings.xml','headerReference','footerReference','continuous','nextPage','paragraphTabs','getAttributeNS'],
+            'glueful-resume-canonical-renderer-v2.js':['glueful-canonical-page','glueful-canonical-editable','glueful-canonical-floating-image','glueful-canonical-table','cellMargins','pageHeaderFor','pageFooterFor','overflow','lineRule','canonical-fixed-page-v3'],
             'glueful-resume-canonical-editing.js':['gluefulCanonicalEditing'],
-            'glueful-resume-canonical-export.js':['gluefulCanonicalExport','Packer.toBlob','window.print()','firstHeader','evenHeader','firstFooter','evenFooter'],
+            'glueful-resume-canonical-export.js':['gluefulCanonicalExport','Packer.toBlob','window.print()','firstHeader','evenHeader','firstFooter','evenFooter','tabStops'],
             'glueful-resume-studio-canonical-bootstrap.js':['glueful-resume-canonical-renderer-v2.js','glueful-resume-canonical-editing.js'],
             'glueful-resume-studio-canonical-controller.js':["architecture: 'E'",'glueful-pdf-to-docx'],
-            'sw.js':['glueful-resume-canonical-renderer-v2.js','glueful-cache-v19-resume-canonical-e5']
+            'sw.js':['glueful-resume-canonical-renderer-v2.js','glueful-cache-v20-resume-canonical-e6']
           };
           for(const [file,needles] of Object.entries(checks)){
             const text=fs.readFileSync(file,'utf8');
