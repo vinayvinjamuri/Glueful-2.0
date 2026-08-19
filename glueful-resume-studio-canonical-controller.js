@@ -14,7 +14,6 @@
 
   const $ = (id) => document.getElementById(id);
   const editor = () => $(EDITOR_ID);
-  const modal = () => $(MODAL_ID);
   const safeText = (value) => String(value ?? '').trim();
 
   function supabaseConfig() {
@@ -24,10 +23,10 @@
     return { url: String(url || '').replace(/\/$/, ''), key: String(key || '') };
   }
 
-  function supabaseClient() {
+  function getSupabaseClient() {
     if (window.gluefulResumeSupabaseClient?.auth) return window.gluefulResumeSupabaseClient;
-    try { if (typeof supabaseClient !== 'undefined' && supabaseClient?.auth) return supabaseClient; } catch (_) {}
-    return window.supabaseClient?.auth ? window.supabaseClient : null;
+    if (window.supabaseClient?.auth) return window.supabaseClient;
+    return null;
   }
 
   async function sourceFile() {
@@ -40,7 +39,7 @@
   async function adobePdfToDocx(buffer) {
     const bytes = new Uint8Array(buffer || 0);
     if (bytes.length < 4 || bytes[0] !== 0x25 || bytes[1] !== 0x50 || bytes[2] !== 0x44 || bytes[3] !== 0x46) throw new Error('The selected source is not a valid PDF.');
-    const client = supabaseClient();
+    const client = getSupabaseClient();
     const config = supabaseConfig();
     if (!client?.auth || !config.url || !config.key) throw new Error('Supabase authentication is unavailable for PDF conversion.');
     const { data, error } = await client.auth.getSession();
@@ -61,14 +60,24 @@
     return response.arrayBuffer();
   }
 
+  async function masterText() {
+    const direct = safeText(window.gluefulMasterResumeText);
+    if (direct) return direct;
+    try {
+      if (typeof window.ensureMasterResumeText === 'function') {
+        const value = await window.ensureMasterResumeText();
+        if (safeText(value)) return safeText(value);
+      }
+    } catch (_) {}
+    try { if (typeof window.buildProfileResumeFallback === 'function') return safeText(window.buildProfileResumeFallback()); } catch (_) {}
+    return '';
+  }
+
   function textModel(textValue, sourceName) {
     const model = window.gluefulResumeCanonicalModel.createDocument({ sourceType: 'text', sourceName });
     const lines = String(textValue || '').split(/\r?\n/);
     model.pages[0].blocks = lines.map((line) => {
-      const paragraph = window.gluefulResumeCanonicalModel.createParagraph({
-        afterSpacingPt: line.trim() ? 4 : 0,
-        lineSpacing: 1.0
-      });
+      const paragraph = window.gluefulResumeCanonicalModel.createParagraph({ afterSpacingPt: line.trim() ? 4 : 0, lineSpacing: 1.0 });
       paragraph.runs = [window.gluefulResumeCanonicalModel.createRun(line, { fontFamily: 'Times New Roman', fontSizePt: 11 })];
       return paragraph;
     });
@@ -84,14 +93,6 @@
       return window.gluefulResumeDocxImporterV2.importDocx(buffer, { sourceName: file.name });
     }
     return null;
-  }
-
-  function masterText() {
-    const direct = safeText(window.gluefulMasterResumeText);
-    if (direct) return direct;
-    try { if (typeof window.ensureMasterResumeText === 'function') return safeText(window.ensureMasterResumeText()); } catch (_) {}
-    try { if (typeof window.buildProfileResumeFallback === 'function') return safeText(window.buildProfileResumeFallback()); } catch (_) {}
-    return '';
   }
 
   function installHostSurface(ed) {
@@ -144,7 +145,7 @@
     try {
       const file = await sourceFile();
       let model = file ? await loadModel(file) : null;
-      if (!model) model = textModel(masterText(), 'generated-master');
+      if (!model) model = textModel(await masterText(), 'generated-master');
       wireModel(model, ed);
       window.gluefulResumeRendererReport = {
         renderer: 'canonical-fixed-page',
@@ -171,14 +172,14 @@
     const ed = editor();
     if (!ed) return;
     const file = await sourceFile();
-    const model = file ? await loadModel(file) : textModel(masterText(), 'generated-master');
+    const model = file ? await loadModel(file) : textModel(await masterText(), 'generated-master');
     wireModel(model, ed);
     try { window.updateJobResumeEditorAts?.(); } catch (_) {}
     ed.focus();
   }
 
   window.gluefulCanonicalResumeStudio = {
-    version: '0.1.0',
+    version: '0.1.1',
     architecture: 'E',
     openJobResumeEditor: openJobResumeEditorCanonical,
     resetJobResumeToMaster: resetJobResumeToMasterCanonical,
