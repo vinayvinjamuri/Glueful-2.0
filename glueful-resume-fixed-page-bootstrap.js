@@ -2,7 +2,7 @@
 (function(){
 'use strict';
 window.__gluefulFixedPdfScheduled=true;
-const VERSION='20260820-fixedpdf15';
+const VERSION='20260820-fixedpdf19';
 const PDFJS=['https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js','glueful-fixed-pdfjs-runtime'];
 const ASSETS=[
  PDFJS,
