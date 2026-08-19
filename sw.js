@@ -1,4 +1,4 @@
-const CACHE_NAME = "glueful-cache-v5-resume-adobe";
+const CACHE_NAME = "glueful-cache-v6-resume-alignment";
 const AUTHORITATIVE_RESUME_SCRIPT = "./glueful-resume-studio-adobe.js";
 const DOCX_FORENSICS_SCRIPT = "./glueful-resume-docx-forensics.js";
 
