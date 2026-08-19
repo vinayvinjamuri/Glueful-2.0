@@ -1,15 +1,16 @@
 /* =========================================================
-   GLUEFUL RESUME STUDIO — HEADER FIDELITY FIX
+   GLUEFUL RESUME STUDIO — HEADER FIDELITY / REGRESSION FIX
    ---------------------------------------------------------
-   Keeps the Adobe/DOCX layout intact while recovering a logo that
-   docx-preview fails to paint from a DOCX header drawing.
+   Restores the real DOCX header image and positions it from the
+   rendered header text cluster so the same 794px Word page remains
+   visually consistent on desktop and mobile.
 
-   Important:
-   - Never moves the first body paragraphs into a synthetic flex row.
-   - Resolves images only from word/header*.xml relationships.
-   - Uses the DOCX drawing dimensions/position when available.
-   - If an earlier compatibility layer created .glueful-docx-header-recovered,
-     unwrap it so the original body flow/alignment is restored.
+   Regression guarantees:
+   - Resolve header relationships from the correct word/_rels path.
+   - Never move body paragraphs into a synthetic flex row.
+   - Use the DOCX header image itself; never substitute a generic logo.
+   - Position the logo relative to the real rendered header text.
+   - Preserve the Word page geometry; mobile only scales the same page.
    ========================================================= */
 (function () {
   'use strict';
@@ -18,6 +19,7 @@
   const JSZIP_URL = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
   const STYLE_ID = 'glueful-resume-header-fidelity-style';
   const DONE_CLASS = 'glueful-header-fidelity-applied';
+  const PAGE_WIDTH = 794;
 
   const $ = (id) => document.getElementById(id);
   const editor = () => $(EDITOR_ID);
@@ -48,7 +50,7 @@
     style.textContent = `
       #${EDITOR_ID} .glueful-docx-header-fidelity-overlay {
         position:absolute !important;
-        z-index:4 !important;
+        z-index:20 !important;
         pointer-events:none !important;
         margin:0 !important;
         padding:0 !important;
@@ -62,7 +64,7 @@
         max-width:none !important;
         object-fit:contain !important;
       }
-      #${EDITOR_ID} .glueful-docx-header-fidelity-layer {
+      #${EDITOR_ID} .glueful-header-fidelity-page {
         position:relative !important;
       }
     `;
@@ -71,8 +73,6 @@
 
   function unwrapLegacyRecovery(ed) {
     const wrappers = Array.from(ed.querySelectorAll('.glueful-docx-header-recovered'));
-    if (!wrappers.length) return false;
-
     wrappers.forEach((wrapper) => {
       const parent = wrapper.parentElement;
       if (!parent) return;
@@ -80,21 +80,18 @@
       const movable = textNodes.length
         ? Array.from(textNodes[0].children)
         : Array.from(wrapper.children).filter((node) => node.tagName !== 'IMG');
-
       movable.forEach((node) => parent.insertBefore(node, wrapper));
       wrapper.remove();
     });
-
     ed.querySelectorAll('.glueful-docx-header-recovered').forEach((node) => node.remove());
     ed.classList.remove('glueful-docx-image-recovered');
-    return true;
   }
 
-  function resolveTarget(headerName, target) {
+  function resolveTarget(sourcePath, target) {
     const clean = String(target || '').replace(/\\/g, '/');
     if (!clean) return '';
     if (clean.startsWith('/')) return clean.slice(1);
-    const base = headerName.slice(0, headerName.lastIndexOf('/') + 1);
+    const base = sourcePath.slice(0, sourcePath.lastIndexOf('/') + 1);
     const parts = (base + clean).split('/');
     const out = [];
     for (const part of parts) {
@@ -105,45 +102,44 @@
     return out.join('/');
   }
 
+  function headerRelationshipPath(headerName) {
+    // DOCX relationship parts live at word/_rels/headerN.xml.rels.
+    return `word/_rels/${headerName.slice(headerName.lastIndexOf('/') + 1)}.rels`;
+  }
+
   function mimeFor(name) {
     const ext = String(name).split('.').pop()?.toLowerCase();
     return ({
-      png: 'image/png',
-      jpg: 'image/jpeg',
-      jpeg: 'image/jpeg',
-      gif: 'image/gif',
-      webp: 'image/webp',
-      bmp: 'image/bmp',
-      svg: 'image/svg+xml',
-      tif: 'image/tiff',
-      tiff: 'image/tiff'
+      png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif',
+      webp: 'image/webp', bmp: 'image/bmp', svg: 'image/svg+xml',
+      tif: 'image/tiff', tiff: 'image/tiff'
     })[ext] || '';
   }
 
-  function firstHeaderDrawing(xmlText) {
-    const match = String(xmlText || '').match(/<wp:(inline|anchor)\b[\s\S]*?<\/wp:\1>/i);
-    if (!match) return null;
-    const drawing = match[0];
-    const rel = drawing.match(/<a:blip\b[^>]*r:embed=["']([^"']+)["']/i);
-    if (!rel) return null;
+  function parseHeaderDrawing(xmlText) {
+    const doc = new DOMParser().parseFromString(String(xmlText || ''), 'application/xml');
+    const drawing = doc.getElementsByTagName('wp:inline')[0] || doc.getElementsByTagName('wp:anchor')[0];
+    if (!drawing) return null;
+    const blip = drawing.getElementsByTagName('a:blip')[0];
+    const relId = blip?.getAttribute('r:embed') || blip?.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'embed');
+    if (!relId) return null;
 
-    const extent = drawing.match(/<wp:extent\b[^>]*cx=["'](\d+)["'][^>]*cy=["'](\d+)["']/i);
-    const posH = drawing.match(/<wp:positionH\b[^>]*>[\s\S]*?<wp:posOffset>(-?\d+)<\/wp:posOffset>[\s\S]*?<\/wp:positionH>/i);
-    const posV = drawing.match(/<wp:positionV\b[^>]*>[\s\S]*?<wp:posOffset>(-?\d+)<\/wp:posOffset>[\s\S]*?<\/wp:positionV>/i);
-    const wrap = drawing.match(/<wp:(wrap[^\s>]*)\b/i);
+    const extent = drawing.getElementsByTagName('wp:extent')[0];
+    const posH = drawing.getElementsByTagName('wp:positionH')[0];
+    const posV = drawing.getElementsByTagName('wp:positionV')[0];
+    const posOffsetH = posH?.getElementsByTagName('wp:posOffset')[0]?.textContent;
+    const posOffsetV = posV?.getElementsByTagName('wp:posOffset')[0]?.textContent;
 
     return {
-      relId: rel[1],
-      widthPx: extent ? Number(extent[1]) / 9525 : null,
-      heightPx: extent ? Number(extent[2]) / 9525 : null,
-      leftPx: posH ? Number(posH[1]) / 9525 : 0,
-      topPx: posV ? Number(posV[1]) / 9525 : 0,
-      floating: /<wp:anchor\b/i.test(drawing),
-      wrap: wrap ? wrap[1] : ''
+      relId,
+      widthPx: extent ? Number(extent.getAttribute('cx')) / 9525 : 68,
+      heightPx: extent ? Number(extent.getAttribute('cy')) / 9525 : 68,
+      leftPx: posOffsetH ? Number(posOffsetH) / 9525 : 0,
+      topPx: posOffsetV ? Number(posOffsetV) / 9525 : 0
     };
   }
 
-  async function headerImages(buffer) {
+  async function headerModel(buffer) {
     const JSZip = await loadScriptOnce(JSZIP_URL, 'glueful-header-fidelity-jszip');
     const zip = await JSZip.loadAsync(buffer);
     const names = Object.keys(zip.files);
@@ -152,77 +148,130 @@
 
     for (const headerName of headers) {
       const headerXml = await zip.files[headerName].async('text');
-      const drawing = firstHeaderDrawing(headerXml);
+      const drawing = parseHeaderDrawing(headerXml);
       if (!drawing) continue;
 
-      const relName = `${headerName}.rels`.replace(/^word\//, 'word/_rels/');
-      const relFile = zip.files[relName];
-      if (!relFile) continue;
-      const relXml = await relFile.async('text');
-
-      const relDoc = new DOMParser().parseFromString(relXml, 'application/xml');
-      const relNode = Array.from(relDoc.getElementsByTagName('Relationship'))
-        .find((node) => node.getAttribute('Id') === drawing.relId);
-      const relTarget = relNode?.getAttribute('Target') || '';
-      if (!relTarget) continue;
-
-      const target = resolveTarget(headerName, relTarget);
-      const mediaFile = zip.files[target];
-      if (!mediaFile || mediaFile.dir) continue;
-
-      const mime = mimeFor(target);
-      if (!mime) {
-        console.warn('[Glueful Resume Header Fidelity] Unsupported header image format:', target);
-        continue;
+      const relFile = zip.files[headerRelationshipPath(headerName)];
+      let target = '';
+      if (relFile) {
+        const relXml = await relFile.async('text');
+        const relDoc = new DOMParser().parseFromString(relXml, 'application/xml');
+        const relNode = Array.from(relDoc.getElementsByTagName('Relationship'))
+          .find((node) => node.getAttribute('Id') === drawing.relId);
+        target = resolveTarget(headerName, relNode?.getAttribute('Target') || '');
       }
 
+      // Deterministic fallback for the common single-logo DOCX only.
+      if (!target) {
+        const media = names.filter((name) => /^word\/media\//i.test(name) && !zip.files[name].dir);
+        if (media.length === 1) target = media[0];
+      }
+      const mediaFile = target ? zip.files[target] : null;
+      const mime = mimeFor(target);
+      if (!mediaFile || mediaFile.dir || !mime) continue;
+
       const base64 = await mediaFile.async('base64');
+      const doc = new DOMParser().parseFromString(headerXml, 'application/xml');
+      const paragraphs = Array.from(doc.getElementsByTagName('p'))
+        .map((p) => Array.from(p.getElementsByTagName('t')).map((t) => t.textContent || '').join(''))
+        .map((value) => value.replace(/\s+/g, ' ').trim())
+        .filter(Boolean);
+
       found.push({
         headerName,
         target,
         dataUrl: `data:${mime};base64,${base64}`,
+        paragraphs,
         ...drawing
       });
     }
-
     return found;
   }
 
-  function findPageSections(ed) {
+  function sections(ed) {
     return Array.from(ed.querySelectorAll('.docx-wrapper > section, .docx > section'));
   }
 
-  function findHeaderHost(section) {
-    return section.querySelector('header, .docx-header, [class~="docx-header"], [class*="header-"]');
+  function textBlocks(root) {
+    return Array.from(root.querySelectorAll('p,li,div,td'))
+      .filter((node) => !node.querySelector('p,li,td') || node.matches('p,li,td'))
+      .filter((node) => String(node.textContent || '').replace(/\s+/g, ' ').trim());
   }
 
-  function applyOneImage(section, image, index) {
-    const already = Array.from(section.querySelectorAll('.glueful-docx-header-fidelity-overlay'))
-      .some((node) => node.dataset.gluefulHeaderTarget === image.target);
-    if (already) return;
+  function findHeaderNodes(section, paragraphs) {
+    const candidates = textBlocks(section);
+    const wanted = paragraphs.slice(0, 4);
+    const found = [];
+    for (const text of wanted) {
+      const match = candidates.find((node) => String(node.textContent || '').replace(/\s+/g, ' ').trim() === text && !found.includes(node));
+      if (match) found.push(match);
+    }
+    return found;
+  }
 
-    const headerHost = findHeaderHost(section);
-    const host = headerHost || section;
-    host.classList.add('glueful-header-fidelity-layer');
+  function removeTopArtifact(section) {
+    const pageRect = section.getBoundingClientRect();
+    const nodes = Array.from(section.querySelectorAll('*')).filter((node) => {
+      if (node.classList?.contains('glueful-docx-header-fidelity-overlay')) return false;
+      if (node.classList?.contains('glueful-header-fidelity-page')) return false;
+      const rect = node.getBoundingClientRect?.();
+      if (!rect) return false;
+      const top = rect.top - pageRect.top;
+      const empty = !String(node.textContent || '').trim() && !node.querySelector('img,canvas,svg');
+      if (!empty || top < -4 || top > 150) return false;
+      const wide = rect.width > PAGE_WIDTH * 0.80;
+      const barHeight = rect.height >= 14 && rect.height <= 90;
+      const style = getComputedStyle(node);
+      const hasPaint = style.backgroundColor !== 'rgba(0, 0, 0, 0)' || style.backgroundImage !== 'none' || style.borderTopStyle !== 'none' || style.borderBottomStyle !== 'none';
+      return wide && barHeight && hasPaint;
+    });
+    // Remove the deepest matching nodes first so the actual page wrapper is never removed.
+    nodes.sort((a, b) => b.querySelectorAll('*').length - a.querySelectorAll('*').length).forEach((node) => node.remove());
+  }
 
-    if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
+  function applyImage(section, image, nodes) {
+    if (section.querySelector(`.glueful-docx-header-fidelity-overlay[data-glueful-header-target="${CSS.escape(image.target)}"]`)) return;
+
+    section.classList.add('glueful-header-fidelity-page');
+    removeTopArtifact(section);
+
+    const first = nodes[0];
+    if (!first) return;
+    const pageRect = section.getBoundingClientRect();
+    const textRect = first.getBoundingClientRect();
+    const textLeft = textRect.left - pageRect.left;
+    const textTop = textRect.top - pageRect.top;
+
+    // The original Word header is a logo + four-line text cluster. Prefer the
+    // real DOCX geometry, but anchor to the rendered text when Word's drawing
+    // position is not exposed by docx-preview. This keeps desktop/mobile equal.
+    const width = Math.max(42, Math.min(110, image.widthPx || 68));
+    const height = Math.max(42, Math.min(110, image.heightPx || width));
+    const gap = 14;
+    const geometryLeft = Number.isFinite(image.leftPx) ? image.leftPx : 0;
+    const geometryLooksUseful = geometryLeft > 4;
+    const left = geometryLooksUseful ? geometryLeft : Math.max(0, textLeft - width - gap);
+    const top = textTop + Math.max(0, (Math.min(textRect.height * 1.15, height) - height) / 2);
 
     const overlay = document.createElement('div');
     overlay.className = 'glueful-docx-header-fidelity-overlay';
     overlay.dataset.gluefulHeaderTarget = image.target;
-    overlay.dataset.gluefulHeaderIndex = String(index);
+    overlay.style.left = `${Math.round(left * 10) / 10}px`;
+    overlay.style.top = `${Math.round(top * 10) / 10}px`;
 
     const img = document.createElement('img');
     img.src = image.dataUrl;
-    img.alt = 'Resume logo';
-    img.draggable = true;
-    if (image.widthPx) img.style.width = `${Math.max(1, image.widthPx)}px`;
-    if (image.heightPx) img.style.height = `${Math.max(1, image.heightPx)}px`;
-
+    img.alt = 'Resume header logo';
+    img.width = Math.round(width);
+    img.height = Math.round(height);
+    img.style.width = `${width}px`;
+    img.style.height = `${height}px`;
     overlay.appendChild(img);
-    overlay.style.left = `${Math.max(0, image.leftPx || 0)}px`;
-    overlay.style.top = `${Math.max(0, image.topPx || 0)}px`;
-    host.appendChild(overlay);
+    section.appendChild(overlay);
+
+    console.info('[Glueful Resume Header Fidelity] Logo calibrated:', {
+      target: image.target, width, height, left, top, textLeft, textTop
+    });
   }
 
   async function applyHeaderFidelity() {
@@ -230,28 +279,21 @@
     if (!ed || !window.gluefulLastAdobeDocxBuffer) return;
     if (ed.dataset.gluefulHeaderFidelityBusy === '1') return;
     ed.dataset.gluefulHeaderFidelityBusy = '1';
-
     try {
       injectStyles();
       unwrapLegacyRecovery(ed);
-      const images = await headerImages(window.gluefulLastAdobeDocxBuffer);
+      const images = await headerModel(window.gluefulLastAdobeDocxBuffer);
       if (!images.length) {
-        console.info('[Glueful Resume Header Fidelity] No header image relationship found; leaving DOCX layout untouched.');
+        console.warn('[Glueful Resume Header Fidelity] No DOCX header image was resolved.');
         return;
       }
-
-      const sections = findPageSections(ed);
-      if (!sections.length) return;
-
-      sections.forEach((section) => {
-        images.forEach((image, index) => applyOneImage(section, image, index));
+      sections(ed).forEach((section) => {
+        images.forEach((image) => {
+          const nodes = findHeaderNodes(section, image.paragraphs);
+          applyImage(section, image, nodes);
+        });
       });
-
       ed.classList.add(DONE_CLASS);
-      console.info('[Glueful Resume Header Fidelity] Recovered header image(s) without changing body paragraph alignment.', {
-        count: images.length,
-        targets: images.map((item) => item.target)
-      });
     } catch (error) {
       console.warn('[Glueful Resume Header Fidelity] Recovery skipped:', error);
     } finally {
@@ -267,7 +309,7 @@
       observer = new MutationObserver(() => {
         if (ed.querySelector('.docx-wrapper, .docx > section, .glueful-docx')) {
           clearTimeout(boot._timer);
-          boot._timer = setTimeout(() => void applyHeaderFidelity(), 120);
+          boot._timer = setTimeout(() => void applyHeaderFidelity(), 180);
         }
       });
       observer.observe(ed, { childList: true, subtree: true, attributes: false });
