@@ -28,14 +28,15 @@ jobs:
       - name: Validate Word geometry and logo invariants
         run: |
           set -e
-          grep -q "794" glueful-resume-header-fidelity-v3.js
-          grep -q "1123" glueful-resume-header-fidelity-v3.js
-          grep -q "BODY_MARGIN = 24" glueful-resume-header-fidelity-v3.js
+          grep -q "PAGE_WIDTH=794" glueful-resume-header-fidelity-v3.js
+          grep -q "PAGE_HEIGHT=1123" glueful-resume-header-fidelity-v3.js
+          grep -q "BODY_MARGIN=64" glueful-resume-header-fidelity-v3.js
           grep -q "v:shape" glueful-resume-header-fidelity-v3.js
           grep -q "v:imagedata" glueful-resume-header-fidelity-v3.js
           grep -q "dataUrl" glueful-resume-header-fidelity-v3.js
           grep -q "glueful-resume-header-fidelity-v3.js" sw.js
           grep -q "glueful-cache-v13-resume-word-header-v3" sw.js
+          grep -q "glueful-resume-header-fidelity-v3.js" glueful-resume-studio-v41-bootstrap.js
       - name: Ensure Adobe DOCX renderer remains authoritative
         run: |
           set -e
