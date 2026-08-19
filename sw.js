@@ -1,8 +1,9 @@
-const CACHE_NAME = "glueful-cache-v8-resume-fidelity";
+const CACHE_NAME = "glueful-cache-v9-resume-fidelity";
 const AUTHORITATIVE_RESUME_SCRIPT = "./glueful-resume-studio-adobe.js";
 const DOCX_FORENSICS_SCRIPT = "./glueful-resume-docx-forensics.js";
 const MOBILE_LAYOUT_SCRIPT = "./glueful-resume-studio-mobile-layout.js";
 const HEADER_FIDELITY_SCRIPT = "./glueful-resume-header-fidelity.js";
+const HEADER_ALIGNMENT_SCRIPT = "./glueful-resume-header-alignment.js";
 const RENDER_DIAGNOSTICS_SCRIPT = "./glueful-resume-render-diagnostics.js";
 
 const ASSETS = [
@@ -11,6 +12,7 @@ const ASSETS = [
   "./glueful-resume-docx-forensics.js",
   "./glueful-resume-studio-mobile-layout.js",
   "./glueful-resume-header-fidelity.js",
+  "./glueful-resume-header-alignment.js",
   "./glueful-resume-render-diagnostics.js",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
@@ -46,16 +48,15 @@ async function buildAuthoritativeIndex(request, preloadResponse) {
   if (!html.includes(HEADER_FIDELITY_SCRIPT)) {
     scripts.push(`<script src="${HEADER_FIDELITY_SCRIPT}?v=20260819-2" data-glueful-header-fidelity="1"></script>`);
   }
+  if (!html.includes(HEADER_ALIGNMENT_SCRIPT)) {
+    scripts.push(`<script src="${HEADER_ALIGNMENT_SCRIPT}?v=20260819-1" data-glueful-header-alignment="1"></script>`);
+  }
   if (!html.includes(RENDER_DIAGNOSTICS_SCRIPT)) {
     scripts.push(`<script src="${RENDER_DIAGNOSTICS_SCRIPT}?v=20260819-4" data-glueful-render-diagnostics="1"></script>`);
   }
 
   if (!scripts.length) {
-    return new Response(html, {
-      status: response.status,
-      statusText: response.statusText,
-      headers: response.headers
-    });
+    return new Response(html, { status: response.status, statusText: response.statusText, headers: response.headers });
   }
 
   const marker = "</body>";
@@ -66,12 +67,7 @@ async function buildAuthoritativeIndex(request, preloadResponse) {
 
   const headers = new Headers(response.headers);
   headers.set("Content-Type", "text/html; charset=UTF-8");
-
-  return new Response(injected, {
-    status: response.status,
-    statusText: response.statusText,
-    headers
-  });
+  return new Response(injected, { status: response.status, statusText: response.statusText, headers });
 }
 
 async function cacheIndexResponse(request, response) {
@@ -99,16 +95,10 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(
-      keys
-        .filter((key) => key !== CACHE_NAME)
-        .map((key) => caches.delete(key))
-    );
-
+    await Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)));
     if (self.registration.navigationPreload) {
       try { await self.registration.navigationPreload.enable(); } catch (_) {}
     }
-
     await self.clients.claim();
   })());
 });
@@ -137,6 +127,7 @@ self.addEventListener("fetch", (event) => {
      url.pathname.endsWith("/glueful-resume-docx-forensics.js") ||
      url.pathname.endsWith("/glueful-resume-studio-mobile-layout.js") ||
      url.pathname.endsWith("/glueful-resume-header-fidelity.js") ||
+     url.pathname.endsWith("/glueful-resume-header-alignment.js") ||
      url.pathname.endsWith("/glueful-resume-render-diagnostics.js"))
   ) {
     event.respondWith((async () => {
