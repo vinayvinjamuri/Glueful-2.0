@@ -1,1 +1,0 @@
-Fixed-PDF renderer prototype is isolated from production. It uses the original PDF as the visual source of truth and overlays editable text blocks over small knockout masks.
