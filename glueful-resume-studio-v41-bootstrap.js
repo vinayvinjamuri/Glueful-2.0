@@ -26,49 +26,18 @@
     style.id = STYLE_ID;
     style.textContent = `
       #job-resume-editor-modal .job-resume-editor-scroll{overflow:auto!important;align-items:flex-start!important;justify-content:flex-start!important;padding:20px 24px 40px!important;box-sizing:border-box!important;}
-      #job-resume-editor-modal #job-resume-editor-text{flex:0 0 794px!important;width:794px!important;min-width:794px!important;max-width:794px!important;min-height:1123px!important;box-sizing:border-box!important;margin:0 auto!important;padding:24px 24px 36px!important;background:#fff!important;color:#202124!important;border:1px solid #d8dce4!important;border-radius:2px!important;box-shadow:0 12px 34px rgba(15,23,42,.18)!important;overflow:visible!important;text-align:left!important;word-break:normal!important;overflow-wrap:break-word!important;font-family:"Times New Roman",Times,serif!important;font-size:11pt!important;line-height:1.18!important;}
+      #job-resume-editor-modal #job-resume-editor-text{flex:0 0 794px!important;width:794px!important;min-width:794px!important;max-width:794px!important;min-height:1123px!important;box-sizing:border-box!important;margin:0 auto!important;padding:0!important;background:#fff!important;color:#202124!important;border:1px solid #d8dce4!important;border-radius:2px!important;box-shadow:0 12px 34px rgba(15,23,42,.18)!important;overflow:visible!important;text-align:left!important;word-break:normal!important;overflow-wrap:break-word!important;font-family:"Times New Roman",Times,serif!important;font-size:11pt!important;line-height:1.18!important;}
       #job-resume-editor-modal #job-resume-editor-text p{margin:0 0 7px!important;padding:0!important;}
       #job-resume-editor-modal #job-resume-editor-text h1,#job-resume-editor-modal #job-resume-editor-text h2,#job-resume-editor-modal #job-resume-editor-text h3{line-height:1.12!important;margin-top:12px!important;margin-bottom:7px!important;}
       #job-resume-editor-modal #job-resume-editor-text img{max-width:100%!important;height:auto!important;object-fit:contain!important;vertical-align:top!important;}
-      #job-resume-editor-modal #job-resume-editor-text > p.glueful-import-header img,#job-resume-editor-modal #job-resume-editor-text > div.glueful-import-header img,#job-resume-editor-modal #job-resume-editor-text > table.glueful-import-header img{width:82px!important;height:82px!important;max-width:82px!important;min-width:82px!important;object-fit:contain!important;flex:0 0 82px!important;}
-      #job-resume-editor-modal #job-resume-editor-text > p.glueful-import-header,#job-resume-editor-modal #job-resume-editor-text > div.glueful-import-header{display:flex!important;align-items:flex-start!important;gap:14px!important;margin-bottom:12px!important;}
-      #job-resume-editor-modal #job-resume-editor-text > p.glueful-import-header > img,#job-resume-editor-modal #job-resume-editor-text > div.glueful-import-header > img{display:block!important;flex:0 0 82px!important;}
-      #job-resume-editor-modal #job-resume-editor-text .glueful-import-header-text{min-width:0!important;flex:1 1 auto!important;}
-      #job-resume-editor-modal #job-resume-editor-text table{max-width:100%!important;border-collapse:collapse!important;}
-      #job-resume-editor-modal #job-resume-editor-text td,#job-resume-editor-modal #job-resume-editor-text th{vertical-align:top!important;}
       @media(max-width:900px){#job-resume-editor-modal .job-resume-editor-scroll{align-items:flex-start!important;justify-content:flex-start!important;padding:12px 12px 150px!important;}#job-resume-editor-modal #job-resume-editor-text{margin-left:0!important;margin-right:0!important;}}
     `;
     document.head.appendChild(style);
   }
 
-  function markHeaderImage(editor){
-    if(editor.classList.contains('glueful-docx-layout-mode')) return;
-    const images=Array.from(editor.querySelectorAll('img'));
-    if(!images.length) return;
-    const first=images[0];
-    const parent=first.closest('p,div,td');
-    if(!parent || parent.parentElement!==editor) return;
-    parent.classList.add('glueful-import-header');
-    if(parent.tagName==='P'&&!parent.querySelector('.glueful-import-header-text')){
-      const textNodes=[];
-      Array.from(parent.childNodes).forEach(node=>{
-        if(node===first) return;
-        if(node.nodeType===Node.TEXT_NODE&&node.nodeValue.trim()) textNodes.push(node);
-        else if(node.nodeType===Node.ELEMENT_NODE&&node.tagName.toLowerCase()!=='img') textNodes.push(node);
-      });
-      if(textNodes.length){
-        const wrapper=document.createElement('span');
-        wrapper.className='glueful-import-header-text';
-        parent.insertBefore(wrapper,textNodes[0]);
-        textNodes.forEach(node=>wrapper.appendChild(node));
-      }
-    }
-  }
-
   function normalizeImportedResume(){
     const editor=document.getElementById(EDITOR_ID);
     if(!editor||!editor.innerHTML.trim()||editor.classList.contains('glueful-docx-layout-mode')) return;
-    markHeaderImage(editor);
     const firstImage=editor.querySelector('img');
     if(firstImage){firstImage.removeAttribute('width');firstImage.removeAttribute('height');}
   }
@@ -102,6 +71,7 @@
 
   const FORENSICS_SRC = './glueful-resume-docx-forensics.js';
   const CONTROLLER_SRC = './glueful-resume-studio-adobe.js';
+  const HEADER_V3_SRC = './glueful-resume-header-fidelity-v3.js';
 
   function loadResumeStudioAsset(src,id){
     return new Promise((resolve,reject)=>{
@@ -124,11 +94,11 @@
   }
 
   async function installAuthoritativeResumeStudio(){
-    if(window.gluefulAdobeResumeStudio?.openJobResumeEditor) return;
     try{
       await loadResumeStudioAsset(FORENSICS_SRC,'glueful-resume-docx-forensics-runtime');
       await loadResumeStudioAsset(CONTROLLER_SRC,'glueful-resume-studio-adobe-runtime');
-      console.info('[Glueful Resume Studio] deterministic authoritative loader installed:',window.gluefulAdobeResumeStudio?.version||'unknown');
+      await loadResumeStudioAsset(HEADER_V3_SRC,'glueful-resume-header-fidelity-v3-runtime');
+      console.info('[Glueful Resume Studio] deterministic authoritative loader installed:',window.gluefulAdobeResumeStudio?.version||'unknown','header-v3=',!!window.gluefulResumeHeaderFidelityV3);
     }catch(error){
       console.error('[Glueful Resume Studio] authoritative controller failed to load:',error);
     }
