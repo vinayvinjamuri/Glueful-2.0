@@ -46,4 +46,25 @@
   window.setInterval(tick, 250);
   window.addEventListener('glueful:resume-render-error', (event) => show(event.detail));
   tick();
+
+  /* Header fidelity runs after the authoritative DOCX renderer and the
+     mobile compatibility layer. It restores only header-linked images and
+     deliberately leaves body paragraph flow/alignment untouched. */
+  function loadHeaderFidelity() {
+    if (window.gluefulResumeHeaderFidelity) return;
+    if (document.getElementById('glueful-resume-header-fidelity-script')) return;
+    const script = document.createElement('script');
+    script.id = 'glueful-resume-header-fidelity-script';
+    script.src = './glueful-resume-header-fidelity.js?v=20260819-1';
+    script.async = true;
+    script.onload = () => console.info('[Glueful Resume Studio] Header fidelity runtime loaded.');
+    script.onerror = () => console.warn('[Glueful Resume Studio] Header fidelity runtime failed to load.');
+    document.head.appendChild(script);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadHeaderFidelity, { once: true });
+  } else {
+    loadHeaderFidelity();
+  }
 })();

@@ -1,12 +1,15 @@
-const CACHE_NAME = "glueful-cache-v5-resume-adobe";
+const CACHE_NAME = "glueful-cache-v6-resume-header-fidelity";
 const AUTHORITATIVE_RESUME_SCRIPT = "./glueful-resume-studio-adobe.js";
 const DOCX_FORENSICS_SCRIPT = "./glueful-resume-docx-forensics.js";
+const HEADER_FIDELITY_SCRIPT = "./glueful-resume-header-fidelity.js";
 
 const ASSETS = [
   "./manifest.json",
   "./glueful-resume-studio-adobe.js",
   "./glueful-resume-docx-forensics.js",
   "./glueful-resume-studio-mobile-layout.js",
+  "./glueful-resume-render-diagnostics.js",
+  "./glueful-resume-header-fidelity.js",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
   "./icons/icon-180.png",
@@ -107,7 +110,9 @@ self.addEventListener("fetch", (event) => {
   if (
     request.method === "GET" &&
     (url.pathname.endsWith("/glueful-resume-studio-adobe.js") ||
-     url.pathname.endsWith("/glueful-resume-docx-forensics.js"))
+     url.pathname.endsWith("/glueful-resume-docx-forensics.js") ||
+     url.pathname.endsWith("/glueful-resume-header-fidelity.js") ||
+     url.pathname.endsWith("/glueful-resume-render-diagnostics.js"))
   ) {
     event.respondWith((async () => {
       try {
