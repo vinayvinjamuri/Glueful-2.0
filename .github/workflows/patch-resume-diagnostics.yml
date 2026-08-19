@@ -1,0 +1,44 @@
+name: Patch Resume Studio diagnostics
+
+on:
+  push:
+    branches: [fix/resume-studio-exact-error-diagnostics]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch controller
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('glueful-resume-studio-adobe.js')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace(
+              "https://unpkg.com/docx-preview@0.4.0/dist/docx-preview.min.js",
+              "https://cdn.jsdelivr.net/npm/docx-preview@0.4.0/dist/docx-preview.min.js"
+          )
+          s = s.replace(
+              "https://unpkg.com/jszip@3.10.1/dist/jszip.min.js",
+              "https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"
+          )
+          old = "window.gluefulResumeRendererReport = { renderer: 'error', error: String(error?.message || error) };"
+          new = "window.gluefulResumeRendererReport = { renderer: 'error', stage: 'PDF/DOCX conversion or docx-preview rendering', error: String(error?.message || error), stack: String(error?.stack || '') };"
+          if old in s:
+              s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add glueful-resume-studio-adobe.js
+          if git diff --cached --quiet; then
+            echo 'No controller changes required.'
+            exit 0
+          fi
+          git commit -m 'fix: make Resume Studio renderer diagnostics actionable'
+          git push
