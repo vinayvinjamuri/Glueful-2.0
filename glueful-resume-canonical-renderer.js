@@ -1,10 +1,6 @@
 /* =========================================================
    GLUEFUL RESUME STUDIO — CANONICAL FIXED-PAGE RENDERER
    Architecture E runtime renderer.
-
-   The canonical model owns document truth. The browser DOM is only a
-   projection. The root surface is not contenteditable; only individual
-   editable text blocks are.
    ========================================================= */
 (function () {
   'use strict';
@@ -12,17 +8,13 @@
   const MODEL = () => window.gluefulResumeCanonicalModel;
   const PT_TO_PX = 96 / 72;
   const px = (pt) => Math.round(Number(pt || 0) * PT_TO_PX * 100) / 100;
-  const esc = (value) => String(value ?? '')
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-
   let active = null;
 
   const CSS = `
     .glueful-canonical-surface{position:relative;display:flex;flex-direction:column;gap:24px;align-items:center;width:max-content;min-width:100%;padding:0;margin:0;box-sizing:border-box;background:transparent;color:#202124;font-family:"Times New Roman",Times,serif;}
     .glueful-canonical-page{position:relative;flex:0 0 auto;overflow:hidden;box-sizing:border-box;background:#fff;color:#202124;box-shadow:0 12px 34px rgba(15,23,42,.18);border:1px solid #d8dce4;}
-    .glueful-canonical-body{position:absolute;box-sizing:border-box;}
-    .glueful-canonical-header,.glueful-canonical-footer{position:absolute;left:0;right:0;box-sizing:border-box;pointer-events:auto;}
+    .glueful-canonical-body{position:absolute;box-sizing:border-box;overflow:hidden;}
+    .glueful-canonical-header,.glueful-canonical-footer{position:absolute;left:0;right:0;box-sizing:border-box;}
     .glueful-canonical-block{box-sizing:border-box;position:relative;}
     .glueful-canonical-paragraph{margin:0;white-space:pre-wrap;word-break:normal;overflow-wrap:break-word;}
     .glueful-canonical-editable{outline:none;cursor:text;min-height:1em;}
@@ -50,9 +42,11 @@
 
   function borderCss(border) {
     if (!border) return '';
-    const side = (item) => item ? `${item.sizePt || .75}pt ${item.style === 'single' ? 'solid' : item.style === 'double' ? 'double' : 'solid'} ${item.color || '#808080'}` : 'none';
+    const side = (item) => item ? `${item.sizePt || .75}pt ${item.style === 'double' ? 'double' : 'solid'} ${item.color || '#808080'}` : 'none';
     return `border-top:${side(border.top)};border-right:${side(border.right)};border-bottom:${side(border.bottom)};border-left:${side(border.left)};`;
   }
+
+  function applyStyle(node, styles) { Object.entries(styles || {}).forEach(([key, value]) => { node.style[key] = value; }); }
 
   function runStyle(run) {
     return {
@@ -66,15 +60,7 @@
     };
   }
 
-  function applyStyle(node, styles) {
-    Object.entries(styles || {}).forEach(([key, value]) => {
-      node.style[key] = value;
-    });
-  }
-
-  function pageUsableHeight(page) {
-    return Math.max(36, page.heightPt - page.marginTopPt - page.marginBottomPt);
-  }
+  function pageUsableHeight(page) { return Math.max(36, page.heightPt - page.marginTopPt - page.marginBottomPt); }
 
   function createTextEditor(block, options) {
     const node = document.createElement('div');
@@ -129,7 +115,12 @@
     if (block.keepLines) node.style.breakInside = 'avoid';
 
     node.addEventListener('input', () => {
-      const textValue = Array.from(node.childNodes).map((child) => child.nodeType === Node.TEXT_NODE ? child.textContent : (child.nodeType === Node.ELEMENT_NODE && child.matches('img') ? '' : child.textContent)).join('');
+      const parts = Array.from(node.childNodes).map((child) => {
+        if (child.nodeType === Node.TEXT_NODE) return child.textContent;
+        if (child.nodeType === Node.ELEMENT_NODE && child.matches('img')) return '';
+        return child.textContent || '';
+      });
+      const textValue = parts.join('');
       const editableRuns = (block.runs || []).filter((run) => run.type === 'run');
       if (editableRuns.length === 1) editableRuns[0].text = textValue.replace(/^•\s*/, '');
       else {
@@ -199,50 +190,81 @@
     wrapper.className = container.type === 'header' ? 'glueful-canonical-header' : 'glueful-canonical-footer';
     wrapper.style.paddingLeft = `${options.page.marginLeftPt}pt`;
     wrapper.style.paddingRight = `${options.page.marginRightPt}pt`;
-    wrapper.style.left = '0';
-    wrapper.style.right = '0';
     if (container.type === 'header') wrapper.style.top = `${Math.max(0, container.distancePt || options.page.headerDistancePt || 20)}pt`;
     else wrapper.style.bottom = `${Math.max(0, container.distancePt || options.page.footerDistancePt || 20)}pt`;
-    container.blocks.forEach((block) => {
-      const node = renderBlock(block, options);
-      if (node) wrapper.appendChild(node);
-    });
+    container.blocks.forEach((block) => { const node = renderBlock(block, options); if (node) wrapper.appendChild(node); });
     parent.appendChild(wrapper);
     return wrapper;
   }
 
-  function renderPage(page, options) {
+  function pageShell(page, options) {
     const pageNode = document.createElement('section');
     pageNode.className = 'glueful-canonical-page';
     pageNode.dataset.pageNumber = String(page.number || 1);
     pageNode.style.width = `${px(page.widthPt)}px`;
     pageNode.style.height = `${px(page.heightPt)}px`;
-
     const body = document.createElement('div');
     body.className = 'glueful-canonical-body';
     body.style.left = `${page.marginLeftPt}pt`;
     body.style.right = `${page.marginRightPt}pt`;
     body.style.top = `${page.marginTopPt}pt`;
     body.style.minHeight = `${pageUsableHeight(page)}pt`;
-    body.style.width = `calc(100% - ${page.marginLeftPt + page.marginRightPt}pt)`;
-
-    page.blocks.forEach((block) => {
-      const node = renderBlock(block, { ...options, page });
-      if (node) {
-        node.classList.add('glueful-canonical-block');
-        body.appendChild(node);
-      }
-    });
     pageNode.appendChild(body);
     renderContainer(page.header, pageNode, { ...options, page });
     renderContainer(page.footer, pageNode, { ...options, page });
-    return pageNode;
+    return { pageNode, body };
   }
 
-  function repaginate(model) {
-    // Page breaks are authoritative in the model. Automatic overflow pagination
-    // is intentionally conservative in this first E implementation: each page
-    // remains fixed geometry and overflow is diagnosed instead of mutating the model.
+  function clonePageGeometry(source, number) {
+    const page = MODEL().createPage(number, source);
+    page.header = source.header ? MODEL().clone(source.header) : null;
+    page.footer = source.footer ? MODEL().clone(source.footer) : null;
+    page.blocks = [];
+    return page;
+  }
+
+  function paginateModel(model, surface, options) {
+    const outputPages = [];
+    surface.replaceChildren();
+    let pageNumber = 0;
+
+    for (const sourcePage of model.pages) {
+      let currentModelPage = clonePageGeometry(sourcePage, ++pageNumber);
+      let current = pageShell(currentModelPage, options);
+      surface.appendChild(current.pageNode);
+      outputPages.push(currentModelPage);
+
+      for (const block of sourcePage.blocks || []) {
+        if (block.pageBreakBefore && currentModelPage.blocks.length) {
+          block.pageBreakBefore = false;
+          currentModelPage = clonePageGeometry(sourcePage, ++pageNumber);
+          current = pageShell(currentModelPage, options);
+          surface.appendChild(current.pageNode);
+          outputPages.push(currentModelPage);
+        }
+
+        const node = renderBlock(block, { ...options, page: currentModelPage, onChange: options.onChange });
+        if (!node) continue;
+        node.classList.add('glueful-canonical-block');
+        current.body.appendChild(node);
+
+        const overflow = current.body.scrollHeight > current.body.clientHeight + 1;
+        if (overflow && currentModelPage.blocks.length > 0) {
+          current.body.removeChild(node);
+          current.pageNode.dataset.overflow = 'false';
+          currentModelPage = clonePageGeometry(sourcePage, ++pageNumber);
+          current = pageShell(currentModelPage, options);
+          surface.appendChild(current.pageNode);
+          outputPages.push(currentModelPage);
+          current.body.appendChild(node);
+        }
+        currentModelPage.blocks.push(block);
+        if (current.body.scrollHeight > current.body.clientHeight + 1) current.pageNode.dataset.overflow = 'true';
+      }
+    }
+
+    model.pages = outputPages;
+    model.pages.forEach((page, index) => { page.number = index + 1; });
     return model;
   }
 
@@ -259,34 +281,26 @@
     surface.dataset.renderer = 'canonical-fixed-page';
     surface.dataset.modelVersion = String(normalized.version);
     surface.contentEditable = 'false';
-
-    const onChange = (block, node) => {
-      active?.onChange?.(block, node, normalized);
-    };
-    normalized.pages.forEach((page) => surface.appendChild(renderPage(page, { ...options, model: normalized, onChange })));
     host.appendChild(surface);
 
-    requestAnimationFrame(() => {
-      surface.querySelectorAll('.glueful-canonical-page').forEach((pageNode) => {
-        const body = pageNode.querySelector('.glueful-canonical-body');
-        if (!body) return;
-        const overflow = body.scrollHeight > body.clientHeight + 2;
-        pageNode.dataset.overflow = String(overflow);
-      });
-    });
+    const onChange = (block, node) => active?.onChange?.(block, node, normalized);
+    paginateModel(normalized, surface, { ...options, model: normalized, onChange });
 
     active = { model: normalized, host, surface, onChange: options.onChange };
     window.gluefulResumeCanonicalState = active;
     return normalized;
   }
 
-  function getActiveModel() {
-    return active?.model || window.gluefulResumeCanonicalState?.model || null;
+  function repaginate(model) {
+    const state = active;
+    if (!state || !model) return model;
+    paginateModel(model, state.surface, { model, onChange: state.onChange });
+    active.model = model;
+    return model;
   }
 
-  function getPlainText() {
-    return MODEL().toPlainText(getActiveModel());
-  }
+  function getActiveModel() { return active?.model || window.gluefulResumeCanonicalState?.model || null; }
+  function getPlainText() { return MODEL().toPlainText(getActiveModel()); }
 
   window.gluefulResumeCanonicalRenderer = {
     PT_TO_PX,
