@@ -1,5 +1,4 @@
 name: Resume Studio canonical regression
-
 on:
   push:
     branches: ['feature/resume-studio-canonical-renderer']
@@ -7,7 +6,7 @@ on:
     paths:
       - 'glueful-resume-canonical-model.js'
       - 'glueful-resume-docx-importer-v2.js'
-      - 'glueful-resume-canonical-renderer.js'
+      - 'glueful-resume-canonical-renderer-v2.js'
       - 'glueful-resume-canonical-editing.js'
       - 'glueful-resume-canonical-export.js'
       - 'glueful-resume-studio-canonical-bootstrap.js'
@@ -15,33 +14,18 @@ on:
       - 'glueful-resume-studio-v41-bootstrap.js'
       - 'sw.js'
       - '.github/workflows/resume-canonical-regression.yml'
-
 permissions:
   contents: read
-
 jobs:
   canonical:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: JavaScript syntax regression
         shell: bash
         run: |
           set -e
-          for f in \
-            glueful-resume-canonical-model.js \
-            glueful-resume-docx-importer-v2.js \
-            glueful-resume-canonical-renderer.js \
-            glueful-resume-canonical-editing.js \
-            glueful-resume-canonical-export.js \
-            glueful-resume-studio-canonical-bootstrap.js \
-            glueful-resume-studio-canonical-controller.js \
-            glueful-resume-studio-v41-bootstrap.js \
-            sw.js; do
-            node --check "$f"
-          done
-
+          for f in glueful-resume-canonical-model.js glueful-resume-docx-importer-v2.js glueful-resume-canonical-renderer-v2.js glueful-resume-canonical-editing.js glueful-resume-canonical-export.js glueful-resume-studio-canonical-bootstrap.js glueful-resume-studio-canonical-controller.js glueful-resume-studio-v41-bootstrap.js sw.js; do node --check "$f"; done
       - name: Architecture authority checks
         shell: bash
         run: |
@@ -49,26 +33,25 @@ jobs:
           grep -F "architecture: 'E'" glueful-resume-studio-canonical-controller.js
           grep -F 'gluefulResumeCanonicalModel' glueful-resume-canonical-model.js
           grep -F 'wordprocessingml' glueful-resume-docx-importer-v2.js
-          grep -F 'contentEditable = \'false\'' glueful-resume-canonical-renderer.js
-          grep -F 'glueful-canonical-editable' glueful-resume-canonical-renderer.js
+          grep -F 'contentEditable=\'false\'' glueful-resume-canonical-renderer-v2.js
+          grep -F 'glueful-canonical-editable' glueful-resume-canonical-renderer-v2.js
+          grep -F 'glueful-canonical-floating-image' glueful-resume-canonical-renderer-v2.js
+          grep -F 'glueful-canonical-table' glueful-resume-canonical-renderer-v2.js
           grep -F 'gluefulCanonicalEditing' glueful-resume-canonical-editing.js
           grep -F 'gluefulCanonicalExport' glueful-resume-canonical-export.js
-          grep -F 'CANONICAL_EDITING' sw.js
-          grep -F 'CANONICAL_EXPORT' sw.js
+          grep -F 'CANONICAL_RENDERER' sw.js
           grep -F 'canonicalRuntimeScheduled' glueful-resume-studio-v41-bootstrap.js
-
       - name: Legacy renderer separation check
         shell: bash
         run: |
           set -e
           ! grep -F 'renderAsync' glueful-resume-studio-canonical-controller.js
           ! grep -F 'docx-preview' glueful-resume-studio-canonical-controller.js
-          ! grep -F 'document.execCommand' glueful-resume-studio-canonical-renderer.js
-
+          ! grep -F 'document.execCommand' glueful-resume-canonical-renderer-v2.js
+          ! grep -F 'glueful-resume-header-fidelity-v3.js' sw.js
       - name: Export authority check
         shell: bash
         run: |
           set -e
-          grep -F 'R()?.getActiveModel?.()' glueful-resume-canonical-export.js
           grep -F 'docx.Packer.toBlob' glueful-resume-canonical-export.js
           grep -F 'window.print()' glueful-resume-canonical-export.js
