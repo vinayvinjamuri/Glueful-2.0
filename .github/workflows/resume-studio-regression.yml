@@ -1,0 +1,54 @@
+name: Resume Studio regression
+
+on:
+  push:
+    branches: [main, 'fix/**']
+  pull_request:
+    paths:
+      - 'glueful-resume-studio-adobe.js'
+      - 'glueful-resume-studio-mobile-layout.js'
+      - 'glueful-resume-header-fidelity.js'
+      - 'glueful-resume-header-alignment.js'
+      - 'glueful-resume-render-diagnostics.js'
+      - 'sw.js'
+      - '.github/workflows/resume-studio-regression.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: JavaScript syntax regression
+        run: |
+          set -e
+          for f in \
+            glueful-resume-studio-adobe.js \
+            glueful-resume-studio-mobile-layout.js \
+            glueful-resume-header-fidelity.js \
+            glueful-resume-header-alignment.js \
+            glueful-resume-render-diagnostics.js \
+            sw.js; do
+            node --check "$f"
+          done
+
+      - name: Header relationship regression
+        run: |
+          set -e
+          grep -F 'word/_rels/' glueful-resume-header-fidelity.js
+          grep -F 'word/_rels/' glueful-resume-header-alignment.js
+          grep -F 'glueful-cache-v10-resume-header-regression' sw.js
+          grep -F 'glueful-resume-header-fidelity.js' sw.js
+          grep -F 'glueful-resume-header-alignment.js' sw.js
+
+      - name: Layout safety regression
+        run: |
+          set -e
+          ! grep -F 'display:flex' glueful-resume-header-fidelity.js
+          grep -F 'glueful-docx-header-fidelity-overlay' glueful-resume-header-fidelity.js
+          grep -F 'glueful-docx-layout-mode' glueful-resume-header-alignment.js
+          grep -F 'PAGE_WIDTH = 794' glueful-resume-header-alignment.js
+          grep -F 'width:794px' glueful-resume-studio-mobile-layout.js
