@@ -11,8 +11,8 @@
   const EDITOR_ID = 'job-resume-editor-text';
   const MODAL_ID = 'job-resume-editor-modal';
   const DOCX_PREVIEW_TIMEOUT = 15000;
-  const DOCX_PREVIEW_JS = 'https://unpkg.com/docx-preview@0.4.0/dist/docx-preview.min.js';
-  const JSZIP_JS = 'https://unpkg.com/jszip@3.10.1/dist/jszip.min.js';
+  const DOCX_PREVIEW_JS = 'https://cdn.jsdelivr.net/npm/docx-preview@0.4.0/dist/docx-preview.min.js';
+  const JSZIP_JS = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
   const $ = (id) => document.getElementById(id);
   const editor = () => $(EDITOR_ID);
   const modal = () => $(MODAL_ID);
@@ -102,7 +102,7 @@
     if (ats) ats.textContent = '…'; if (ed) { ed.innerHTML = '<p style="padding:40px;text-align:center;color:#777;font-family:Inter,Arial,sans-serif">Preparing editable Word document…</p>'; ed.contentEditable = 'true'; }
     try { clearConversionUi(); await loadMasterIntoEditor(); } catch (error) {
       console.error('[Glueful Resume Studio Adobe] load failed:', error);
-      window.gluefulResumeRendererReport = { renderer: 'error', error: String(error?.message || error) };
+      window.gluefulResumeRendererReport = { renderer: 'error', stage: 'PDF/DOCX conversion or docx-preview rendering', error: String(error?.message || error), stack: String(error?.stack || '') };
       if (ed) { ed.innerHTML = `<div style="padding:40px;text-align:center;font-family:Inter,Arial,sans-serif;color:#8b1e1e;background:#fff7f7;border:1px solid #e8b4b4;border-radius:8px"><strong>Resume layout renderer failed.</strong><br><span style="font-size:12px">The master resume was not modified. Check the browser console for the exact conversion/rendering error.</span></div>`; ed.contentEditable = 'false'; }
       showConversionNote('Resume layout rendering failed; no semantic fallback was inserted.');
       if (typeof window.showError === 'function') window.showError(error?.message || 'Could not render the Adobe-generated Word document.');
