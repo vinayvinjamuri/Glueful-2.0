@@ -9,7 +9,9 @@ on:
       - 'glueful-resume-studio-mobile-layout.js'
       - 'glueful-resume-header-fidelity.js'
       - 'glueful-resume-header-alignment.js'
+      - 'glueful-resume-header-fidelity-v2.js'
       - 'glueful-resume-render-diagnostics.js'
+      - 'glueful-resume-studio-v41-bootstrap.js'
       - 'sw.js'
       - '.github/workflows/resume-studio-regression.yml'
 
@@ -30,7 +32,9 @@ jobs:
             glueful-resume-studio-mobile-layout.js \
             glueful-resume-header-fidelity.js \
             glueful-resume-header-alignment.js \
+            glueful-resume-header-fidelity-v2.js \
             glueful-resume-render-diagnostics.js \
+            glueful-resume-studio-v41-bootstrap.js \
             sw.js; do
             node --check "$f"
           done
@@ -40,9 +44,12 @@ jobs:
           set -e
           grep -F 'word/_rels/' glueful-resume-header-fidelity.js
           grep -F 'word/_rels/' glueful-resume-header-alignment.js
-          grep -F 'glueful-cache-v10-resume-header-regression' sw.js
+          grep -F '_rels/' glueful-resume-header-fidelity-v2.js
+          grep -F 'document.xml' glueful-resume-header-fidelity-v2.js
+          grep -F 'glueful-cache-v11-resume-header-fidelity-v2' sw.js
           grep -F 'glueful-resume-header-fidelity.js' sw.js
           grep -F 'glueful-resume-header-alignment.js' sw.js
+          grep -F 'glueful-resume-header-fidelity-v2.js' sw.js
 
       - name: Layout safety regression
         run: |
@@ -52,3 +59,4 @@ jobs:
           grep -F 'glueful-docx-layout-mode' glueful-resume-header-alignment.js
           grep -F 'PAGE_WIDTH = 794' glueful-resume-header-alignment.js
           grep -F 'width:794px' glueful-resume-studio-mobile-layout.js
+          grep -F 'padding:48px 48px 54px' glueful-resume-studio-v41-bootstrap.js
