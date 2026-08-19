@@ -3,13 +3,13 @@
 'use strict';
 
 /*
- * Fixed-PDF must become the authority BEFORE its async renderer assets finish
- * loading. Previously there was a window during which the legacy DOCX editor
- * could still be opened. Once that happened, later authority watchdogs could
- * replace the function but could not replace the already-rendered editor.
+ * Fixed-PDF is authoritative for ?resumeRenderer=fixed-pdf.
+ * The gate below installs before the async renderer assets finish loading.
+ * The watchdog then keeps that authority after all other legacy scripts load,
+ * including the unconditional Adobe/DOCX controller in index.html.
  */
 window.__gluefulFixedPdfScheduled = true;
-const VERSION='20260819-fixedpdf11';
+const VERSION='20260819-fixedpdf12';
 const ASSETS=[
  ['./glueful-resume-layout-model.js','glueful-fixed-layout-model-runtime'],
  ['./glueful-resume-pdf-layout-importer.js','glueful-fixed-pdf-importer-runtime'],
@@ -18,7 +18,7 @@ const ASSETS=[
 ];
 let realOpen=null;
 let realReset=null;
-let runtimePromise=null;
+let authorityWatchdog=null;
 
 function waitForRuntime(kind){
   return new Promise((resolve,reject)=>{
@@ -66,6 +66,25 @@ function installAuthorityGate(){
   };
 }
 
+function enforceAuthority(){
+  if(!window.__gluefulFixedPdfScheduled)return;
+  const studio=window.gluefulFixedPdfResumeStudio;
+  if(!studio || typeof studio.open!=='function')return;
+  if(window.openJobResumeEditor!==studio.open){
+    window.openJobResumeEditor=studio.open;
+  }
+  if(typeof studio.reset==='function' && window.resetJobResumeToMaster!==studio.reset){
+    window.resetJobResumeToMaster=studio.reset;
+  }
+  window.__gluefulFixedPdfAuthorityActive=true;
+}
+
+function startAuthorityWatchdog(){
+  if(authorityWatchdog)return;
+  enforceAuthority();
+  authorityWatchdog=setInterval(enforceAuthority,100);
+}
+
 function load(src,id){
   return new Promise((resolve,reject)=>{
     const existing=document.getElementById(id);
@@ -88,10 +107,12 @@ function load(src,id){
 
 async function boot(){
   installAuthorityGate();
+  startAuthorityWatchdog();
   try{
     for(const [src,id] of ASSETS)await load(src,id);
     window.__gluefulFixedPdfReady=true;
     window.gluefulFixedPdfResumeStudio?.activate?.();
+    enforceAuthority();
     console.info('[Glueful Resume Studio] fixed-PDF controller bootstrap loaded; PDF masters use fixed-page renderer',VERSION);
   }catch(error){
     console.error('[Glueful Resume Studio] fixed-PDF bootstrap failed:',error);
