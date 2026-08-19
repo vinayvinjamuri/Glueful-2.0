@@ -34,7 +34,7 @@ jobs:
             'glueful-resume-docx-importer-v2.js':['wordprocessingml','word/document.xml','gridCol','tblCellMar','positionH','positionV','sectPr','settings.xml','headerReference','footerReference'],
             'glueful-resume-canonical-renderer-v2.js':['glueful-canonical-page','glueful-canonical-editable','glueful-canonical-floating-image','glueful-canonical-table','cellMargins','pageHeaderFor','pageFooterFor'],
             'glueful-resume-canonical-editing.js':['gluefulCanonicalEditing'],
-            'glueful-resume-canonical-export.js':['gluefulCanonicalExport','docx.Packer.toBlob','window.print()','firstHeader','evenHeader','firstFooter','evenFooter'],
+            'glueful-resume-canonical-export.js':['gluefulCanonicalExport','Packer.toBlob','window.print()','firstHeader','evenHeader','firstFooter','evenFooter'],
             'glueful-resume-studio-canonical-bootstrap.js':['glueful-resume-canonical-renderer-v2.js','glueful-resume-canonical-editing.js'],
             'glueful-resume-studio-canonical-controller.js':["architecture: 'E'",'glueful-pdf-to-docx'],
             'sw.js':['glueful-resume-canonical-renderer-v2.js','glueful-cache-v19-resume-canonical-e5']
