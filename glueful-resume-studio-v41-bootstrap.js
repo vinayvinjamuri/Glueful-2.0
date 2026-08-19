@@ -23,6 +23,36 @@
   const EDITOR_ID = 'job-resume-editor-text';
   let editorObserver = null;
   let normalizeQueued = false;
+  let fixedAuthorityTimer = null;
+
+  function enforceFixedPdfAuthority(){
+    if(!fixedPdfScheduled()) return;
+    const fixed=window.gluefulFixedPdfResumeStudio;
+    if(!fixed || typeof fixed.open !== 'function') return;
+
+    /* A legacy controller can load after the fixed bootstrap because the
+       service worker injects the fixed runtime at navigation time. Keep the
+       fixed controller authoritative until the page is unloaded. */
+    if(window.openJobResumeEditor !== fixed.open){
+      window.openJobResumeEditor = fixed.open;
+    }
+    if(typeof fixed.reset === 'function' && typeof window.resetJobResumeToMaster === 'function' && window.resetJobResumeToMaster !== fixed.reset){
+      window.resetJobResumeToMaster = () => fixed.reset(window.gluefulJobResumeEditorId);
+    }
+
+    const legacyStyle=document.getElementById(STYLE_ID);
+    if(legacyStyle) legacyStyle.remove();
+    if(editorObserver){
+      try{ editorObserver.disconnect(); }catch(_){ }
+      editorObserver=null;
+    }
+  }
+
+  function startFixedAuthorityWatchdog(){
+    if(fixedAuthorityTimer) return;
+    fixedAuthorityTimer=setInterval(enforceFixedPdfAuthority,250);
+    enforceFixedPdfAuthority();
+  }
 
   function installV54Styles(){
     if(fixedPdfScheduled()) return;
@@ -67,10 +97,13 @@
   }
 
   function boot(){
-    if(fixedPdfScheduled()) return;
+    if(fixedPdfScheduled()){
+      startFixedAuthorityWatchdog();
+      return;
+    }
     installV54Styles();
     if(!attachEditorObserver()){
-      const timer=setInterval(()=>{if(fixedPdfScheduled()){clearInterval(timer);return;}if(attachEditorObserver()) clearInterval(timer);},250);
+      const timer=setInterval(()=>{if(fixedPdfScheduled()){clearInterval(timer);startFixedAuthorityWatchdog();return;}if(attachEditorObserver()) clearInterval(timer);},250);
       setTimeout(()=>clearInterval(timer),30000);
     }
   }
@@ -104,15 +137,17 @@
 
   async function installAuthoritativeResumeStudio(){
     if(fixedPdfScheduled()){
+      startFixedAuthorityWatchdog();
       console.info('[Glueful Resume Studio] V54 legacy bootstrap skipped; fixed-PDF runtime owns Resume Studio.');
       return;
     }
     try{
       await loadResumeStudioAsset(FORENSICS_SRC,'glueful-resume-docx-forensics-runtime');
-      if(fixedPdfScheduled()) return;
+      if(fixedPdfScheduled()){startFixedAuthorityWatchdog();return;}
       await loadResumeStudioAsset(CONTROLLER_SRC,'glueful-resume-studio-adobe-runtime');
-      if(fixedPdfScheduled()) return;
+      if(fixedPdfScheduled()){startFixedAuthorityWatchdog();return;}
       await loadResumeStudioAsset(HEADER_V3_SRC,'glueful-resume-header-fidelity-v3-runtime');
+      if(fixedPdfScheduled()){startFixedAuthorityWatchdog();return;}
       console.info('[Glueful Resume Studio] deterministic authoritative loader installed:',window.gluefulAdobeResumeStudio?.version||'unknown','header-v3=',!!window.gluefulResumeHeaderFidelityV3);
     }catch(error){
       console.error('[Glueful Resume Studio] authoritative controller failed to load:',error);
@@ -121,4 +156,7 @@
 
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>void installAuthoritativeResumeStudio(),{once:true});
   else setTimeout(()=>void installAuthoritativeResumeStudio(),0);
+
+  window.addEventListener('glueful:fixed-pdf-ready',startFixedAuthorityWatchdog);
+  startFixedAuthorityWatchdog();
 })();
