@@ -34,7 +34,8 @@ jobs:
           grep -q "v:shape" glueful-resume-header-fidelity-v3.js
           grep -q "v:imagedata" glueful-resume-header-fidelity-v3.js
           grep -q "relPath(part)" glueful-resume-header-fidelity-v3.js
-          grep -q "glueful-resume-header-fidelity-v3.js" sw.js
+          grep -q "HEADER_FIDELITY_V3_SCRIPT" sw.js
+          grep -q "20260819-2" sw.js
           grep -q "glueful-cache-v15-resume-fixed-pdf-optin" sw.js
           grep -q "glueful-resume-header-fidelity-v3.js" glueful-resume-studio-v41-bootstrap.js
       - name: Ensure Adobe DOCX renderer remains authoritative
