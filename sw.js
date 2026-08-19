@@ -1,12 +1,14 @@
-const CACHE_NAME = "glueful-cache-v5-resume-adobe";
+const CACHE_NAME = "glueful-cache-v6-resume-adobe";
 const AUTHORITATIVE_RESUME_SCRIPT = "./glueful-resume-studio-adobe.js";
 const DOCX_FORENSICS_SCRIPT = "./glueful-resume-docx-forensics.js";
+const LAYOUT_FIDELITY_SCRIPT = "./glueful-resume-studio-layout-fidelity.js";
 
 const ASSETS = [
   "./manifest.json",
   "./glueful-resume-studio-adobe.js",
   "./glueful-resume-docx-forensics.js",
   "./glueful-resume-studio-mobile-layout.js",
+  "./glueful-resume-studio-layout-fidelity.js",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
   "./icons/icon-180.png",
@@ -28,7 +30,11 @@ async function buildAuthoritativeIndex(request, preloadResponse) {
 
   const html = await response.text();
 
-  if (html.includes(AUTHORITATIVE_RESUME_SCRIPT) && html.includes(DOCX_FORENSICS_SCRIPT)) {
+  if (
+    html.includes(AUTHORITATIVE_RESUME_SCRIPT) &&
+    html.includes(DOCX_FORENSICS_SCRIPT) &&
+    html.includes(LAYOUT_FIDELITY_SCRIPT)
+  ) {
     return new Response(html, {
       status: response.status,
       statusText: response.statusText,
@@ -37,8 +43,10 @@ async function buildAuthoritativeIndex(request, preloadResponse) {
   }
 
   const scripts = [
-    `<script src="${DOCX_FORENSICS_SCRIPT}?v=20260819-2" data-glueful-docx-forensics="1"></script>`,
-    `<script src="${AUTHORITATIVE_RESUME_SCRIPT}?v=20260819-2" data-glueful-authoritative-resume-studio="1"></script>`
+    `<script src="${DOCX_FORENSICS_SCRIPT}?v=20260819-3" data-glueful-docx-forensics="1"></script>`,
+    `<script src="${AUTHORITATIVE_RESUME_SCRIPT}?v=20260819-3" data-glueful-authoritative-resume-studio="1"></script>`,
+    `<script src="./glueful-resume-studio-mobile-layout.js?v=20260819-4" data-glueful-mobile-layout="1"></script>`,
+    `<script src="${LAYOUT_FIDELITY_SCRIPT}?v=20260819-1" data-glueful-layout-fidelity="1"></script>`
   ].join("\n");
   const marker = "</body>";
   const injected = html.includes(marker)
@@ -107,7 +115,9 @@ self.addEventListener("fetch", (event) => {
   if (
     request.method === "GET" &&
     (url.pathname.endsWith("/glueful-resume-studio-adobe.js") ||
-     url.pathname.endsWith("/glueful-resume-docx-forensics.js"))
+     url.pathname.endsWith("/glueful-resume-docx-forensics.js") ||
+     url.pathname.endsWith("/glueful-resume-studio-mobile-layout.js") ||
+     url.pathname.endsWith("/glueful-resume-studio-layout-fidelity.js"))
   ) {
     event.respondWith((async () => {
       try {
