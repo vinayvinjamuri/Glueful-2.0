@@ -1,1 +1,0 @@
-Prototype smoke contract: fixed page is 794x1123 at 96dpi, PDF background remains non-editable, text overlays are editable, and prototype scripts are never injected by production sw.js.
