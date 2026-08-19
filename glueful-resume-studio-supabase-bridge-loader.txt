@@ -1,1 +1,0 @@
-Load order: existing Supabase client script -> glueful-resume-studio-supabase-bridge.js -> glueful-resume-studio-adobe.js. This ensures the authoritative PDF-to-Adobe controller can access the authenticated client without exposing credentials.
