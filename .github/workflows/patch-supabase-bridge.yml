@@ -1,0 +1,38 @@
+name: Patch Resume Studio Supabase bridge
+
+on:
+  push:
+    branches: [fix/resume-studio-exact-error-diagnostics]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inject bridge before authoritative controller
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          bridge = '<script src="./glueful-resume-studio-supabase-bridge.js?v=20260819-1"></script>'
+          controller = '<script src="./glueful-resume-studio-adobe.js?v=20260819-1"></script>'
+          if bridge not in s:
+              if controller not in s:
+                  raise SystemExit('Authoritative Resume Studio controller marker not found')
+              s = s.replace(controller, bridge + '\n' + controller, 1)
+              p.write_text(s, encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then
+            echo 'Bridge already injected.'
+            exit 0
+          fi
+          git commit -m 'fix: expose existing Supabase client to Resume Studio'
+          git push
