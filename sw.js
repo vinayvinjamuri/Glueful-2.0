@@ -1,6 +1,7 @@
 const CACHE_NAME = "glueful-cache-v6-resume-adobe";
 const AUTHORITATIVE_RESUME_SCRIPT = "./glueful-resume-studio-adobe.js";
 const DOCX_FORENSICS_SCRIPT = "./glueful-resume-docx-forensics.js";
+const MOBILE_LAYOUT_SCRIPT = "./glueful-resume-studio-mobile-layout.js";
 const LAYOUT_FIDELITY_SCRIPT = "./glueful-resume-studio-layout-fidelity.js";
 
 const ASSETS = [
@@ -29,12 +30,22 @@ async function buildAuthoritativeIndex(request, preloadResponse) {
   if (!contentType.includes("text/html")) return response;
 
   const html = await response.text();
+  const scripts = [];
 
-  if (
-    html.includes(AUTHORITATIVE_RESUME_SCRIPT) &&
-    html.includes(DOCX_FORENSICS_SCRIPT) &&
-    html.includes(LAYOUT_FIDELITY_SCRIPT)
-  ) {
+  if (!html.includes(DOCX_FORENSICS_SCRIPT)) {
+    scripts.push(`<script src="${DOCX_FORENSICS_SCRIPT}?v=20260819-3" data-glueful-docx-forensics="1"></script>`);
+  }
+  if (!html.includes(AUTHORITATIVE_RESUME_SCRIPT)) {
+    scripts.push(`<script src="${AUTHORITATIVE_RESUME_SCRIPT}?v=20260819-3" data-glueful-authoritative-resume-studio="1"></script>`);
+  }
+  if (!html.includes(MOBILE_LAYOUT_SCRIPT)) {
+    scripts.push(`<script src="${MOBILE_LAYOUT_SCRIPT}?v=20260819-4" data-glueful-mobile-layout="1"></script>`);
+  }
+  if (!html.includes(LAYOUT_FIDELITY_SCRIPT)) {
+    scripts.push(`<script src="${LAYOUT_FIDELITY_SCRIPT}?v=20260819-1" data-glueful-layout-fidelity="1"></script>`);
+  }
+
+  if (!scripts.length) {
     return new Response(html, {
       status: response.status,
       statusText: response.statusText,
@@ -42,16 +53,11 @@ async function buildAuthoritativeIndex(request, preloadResponse) {
     });
   }
 
-  const scripts = [
-    `<script src="${DOCX_FORENSICS_SCRIPT}?v=20260819-3" data-glueful-docx-forensics="1"></script>`,
-    `<script src="${AUTHORITATIVE_RESUME_SCRIPT}?v=20260819-3" data-glueful-authoritative-resume-studio="1"></script>`,
-    `<script src="./glueful-resume-studio-mobile-layout.js?v=20260819-4" data-glueful-mobile-layout="1"></script>`,
-    `<script src="${LAYOUT_FIDELITY_SCRIPT}?v=20260819-1" data-glueful-layout-fidelity="1"></script>`
-  ].join("\n");
   const marker = "</body>";
+  const scriptBlock = scripts.join("\n");
   const injected = html.includes(marker)
-    ? html.replace(marker, `${scripts}\n${marker}`)
-    : `${html}\n${scripts}`;
+    ? html.replace(marker, `${scriptBlock}\n${marker}`)
+    : `${html}\n${scriptBlock}`;
 
   const headers = new Headers(response.headers);
   headers.set("Content-Type", "text/html; charset=UTF-8");
