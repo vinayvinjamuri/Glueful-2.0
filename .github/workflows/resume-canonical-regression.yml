@@ -5,7 +5,6 @@ on:
   pull_request:
     paths:
       - 'glueful-resume-canonical-model.js'
-      - 'glueful-resume-docx-importer-v2.js'
       - 'glueful-resume-canonical-renderer-v2.js'
       - 'glueful-resume-canonical-editing.js'
       - 'glueful-resume-canonical-export.js'
@@ -33,7 +32,7 @@ jobs:
           grep -F "architecture: 'E'" glueful-resume-studio-canonical-controller.js
           grep -F 'gluefulResumeCanonicalModel' glueful-resume-canonical-model.js
           grep -F 'wordprocessingml' glueful-resume-docx-importer-v2.js
-          grep -F 'contentEditable=\'false\'' glueful-resume-canonical-renderer-v2.js
+          grep -F "contentEditable='false'" glueful-resume-canonical-renderer-v2.js
           grep -F 'glueful-canonical-editable' glueful-resume-canonical-renderer-v2.js
           grep -F 'glueful-canonical-floating-image' glueful-resume-canonical-renderer-v2.js
           grep -F 'glueful-canonical-table' glueful-resume-canonical-renderer-v2.js
