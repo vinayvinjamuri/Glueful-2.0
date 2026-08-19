@@ -2,7 +2,7 @@ name: Resume Studio header regression v3
 
 on:
   push:
-    branches: [fix/resume-studio-header-visual-regression-v2, 'fix/resume-word-margins-logo-v3', 'feature/resume-studio-canonical-v2-safe']
+    branches: [fix/resume-studio-header-visual-regression-v2, 'fix/resume-word-margins-logo-v3', 'fix/resume-fixed-page-authority', 'feature/resume-studio-canonical-v2-safe']
   pull_request:
     paths:
       - 'glueful-resume-*.js'
@@ -22,10 +22,13 @@ jobs:
           node --check glueful-resume-header-fidelity-v3.js
           node --check glueful-resume-header-fidelity.js
           node --check glueful-resume-header-alignment.js
+          node --check glueful-resume-fixed-page-bootstrap.js
+          node --check glueful-resume-fixed-page-controller.js
+          node --check glueful-resume-fixed-page-renderer.js
           node --check glueful-resume-studio-v41-bootstrap.js
           node --check glueful-resume-studio-adobe.js
           node --check sw.js
-      - name: Validate Word geometry and logo invariants
+      - name: Validate Word geometry, logo, and fixed-page authority invariants
         run: |
           set -e
           grep -q "PAGE_WIDTH=794" glueful-resume-header-fidelity-v3.js
@@ -34,10 +37,11 @@ jobs:
           grep -q "v:imagedata" glueful-resume-header-fidelity-v3.js
           grep -q "relPath(part)" glueful-resume-header-fidelity-v3.js
           grep -q "HEADER_FIDELITY_V3_SCRIPT" sw.js
-          grep -q "20260819-2" sw.js
-          grep -q "glueful-cache-v15-resume-fixed-pdf-optin" sw.js
-          grep -q "glueful-resume-header-fidelity-v3.js" glueful-resume-studio-v41-bootstrap.js
-      - name: Ensure Adobe DOCX renderer remains authoritative
+          grep -q "20260819-4" sw.js
+          grep -q "glueful-cache-v19-resume-fixed-pdf-authority" sw.js
+          grep -q "__gluefulFixedPdfScheduled = true" glueful-resume-fixed-page-bootstrap.js
+          grep -q "fixedPdfScheduled" glueful-resume-studio-v41-bootstrap.js
+      - name: Ensure Adobe DOCX pipeline remains available
         run: |
           set -e
           ! grep -R "PDF.js.*docx.js\|docx.js.*Mammoth" glueful-resume-studio-adobe.js
