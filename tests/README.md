@@ -1,0 +1,1 @@
+Resume Studio regression suite covers controller load order, authenticated Supabase client resolution, Adobe PDF-to-DOCX path, docx-preview rendering, service-worker cache invalidation, and JavaScript syntax checks.
