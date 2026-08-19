@@ -21,36 +21,34 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: JavaScript syntax regression
-        shell: bash
         run: |
           set -e
           for f in glueful-resume-canonical-model.js glueful-resume-docx-importer-v2.js glueful-resume-canonical-renderer-v2.js glueful-resume-canonical-editing.js glueful-resume-canonical-export.js glueful-resume-studio-canonical-bootstrap.js glueful-resume-studio-canonical-controller.js glueful-resume-studio-v41-bootstrap.js sw.js; do node --check "$f"; done
-      - name: Architecture authority checks
-        shell: bash
+      - name: Architecture contract regression
         run: |
-          set -e
-          grep -F "architecture: 'E'" glueful-resume-studio-canonical-controller.js
-          grep -F 'gluefulResumeCanonicalModel' glueful-resume-canonical-model.js
-          grep -F 'wordprocessingml' glueful-resume-docx-importer-v2.js
-          grep -F "contentEditable='false'" glueful-resume-canonical-renderer-v2.js
-          grep -F 'glueful-canonical-editable' glueful-resume-canonical-renderer-v2.js
-          grep -F 'glueful-canonical-floating-image' glueful-resume-canonical-renderer-v2.js
-          grep -F 'glueful-canonical-table' glueful-resume-canonical-renderer-v2.js
-          grep -F 'gluefulCanonicalEditing' glueful-resume-canonical-editing.js
-          grep -F 'gluefulCanonicalExport' glueful-resume-canonical-export.js
-          grep -F 'CANONICAL_RENDERER' sw.js
-          grep -F 'canonicalRuntimeScheduled' glueful-resume-studio-v41-bootstrap.js
-      - name: Legacy renderer separation check
-        shell: bash
+          node <<'NODE'
+          const fs=require('fs');
+          const checks={
+            'glueful-resume-canonical-model.js':['glueful-resume-document','horizontalReference','xPt'],
+            'glueful-resume-docx-importer-v2.js':['wordprocessingml','word/document.xml'],
+            'glueful-resume-canonical-renderer-v2.js':['glueful-canonical-page','glueful-canonical-editable','glueful-canonical-floating-image','glueful-canonical-table'],
+            'glueful-resume-canonical-editing.js':['gluefulCanonicalEditing'],
+            'glueful-resume-canonical-export.js':['gluefulCanonicalExport','docx.Packer.toBlob','window.print()'],
+            'glueful-resume-studio-canonical-bootstrap.js':['glueful-resume-canonical-renderer-v2.js','glueful-resume-canonical-editing.js'],
+            'glueful-resume-studio-canonical-controller.js':['architecture: \'E\'','glueful-pdf-to-docx'],
+            'sw.js':['glueful-resume-canonical-renderer-v2.js','glueful-cache-v17-resume-canonical-e3']
+          };
+          for(const [file,needles] of Object.entries(checks)){
+            const text=fs.readFileSync(file,'utf8');
+            for(const needle of needles) if(!text.includes(needle)) throw new Error(`${file} missing: ${needle}`);
+          }
+          const controller=fs.readFileSync('glueful-resume-studio-canonical-controller.js','utf8');
+          if(/renderAsync|docx-preview/.test(controller)) throw new Error('Canonical controller still depends on docx-preview');
+          const renderer=fs.readFileSync('glueful-resume-canonical-renderer-v2.js','utf8');
+          if(renderer.includes('document.execCommand')) throw new Error('Renderer owns browser editing commands');
+          console.log('Architecture E contract checks passed');
+          NODE
+      - name: Legacy renderer separation regression
         run: |
-          set -e
-          ! grep -F 'renderAsync' glueful-resume-studio-canonical-controller.js
-          ! grep -F 'docx-preview' glueful-resume-studio-canonical-controller.js
-          ! grep -F 'document.execCommand' glueful-resume-canonical-renderer-v2.js
           ! grep -F 'glueful-resume-header-fidelity-v3.js' sw.js
-      - name: Export authority check
-        shell: bash
-        run: |
-          set -e
-          grep -F 'docx.Packer.toBlob' glueful-resume-canonical-export.js
-          grep -F 'window.print()' glueful-resume-canonical-export.js
+          grep -F 'canonicalRuntimeScheduled' glueful-resume-studio-v41-bootstrap.js
