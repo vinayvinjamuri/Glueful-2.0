@@ -7,9 +7,13 @@
  * The gate below installs before the async renderer assets finish loading.
  * The watchdog then keeps that authority after all other legacy scripts load,
  * including the unconditional Adobe/DOCX controller in index.html.
+ *
+ * IMPORTANT: preserve the real legacy Resume Studio handlers separately.
+ * The fixed-page controller loads asynchronously and must never capture this
+ * temporary gate as its fallback handler (that creates recursive open calls).
  */
 window.__gluefulFixedPdfScheduled = true;
-const VERSION='20260819-fixedpdf12';
+const VERSION='20260819-fixedpdf13';
 const ASSETS=[
  ['./glueful-resume-layout-model.js','glueful-fixed-layout-model-runtime'],
  ['./glueful-resume-pdf-layout-importer.js','glueful-fixed-pdf-importer-runtime'],
@@ -41,9 +45,19 @@ function waitForRuntime(kind){
 
 function installAuthorityGate(){
   if(window.__gluefulFixedPdfAuthorityGateInstalled)return;
+
+  /* Capture the genuine legacy handlers BEFORE installing the gate. */
+  if(typeof window.__gluefulLegacyResumeEditorOpen !== 'function'){
+    window.__gluefulLegacyResumeEditorOpen=window.openJobResumeEditor||null;
+  }
+  if(typeof window.__gluefulLegacyResumeEditorReset !== 'function'){
+    window.__gluefulLegacyResumeEditorReset=window.resetJobResumeToMaster||null;
+  }
+
+  realOpen=window.__gluefulLegacyResumeEditorOpen||null;
+  realReset=window.__gluefulLegacyResumeEditorReset||null;
   window.__gluefulFixedPdfAuthorityGateInstalled=true;
-  realOpen=window.openJobResumeEditor||null;
-  realReset=window.resetJobResumeToMaster||null;
+
   window.openJobResumeEditor=async function(id){
     try{
       const fn=await waitForRuntime('open');
