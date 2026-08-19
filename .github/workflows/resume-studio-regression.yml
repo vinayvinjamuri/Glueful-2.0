@@ -63,6 +63,8 @@ jobs:
           grep -F '20260819-fixedpdf6' sw.js
           grep -F '__gluefulFixedPdfScheduled = true' glueful-resume-fixed-page-bootstrap.js
           grep -F 'fixedPdfScheduled' glueful-resume-studio-v41-bootstrap.js
+          grep -F 'enforceFixedPdfAuthority' glueful-resume-studio-v41-bootstrap.js
+          grep -F 'fixedAuthorityTimer' glueful-resume-studio-v41-bootstrap.js
 
       - name: Layout safety regression
         run: |
