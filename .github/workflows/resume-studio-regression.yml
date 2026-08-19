@@ -6,16 +6,13 @@ on:
   pull_request:
     paths:
       - 'glueful-resume-studio-adobe.js'
-      - 'glueful-resume-studio-mobile-layout.js'
-      - 'glueful-resume-header-fidelity.js'
-      - 'glueful-resume-header-alignment.js'
-      - 'glueful-resume-header-fidelity-v2.js'
-      - 'glueful-resume-header-fidelity-v3.js'
+      - 'glueful-resume-docx-forensics.js'
       - 'glueful-resume-render-diagnostics.js'
       - 'glueful-resume-fixed-page-bootstrap.js'
       - 'glueful-resume-fixed-page-controller.js'
       - 'glueful-resume-fixed-page-renderer.js'
-      - 'glueful-resume-studio-v41-bootstrap.js'
+      - 'glueful-resume-layout-model.js'
+      - 'glueful-resume-pdf-layout-importer.js'
       - 'sw.js'
       - '.github/workflows/resume-studio-regression.yml'
 
@@ -33,44 +30,32 @@ jobs:
           set -e
           for f in \
             glueful-resume-studio-adobe.js \
-            glueful-resume-studio-mobile-layout.js \
-            glueful-resume-header-fidelity.js \
-            glueful-resume-header-alignment.js \
-            glueful-resume-header-fidelity-v2.js \
-            glueful-resume-header-fidelity-v3.js \
+            glueful-resume-docx-forensics.js \
             glueful-resume-render-diagnostics.js \
             glueful-resume-fixed-page-bootstrap.js \
             glueful-resume-fixed-page-controller.js \
             glueful-resume-fixed-page-renderer.js \
-            glueful-resume-studio-v41-bootstrap.js \
+            glueful-resume-layout-model.js \
+            glueful-resume-pdf-layout-importer.js \
             sw.js; do
             node --check "$f"
           done
 
-      - name: Word fidelity, logo, rule, and fixed-page authority regression
+      - name: Fixed-page authority and visual-source regression
         run: |
           set -e
-          grep -F 'relPath(part)' glueful-resume-header-fidelity-v3.js
-          grep -F 'v:shape' glueful-resume-header-fidelity-v3.js
-          grep -F 'v:imagedata' glueful-resume-header-fidelity-v3.js
-          grep -F 'PAGE_WIDTH=794' glueful-resume-header-fidelity-v3.js
-          grep -F 'PAGE_HEIGHT=1123' glueful-resume-header-fidelity-v3.js
-          grep -F 'glueful-word-artifact' glueful-resume-header-fidelity-v3.js
-          grep -F 'HEADER_FIDELITY_V3_SCRIPT' sw.js
-          grep -F '20260819-4' sw.js
-          grep -F 'glueful-cache-v19-resume-fixed-pdf-authority' sw.js
-          grep -F 'FIXED_PDF_BOOTSTRAP' sw.js
-          grep -F '20260819-fixedpdf6' sw.js
           grep -F '__gluefulFixedPdfScheduled = true' glueful-resume-fixed-page-bootstrap.js
-          grep -F 'fixedPdfScheduled' glueful-resume-studio-v41-bootstrap.js
-          grep -F 'enforceFixedPdfAuthority' glueful-resume-studio-v41-bootstrap.js
-          grep -F 'fixedAuthorityTimer' glueful-resume-studio-v41-bootstrap.js
+          grep -F 'original-pdf' glueful-resume-pdf-layout-importer.js
+          grep -F 'explicitLogoExtraction' glueful-resume-pdf-layout-importer.js
+          grep -F 'glueful-fixed-bg' glueful-resume-fixed-page-renderer.js
+          grep -F 'glueful-fixed-text' glueful-resume-fixed-page-renderer.js
+          grep -F 'FIXED_PDF_BOOTSTRAP' sw.js
+          ! grep -F 'HEADER_FIDELITY_SCRIPT' sw.js
+          ! grep -F 'HEADER_ALIGNMENT_SCRIPT' sw.js
+          ! grep -F 'MOBILE_LAYOUT_SCRIPT' sw.js
 
-      - name: Layout safety regression
+      - name: DOCX fallback remains available
         run: |
           set -e
-          ! grep -F 'display:flex' glueful-resume-header-fidelity.js
-          grep -F 'glueful-docx-layout-mode' glueful-resume-header-alignment.js
-          grep -F 'PAGE_WIDTH = 794' glueful-resume-header-alignment.js
-          grep -F 'width:794px' glueful-resume-studio-mobile-layout.js
-          grep -F 'padding:0!important' glueful-resume-studio-v41-bootstrap.js
+          grep -F 'glueful-pdf-to-docx' glueful-resume-studio-adobe.js
+          grep -F 'docx-preview' glueful-resume-studio-adobe.js
