@@ -30,9 +30,9 @@ jobs:
           node <<'NODE'
           const fs=require('fs');
           const checks={
-            'glueful-resume-canonical-model.js':['glueful-resume-document','horizontalReference','xPt','createTable','createTableCell','columnWidthsPt','differentFirstPageHeader'],
-            'glueful-resume-docx-importer-v2.js':['wordprocessingml','word/document.xml','gridCol','tblCellMar','positionH','positionV','sectPr','settings.xml','headerReference','footerReference'],
-            'glueful-resume-canonical-renderer-v2.js':['glueful-canonical-page','glueful-canonical-editable','glueful-canonical-floating-image','glueful-canonical-table','cellMargins','pageHeaderFor','pageFooterFor'],
+            'glueful-resume-canonical-model.js':['glueful-resume-document','horizontalReference','xPt','createTable','createTableCell','columnWidthsPt','differentFirstPageHeader','sectionAfter'],
+            'glueful-resume-docx-importer-v2.js':['wordprocessingml','word/document.xml','gridCol','tblCellMar','positionH','positionV','sectPr','settings.xml','headerReference','footerReference','continuous','nextPage'],
+            'glueful-resume-canonical-renderer-v2.js':['glueful-canonical-page','glueful-canonical-editable','glueful-canonical-floating-image','glueful-canonical-table','cellMargins','pageHeaderFor','pageFooterFor','overflow','lineRule'],
             'glueful-resume-canonical-editing.js':['gluefulCanonicalEditing'],
             'glueful-resume-canonical-export.js':['gluefulCanonicalExport','Packer.toBlob','window.print()','firstHeader','evenHeader','firstFooter','evenFooter'],
             'glueful-resume-studio-canonical-bootstrap.js':['glueful-resume-canonical-renderer-v2.js','glueful-resume-canonical-editing.js'],
