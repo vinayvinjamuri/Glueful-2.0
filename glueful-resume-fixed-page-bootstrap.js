@@ -2,7 +2,7 @@
 (function(){
 'use strict';
 window.__gluefulFixedPdfScheduled = true;
-const VERSION='20260819-fixedpdf8';
+const VERSION='20260819-fixedpdf9';
 const ASSETS=[
  ['./glueful-resume-layout-model.js','glueful-fixed-layout-model-runtime'],
  ['./glueful-resume-pdf-layout-importer.js','glueful-fixed-pdf-importer-runtime'],
