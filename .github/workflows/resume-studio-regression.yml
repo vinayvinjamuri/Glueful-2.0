@@ -50,8 +50,9 @@ jobs:
           grep -F 'PAGE_WIDTH=794' glueful-resume-header-fidelity-v3.js
           grep -F 'PAGE_HEIGHT=1123' glueful-resume-header-fidelity-v3.js
           grep -F 'glueful-word-artifact' glueful-resume-header-fidelity-v3.js
+          grep -F 'HEADER_FIDELITY_V3_SCRIPT' sw.js
+          grep -F '20260819-2' sw.js
           grep -F 'glueful-cache-v15-resume-fixed-pdf-optin' sw.js
-          grep -F 'glueful-resume-header-fidelity-v3.js?v=20260819-2' sw.js
           grep -F 'glueful-resume-header-fidelity.js' sw.js
           grep -F 'glueful-resume-header-alignment.js' sw.js
           grep -F 'HEADER_V3_SRC' glueful-resume-studio-v41-bootstrap.js
