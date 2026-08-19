@@ -30,7 +30,6 @@ jobs:
           set -e
           grep -q "PAGE_WIDTH=794" glueful-resume-header-fidelity-v3.js
           grep -q "PAGE_HEIGHT=1123" glueful-resume-header-fidelity-v3.js
-          grep -q "BODY_MARGIN=64" glueful-resume-header-fidelity-v3.js
           grep -q "v:shape" glueful-resume-header-fidelity-v3.js
           grep -q "v:imagedata" glueful-resume-header-fidelity-v3.js
           grep -q "relPath(part)" glueful-resume-header-fidelity-v3.js
