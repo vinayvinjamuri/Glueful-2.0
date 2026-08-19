@@ -81,9 +81,8 @@
         ? Array.from(textNodes[0].children)
         : Array.from(wrapper.children).filter((node) => node.tagName !== 'IMG');
 
-      const marker = wrapper;
-      movable.forEach((node) => parent.insertBefore(node, marker));
-      marker.remove();
+      movable.forEach((node) => parent.insertBefore(node, wrapper));
+      wrapper.remove();
     });
 
     ed.querySelectorAll('.glueful-docx-header-recovered').forEach((node) => node.remove());
@@ -160,11 +159,14 @@
       const relFile = zip.files[relName];
       if (!relFile) continue;
       const relXml = await relFile.async('text');
-      const relRe = new RegExp(`<Relationship\\b[^>]*Id=["']${drawing.relId.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}["'][^>]*Target=["']([^"']+)["'][^>]*\\/?>(?:<\\/Relationship>)?`, 'i');
-      const rel = relXml.match(relRe);
-      if (!rel) continue;
 
-      const target = resolveTarget(headerName, rel[1]);
+      const relDoc = new DOMParser().parseFromString(relXml, 'application/xml');
+      const relNode = Array.from(relDoc.getElementsByTagName('Relationship'))
+        .find((node) => node.getAttribute('Id') === drawing.relId);
+      const relTarget = relNode?.getAttribute('Target') || '';
+      if (!relTarget) continue;
+
+      const target = resolveTarget(headerName, relTarget);
       const mediaFile = zip.files[target];
       if (!mediaFile || mediaFile.dir) continue;
 
@@ -195,7 +197,9 @@
   }
 
   function applyOneImage(section, image, index) {
-    if (section.querySelector(`[data-glueful-header-target="${CSS.escape(image.target)}"]`)) return;
+    const already = Array.from(section.querySelectorAll('.glueful-docx-header-fidelity-overlay'))
+      .some((node) => node.dataset.gluefulHeaderTarget === image.target);
+    if (already) return;
 
     const headerHost = findHeaderHost(section);
     const host = headerHost || section;
@@ -216,17 +220,8 @@
     if (image.heightPx) img.style.height = `${Math.max(1, image.heightPx)}px`;
 
     overlay.appendChild(img);
-
-    // Floating Word drawings have explicit offsets. For inline drawings,
-    // placing the image at the header origin preserves the header's own flow.
-    if (image.floating || !headerHost) {
-      overlay.style.left = `${Math.max(0, image.leftPx || 0)}px`;
-      overlay.style.top = `${Math.max(0, image.topPx || 0)}px`;
-    } else {
-      overlay.style.left = `${Math.max(0, image.leftPx || 0)}px`;
-      overlay.style.top = `${Math.max(0, image.topPx || 0)}px`;
-    }
-
+    overlay.style.left = `${Math.max(0, image.leftPx || 0)}px`;
+    overlay.style.top = `${Math.max(0, image.topPx || 0)}px`;
     host.appendChild(overlay);
   }
 
