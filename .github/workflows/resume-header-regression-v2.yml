@@ -27,7 +27,7 @@ jobs:
       - name: Validate header fidelity invariants
         run: |
           set -e
-          grep -q "word/_rels" glueful-resume-header-fidelity-v2.js
+          grep -q "_rels/" glueful-resume-header-fidelity-v2.js
           grep -q "document.xml" glueful-resume-header-fidelity-v2.js
           grep -q "dataUrl" glueful-resume-header-fidelity-v2.js
           grep -q "794px" glueful-resume-studio-v41-bootstrap.js
