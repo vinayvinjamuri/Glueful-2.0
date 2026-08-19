@@ -1,7 +1,7 @@
 /* Glueful Resume Studio fixed-PDF bootstrap. Loaded by the service worker. */
 (function(){
 'use strict';
-const VERSION='20260819-fixedpdf4';
+const VERSION='20260819-fixedpdf5';
 const ASSETS=[
  ['./glueful-resume-layout-model.js','glueful-fixed-layout-model-runtime'],
  ['./glueful-resume-pdf-layout-importer.js','glueful-fixed-pdf-importer-runtime'],
