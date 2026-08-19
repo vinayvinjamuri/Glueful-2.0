@@ -2,7 +2,7 @@ name: Resume Studio regression
 
 on:
   push:
-    branches: [main, 'fix/**']
+    branches: [main, 'fix/**', 'feature/resume-studio-canonical-v2-safe']
   pull_request:
     paths:
       - 'glueful-resume-studio-adobe.js'
@@ -54,7 +54,7 @@ jobs:
           grep -F 'docx-preview-authoritative' glueful-resume-header-fidelity-v3.js
           grep -F 'glueful-word-artifact' glueful-resume-header-fidelity-v3.js
           grep -F 'glueful-word-rule-repair' glueful-resume-header-fidelity-v3.js
-          grep -F 'glueful-cache-v14-resume-word-fidelity-v4' sw.js
+          grep -F 'glueful-cache-v15-resume-fixed-pdf-optin' sw.js
           grep -F 'glueful-resume-header-fidelity-v3.js?v=20260819-2' sw.js
           grep -F 'glueful-resume-header-fidelity.js' sw.js
           grep -F 'glueful-resume-header-alignment.js' sw.js
