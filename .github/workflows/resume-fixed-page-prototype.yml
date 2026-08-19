@@ -1,7 +1,7 @@
 name: Resume Studio fixed-page regression
 on:
   push:
-    branches: ['fix/resume-fixed-page-overflow']
+    branches: ['fix/resume-fixed-page-authority']
   pull_request:
     branches: ['main']
     paths:
@@ -11,6 +11,7 @@ on:
       - 'glueful-resume-fixed-page-renderer.js'
       - 'glueful-resume-fixed-page-controller.js'
       - 'glueful-resume-fixed-page-bootstrap.js'
+      - 'glueful-resume-studio-v41-bootstrap.js'
       - '.github/workflows/resume-fixed-page-prototype.yml'
 permissions:
   contents: read
@@ -22,7 +23,7 @@ jobs:
       - name: Syntax checks
         run: |
           set -e
-          for f in sw.js glueful-resume-layout-model.js glueful-resume-pdf-layout-importer.js glueful-resume-fixed-page-renderer.js glueful-resume-fixed-page-controller.js glueful-resume-fixed-page-bootstrap.js; do
+          for f in sw.js glueful-resume-layout-model.js glueful-resume-pdf-layout-importer.js glueful-resume-fixed-page-renderer.js glueful-resume-fixed-page-controller.js glueful-resume-fixed-page-bootstrap.js glueful-resume-studio-v41-bootstrap.js; do
             node --check "$f"
           done
       - name: Fixed-page invariants
@@ -33,13 +34,16 @@ jobs:
             'glueful-resume-layout-model.js':['glueful-resume-layout-document','createMask','maskWidth','maskHeight','sourceItems'],
             'glueful-resume-pdf-layout-importer.js':['pdf-fixed-page-v2','original-pdf','PT_TO_PX','createMask','maskForLine'],
             'glueful-resume-fixed-page-renderer.js':['glueful-fixed-page-v3','glueful-fixed-mask','glueful-fixed-text','safeBlockWidth','overflow-wrap:break-word','overflowX'],
-            'glueful-resume-fixed-page-controller.js':['gluefulFixedPdfResumeStudio','fitToViewport','fixed-page-pdf-v3','clientWidth','dataset.fixedPdfAutoZoom'],
-            'glueful-resume-fixed-page-bootstrap.js':['glueful-resume-fixed-page-controller.js','20260819-fixedpdf4'],
-            'sw.js':['fixed-pdf-bootstrap','fixed-pdf-model','fixed-pdf-importer','fixed-pdf-renderer','fixed-pdf-controller']
+            'glueful-resume-fixed-page-controller.js':['gluefulFixedPdfResumeStudio','fitToViewport','fixed-page-pdf-v4','clientWidth','dataset.fixedPdfAutoZoom'],
+            'glueful-resume-fixed-page-bootstrap.js':['glueful-resume-fixed-page-controller.js','20260819-fixedpdf6','__gluefulFixedPdfScheduled'],
+            'glueful-resume-studio-v41-bootstrap.js':['fixedPdfScheduled','fixed-PDF runtime owns Resume Studio','if(fixedPdfScheduled()) return'],
+            'sw.js':['glueful-cache-v19-resume-fixed-pdf-authority','20260819-fixedpdf6','fixed-pdf-bootstrap','fixed-pdf-model','fixed-pdf-importer','fixed-pdf-renderer','fixed-pdf-controller']
           };
           for(const [file,needles] of Object.entries(checks)){
             const text=fs.readFileSync(file,'utf8');
             for(const n of needles) if(!text.includes(n)) throw new Error(`${file} missing ${n}`);
           }
-          console.log('Fixed-page viewport and wrap contracts passed');
+          const bootstrap=fs.readFileSync('glueful-resume-fixed-page-bootstrap.js','utf8');
+          if(!bootstrap.includes('window.__gluefulFixedPdfScheduled = true')) throw new Error('Fixed-PDF authority flag must be set synchronously');
+          console.log('Fixed-page authority and viewport contracts passed');
           NODE
