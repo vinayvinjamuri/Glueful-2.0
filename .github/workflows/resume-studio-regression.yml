@@ -5,13 +5,12 @@ on:
     branches: [main, 'fix/**']
   pull_request:
     paths:
-      - 'glueful-resume-studio-adobe.js'
+      - 'glueful-resume-canonical-model.js'
+      - 'glueful-resume-docx-importer-v2.js'
+      - 'glueful-resume-canonical-renderer.js'
+      - 'glueful-resume-studio-canonical-controller.js'
+      - 'glueful-resume-studio-canonical-bootstrap.js'
       - 'glueful-resume-studio-mobile-layout.js'
-      - 'glueful-resume-header-fidelity.js'
-      - 'glueful-resume-header-alignment.js'
-      - 'glueful-resume-header-fidelity-v2.js'
-      - 'glueful-resume-header-fidelity-v3.js'
-      - 'glueful-resume-render-diagnostics.js'
       - 'glueful-resume-studio-v41-bootstrap.js'
       - 'sw.js'
       - '.github/workflows/resume-studio-regression.yml'
@@ -29,42 +28,49 @@ jobs:
         run: |
           set -e
           for f in \
-            glueful-resume-studio-adobe.js \
+            glueful-resume-canonical-model.js \
+            glueful-resume-docx-importer-v2.js \
+            glueful-resume-canonical-renderer.js \
+            glueful-resume-studio-canonical-controller.js \
+            glueful-resume-studio-canonical-bootstrap.js \
             glueful-resume-studio-mobile-layout.js \
-            glueful-resume-header-fidelity.js \
-            glueful-resume-header-alignment.js \
-            glueful-resume-header-fidelity-v2.js \
-            glueful-resume-header-fidelity-v3.js \
-            glueful-resume-render-diagnostics.js \
             glueful-resume-studio-v41-bootstrap.js \
             sw.js; do
             node --check "$f"
           done
 
-      - name: Word fidelity, logo, and rule regression
+      - name: Architecture E contract regression
         run: |
           set -e
-          grep -F 'word/_rels/' glueful-resume-header-fidelity-v3.js
-          grep -F 'v:shape' glueful-resume-header-fidelity-v3.js
-          grep -F 'v:imagedata' glueful-resume-header-fidelity-v3.js
-          grep -F 'dataUrl' glueful-resume-header-fidelity-v3.js
-          grep -F "version:'4'" glueful-resume-header-fidelity-v3.js
-          grep -F 'PAGE_WIDTH=794' glueful-resume-header-fidelity-v3.js
-          grep -F 'PAGE_HEIGHT=1123' glueful-resume-header-fidelity-v3.js
-          grep -F 'docx-preview-authoritative' glueful-resume-header-fidelity-v3.js
-          grep -F 'glueful-word-artifact' glueful-resume-header-fidelity-v3.js
-          grep -F 'glueful-word-rule-repair' glueful-resume-header-fidelity-v3.js
-          grep -F 'glueful-cache-v14-resume-word-fidelity-v4' sw.js
-          grep -F 'glueful-resume-header-fidelity-v3.js?v=20260819-2' sw.js
-          grep -F 'glueful-resume-header-fidelity.js' sw.js
-          grep -F 'glueful-resume-header-alignment.js' sw.js
-          grep -F 'HEADER_V3_SRC' glueful-resume-studio-v41-bootstrap.js
+          grep -F "model: 'glueful-resume-document'" glueful-resume-canonical-model.js
+          grep -F "window.gluefulResumeCanonicalModel" glueful-resume-canonical-model.js
+          grep -F "window.gluefulResumeDocxImporterV2" glueful-resume-docx-importer-v2.js
+          grep -F "word/document.xml" glueful-resume-docx-importer-v2.js
+          grep -F "window.gluefulResumeCanonicalRenderer" glueful-resume-canonical-renderer.js
+          grep -F "glueful-canonical-page" glueful-resume-canonical-renderer.js
+          grep -F "glueful-canonical-editable" glueful-resume-canonical-renderer.js
+          grep -F "Architecture E" glueful-resume-studio-canonical-controller.js
+          grep -F "glueful-resume-canonical-model.js" glueful-resume-studio-canonical-bootstrap.js
+          grep -F "glueful-resume-docx-importer-v2.js" glueful-resume-studio-canonical-bootstrap.js
+          grep -F "glueful-resume-canonical-renderer.js" glueful-resume-studio-canonical-bootstrap.js
+          grep -F "glueful-resume-studio-canonical-controller.js" glueful-resume-studio-canonical-bootstrap.js
 
-      - name: Layout safety regression
+      - name: Legacy renderer exclusion regression
         run: |
           set -e
-          ! grep -F 'display:flex' glueful-resume-header-fidelity.js
-          grep -F 'glueful-docx-layout-mode' glueful-resume-header-alignment.js
-          grep -F 'PAGE_WIDTH = 794' glueful-resume-header-alignment.js
-          grep -F 'width:794px' glueful-resume-studio-mobile-layout.js
-          grep -F 'padding:0!important' glueful-resume-studio-v41-bootstrap.js
+          grep -F 'CANONICAL_BOOTSTRAP' sw.js
+          grep -F 'glueful-resume-canonical-model.js' sw.js
+          grep -F 'glueful-resume-canonical-renderer.js' sw.js
+          grep -F 'glueful-resume-studio-canonical-controller.js' sw.js
+          grep -F 'legacy V41/V54 bootstrap skipped' glueful-resume-studio-v41-bootstrap.js
+          ! grep -F 'HEADER_FIDELITY_V3_SCRIPT' sw.js
+          ! grep -F 'glueful-resume-header-fidelity-v3.js?v=' sw.js
+
+      - name: Fixed-page geometry regression
+        run: |
+          set -e
+          grep -F 'PT_TO_PX = 96 / 72' glueful-resume-canonical-renderer.js
+          grep -F 'pageUsableHeight' glueful-resume-canonical-renderer.js
+          grep -F 'paginateModel' glueful-resume-canonical-renderer.js
+          grep -F 'PAGE_WIDTH = 794' glueful-resume-studio-mobile-layout.js
+          grep -F 'PAGE_HEIGHT = 1123' glueful-resume-studio-mobile-layout.js
