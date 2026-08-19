@@ -1,4 +1,4 @@
-const CACHE_NAME = "glueful-cache-v9-resume-fidelity";
+const CACHE_NAME = "glueful-cache-v10-resume-header-regression";
 const AUTHORITATIVE_RESUME_SCRIPT = "./glueful-resume-studio-adobe.js";
 const DOCX_FORENSICS_SCRIPT = "./glueful-resume-docx-forensics.js";
 const MOBILE_LAYOUT_SCRIPT = "./glueful-resume-studio-mobile-layout.js";
@@ -29,42 +29,23 @@ async function networkResponse(request, preloadResponse) {
 async function buildAuthoritativeIndex(request, preloadResponse) {
   const response = await networkResponse(request, preloadResponse);
   if (!response || !response.ok) return response;
-
   const contentType = response.headers.get("content-type") || "";
   if (!contentType.includes("text/html")) return response;
 
   const html = await response.text();
   const scripts = [];
+  if (!html.includes(DOCX_FORENSICS_SCRIPT)) scripts.push(`<script src="${DOCX_FORENSICS_SCRIPT}?v=20260819-5" data-glueful-docx-forensics="1"></script>`);
+  if (!html.includes(AUTHORITATIVE_RESUME_SCRIPT)) scripts.push(`<script src="${AUTHORITATIVE_RESUME_SCRIPT}?v=20260819-5" data-glueful-authoritative-resume-studio="1"></script>`);
+  if (!html.includes(MOBILE_LAYOUT_SCRIPT)) scripts.push(`<script src="${MOBILE_LAYOUT_SCRIPT}?v=20260819-6" data-glueful-mobile-layout="1"></script>`);
+  if (!html.includes(HEADER_FIDELITY_SCRIPT)) scripts.push(`<script src="${HEADER_FIDELITY_SCRIPT}?v=20260819-3" data-glueful-header-fidelity="1"></script>`);
+  if (!html.includes(HEADER_ALIGNMENT_SCRIPT)) scripts.push(`<script src="${HEADER_ALIGNMENT_SCRIPT}?v=20260819-2" data-glueful-header-alignment="1"></script>`);
+  if (!html.includes(RENDER_DIAGNOSTICS_SCRIPT)) scripts.push(`<script src="${RENDER_DIAGNOSTICS_SCRIPT}?v=20260819-5" data-glueful-render-diagnostics="1"></script>`);
 
-  if (!html.includes(DOCX_FORENSICS_SCRIPT)) {
-    scripts.push(`<script src="${DOCX_FORENSICS_SCRIPT}?v=20260819-4" data-glueful-docx-forensics="1"></script>`);
-  }
-  if (!html.includes(AUTHORITATIVE_RESUME_SCRIPT)) {
-    scripts.push(`<script src="${AUTHORITATIVE_RESUME_SCRIPT}?v=20260819-4" data-glueful-authoritative-resume-studio="1"></script>`);
-  }
-  if (!html.includes(MOBILE_LAYOUT_SCRIPT)) {
-    scripts.push(`<script src="${MOBILE_LAYOUT_SCRIPT}?v=20260819-5" data-glueful-mobile-layout="1"></script>`);
-  }
-  if (!html.includes(HEADER_FIDELITY_SCRIPT)) {
-    scripts.push(`<script src="${HEADER_FIDELITY_SCRIPT}?v=20260819-2" data-glueful-header-fidelity="1"></script>`);
-  }
-  if (!html.includes(HEADER_ALIGNMENT_SCRIPT)) {
-    scripts.push(`<script src="${HEADER_ALIGNMENT_SCRIPT}?v=20260819-1" data-glueful-header-alignment="1"></script>`);
-  }
-  if (!html.includes(RENDER_DIAGNOSTICS_SCRIPT)) {
-    scripts.push(`<script src="${RENDER_DIAGNOSTICS_SCRIPT}?v=20260819-4" data-glueful-render-diagnostics="1"></script>`);
-  }
-
-  if (!scripts.length) {
-    return new Response(html, { status: response.status, statusText: response.statusText, headers: response.headers });
-  }
+  if (!scripts.length) return new Response(html, { status: response.status, statusText: response.statusText, headers: response.headers });
 
   const marker = "</body>";
   const scriptBlock = scripts.join("\n");
-  const injected = html.includes(marker)
-    ? html.replace(marker, `${scriptBlock}\n${marker}`)
-    : `${html}\n${scriptBlock}`;
-
+  const injected = html.includes(marker) ? html.replace(marker, `${scriptBlock}\n${marker}`) : `${html}\n${scriptBlock}`;
   const headers = new Headers(response.headers);
   headers.set("Content-Type", "text/html; charset=UTF-8");
   return new Response(injected, { status: response.status, statusText: response.statusText, headers });
