@@ -1,0 +1,39 @@
+name: Resume Studio header regression v2
+
+on:
+  push:
+    branches: [fix/resume-studio-header-visual-regression-v2]
+  pull_request:
+    paths:
+      - 'glueful-resume-*.js'
+      - 'glueful-resume-studio-v41-bootstrap.js'
+      - 'sw.js'
+      - '.github/workflows/resume-header-regression-v2.yml'
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate JavaScript syntax
+        run: |
+          node --check glueful-resume-header-fidelity-v2.js
+          node --check glueful-resume-header-fidelity.js
+          node --check glueful-resume-header-alignment.js
+          node --check glueful-resume-studio-v41-bootstrap.js
+          node --check glueful-resume-studio-adobe.js
+          node --check sw.js
+      - name: Validate header fidelity invariants
+        run: |
+          grep -q "word/_rels" glueful-resume-header-fidelity-v2.js
+          grep -q "word/document.xml" glueful-resume-header-fidelity-v2.js
+          grep -q "dataUrl" glueful-resume-header-fidelity-v2.js
+          grep -q "794px" glueful-resume-studio-v41-bootstrap.js
+          grep -q "padding:48px 48px 54px" glueful-resume-studio-v41-bootstrap.js
+          grep -q "glueful-resume-header-fidelity-v2.js" sw.js
+          grep -q "glueful-cache-v11-resume-header-fidelity-v2" sw.js
+      - name: Ensure legacy reconstruction is not authoritative
+        run: |
+          ! grep -R "PDF.js.*docx.js\|docx.js.*Mammoth" glueful-resume-studio-adobe.js
+          grep -q "glueful-pdf-to-docx" glueful-resume-studio-adobe.js
+          grep -q "docx-preview" glueful-resume-studio-adobe.js
