@@ -1,7 +1,6 @@
 /* GLUEFUL Resume Studio — Header Fidelity V2
- * Regression-driven visual reconstruction.
- * Uses the actual Adobe DOCX drawing + relationship parts, including
- * document.xml as well as headerN.xml. No generic logo asset is used.
+ * Word-reference reconstruction for the Adobe DOCX preview.
+ * Supports DrawingML and legacy VML image relationships.
  */
 (function () {
   'use strict';
@@ -10,7 +9,7 @@
   const JSZIP_URL = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
   const STYLE_ID = 'glueful-resume-header-fidelity-v2-style';
   const PAGE_WIDTH = 794;
-  const BODY_LEFT_FALLBACK = 48;
+  const BODY_LEFT_FALLBACK = 24;
   const HEADER_TEXT_OFFSET = 96;
 
   const norm = (v) => String(v || '').replace(/\s+/g, ' ').trim();
@@ -76,6 +75,7 @@
   function resolveTarget(sourcePath, target) {
     const clean = String(target || '').replace(/\\/g, '/');
     if (!clean) return '';
+    if (clean.startsWith('/')) return clean.slice(1);
     const base = sourcePath.slice(0, sourcePath.lastIndexOf('/') + 1);
     const out = [];
     for (const part of (base + clean).split('/')) {
@@ -97,27 +97,87 @@
       webp:'image/webp', bmp:'image/bmp', svg:'image/svg+xml', tif:'image/tiff', tiff:'image/tiff' })[ext] || '';
   }
 
+  function attr(node, localName, namespace) {
+    return node?.getAttribute(`r:${localName}`) ||
+      (namespace ? node?.getAttributeNS(namespace, localName) : '') || '';
+  }
+
+  function pxFromEmu(value, fallback) {
+    const n = Number(value);
+    return Number.isFinite(n) && n > 0 ? n / 9525 : fallback;
+  }
+
+  function parseVmlSize(style, fallback) {
+    const match = String(style || '').match(/(?:^|;)\s*(width|height)\s*:\s*([0-9.]+)pt/i);
+    return match ? Number(match[2]) * 96 / 72 : fallback;
+  }
+
+  function nearestParagraph(node) {
+    let current = node;
+    while (current) {
+      if (String(current.localName || current.nodeName).toLowerCase() === 'p') return current;
+      current = current.parentNode;
+    }
+    return null;
+  }
+
+  function paragraphText(p) {
+    return norm(Array.from(p?.getElementsByTagName('t') || [])
+      .map((t) => t.textContent || '').join(' '));
+  }
+
   function parsePart(partName, xml) {
     const doc = new DOMParser().parseFromString(xml, 'application/xml');
-    const paragraphs = Array.from(doc.getElementsByTagName('p')).map((p) =>
-      Array.from(p.getElementsByTagName('t')).map((t) => t.textContent || '').join('')
-    ).map(norm).filter(Boolean);
-    const drawings = Array.from(doc.getElementsByTagName('wp:inline'))
-      .concat(Array.from(doc.getElementsByTagName('wp:anchor')))
-      .map((drawing) => {
-        const blip = drawing.getElementsByTagName('a:blip')[0];
-        const rid = blip?.getAttribute('r:embed') || blip?.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'embed') || '';
-        const extent = drawing.getElementsByTagName('wp:extent')[0];
-        const posH = drawing.getElementsByTagName('wp:positionH')[0]?.getElementsByTagName('wp:posOffset')[0]?.textContent;
-        const posV = drawing.getElementsByTagName('wp:positionV')[0]?.getElementsByTagName('wp:posOffset')[0]?.textContent;
-        return {
-          rid,
-          width: extent ? Number(extent.getAttribute('cx')) / 9525 : 68,
-          height: extent ? Number(extent.getAttribute('cy')) / 9525 : 68,
-          left: posH ? Number(posH) / 9525 : null,
-          top: posV ? Number(posV) / 9525 : null
-        };
+    const pNodes = Array.from(doc.getElementsByTagName('p'));
+    const paragraphs = pNodes.map(paragraphText).filter(Boolean);
+    const paragraphIndex = new Map(pNodes.map((p, i) => [p, i]));
+    const drawings = [];
+
+    const drawingNodes = Array.from(doc.getElementsByTagName('wp:inline'))
+      .concat(Array.from(doc.getElementsByTagName('wp:anchor')));
+
+    drawingNodes.forEach((drawing) => {
+      const blip = drawing.getElementsByTagName('a:blip')[0];
+      const rid = attr(blip, 'embed', 'http://schemas.openxmlformats.org/officeDocument/2006/relationships');
+      const extent = drawing.getElementsByTagName('wp:extent')[0];
+      const posH = drawing.getElementsByTagName('wp:positionH')[0]?.getElementsByTagName('wp:posOffset')[0]?.textContent;
+      const posV = drawing.getElementsByTagName('wp:positionV')[0]?.getElementsByTagName('wp:posOffset')[0]?.textContent;
+      const p = nearestParagraph(drawing);
+      drawings.push({
+        rid,
+        width: pxFromEmu(extent?.getAttribute('cx'), 68),
+        height: pxFromEmu(extent?.getAttribute('cy'), 68),
+        left: pxFromEmu(posH, 0),
+        top: pxFromEmu(posV, 0),
+        paragraphIndex: paragraphIndex.get(p) ?? 999,
+        paragraphText: paragraphText(p)
       });
+    });
+
+    // Adobe/Word can emit the logo as legacy VML inside w:pict instead of
+    // DrawingML. The old resolver ignored this entirely, which explains a
+    // valid DOCX containing the logo but an empty Resume Studio header.
+    Array.from(doc.getElementsByTagName('v:shape')).forEach((shape) => {
+      const image = shape.getElementsByTagName('v:imagedata')[0];
+      const rid = attr(image, 'id', 'http://schemas.openxmlformats.org/officeDocument/2006/relationships');
+      if (!rid) return;
+      const p = nearestParagraph(shape);
+      const style = shape.getAttribute('style') || '';
+      drawings.push({
+        rid,
+        width: parseVmlSize(style, 68),
+        height: (() => {
+          const match = style.match(/(?:^|;)\s*height\s*:\s*([0-9.]+)pt/i);
+          return match ? Number(match[1]) * 96 / 72 : 68;
+        })(),
+        left: 0,
+        top: 0,
+        paragraphIndex: paragraphIndex.get(p) ?? 999,
+        paragraphText: paragraphText(p),
+        vml: true
+      });
+    });
+
     return { partName, paragraphs, drawings };
   }
 
@@ -125,7 +185,7 @@
     const zip = await loadZip(buffer);
     const names = Object.keys(zip.files).filter((n) => !zip.files[n].dir);
     const xmlParts = names.filter((n) => /^word\/(document|header\d+)\.xml$/i.test(n));
-    const parts = [];
+    const candidates = [];
 
     for (const partName of xmlParts) {
       const model = parsePart(partName, await zip.files[partName].async('text'));
@@ -134,8 +194,10 @@
       let relMap = new Map();
       if (relFile) {
         const relDoc = new DOMParser().parseFromString(await relFile.async('text'), 'application/xml');
-        relMap = new Map(Array.from(relDoc.getElementsByTagName('Relationship')).map((r) => [r.getAttribute('Id'), r.getAttribute('Target')]));
+        relMap = new Map(Array.from(relDoc.getElementsByTagName('Relationship'))
+          .map((r) => [r.getAttribute('Id'), r.getAttribute('Target')]));
       }
+
       for (const drawing of model.drawings) {
         const target = resolveTarget(partName, relMap.get(drawing.rid) || '');
         const file = zip.files[target];
@@ -144,26 +206,35 @@
         drawing.target = target;
         drawing.type = type;
         drawing.dataUrl = `data:${type};base64,${await file.async('base64')}`;
-        parts.push({ ...model, drawing });
+        const partIsHeader = /^word\/header\d+\.xml$/i.test(partName);
+        const square = Math.abs(drawing.width - drawing.height) <= 24;
+        const plausibleSize = drawing.width >= 35 && drawing.width <= 150 && drawing.height >= 35 && drawing.height <= 150;
+        const headerText = /VINJAMURI\s+VINAY|Hyderabad|MTech/i.test(drawing.paragraphText || '');
+        let score = 0;
+        if (partIsHeader) score += 120;
+        if (plausibleSize) score += 50;
+        if (square) score += 25;
+        if (headerText) score += 80;
+        if (drawing.paragraphIndex <= 6) score += 35;
+        if (drawing.width > 180 || drawing.height > 180) score -= 80;
+        candidates.push({ ...model, drawing, score });
       }
     }
 
-    // Prefer a drawing from a real Word header part. If the source PDF was
-    // converted into a body-level header block, prefer the document drawing
-    // whose surrounding XML contains the first four header strings.
-    const headerParts = parts.filter((p) => /^word\/header\d+\.xml$/i.test(p.partName));
-    if (headerParts.length) return headerParts[0];
-
-    const docParts = parts.filter((p) => p.partName === 'word/document.xml');
-    const preferred = docParts.find((p) => {
-      const text = p.paragraphs.slice(0, 8).join(' | ');
-      return /VINJAMURI\s+VINAY/i.test(text) && /Hyderabad/i.test(text) && /MTech/i.test(text);
-    });
-    if (preferred) return preferred;
-
-    // Last-resort structural fallback: only a small, plausible logo drawing
-    // in the first document part. This is not a PDF first-image heuristic.
-    return docParts.find((p) => p.drawing.width >= 35 && p.drawing.width <= 140 && p.drawing.height >= 35 && p.drawing.height <= 140) || null;
+    candidates.sort((a, b) => b.score - a.score);
+    const chosen = candidates[0] || null;
+    if (chosen) {
+      console.info('[Glueful Resume Header V2] selected DOCX image:', {
+        part: chosen.partName,
+        target: chosen.drawing.target,
+        score: chosen.score,
+        vml: !!chosen.drawing.vml,
+        width: chosen.drawing.width,
+        height: chosen.drawing.height,
+        paragraphIndex: chosen.drawing.paragraphIndex
+      });
+    }
+    return chosen;
   }
 
   function sections(ed) {
@@ -198,19 +269,15 @@
     if (!rect) return false;
     const top = rect.top - pageRect.top;
     if (top < -4 || top > 150) return false;
-    if (rect.width < PAGE_WIDTH * 0.72 || rect.height < 12 || rect.height > 100) return false;
+    if (rect.width < PAGE_WIDTH * 0.55 || rect.height < 10 || rect.height > 110) return false;
     if (norm(node.textContent) || node.querySelector('img,canvas,svg')) return false;
     const style = getComputedStyle(node);
-    const paint = style.backgroundColor !== 'rgba(0, 0, 0, 0)' || style.backgroundImage !== 'none' ||
-      style.borderTopStyle !== 'none' || style.borderBottomStyle !== 'none' ||
-      style.boxShadow !== 'none';
-    return paint;
+    return style.backgroundColor !== 'rgba(0, 0, 0, 0)' || style.backgroundImage !== 'none' ||
+      style.borderTopStyle !== 'none' || style.borderBottomStyle !== 'none' || style.boxShadow !== 'none';
   }
 
   function removeTopArtifacts(section) {
     const pageRect = section.getBoundingClientRect();
-    // The bad bar is an empty painted block generated by the converter.
-    // Inspect top-level children first so nested text/layout is untouched.
     Array.from(section.children).filter((node) => isPaintedEmpty(node, pageRect)).forEach((node) => node.remove());
     Array.from(section.querySelectorAll('div,p,span')).filter((node) => isPaintedEmpty(node, pageRect)).forEach((node) => node.remove());
   }
@@ -239,14 +306,15 @@
     removeTopArtifacts(section);
     const nodes = findHeaderNodes(section, model);
     if (!nodes.length) return;
+
     const pageRect = section.getBoundingClientRect();
     const bodyLeft = findBodyLeft(section, nodes);
     const textLeft = bodyLeft + HEADER_TEXT_OFFSET;
     const firstRect = nodes[0].getBoundingClientRect();
     const top = Math.max(8, firstRect.top - pageRect.top);
-
     const existing = nodes[0].parentElement;
     if (!existing) return;
+
     const wrapper = document.createElement('div');
     wrapper.className = 'glueful-header-v2-text';
     wrapper.contentEditable = 'true';
@@ -262,6 +330,7 @@
     logo.style.top = `${Math.round((top - 2) * 10) / 10}px`;
     logo.style.width = `${width}px`;
     logo.style.height = `${height}px`;
+
     const img = document.createElement('img');
     img.src = model.drawing.dataUrl;
     img.alt = 'Resume header logo';
@@ -273,7 +342,6 @@
       target: model.drawing.target,
       bodyLeft,
       textLeft,
-      logoLeft: bodyLeft,
       logoTop: top,
       logoWidth: width,
       logoHeight: height
@@ -289,12 +357,8 @@
       installStyles();
       unwrapOldLayers(ed);
       const model = await extractHeaderModel(window.gluefulLastAdobeDocxBuffer);
-      if (!model) {
-        console.warn('[Glueful Resume Header V2] No structured DOCX logo drawing found.');
-        return;
-      }
-      sections(ed).forEach((section) => applySection(section, model));
-      ed.dataset.gluefulHeaderV2Applied = '1';
+      sections(ed).forEach((section) => applySection(section, model || { paragraphs: [] }));
+      ed.dataset.gluefulHeaderV2Applied = model ? '1' : '0';
     } catch (error) {
       console.warn('[Glueful Resume Header V2] skipped:', error);
     } finally {
