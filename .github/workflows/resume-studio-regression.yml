@@ -12,6 +12,9 @@ on:
       - 'glueful-resume-header-fidelity-v2.js'
       - 'glueful-resume-header-fidelity-v3.js'
       - 'glueful-resume-render-diagnostics.js'
+      - 'glueful-resume-fixed-page-bootstrap.js'
+      - 'glueful-resume-fixed-page-controller.js'
+      - 'glueful-resume-fixed-page-renderer.js'
       - 'glueful-resume-studio-v41-bootstrap.js'
       - 'sw.js'
       - '.github/workflows/resume-studio-regression.yml'
@@ -36,12 +39,15 @@ jobs:
             glueful-resume-header-fidelity-v2.js \
             glueful-resume-header-fidelity-v3.js \
             glueful-resume-render-diagnostics.js \
+            glueful-resume-fixed-page-bootstrap.js \
+            glueful-resume-fixed-page-controller.js \
+            glueful-resume-fixed-page-renderer.js \
             glueful-resume-studio-v41-bootstrap.js \
             sw.js; do
             node --check "$f"
           done
 
-      - name: Word fidelity, logo, and rule regression
+      - name: Word fidelity, logo, rule, and fixed-page authority regression
         run: |
           set -e
           grep -F 'relPath(part)' glueful-resume-header-fidelity-v3.js
@@ -51,11 +57,12 @@ jobs:
           grep -F 'PAGE_HEIGHT=1123' glueful-resume-header-fidelity-v3.js
           grep -F 'glueful-word-artifact' glueful-resume-header-fidelity-v3.js
           grep -F 'HEADER_FIDELITY_V3_SCRIPT' sw.js
-          grep -F '20260819-2' sw.js
-          grep -F 'glueful-cache-v15-resume-fixed-pdf-optin' sw.js
-          grep -F 'glueful-resume-header-fidelity.js' sw.js
-          grep -F 'glueful-resume-header-alignment.js' sw.js
-          grep -F 'HEADER_V3_SRC' glueful-resume-studio-v41-bootstrap.js
+          grep -F '20260819-4' sw.js
+          grep -F 'glueful-cache-v19-resume-fixed-pdf-authority' sw.js
+          grep -F 'FIXED_PDF_BOOTSTRAP' sw.js
+          grep -F '20260819-fixedpdf6' sw.js
+          grep -F '__gluefulFixedPdfScheduled = true' glueful-resume-fixed-page-bootstrap.js
+          grep -F 'fixedPdfScheduled' glueful-resume-studio-v41-bootstrap.js
 
       - name: Layout safety regression
         run: |
