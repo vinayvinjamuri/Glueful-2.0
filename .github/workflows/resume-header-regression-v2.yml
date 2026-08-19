@@ -2,7 +2,7 @@ name: Resume Studio header regression v3
 
 on:
   push:
-    branches: [fix/resume-studio-header-visual-regression-v2, 'fix/resume-word-margins-logo-v3']
+    branches: [fix/resume-studio-header-visual-regression-v2, 'fix/resume-word-margins-logo-v3', 'feature/resume-studio-canonical-v2-safe']
   pull_request:
     paths:
       - 'glueful-resume-*.js'
@@ -35,7 +35,7 @@ jobs:
           grep -q "v:imagedata" glueful-resume-header-fidelity-v3.js
           grep -q "dataUrl" glueful-resume-header-fidelity-v3.js
           grep -q "glueful-resume-header-fidelity-v3.js" sw.js
-          grep -q "glueful-cache-v13-resume-word-header-v3" sw.js
+          grep -q "glueful-cache-v15-resume-fixed-pdf-optin" sw.js
           grep -q "glueful-resume-header-fidelity-v3.js" glueful-resume-studio-v41-bootstrap.js
       - name: Ensure Adobe DOCX renderer remains authoritative
         run: |
