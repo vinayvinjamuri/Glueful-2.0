@@ -1,0 +1,42 @@
+name: Resume Studio fixed-page prototype regression
+on:
+  push:
+    branches: ['feature/resume-studio-canonical-v2-safe']
+  pull_request:
+    branches: ['main']
+    paths:
+      - 'glueful-resume-layout-model.js'
+      - 'glueful-resume-pdf-layout-importer.js'
+      - 'glueful-resume-fixed-page-renderer.js'
+      - '.github/workflows/resume-fixed-page-prototype.yml'
+permissions:
+  contents: read
+jobs:
+  prototype:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Syntax checks
+        run: |
+          set -e
+          node --check glueful-resume-layout-model.js
+          node --check glueful-resume-pdf-layout-importer.js
+          node --check glueful-resume-fixed-page-renderer.js
+      - name: Architecture invariants
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const files={
+            'glueful-resume-layout-model.js':['glueful-resume-layout-document','createPage','createText'],
+            'glueful-resume-pdf-layout-importer.js':['pdf-fixed-page-v1','original-pdf','getDocument'],
+            'glueful-resume-fixed-page-renderer.js':['glueful-fixed-page','contentEditable','794px','1123px']
+          };
+          for(const [file,needles] of Object.entries(files)){
+            const text=fs.readFileSync(file,'utf8');
+            for(const n of needles) if(!text.includes(n)) throw new Error(`${file} missing ${n}`);
+          }
+          const sw=fs.readFileSync('sw.js','utf8');
+          if(sw.includes('glueful-resume-pdf-layout-importer.js')) throw new Error('Prototype importer must not be production-injected');
+          if(sw.includes('glueful-resume-fixed-page-renderer.js')) throw new Error('Prototype renderer must not be production-injected');
+          console.log('Fixed-page prototype isolation checks passed');
+          NODE
