@@ -1,0 +1,56 @@
+name: Resume Studio canonical regression
+on:
+  push:
+    branches: ['feature/resume-studio-canonical-renderer']
+  pull_request:
+    paths:
+      - 'glueful-resume-canonical-model.js'
+      - 'glueful-resume-docx-importer-v2.js'
+      - 'glueful-resume-canonical-renderer-v2.js'
+      - 'glueful-resume-canonical-editing.js'
+      - 'glueful-resume-canonical-export.js'
+      - 'glueful-resume-studio-canonical-bootstrap.js'
+      - 'glueful-resume-studio-canonical-controller.js'
+      - 'glueful-resume-studio-v41-bootstrap.js'
+      - 'sw.js'
+      - '.github/workflows/resume-canonical-regression.yml'
+permissions:
+  contents: read
+jobs:
+  canonical:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: JavaScript syntax regression
+        run: |
+          set -e
+          for f in glueful-resume-canonical-model.js glueful-resume-docx-importer-v2.js glueful-resume-canonical-renderer-v2.js glueful-resume-canonical-editing.js glueful-resume-canonical-export.js glueful-resume-studio-canonical-bootstrap.js glueful-resume-studio-canonical-controller.js glueful-resume-studio-v41-bootstrap.js sw.js; do node --check "$f"; done
+      - name: Architecture contract regression
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const checks={
+            'glueful-resume-canonical-model.js':['glueful-resume-document','horizontalReference','xPt','createTable','createTableCell','columnWidthsPt','differentFirstPageHeader','sectionAfter','tabs'],
+            'glueful-resume-docx-importer-v2.js':['wordprocessingml','word/document.xml','gridCol','tblCellMar','positionH','positionV','sectPr','settings.xml','headerReference','footerReference','continuous','nextPage','paragraphTabs','getAttributeNS'],
+            'glueful-resume-canonical-renderer-v2.js':['glueful-canonical-page','glueful-canonical-editable','glueful-canonical-floating-image','glueful-canonical-table','cellMargins','pageHeaderFor','pageFooterFor','overflow','lineRule','canonical-fixed-page-v3'],
+            'glueful-resume-canonical-editing.js':['gluefulCanonicalEditing'],
+            'glueful-resume-canonical-export.js':['gluefulCanonicalExport','Packer.toBlob','window.print()','firstHeader','evenHeader','firstFooter','evenFooter','tabStops'],
+            'glueful-resume-studio-canonical-bootstrap.js':['glueful-resume-canonical-renderer-v2.js','glueful-resume-canonical-editing.js'],
+            'glueful-resume-studio-canonical-controller.js':["architecture: 'E'",'glueful-pdf-to-docx'],
+            'sw.js':['glueful-resume-canonical-renderer-v2.js','glueful-cache-v20-resume-canonical-e6']
+          };
+          for(const [file,needles] of Object.entries(checks)){
+            const text=fs.readFileSync(file,'utf8');
+            for(const needle of needles) if(!text.includes(needle)) throw new Error(`${file} missing: ${needle}`);
+          }
+          const controller=fs.readFileSync('glueful-resume-studio-canonical-controller.js','utf8');
+          if(/renderAsync|docx-preview/.test(controller)) throw new Error('Canonical controller still depends on docx-preview');
+          const renderer=fs.readFileSync('glueful-resume-canonical-renderer-v2.js','utf8');
+          if(renderer.includes('document.execCommand')) throw new Error('Renderer owns browser editing commands');
+          console.log('Architecture E contract checks passed');
+          NODE
+      - name: Legacy renderer separation regression
+        run: |
+          set -e
+          ! grep -F 'glueful-resume-header-fidelity-v3.js' sw.js
+          grep -F 'canonicalRuntimeScheduled' glueful-resume-studio-v41-bootstrap.js
