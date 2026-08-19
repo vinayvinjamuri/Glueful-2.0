@@ -28,7 +28,7 @@
       }
       const script = document.createElement('script');
       script.id = id;
-      script.src = `${src}?v=20260819-e2`;
+      script.src = `${src}?v=20260819-e3`;
       script.async = false;
       script.dataset.gluefulCanonicalRuntime = '1';
       script.onload = () => { script.dataset.loaded = 'true'; resolve(); };
@@ -37,26 +37,16 @@
     });
   }
 
-  function installToolbarBridge() {
-    const editing = window.gluefulCanonicalEditing;
-    if (!editing) return;
-
-    window.gluefulV41Command = editing.command;
-    window.gluefulV41PointSize = editing.pointSize;
-    window.gluefulV41FormatBlock = editing.formatBlock;
-    window.gluefulV41InsertLink = editing.insertLink;
-
-    const originalEnhance = window.gluefulResumeStudioEnhance;
-    window.gluefulResumeStudioEnhance = function () {
-      try { originalEnhance?.(); } catch (_) {}
-      try { editing.attach(); } catch (_) {}
-    };
-  }
-
   async function boot() {
     try {
       for (const [src, id] of assets) await load(src, id);
-      installToolbarBridge();
+      window.gluefulCanonicalEditing?.attach?.();
+      window.gluefulCanonicalResumeStudio = {
+        ...(window.gluefulCanonicalResumeStudio || {}),
+        getModel: () => window.gluefulResumeCanonicalRenderer?.getActiveModel?.() || null,
+        exportDocx: () => window.gluefulCanonicalExport?.exportDocx?.(),
+        exportPdf: () => window.gluefulCanonicalExport?.exportPdf?.()
+      };
       console.info('[Glueful Resume Studio] Architecture E bootstrap ready: model/importer/renderer/editing/export/controller.');
     } catch (error) {
       console.error('[Glueful Resume Studio] Architecture E bootstrap failed:', error);
