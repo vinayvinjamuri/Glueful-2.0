@@ -1,1 +1,0 @@
-Prototype remains isolated from production; do not wire into sw.js until browser smoke validation passes.
