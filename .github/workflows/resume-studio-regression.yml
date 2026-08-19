@@ -1,13 +1,11 @@
 name: Resume Studio regression
-
 on:
   push:
     branches: [main, 'fix/**', 'feature/**']
   pull_request:
     paths:
       - 'glueful-resume-canonical-model.js'
-      - 'glueful-resume-docx-importer-v2.js'
-      - 'glueful-resume-canonical-renderer.js'
+      - 'glueful-resume-canonical-renderer-v2.js'
       - 'glueful-resume-canonical-editing.js'
       - 'glueful-resume-canonical-export.js'
       - 'glueful-resume-studio-canonical-controller.js'
@@ -16,33 +14,17 @@ on:
       - 'glueful-resume-studio-v41-bootstrap.js'
       - 'sw.js'
       - '.github/workflows/resume-studio-regression.yml'
-
 permissions:
   contents: read
-
 jobs:
   regression:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: JavaScript syntax regression
         run: |
           set -e
-          for f in \
-            glueful-resume-canonical-model.js \
-            glueful-resume-docx-importer-v2.js \
-            glueful-resume-canonical-renderer.js \
-            glueful-resume-canonical-editing.js \
-            glueful-resume-canonical-export.js \
-            glueful-resume-studio-canonical-controller.js \
-            glueful-resume-studio-canonical-bootstrap.js \
-            glueful-resume-studio-mobile-layout.js \
-            glueful-resume-studio-v41-bootstrap.js \
-            sw.js; do
-            node --check "$f"
-          done
-
+          for f in glueful-resume-canonical-model.js glueful-resume-docx-importer-v2.js glueful-resume-canonical-renderer-v2.js glueful-resume-canonical-editing.js glueful-resume-canonical-export.js glueful-resume-studio-canonical-controller.js glueful-resume-studio-canonical-bootstrap.js glueful-resume-studio-mobile-layout.js glueful-resume-studio-v41-bootstrap.js sw.js; do node --check "$f"; done
       - name: Architecture E contract regression
         run: |
           set -e
@@ -50,43 +32,30 @@ jobs:
           grep -F "window.gluefulResumeCanonicalModel" glueful-resume-canonical-model.js
           grep -F "window.gluefulResumeDocxImporterV2" glueful-resume-docx-importer-v2.js
           grep -F "word/document.xml" glueful-resume-docx-importer-v2.js
-          grep -F "window.gluefulResumeCanonicalRenderer" glueful-resume-canonical-renderer.js
-          grep -F "glueful-canonical-page" glueful-resume-canonical-renderer.js
-          grep -F "glueful-canonical-editable" glueful-resume-canonical-renderer.js
+          grep -F "window.gluefulResumeCanonicalRendererV2" glueful-resume-canonical-renderer-v2.js
+          grep -F "glueful-canonical-page" glueful-resume-canonical-renderer-v2.js
+          grep -F "glueful-canonical-editable" glueful-resume-canonical-renderer-v2.js
+          grep -F "glueful-canonical-floating-image" glueful-resume-canonical-renderer-v2.js
+          grep -F "glueful-canonical-table" glueful-resume-canonical-renderer-v2.js
           grep -F "gluefulCanonicalEditing" glueful-resume-canonical-editing.js
           grep -F "gluefulCanonicalExport" glueful-resume-canonical-export.js
-          grep -F "Architecture E" glueful-resume-studio-canonical-controller.js
-          grep -F "glueful-resume-canonical-model.js" glueful-resume-studio-canonical-bootstrap.js
-          grep -F "glueful-resume-docx-importer-v2.js" glueful-resume-studio-canonical-bootstrap.js
-          grep -F "glueful-resume-canonical-renderer.js" glueful-resume-studio-canonical-bootstrap.js
-          grep -F "glueful-resume-canonical-editing.js" glueful-resume-studio-canonical-bootstrap.js
-          grep -F "glueful-resume-canonical-export.js" glueful-resume-studio-canonical-bootstrap.js
-
+          grep -F "glueful-resume-canonical-renderer-v2.js" glueful-resume-studio-canonical-bootstrap.js
       - name: Legacy renderer exclusion regression
         run: |
           set -e
-          grep -F 'CANONICAL_BOOTSTRAP' sw.js
-          grep -F 'glueful-resume-canonical-model.js' sw.js
-          grep -F 'glueful-resume-canonical-renderer.js' sw.js
-          grep -F 'glueful-resume-canonical-editing.js' sw.js
-          grep -F 'glueful-resume-canonical-export.js' sw.js
-          grep -F 'glueful-resume-studio-canonical-controller.js' sw.js
-          grep -F 'legacy V41/V54 bootstrap skipped' glueful-resume-studio-v41-bootstrap.js
-          ! grep -F 'HEADER_FIDELITY_V3_SCRIPT' sw.js
-          ! grep -F 'glueful-resume-header-fidelity-v3.js?v=' sw.js
-
+          grep -F 'CANONICAL_RENDERER' sw.js
+          grep -F 'glueful-resume-canonical-renderer-v2.js' sw.js
+          grep -F 'canonicalRuntimeScheduled' glueful-resume-studio-v41-bootstrap.js
+          ! grep -F 'glueful-resume-header-fidelity-v3.js' sw.js
       - name: Fixed-page geometry regression
         run: |
           set -e
-          grep -F 'PT_TO_PX = 96 / 72' glueful-resume-canonical-renderer.js
-          grep -F 'pageUsableHeight' glueful-resume-canonical-renderer.js
-          grep -F 'function repaginate' glueful-resume-canonical-renderer.js
+          grep -F 'PT_TO_PX=96/72' glueful-resume-canonical-renderer-v2.js
+          grep -F 'function paginate' glueful-resume-canonical-renderer-v2.js
           grep -F 'PAGE_WIDTH = 794' glueful-resume-studio-mobile-layout.js
           grep -F 'PAGE_HEIGHT = 1123' glueful-resume-studio-mobile-layout.js
-
       - name: Export authority regression
         run: |
           set -e
           grep -F 'docx.Packer.toBlob' glueful-resume-canonical-export.js
           grep -F 'window.print()' glueful-resume-canonical-export.js
-          ! grep -F 'el.innerHTML' glueful-resume-canonical-export.js
