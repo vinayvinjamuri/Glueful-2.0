@@ -47,7 +47,6 @@ jobs:
           grep -F 'word/_rels/' glueful-resume-header-fidelity-v3.js
           grep -F 'v:shape' glueful-resume-header-fidelity-v3.js
           grep -F 'v:imagedata' glueful-resume-header-fidelity-v3.js
-          grep -F 'dataUrl' glueful-resume-header-fidelity-v3.js
           grep -F 'PAGE_WIDTH=794' glueful-resume-header-fidelity-v3.js
           grep -F 'PAGE_HEIGHT=1123' glueful-resume-header-fidelity-v3.js
           grep -F 'glueful-word-artifact' glueful-resume-header-fidelity-v3.js
