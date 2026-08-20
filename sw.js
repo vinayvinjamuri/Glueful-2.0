@@ -1,4 +1,4 @@
-const CACHE_NAME="glueful-cache-v49-jobs-discover-v7";
+const CACHE_NAME="glueful-cache-v50-jobs-discover-v8";
 const RENDER_DIAGNOSTICS_SCRIPT="./glueful-resume-render-diagnostics.js";
 const FIXED_PDF_BOOTSTRAP="./glueful-resume-fixed-page-bootstrap.js";
 const FIXED_PDF_MODEL="./glueful-resume-layout-model.js";
@@ -16,8 +16,9 @@ const JOBS_V5="./glueful-jobs-discover-v5.js";
 const JOBS_V6="./glueful-jobs-discover-v6.js";
 const JOBS_V6_HOTFIX="./glueful-jobs-discover-v6-hotfix.js";
 const JOBS_V7="./glueful-jobs-discover-v7.js";
+const JOBS_V8="./glueful-jobs-discover-v8-interaction.js";
 const JOBS_LOGO_PATCH="./glueful-jobs-logo-patch-v1.js";
-const RUNTIME=[RENDER_DIAGNOSTICS_SCRIPT,FIXED_PDF_BOOTSTRAP,FIXED_PDF_MODEL,FIXED_PDF_IMPORTER,FIXED_PDF_RENDERER,FIXED_PDF_UX,FIXED_PDF_CONTROLLER,FIXED_PDF_DOCX_EXPORT_V2,FIXED_PDF_TYPOGRAPHY,RESUME_IMPORT_GUARD,PDF_EXPORT_FIX,JOBS_V3,JOBS_V4,JOBS_V5,JOBS_V6,JOBS_V6_HOTFIX,JOBS_V7,JOBS_LOGO_PATCH];
+const RUNTIME=[RENDER_DIAGNOSTICS_SCRIPT,FIXED_PDF_BOOTSTRAP,FIXED_PDF_MODEL,FIXED_PDF_IMPORTER,FIXED_PDF_RENDERER,FIXED_PDF_UX,FIXED_PDF_CONTROLLER,FIXED_PDF_DOCX_EXPORT_V2,FIXED_PDF_TYPOGRAPHY,RESUME_IMPORT_GUARD,PDF_EXPORT_FIX,JOBS_V3,JOBS_V4,JOBS_V5,JOBS_V6,JOBS_V6_HOTFIX,JOBS_V7,JOBS_V8,JOBS_LOGO_PATCH];
 const ASSETS=["./manifest.json",...RUNTIME,"./icons/icon-192.png","./icons/icon-512.png","./icons/icon-180.png","./icons/icon-maskable-512.png"];
 async function networkResponse(request,preloadResponse){return (await preloadResponse)||fetch(request,{cache:"no-store"})}
 function stripCompetingRuntime(html){return html
@@ -25,12 +26,13 @@ function stripCompetingRuntime(html){return html
  .replace(/<script[^>]+src=["'][^"']*glueful-jobs-discover-v4\.js(?:\?[^"']*)?["'][^>]*><\/script>/gi,"")
  .replace(/<script[^>]+src=["'][^"']*glueful-jobs-discover-v5\.js(?:\?[^"']*)?["'][^>]*><\/script>/gi,"")
  .replace(/<script[^>]+src=["'][^"']*glueful-jobs-discover-v6(?:-hotfix)?\.js(?:\?[^"']*)?["'][^>]*><\/script>/gi,"")
- .replace(/<script[^>]+src=["'][^"']*glueful-jobs-discover-v7\.js(?:\?[^"']*)?["'][^>]*><\/script>/gi,"");}
+ .replace(/<script[^>]+src=["'][^"']*glueful-jobs-discover-v7\.js(?:\?[^"']*)?["'][^>]*><\/script>/gi,"")
+ .replace(/<script[^>]+src=["'][^"']*glueful-jobs-discover-v8-interaction\.js(?:\?[^"']*)?["'][^>]*><\/script>/gi,"");}
 async function buildAuthoritativeIndex(request,preloadResponse){
  const response=await networkResponse(request,preloadResponse);if(!response?.ok)return response;
  const type=response.headers.get("content-type")||"";if(!type.includes("text/html"))return response;
  let html=await response.text();html=stripCompetingRuntime(html);
- const scripts=[`<script src="${RENDER_DIAGNOSTICS_SCRIPT}?v=20260820-12" data-glueful-runtime="render-diagnostics"></script>`,`<script src="${FIXED_PDF_BOOTSTRAP}?v=20260820-fixedpdf27" data-glueful-runtime="fixed-pdf-bootstrap"></script>`,`<script src="${JOBS_V7}?v=20260820-jobs-discover-v7" data-glueful-runtime="jobs-discover-v7"></script>`];
+ const scripts=[`<script src="${RENDER_DIAGNOSTICS_SCRIPT}?v=20260820-12" data-glueful-runtime="render-diagnostics"></script>`,`<script src="${FIXED_PDF_BOOTSTRAP}?v=20260820-fixedpdf27" data-glueful-runtime="fixed-pdf-bootstrap"></script>`,`<script src="${JOBS_V7}?v=20260820-jobs-discover-v7" data-glueful-runtime="jobs-discover-v7"></script>`,`<script src="${JOBS_V8}?v=20260820-jobs-discover-v8" data-glueful-runtime="jobs-discover-v8"></script>`];
  const block=scripts.join("\n"),marker="</body>";
  const injected=html.includes(marker)?html.replace(marker,`${block}\n${marker}`):`${html}\n${block}`;
  const headers=new Headers(response.headers);headers.set("Content-Type","text/html; charset=UTF-8");headers.set("Cache-Control","no-store, no-cache, must-revalidate");
