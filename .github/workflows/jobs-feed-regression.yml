@@ -5,6 +5,7 @@ on:
       - 'glueful-jobs-discover-v3.js'
       - 'glueful-jobs-discover-v4.js'
       - 'glueful-jobs-discover-v5.js'
+      - 'glueful-jobs-discover-v6.js'
       - 'sw.js'
       - '.github/workflows/jobs-feed-regression.yml'
   pull_request:
@@ -12,6 +13,7 @@ on:
       - 'glueful-jobs-discover-v3.js'
       - 'glueful-jobs-discover-v4.js'
       - 'glueful-jobs-discover-v5.js'
+      - 'glueful-jobs-discover-v6.js'
       - 'sw.js'
 jobs:
   syntax-and-contract:
@@ -26,13 +28,17 @@ jobs:
           node --check glueful-jobs-discover-v3.js
           node --check glueful-jobs-discover-v4.js
           node --check glueful-jobs-discover-v5.js
+          node --check glueful-jobs-discover-v6.js
           node --check sw.js
       - name: Jobs feed contract checks
         run: |
-          grep -q "get-personalized-jobs" glueful-jobs-discover-v5.js
-          grep -q "Roles based on your applications" glueful-jobs-discover-v5.js
-          grep -q "Recommended for you" glueful-jobs-discover-v5.js
-          grep -q "Top companies hiring" glueful-jobs-discover-v5.js
-          grep -q "Thousands of live roles" glueful-jobs-discover-v5.js
-          grep -q "JOBS_DISCOVER_V5" sw.js
-          grep -q "glueful-cache-v45-jobs-discover-v5" sw.js
+          grep -q "get-personalized-jobs" glueful-jobs-discover-v6.js
+          grep -q "Roles you've applied to" glueful-jobs-discover-v6.js
+          grep -q "Curated for you" glueful-jobs-discover-v6.js
+          grep -q "Top companies hiring" glueful-jobs-discover-v6.js
+          grep -q "Saved for later" glueful-jobs-discover-v6.js
+          grep -q "Recently seen" glueful-jobs-discover-v6.js
+          grep -q "JOBS_DISCOVER_V6" sw.js
+          grep -q "glueful-cache-v46-jobs-discover-v6" sw.js
+          if grep -q "add(JOBS_DISCOVER_V4" sw.js; then exit 1; fi
+          if grep -q "add(JOBS_DISCOVER_V5" sw.js; then exit 1; fi
