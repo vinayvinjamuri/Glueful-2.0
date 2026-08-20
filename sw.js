@@ -40,4 +40,43 @@ async function buildAuthoritativeIndex(request,preloadResponse){const response=a
 async function cacheIndexResponse(request,response){if(!response?.ok)return;try{const c=await caches.open(CACHE_NAME);await c.put(request,response.clone())}catch(e){console.warn("[Glueful SW] index cache write failed:",e)}}
 self.addEventListener("install",e=>e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()).catch(err=>{console.warn("[Glueful SW] precache failed:",err);return self.skipWaiting()})));
 self.addEventListener("activate",e=>e.waitUntil((async()=>{const keys=await caches.keys();await Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)));if(self.registration.navigationPreload){try{await self.registration.navigationPreload.enable()}catch(_){}}await self.clients.claim()})()));
-self.addEventListener("fetch",e=>{const r=e.request,u=new URL(r.url);if(r.method==="GET"&&r.mode==="navigate"){e.respondWith((async()=>{try{const res=await buildAuthoritativeIndex(r,e.preloadResponse);e.waitUntil(cacheIndexResponse(r,res));return res}catch(err){console.warn("[Glueful SW] navigation failed:",err);return(await caches.match(r))||Response.error()}})());return}if(r.method==="GET"&&RUNTIME.some(p=>u.pathname.endsWith(p.slice(2)))){e.respondWith((async()=>{try{const res=await fetch(r,{cache:"no-store"});if(res.ok)e.waitUntil((async()=>{try{const c=await caches.open(CACHE_NAME);await c.put(r,res.clone())}catch(_){}})());return res}catch(_){return(await caches.match(r))||Response.error()}})());return}if(r.method==="GET")e.respondWith((async()=>{const cached=await caches.match(r);try{const res=await fetch(r,{cache:"no-store"});if(res.ok)e.waitUntil((async()=>{try{const c=await caches.open(CACHE_NAME);await c.put(r,res.clone())}catch(_){}})());return res}catch(_){return cached||Response.error()}})()});
+self.addEventListener("fetch",e=>{
+  const r=e.request,u=new URL(r.url);
+  if(r.method==="GET"&&r.mode==="navigate"){
+    e.respondWith((async()=>{
+      try{
+        const res=await buildAuthoritativeIndex(r,e.preloadResponse);
+        e.waitUntil(cacheIndexResponse(r,res));
+        return res;
+      }catch(err){
+        console.warn("[Glueful SW] navigation failed:",err);
+        return (await caches.match(r))||Response.error();
+      }
+    })());
+    return;
+  }
+  if(r.method==="GET"&&RUNTIME.some(p=>u.pathname.endsWith(p.slice(2)))){
+    e.respondWith((async()=>{
+      try{
+        const res=await fetch(r,{cache:"no-store"});
+        if(res.ok)e.waitUntil((async()=>{try{const c=await caches.open(CACHE_NAME);await c.put(r,res.clone())}catch(_) {}})());
+        return res;
+      }catch(_){
+        return (await caches.match(r))||Response.error();
+      }
+    })());
+    return;
+  }
+  if(r.method==="GET"){
+    e.respondWith((async()=>{
+      const cached=await caches.match(r);
+      try{
+        const res=await fetch(r,{cache:"no-store"});
+        if(res.ok)e.waitUntil((async()=>{try{const c=await caches.open(CACHE_NAME);await c.put(r,res.clone())}catch(_) {}})());
+        return res;
+      }catch(_){
+        return cached||Response.error();
+      }
+    })());
+  }
+});
