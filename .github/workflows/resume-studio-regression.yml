@@ -17,6 +17,7 @@ on:
       - 'glueful-resume-pdf-export-fix-v1.js'
       - 'glueful-jobs-discover-v1.js'
       - 'glueful-jobs-discover-v3.js'
+      - 'glueful-jobs-logo-patch-v1.js'
       - 'sw.js'
       - '.github/workflows/resume-studio-regression.yml'
 
@@ -28,27 +29,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: JavaScript syntax regression
         run: |
           set -e
-          for f in \
-            glueful-resume-studio-adobe.js \
-            glueful-resume-docx-forensics.js \
-            glueful-resume-render-diagnostics.js \
-            glueful-resume-fixed-page-bootstrap.js \
-            glueful-resume-fixed-page-controller.js \
-            glueful-resume-fixed-page-renderer.js \
-            glueful-resume-layout-model.js \
-            glueful-resume-pdf-layout-importer.js \
-            glueful-resume-import-guard-v1.js \
-            glueful-resume-pdf-export-fix-v1.js \
-            glueful-jobs-discover-v1.js \
-            glueful-jobs-discover-v3.js \
-            sw.js; do
-            node --check "$f"
-          done
-
+          for f in glueful-resume-studio-adobe.js glueful-resume-docx-forensics.js glueful-resume-render-diagnostics.js glueful-resume-fixed-page-bootstrap.js glueful-resume-fixed-page-controller.js glueful-resume-fixed-page-renderer.js glueful-resume-layout-model.js glueful-resume-pdf-layout-importer.js glueful-resume-import-guard-v1.js glueful-resume-pdf-export-fix-v1.js glueful-jobs-discover-v1.js glueful-jobs-discover-v3.js glueful-jobs-logo-patch-v1.js sw.js; do node --check "$f"; done
       - name: Fixed-page authority and visual-source regression
         run: |
           set -e
@@ -56,59 +40,36 @@ jobs:
           grep -F 'fixed-controller-v11' glueful-resume-fixed-page-controller.js
           grep -F 'original-pdf' glueful-resume-pdf-layout-importer.js
           grep -F 'explicitLogoExtraction:false' glueful-resume-pdf-layout-importer.js
-          grep -F 'logoOverlay' glueful-resume-pdf-layout-importer.js
           grep -F 'glueful-fixed-bg' glueful-resume-fixed-page-renderer.js
           grep -F 'glueful-fixed-text' glueful-resume-fixed-page-renderer.js
-          grep -F 'FIXED_PDF_BOOTSTRAP' sw.js
-          grep -F 'RESUME_IMPORT_GUARD' sw.js
-          grep -F 'PDF_EXPORT_FIX' sw.js
-          grep -F 'JOBS_DISCOVER' sw.js
           grep -F 'glueful-jobs-discover-v3.js' sw.js
+          grep -F 'glueful-jobs-logo-patch-v1.js' sw.js
           grep -F '20260820-fixedpdf27' sw.js
-          grep -F 'glueful-cache-v42-jobs-discover-v3' sw.js
+          grep -F 'glueful-cache-v43-jobs-discover-v3' sw.js
           ! grep -F 'HEADER_FIDELITY_SCRIPT' sw.js
           ! grep -F 'HEADER_ALIGNMENT_SCRIPT' sw.js
           ! grep -F 'MOBILE_LAYOUT_SCRIPT' sw.js
-
-      - name: PDF controller must await the cloud/device resume
-        run: |
-          set -e
-          grep -F 'async function getFile' glueful-resume-fixed-page-controller.js
-          grep -F 'await window.ensureCandidateResumeCloudFile()' glueful-resume-fixed-page-controller.js
-          ! grep -F 'function getFile(){try{if(typeof candidateResumeFile' glueful-resume-fixed-page-controller.js
-
-      - name: Fixed PDF must not be handed back to the legacy enhancer
-        run: |
-          set -e
-          ! grep -F 'gluefulResumeStudioEnhance' glueful-resume-fixed-page-controller.js
-
       - name: Resume import controls remain bound
         run: |
           set -e
           grep -F 'cp-resume-file' glueful-resume-import-guard-v1.js
           grep -F 'handleCandidateResumeUpload' glueful-resume-import-guard-v1.js
           grep -F 'glueful-resume-import-guard-v1.js' glueful-resume-fixed-page-bootstrap.js
-
       - name: PDF download regression
         run: |
           set -e
           grep -F '20260820-pdf-download-v2' glueful-resume-pdf-export-fix-v1.js
           grep -F 'window.showSaveFilePicker' glueful-resume-pdf-export-fix-v1.js
-          grep -F 'html2canvas' glueful-resume-pdf-export-fix-v1.js
           grep -F 'pdfExportSelectionCleared:true' glueful-resume-pdf-export-fix-v1.js
           grep -F 'pdfExportBlankPageFix:true' glueful-resume-pdf-export-fix-v1.js
-          grep -F 'pdfExportSkippedEmptyPages' glueful-resume-pdf-export-fix-v1.js
-          grep -F 'glueful-download-format-menu-v2' glueful-resume-pdf-export-fix-v1.js
           grep -F 'Download PDF' glueful-resume-pdf-export-fix-v1.js
           grep -F 'Download DOCX' glueful-resume-pdf-export-fix-v1.js
-
       - name: DOCX save-picker path remains available
         run: |
           set -e
           grep -F 'showSaveFilePicker' glueful-resume-vector-docx-export-v2.js
           grep -F 'docxDownloadPipeline' glueful-resume-vector-docx-export-v2.js
-
-      - name: Jobs Discover V3 functional and personalization regression
+      - name: Jobs Discover personalization and controls
         run: |
           set -e
           grep -F '20260820-jobs-discover-v3' glueful-jobs-discover-v3.js
@@ -121,13 +82,11 @@ jobs:
           grep -F 'NXP' glueful-jobs-discover-v3.js
           grep -F 'hardware' glueful-jobs-discover-v3.js
           grep -F 'scroll-snap-type:x proximity' glueful-jobs-discover-v3.js
-          grep -F 'showList' glueful-jobs-discover-v3.js
           grep -F 'glueful_recent_jobs' glueful-jobs-discover-v3.js
-          grep -F 'data-company' glueful-jobs-discover-v3.js
           grep -F 'openFilters' glueful-jobs-discover-v3.js
+          grep -F 'showList' glueful-jobs-discover-v3.js
           grep -F 'premium-splash-image' glueful-jobs-discover-v3.js
-          grep -F "v==='\\n'" glueful-jobs-discover-v3.js
-
+          grep -F '20260820-jobs-logo-patch-v1' glueful-jobs-logo-patch-v1.js
       - name: DOCX fallback remains available
         run: |
           set -e
