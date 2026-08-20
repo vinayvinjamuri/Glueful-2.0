@@ -2,15 +2,13 @@ name: Jobs Discover Regression
 on:
   push:
     paths:
-      - 'glueful-jobs-discover-v11-stable.js'
-      - 'glueful-jobs-infinite-feed-v1.js'
+      - 'glueful-jobs-discover-v12-stable.js'
       - 'glueful-jobs-official-link-guard-v1.js'
       - 'sw.js'
       - '.github/workflows/jobs-feed-regression.yml'
   pull_request:
     paths:
-      - 'glueful-jobs-discover-v11-stable.js'
-      - 'glueful-jobs-infinite-feed-v1.js'
+      - 'glueful-jobs-discover-v12-stable.js'
       - 'glueful-jobs-official-link-guard-v1.js'
       - 'sw.js'
       - '.github/workflows/jobs-feed-regression.yml'
@@ -24,36 +22,29 @@ jobs:
           node-version: 20
       - name: JavaScript syntax
         run: |
-          node --check glueful-jobs-discover-v11-stable.js
-          node --check glueful-jobs-infinite-feed-v1.js
+          node --check glueful-jobs-discover-v12-stable.js
           node --check glueful-jobs-official-link-guard-v1.js
           node --check sw.js
-      - name: Infinite feed contract
+      - name: Jobs V12 contract
         run: |
-          grep -q "Explore more jobs" glueful-jobs-infinite-feed-v1.js
-          grep -q "IntersectionObserver" glueful-jobs-infinite-feed-v1.js
-          grep -q "range(offset,offset+PAGE-1)" glueful-jobs-infinite-feed-v1.js
-          grep -q "job_listings" glueful-jobs-infinite-feed-v1.js
-          grep -q "Official employer link verified" glueful-jobs-infinite-feed-v1.js
-      - name: Jobs V11 contract
-        run: |
-          grep -q "Curated for you" glueful-jobs-discover-v11-stable.js
-          grep -q "Top companies hiring" glueful-jobs-discover-v11-stable.js
-          grep -q "job_listings" glueful-jobs-discover-v11-stable.js
-          grep -q "get-personalized-jobs" glueful-jobs-discover-v11-stable.js
+          grep -q "Find your next big move" glueful-jobs-discover-v12-stable.js
+          grep -q "Curated for you" glueful-jobs-discover-v12-stable.js
+          grep -q "Top companies hiring" glueful-jobs-discover-v12-stable.js
+          grep -q "Search jobs, skills or companies" glueful-jobs-discover-v12-stable.js
+          grep -q "get-personalized-jobs" glueful-jobs-discover-v12-stable.js
+          grep -q "data-see" glueful-jobs-discover-v12-stable.js
+          grep -q "data-company" glueful-jobs-discover-v12-stable.js
+          grep -q "data-save" glueful-jobs-discover-v12-stable.js
+          grep -q "openDetails" glueful-jobs-discover-v12-stable.js
       - name: Verified employer link contract
         run: |
           grep -q "verified_employer_link" glueful-jobs-official-link-guard-v1.js
           grep -q "adzuna" glueful-jobs-official-link-guard-v1.js
       - name: Service worker authoritative runtime
         run: |
-          grep -q 'const JOBS_V11=' sw.js
-          grep -q 'glueful-jobs-discover-v11-stable.js' sw.js
-          grep -q 'glueful-jobs-infinite-feed-v1.js' sw.js
-          grep -q 'glueful-jobs-official-link-guard-v1.js' sw.js
-          grep -q 'glueful-cache-v57-infinite-jobs' sw.js
-          ! grep -q 'const JOBS_V10=' sw.js
-          ! grep -q 'JOBS_V6_HOTFIX' sw.js
-          ! grep -q 'JOBS_V7' sw.js
-          ! grep -q 'JOBS_V8' sw.js
-          ! grep -q 'JOBS_V9' sw.js
+          grep -q 'const JOBS_V12=' sw.js
+          grep -q 'glueful-jobs-discover-v12-stable.js' sw.js
+          grep -q 'glueful-cache-v58-jobs-v12' sw.js
+          ! grep -q 'const JOBS_V11=' sw.js
+          ! grep -q 'glueful-jobs-discover-v11-stable.js' sw.js
+          ! grep -q 'glueful-jobs-infinite-feed-v1.js' sw.js
