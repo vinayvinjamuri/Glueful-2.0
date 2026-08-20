@@ -42,10 +42,8 @@ jobs:
           grep -F 'explicitLogoExtraction:false' glueful-resume-pdf-layout-importer.js
           grep -F 'glueful-fixed-bg' glueful-resume-fixed-page-renderer.js
           grep -F 'glueful-fixed-text' glueful-resume-fixed-page-renderer.js
-          grep -F 'glueful-jobs-discover-v3.js' sw.js
-          grep -F 'glueful-jobs-logo-patch-v1.js' sw.js
-          grep -F '20260820-fixedpdf27' sw.js
-          grep -F 'glueful-cache-v43-jobs-discover-v3' sw.js
+          grep -F 'glueful-resume-studio-adobe\\.js' sw.js
+          grep -F 'glueful-cache-v65-fixed-resume-authority' sw.js
           ! grep -F 'HEADER_FIDELITY_SCRIPT' sw.js
           ! grep -F 'HEADER_ALIGNMENT_SCRIPT' sw.js
           ! grep -F 'MOBILE_LAYOUT_SCRIPT' sw.js
