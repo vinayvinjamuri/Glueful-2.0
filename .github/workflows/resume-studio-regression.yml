@@ -57,6 +57,10 @@ jobs:
           grep -F 'glueful-fixed-text' glueful-resume-fixed-page-renderer.js
           grep -F 'FIXED_PDF_BOOTSTRAP' sw.js
           grep -F 'RESUME_IMPORT_GUARD' sw.js
+          grep -F 'PDF_EXPORT_FIX' sw.js
+          grep -F 'glueful-resume-pdf-export-fix-v1.js' sw.js
+          grep -F '20260820-fixedpdf27' sw.js
+          grep -F 'glueful-cache-v38-pdf-export-fix' sw.js
           ! grep -F 'HEADER_FIDELITY_SCRIPT' sw.js
           ! grep -F 'HEADER_ALIGNMENT_SCRIPT' sw.js
           ! grep -F 'MOBILE_LAYOUT_SCRIPT' sw.js
@@ -88,6 +92,7 @@ jobs:
           grep -F 'pdfExportSelectionCleared:true' glueful-resume-pdf-export-fix-v1.js
           grep -F 'window.getSelection' glueful-resume-pdf-export-fix-v1.js
           grep -F 'querySelectorAll(PAGE_SEL)' glueful-resume-pdf-export-fix-v1.js
+          grep -F 'glueful-fixed-print-page' glueful-resume-pdf-export-fix-v1.js
 
       - name: DOCX fallback remains available
         run: |
