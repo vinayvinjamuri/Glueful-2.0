@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - 'glueful-jobs-auth-bootstrap-v1.js'
+      - 'glueful-jobs-discover-v6.js'
       - 'glueful-jobs-discover-v7.js'
       - 'glueful-jobs-discover-v8-interaction.js'
       - 'glueful-jobs-discover-v9-relevance-logo-interaction.js'
@@ -12,14 +13,14 @@ on:
   pull_request:
     paths:
       - 'glueful-jobs-auth-bootstrap-v1.js'
+      - 'glueful-jobs-discover-v6.js'
       - 'glueful-jobs-discover-v7.js'
       - 'glueful-jobs-discover-v8-interaction.js'
       - 'glueful-jobs-discover-v9-relevance-logo-interaction.js'
       - 'glueful-jobs-logo-patch-v1.js'
       - 'sw.js'
-      - '.github/workflows/jobs-feed-regression.yml'
 jobs:
-  syntax-and-contract:
+  syntax-and-runtime-contract:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -29,25 +30,38 @@ jobs:
       - name: JavaScript syntax
         run: |
           node --check glueful-jobs-auth-bootstrap-v1.js
+          node --check glueful-jobs-discover-v6.js
           node --check glueful-jobs-discover-v7.js
           node --check glueful-jobs-discover-v8-interaction.js
           node --check glueful-jobs-discover-v9-relevance-logo-interaction.js
           node --check glueful-jobs-logo-patch-v1.js
           node --check sw.js
-      - name: Jobs feed contract checks
+      - name: Intended Jobs UI contract
         run: |
-          grep -q "createClient" glueful-jobs-auth-bootstrap-v1.js
-          grep -q "get-personalized-jobs" glueful-jobs-discover-v7.js
-          grep -q "Curated for you" glueful-jobs-discover-v7.js
-          grep -q "Top companies hiring" glueful-jobs-discover-v7.js
-          grep -q "openId" glueful-jobs-discover-v7.js
-          grep -q "g7-row" glueful-jobs-discover-v7.js
-          grep -q "company_logo_url" glueful-jobs-discover-v7.js
-          grep -q "g7-row" glueful-jobs-discover-v8-interaction.js
-          grep -q "profile-aware relevance" glueful-jobs-discover-v9-relevance-logo-interaction.js
-          grep -q "company_logo_url" glueful-jobs-discover-v9-relevance-logo-interaction.js
-          grep -q "data-v9-id" glueful-jobs-discover-v9-relevance-logo-interaction.js
-          grep -q "JOBS_AUTH" sw.js
-          grep -q "JOBS_V9" sw.js
-          grep -q "glueful-cache-v52-jobs-discover-auth-v1" sw.js
-          if grep -q 'add(JOBS_V6' sw.js; then exit 1; fi
+          grep -q "Find your next big move" glueful-jobs-discover-v6.js
+          grep -q "Roles you've applied to" glueful-jobs-discover-v6.js
+          grep -q "Curated for you" glueful-jobs-discover-v6.js
+          grep -q "Top companies hiring" glueful-jobs-discover-v6.js
+          grep -q "Explore more" glueful-jobs-discover-v6.js
+          grep -q "g6-list-row" glueful-jobs-discover-v6.js
+          grep -q "g6-company" glueful-jobs-discover-v6.js
+      - name: Service worker must have one authoritative Jobs runtime
+        run: |
+          grep -q 'const JOBS_V6=' sw.js
+          grep -q 'glueful-jobs-discover-v6.js' sw.js
+          grep -q 'glueful-cache-v53-jobs-v6-authoritative' sw.js
+          ! grep -q 'const JOBS_V7=' sw.js
+          ! grep -q 'const JOBS_V9=' sw.js
+          ! grep -q 'JOBS_V7' sw.js
+          ! grep -q 'JOBS_V9' sw.js
+          ! grep -q 'JOBS_V6_HOTFIX' sw.js
+      - name: No competing Jobs scripts in authoritative injector
+        run: |
+          ! grep -q 'JOBS_V7' sw.js
+          ! grep -q 'JOBS_V8' sw.js
+          ! grep -q 'JOBS_V9' sw.js
+      - name: Relevance/logo source contracts remain available
+        run: |
+          grep -q 'get-personalized-jobs' glueful-jobs-discover-v6.js
+          grep -q 'company_logo_url' glueful-jobs-discover-v6.js
+          grep -q 'openJobById' glueful-jobs-discover-v6.js
