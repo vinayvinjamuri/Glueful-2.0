@@ -4,18 +4,15 @@ const style=document.createElement('style');
 style.id='glueful-jobs-v6-visual-fix';
 style.textContent=`#glueful-discover-root-v6 .g6-card .g6-company{box-sizing:content-box;flex:none;min-height:0;width:auto;border:0;background:transparent;border-radius:0;color:var(--text-muted);padding:0;text-align:left;font-size:11px;font-weight:400;margin-top:4px;display:block}#glueful-discover-root-v6 .g6-card .g6-company strong,#glueful-discover-root-v6 .g6-card .g6-company b,#glueful-discover-root-v6 .g6-card .g6-company small{display:inline;font-size:inherit;min-height:0;margin:0;color:inherit}`;
 document.head.appendChild(style);
-window.__GLUEFUL_JOBS_LOGO_PATCH__={version:'20260820-jobs-v6-visual-fix'};
+window.__GLUEFUL_JOBS_LOGO_PATCH__={version:'20260820-jobs-logo-patch-v1'};
 })();
 
 /*
  * Glueful Quick Actions / Plug-ins V1
  * -----------------------------------
- * This is intentionally layered on top of the existing drawer instead of
- * rewriting the drawer markup. That keeps Dashboard, Applications,
- * Interviews, Resumes and Placement Portal behavior untouched.
- *
- * Brand Fetch remains represented by the existing logo/branding pipeline;
- * this screen is only the management surface for it and future plug-ins.
+ * Layered on top of the existing drawer. It does not replace drawer
+ * navigation or any existing job/application/resume behavior.
+ * Brand Fetch remains the existing branding pipeline already used by Jobs.
  */
 (function(){
   'use strict';
@@ -58,7 +55,7 @@ window.__GLUEFUL_JOBS_LOGO_PATCH__={version:'20260820-jobs-v6-visual-fix'};
       html[data-theme="light"] .gq-plugin-panel{background:linear-gradient(180deg,#FFFFFF,#F6F8FC);color:#172033;border-color:#D9DFE8}
       html[data-theme="light"] .gq-plugin-card{background:#fff;border-color:#D9DFE8}
       html[data-theme="light"] .gq-plugin-name{color:#172033}
-      html[data-theme="light"] .gq-plugin-desc,.gq-plugin-meta{color:#5D6A7D}
+      html[data-theme="light"] .gq-plugin-desc,html[data-theme="light"] .gq-plugin-meta{color:#5D6A7D}
     `;
     document.head.appendChild(s);
   }
@@ -71,7 +68,6 @@ window.__GLUEFUL_JOBS_LOGO_PATCH__={version:'20260820-jobs-v6-visual-fix'};
     modal.setAttribute('aria-hidden','false');
     document.body.style.overflow='hidden';
   }
-
   function closePlugins(){
     const modal=document.getElementById(PLUGIN_MODAL_ID);
     if(!modal) return;
@@ -79,7 +75,6 @@ window.__GLUEFUL_JOBS_LOGO_PATCH__={version:'20260820-jobs-v6-visual-fix'};
     modal.setAttribute('aria-hidden','true');
     document.body.style.overflow='';
   }
-
   function buildModal(){
     if(document.getElementById(PLUGIN_MODAL_ID)) return;
     const modal=document.createElement('div');
@@ -87,100 +82,58 @@ window.__GLUEFUL_JOBS_LOGO_PATCH__={version:'20260820-jobs-v6-visual-fix'};
     modal.setAttribute('role','dialog');
     modal.setAttribute('aria-modal','true');
     modal.setAttribute('aria-hidden','true');
-    modal.innerHTML=`
-      <section class="gq-plugin-panel" onclick="event.stopPropagation()">
-        <div class="gq-plugin-head">
-          <div><div class="gq-plugin-kicker">Glueful extensions</div><h2 class="gq-plugin-title">Plug-ins</h2><div class="gq-plugin-subtitle">Supercharge your career workflow with useful integrations.</div></div>
-          <button type="button" class="gq-plugin-close" aria-label="Close plug-ins">×</button>
-        </div>
-        <div class="gq-plugin-tabs" role="tablist">
-          <button type="button" class="gq-plugin-tab active">All</button>
-          <button type="button" class="gq-plugin-tab">Active</button>
-          <button type="button" class="gq-plugin-tab">Recommended</button>
-          <button type="button" class="gq-plugin-tab">New</button>
-        </div>
-        <div class="gq-plugin-card">
-          <div class="gq-plugin-row">
-            <div class="gq-plugin-icon">✦</div>
-            <div><div class="gq-plugin-name">Brand Fetch</div><div class="gq-plugin-meta">Company identity &amp; logo enrichment</div></div>
-            <span class="gq-plugin-status">ACTIVE</span>
-          </div>
-          <p class="gq-plugin-desc">Keeps company branding consistent across job cards, company views and application-related surfaces by using the existing Glueful branding pipeline.</p>
-          <div class="gq-plugin-actions"><button type="button" class="gq-plugin-action primary" data-plugin-refresh>Refresh branding</button><button type="button" class="gq-plugin-action" data-plugin-close>Done</button></div>
-          <div class="gq-plugin-note">This does not replace the existing job/application logic. It only exposes the branding integration and leaves current navigation and data flows intact.</div>
-        </div>
-        <div class="gq-plugin-card">
-          <div class="gq-plugin-row"><div class="gq-plugin-icon">+</div><div><div class="gq-plugin-name">More plug-ins coming</div><div class="gq-plugin-meta">Connect future career tools here</div></div><span class="gq-plugin-status" style="background:rgba(123,54,255,.10);border-color:rgba(123,54,255,.20);color:#B79AFF">SOON</span></div>
-        </div>
-      </section>`;
-    modal.addEventListener('click',closePlugins);
+    modal.innerHTML=`<section class="gq-plugin-panel"><div class="gq-plugin-head"><div><div class="gq-plugin-kicker">Glueful extensions</div><h2 class="gq-plugin-title">Plug-ins</h2><div class="gq-plugin-subtitle">Supercharge your career workflow with useful integrations.</div></div><button type="button" class="gq-plugin-close" aria-label="Close plug-ins">×</button></div><div class="gq-plugin-tabs" role="tablist"><button type="button" class="gq-plugin-tab active">All</button><button type="button" class="gq-plugin-tab">Active</button><button type="button" class="gq-plugin-tab">Recommended</button><button type="button" class="gq-plugin-tab">New</button></div><div class="gq-plugin-card"><div class="gq-plugin-row"><div class="gq-plugin-icon">✦</div><div><div class="gq-plugin-name">Brand Fetch</div><div class="gq-plugin-meta">Company identity &amp; logo enrichment</div></div><span class="gq-plugin-status">ACTIVE</span></div><p class="gq-plugin-desc">Keeps company branding consistent across job cards, company views and application-related surfaces using the existing Glueful branding pipeline.</p><div class="gq-plugin-actions"><button type="button" class="gq-plugin-action primary" data-plugin-refresh>Refresh branding</button><button type="button" class="gq-plugin-action" data-plugin-close>Done</button></div><div class="gq-plugin-note">This does not replace existing job, application, placement portal or resume logic.</div></div><div class="gq-plugin-card"><div class="gq-plugin-row"><div class="gq-plugin-icon">+</div><div><div class="gq-plugin-name">More plug-ins coming</div><div class="gq-plugin-meta">Connect future career tools here</div></div><span class="gq-plugin-status" style="background:rgba(123,54,255,.10);border-color:rgba(123,54,255,.20);color:#B79AFF">SOON</span></div></div></section>`;
+    modal.addEventListener('click',e=>{if(e.target===modal)closePlugins()});
     modal.querySelector('.gq-plugin-close').addEventListener('click',closePlugins);
     modal.querySelector('[data-plugin-close]').addEventListener('click',closePlugins);
     modal.querySelector('[data-plugin-refresh]').addEventListener('click',()=>{
-      try{window.gluefulJobsLogoRefresh?.();}catch(_){ }
-      try{window.gluefulJobsResumeActionV1?.refresh?.();}catch(_){ }
-      const btn=modal.querySelector('[data-plugin-refresh]');
-      if(btn){const old=btn.textContent;btn.textContent='Branding refreshed ✓';setTimeout(()=>{btn.textContent=old},1200)}
+      try{window.gluefulJobsLogoRefresh?.()}catch(_){ }
+      try{window.gluefulJobsResumeActionV1?.refresh?.()}catch(_){ }
+      const b=modal.querySelector('[data-plugin-refresh]');
+      if(b){const old=b.textContent;b.textContent='Branding refreshed ✓';setTimeout(()=>{b.textContent=old},1200)}
     });
     document.body.appendChild(modal);
   }
-
   function addDrawerItem(){
     const drawer=document.getElementById('glueful-drawer');
     if(!drawer || drawer.querySelector('[data-glueful-plugin-item]')) return;
-
-    const placement=document.getElementById('placement-status');
     const accountLabel=[...drawer.querySelectorAll('.drawer-section-label')].find(el=>el.textContent.trim().toLowerCase()==='account');
-    if(!placement || !accountLabel) return;
-
+    if(!accountLabel) return;
     const divider=document.createElement('div');
     divider.className='drawer-divider';
     divider.dataset.gluefulPluginItem='1';
-
     const label=document.createElement('div');
     label.className='drawer-section-label gq-plugin-section';
     label.textContent='Plug-ins';
     label.dataset.gluefulPluginItem='1';
-
     const button=document.createElement('button');
     button.type='button';
     button.className='drawer-item';
     button.dataset.gluefulPluginItem='1';
     button.innerHTML=`<span class="drawer-item-icon"><svg class="premium-svg-icon" viewBox="0 0 24 24"><path d="M9 3h6v3h3a3 3 0 0 1 3 3v3h-3a3 3 0 0 0 0 6h3v3h-3a3 3 0 0 1-3-3v-3H9v3a3 3 0 0 1-3 3H3v-3h3a3 3 0 0 0 0-6H3V9a3 3 0 0 1 3-3h3z"></path></svg></span><span class="drawer-item-copy"><span class="drawer-item-title">Plug-ins</span><span class="drawer-item-subtitle">Explore and manage integrations</span></span><span class="gq-plugin-badge">New</span><span class="drawer-item-chevron">›</span>`;
-    button.addEventListener('click',()=>{
-      toggleGluefulDrawer(false);
-      openPlugins();
-    });
-
+    button.addEventListener('click',()=>{try{toggleGluefulDrawer(false)}catch(_){ }openPlugins()});
     drawer.insertBefore(divider,accountLabel);
     drawer.insertBefore(label,accountLabel);
     drawer.insertBefore(button,accountLabel);
   }
-
   function renameDrawerBrand(){
-    const name=document.querySelector('#glueful-drawer .drawer-brand-name');
-    if(name) name.textContent='Quick Actions';
     const drawer=document.getElementById('glueful-drawer');
-    if(drawer) drawer.setAttribute('aria-label','Quick Actions navigation');
+    if(!drawer) return;
+    const name=drawer.querySelector('.drawer-brand-name');
+    if(name){name.textContent='Quick Actions'}
+    else{
+      const brand=drawer.querySelector('.drawer-brand');
+      if(brand){
+        const walker=document.createTreeWalker(brand,NodeFilter.SHOW_TEXT);
+        let n;while(n=walker.nextNode()){if(n.nodeValue.trim()==='Glueful'){n.nodeValue=n.nodeValue.replace('Glueful','Quick Actions');break}}
+      }
+    }
+    drawer.setAttribute('aria-label','Quick Actions navigation');
   }
-
-  function boot(){
-    injectStyle();
-    buildModal();
-    renameDrawerBrand();
-    addDrawerItem();
-  }
-
+  function boot(){injectStyle();buildModal();renameDrawerBrand();addDrawerItem()}
   window.gluefulOpenPlugins=openPlugins;
   window.gluefulClosePlugins=closePlugins;
-
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true});
-  else boot();
-
-  const observer=new MutationObserver(()=>{
-    renameDrawerBrand();
-    addDrawerItem();
-    if(!document.getElementById(PLUGIN_MODAL_ID)) buildModal();
-  });
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+  const observer=new MutationObserver(()=>{renameDrawerBrand();addDrawerItem();if(!document.getElementById(PLUGIN_MODAL_ID))buildModal()});
   observer.observe(document.body,{childList:true,subtree:true});
 })();
