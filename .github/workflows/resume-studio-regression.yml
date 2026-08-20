@@ -13,6 +13,7 @@ on:
       - 'glueful-resume-fixed-page-renderer.js'
       - 'glueful-resume-layout-model.js'
       - 'glueful-resume-pdf-layout-importer.js'
+      - 'glueful-resume-import-guard-v1.js'
       - 'sw.js'
       - '.github/workflows/resume-studio-regression.yml'
 
@@ -37,6 +38,7 @@ jobs:
             glueful-resume-fixed-page-renderer.js \
             glueful-resume-layout-model.js \
             glueful-resume-pdf-layout-importer.js \
+            glueful-resume-import-guard-v1.js \
             sw.js; do
             node --check "$f"
           done
@@ -45,14 +47,35 @@ jobs:
         run: |
           set -e
           grep -F '__gluefulFixedPdfScheduled = true' glueful-resume-fixed-page-bootstrap.js
+          grep -F 'fixed-controller-v11' glueful-resume-fixed-page-controller.js
           grep -F 'original-pdf' glueful-resume-pdf-layout-importer.js
           grep -F 'explicitLogoExtraction' glueful-resume-pdf-layout-importer.js
           grep -F 'glueful-fixed-bg' glueful-resume-fixed-page-renderer.js
           grep -F 'glueful-fixed-text' glueful-resume-fixed-page-renderer.js
           grep -F 'FIXED_PDF_BOOTSTRAP' sw.js
+          grep -F 'RESUME_IMPORT_GUARD' sw.js
           ! grep -F 'HEADER_FIDELITY_SCRIPT' sw.js
           ! grep -F 'HEADER_ALIGNMENT_SCRIPT' sw.js
           ! grep -F 'MOBILE_LAYOUT_SCRIPT' sw.js
+
+      - name: PDF controller must await the cloud/device resume
+        run: |
+          set -e
+          grep -F 'async function getFile' glueful-resume-fixed-page-controller.js
+          grep -F 'await window.ensureCandidateResumeCloudFile()' glueful-resume-fixed-page-controller.js
+          ! grep -F 'function getFile(){try{if(typeof candidateResumeFile' glueful-resume-fixed-page-controller.js
+
+      - name: Fixed PDF must not be handed back to the legacy enhancer
+        run: |
+          set -e
+          ! grep -F 'gluefulResumeStudioEnhance' glueful-resume-fixed-page-controller.js
+
+      - name: Resume import controls remain bound
+        run: |
+          set -e
+          grep -F 'cp-resume-file' glueful-resume-import-guard-v1.js
+          grep -F 'handleCandidateResumeUpload' glueful-resume-import-guard-v1.js
+          grep -F 'glueful-resume-import-guard-v1.js' glueful-resume-fixed-page-bootstrap.js
 
       - name: DOCX fallback remains available
         run: |
