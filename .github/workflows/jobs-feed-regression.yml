@@ -36,6 +36,8 @@ jobs:
           grep -q "data-company" glueful-jobs-discover-v12-stable.js
           grep -q "data-save" glueful-jobs-discover-v12-stable.js
           grep -q "openDetails" glueful-jobs-discover-v12-stable.js
+          grep -q "replaceChildren(shell)" glueful-jobs-discover-v12-stable.js
+          grep -q "MutationObserver" glueful-jobs-discover-v12-stable.js
       - name: Verified employer link contract
         run: |
           grep -q "verified_employer_link" glueful-jobs-official-link-guard-v1.js
@@ -44,7 +46,7 @@ jobs:
         run: |
           grep -q 'const JOBS_V12=' sw.js
           grep -q 'glueful-jobs-discover-v12-stable.js' sw.js
-          grep -q 'glueful-cache-v58-jobs-v12' sw.js
+          grep -q 'glueful-cache-v59-jobs-v12-renderer-fix' sw.js
           ! grep -q 'const JOBS_V11=' sw.js
           ! grep -q 'glueful-jobs-discover-v11-stable.js' sw.js
           ! grep -q 'glueful-jobs-infinite-feed-v1.js' sw.js
