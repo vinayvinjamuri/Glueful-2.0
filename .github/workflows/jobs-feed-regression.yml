@@ -2,23 +2,14 @@ name: Jobs Discover Regression
 on:
   push:
     paths:
-      - 'glueful-jobs-auth-bootstrap-v1.js'
-      - 'glueful-jobs-discover-v6.js'
-      - 'glueful-jobs-discover-v7.js'
-      - 'glueful-jobs-discover-v8-interaction.js'
-      - 'glueful-jobs-discover-v9-relevance-logo-interaction.js'
-      - 'glueful-jobs-logo-patch-v1.js'
+      - 'glueful-jobs-discover-v10-authoritative.js'
       - 'sw.js'
       - '.github/workflows/jobs-feed-regression.yml'
   pull_request:
     paths:
-      - 'glueful-jobs-auth-bootstrap-v1.js'
-      - 'glueful-jobs-discover-v6.js'
-      - 'glueful-jobs-discover-v7.js'
-      - 'glueful-jobs-discover-v8-interaction.js'
-      - 'glueful-jobs-discover-v9-relevance-logo-interaction.js'
-      - 'glueful-jobs-logo-patch-v1.js'
+      - 'glueful-jobs-discover-v10-authoritative.js'
       - 'sw.js'
+      - '.github/workflows/jobs-feed-regression.yml'
 jobs:
   syntax-and-runtime-contract:
     runs-on: ubuntu-latest
@@ -29,39 +20,45 @@ jobs:
           node-version: 20
       - name: JavaScript syntax
         run: |
-          node --check glueful-jobs-auth-bootstrap-v1.js
-          node --check glueful-jobs-discover-v6.js
-          node --check glueful-jobs-discover-v7.js
-          node --check glueful-jobs-discover-v8-interaction.js
-          node --check glueful-jobs-discover-v9-relevance-logo-interaction.js
-          node --check glueful-jobs-logo-patch-v1.js
+          node --check glueful-jobs-discover-v10-authoritative.js
           node --check sw.js
       - name: Intended Jobs UI contract
         run: |
-          grep -q "Find your next big move" glueful-jobs-discover-v6.js
-          grep -q "Roles you've applied to" glueful-jobs-discover-v6.js
-          grep -q "Curated for you" glueful-jobs-discover-v6.js
-          grep -q "Top companies hiring" glueful-jobs-discover-v6.js
-          grep -q "Explore more" glueful-jobs-discover-v6.js
-          grep -q "g6-list-row" glueful-jobs-discover-v6.js
-          grep -q "g6-company" glueful-jobs-discover-v6.js
+          grep -q "Find your next big move" glueful-jobs-discover-v10-authoritative.js
+          grep -q "Roles you've applied to" glueful-jobs-discover-v10-authoritative.js
+          grep -q "Curated for you" glueful-jobs-discover-v10-authoritative.js
+          grep -q "Top companies hiring" glueful-jobs-discover-v10-authoritative.js
+          grep -q "Explore more" glueful-jobs-discover-v10-authoritative.js
+          grep -q "data-open" glueful-jobs-discover-v10-authoritative.js
+          grep -q "data-row" glueful-jobs-discover-v10-authoritative.js
+          grep -q "data-company" glueful-jobs-discover-v10-authoritative.js
+          grep -q "job_listings" glueful-jobs-discover-v10-authoritative.js
+      - name: Relevance guard
+        run: |
+          grep -q "talent assistant" glueful-jobs-discover-v10-authoritative.js
+          grep -q "customer support" glueful-jobs-discover-v10-authoritative.js
+          grep -q "nvidia" glueful-jobs-discover-v10-authoritative.js
+          grep -q "qualcomm" glueful-jobs-discover-v10-authoritative.js
+          grep -q "nxp" glueful-jobs-discover-v10-authoritative.js
       - name: Service worker must have one authoritative Jobs runtime
         run: |
-          grep -q 'const JOBS_V6=' sw.js
-          grep -q 'glueful-jobs-discover-v6.js' sw.js
-          grep -q 'glueful-cache-v53-jobs-v6-authoritative' sw.js
+          grep -q 'const JOBS_V10=' sw.js
+          grep -q 'glueful-jobs-discover-v10-authoritative.js' sw.js
+          grep -q 'glueful-cache-v54-jobs-v10-authoritative' sw.js
+          ! grep -q 'const JOBS_V6=' sw.js
           ! grep -q 'const JOBS_V7=' sw.js
           ! grep -q 'const JOBS_V9=' sw.js
-          ! grep -q 'JOBS_V7' sw.js
-          ! grep -q 'JOBS_V9' sw.js
           ! grep -q 'JOBS_V6_HOTFIX' sw.js
-      - name: No competing Jobs scripts in authoritative injector
-        run: |
           ! grep -q 'JOBS_V7' sw.js
           ! grep -q 'JOBS_V8' sw.js
           ! grep -q 'JOBS_V9' sw.js
-      - name: Relevance/logo source contracts remain available
+      - name: Legacy Jobs UI must not be authoritative
         run: |
-          grep -q 'get-personalized-jobs' glueful-jobs-discover-v6.js
-          grep -q 'company_logo_url' glueful-jobs-discover-v6.js
-          grep -q 'openJobById' glueful-jobs-discover-v6.js
+          grep -q 'JOBS_V10' sw.js
+          grep -q 'stripCompetingRuntime' sw.js
+          grep -q 'glueful-jobs-discover-v10-authoritative.js' sw.js
+      - name: Feed and logo contracts
+        run: |
+          grep -q 'get-personalized-jobs' glueful-jobs-discover-v10-authoritative.js
+          grep -q 'company_logo_url' glueful-jobs-discover-v10-authoritative.js
+          grep -q 'cdn.simpleicons.org' glueful-jobs-discover-v10-authoritative.js
