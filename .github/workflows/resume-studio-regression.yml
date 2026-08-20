@@ -49,7 +49,8 @@ jobs:
           grep -F '__gluefulFixedPdfScheduled = true' glueful-resume-fixed-page-bootstrap.js
           grep -F 'fixed-controller-v11' glueful-resume-fixed-page-controller.js
           grep -F 'original-pdf' glueful-resume-pdf-layout-importer.js
-          grep -F 'explicitLogoExtraction' glueful-resume-pdf-layout-importer.js
+          grep -F 'explicitLogoExtraction:false' glueful-resume-pdf-layout-importer.js
+          grep -F 'logoOverlay' glueful-resume-pdf-layout-importer.js
           grep -F 'glueful-fixed-bg' glueful-resume-fixed-page-renderer.js
           grep -F 'glueful-fixed-text' glueful-resume-fixed-page-renderer.js
           grep -F 'FIXED_PDF_BOOTSTRAP' sw.js
