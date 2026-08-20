@@ -1,27 +1,21 @@
-/* Glueful Resume Studio — resume import guard V1
-   Keeps the profile resume picker reliable on touch/mobile browsers and
-   ensures the selected File reaches the existing parser/import pipeline. */
+/* Glueful Resume Studio — resume import guard V1 */
 (function(){
 'use strict';
-const VERSION='20260820-importguard1';
+const VERSION='20260820-importguard2';
 function bind(){
   const input=document.getElementById('cp-resume-file');
   const label=document.querySelector('label[for="cp-resume-file"]');
   const importButton=document.getElementById('cp-resume-import-btn');
-  if(input && !input.dataset.gluefulImportGuard){
+  if(input && !input.dataset.mobileBound && !input.dataset.gluefulImportGuard){
     input.dataset.gluefulImportGuard=VERSION;
     input.addEventListener('change',function(event){
       const fn=window.handleCandidateResumeUpload;
-      if(typeof fn==='function'){
-        Promise.resolve(fn(event)).catch(error=>console.error('[Glueful] resume upload failed:',error));
-      }
+      if(typeof fn==='function') Promise.resolve(fn(event)).catch(error=>console.error('[Glueful] resume upload failed:',error));
     });
   }
   if(label && !label.dataset.gluefulImportGuard){
     label.dataset.gluefulImportGuard=VERSION;
-    label.addEventListener('click',function(){
-      if(input) setTimeout(function(){try{input.focus({preventScroll:true})}catch(_){ }},0);
-    });
+    label.addEventListener('click',function(){if(input)setTimeout(function(){try{input.focus({preventScroll:true})}catch(_){ }},0)});
   }
   if(importButton && !importButton.dataset.gluefulImportGuard){
     importButton.dataset.gluefulImportGuard=VERSION;
