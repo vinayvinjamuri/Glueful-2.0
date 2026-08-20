@@ -1,4 +1,4 @@
-const CACHE_NAME="glueful-cache-v38-pdf-export-fix";
+const CACHE_NAME="glueful-cache-v39-resume-download-fix";
 const RENDER_DIAGNOSTICS_SCRIPT="./glueful-resume-render-diagnostics.js";
 const FIXED_PDF_BOOTSTRAP="./glueful-resume-fixed-page-bootstrap.js";
 const FIXED_PDF_MODEL="./glueful-resume-layout-model.js";
@@ -23,7 +23,7 @@ function stripCompetingResumeRuntime(html){return html
  .replace(/window\.openJobResumeEditor\s*=\s*v50OpenJobResumeEditor\s*;/g,"window.__gluefulLegacyResumeEditorOpen = v50OpenJobResumeEditor;")
  .replace(/window\.resetJobResumeToMaster\s*=\s*v50ResetJobResumeToMaster\s*;/g,"window.__gluefulLegacyResumeEditorReset = v50ResetJobResumeToMaster;")
  .replace(/querySelectorAll\(\s*['"]\.job-resume-pdf-page['"]\s*\)/g,"querySelectorAll('.job-resume-pdf-page, .glueful-fixed-page')")
- .replace(/https:\/\/cdn\.jsdelivr\.net\/npm\/docx@9\.5\.1\/build\/index\.umd\.js/g,"https://cdn.jsdelivr.net/npm/docx@9.7.1/build/index.umd.js");}
+ .replace(/https:\/\/cdn\.jsdelivr\.net\/npm\/docx@9\.5\.1\/build\/index.umd\.js/g,"https://cdn.jsdelivr.net/npm/docx@9.7.1/build/index.umd.js");}
 async function buildAuthoritativeIndex(request,preloadResponse){const response=await networkResponse(request,preloadResponse);if(!response?.ok)return response;const type=response.headers.get("content-type")||"";if(!type.includes("text/html"))return response;let html=await response.text();html=stripCompetingResumeRuntime(html);const scripts=[],add=(src,v,data)=>{if(!html.includes(src))scripts.push(`<script src="${src}?v=${v}" data-glueful-runtime="${data}"></script>`)};
 if(!html.includes(RENDER_DIAGNOSTICS_SCRIPT))add(RENDER_DIAGNOSTICS_SCRIPT,"20260820-12","render-diagnostics");
 add(FIXED_PDF_BOOTSTRAP,"20260820-fixedpdf27","fixed-pdf-bootstrap");
