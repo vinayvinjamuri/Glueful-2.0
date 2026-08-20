@@ -2,13 +2,13 @@ name: Jobs Discover Regression
 on:
   push:
     paths:
-      - 'glueful-jobs-discover-v12-stable.js'
+      - 'glueful-jobs-discover-v13-authoritative.js'
       - 'glueful-jobs-official-link-guard-v1.js'
       - 'sw.js'
       - '.github/workflows/jobs-feed-regression.yml'
   pull_request:
     paths:
-      - 'glueful-jobs-discover-v12-stable.js'
+      - 'glueful-jobs-discover-v13-authoritative.js'
       - 'glueful-jobs-official-link-guard-v1.js'
       - 'sw.js'
       - '.github/workflows/jobs-feed-regression.yml'
@@ -22,31 +22,33 @@ jobs:
           node-version: 20
       - name: JavaScript syntax
         run: |
-          node --check glueful-jobs-discover-v12-stable.js
+          node --check glueful-jobs-discover-v13-authoritative.js
           node --check glueful-jobs-official-link-guard-v1.js
           node --check sw.js
-      - name: Jobs V12 contract
+      - name: Jobs V13 contract
         run: |
-          grep -q "Find your next big move" glueful-jobs-discover-v12-stable.js
-          grep -q "Curated for you" glueful-jobs-discover-v12-stable.js
-          grep -q "Top companies hiring" glueful-jobs-discover-v12-stable.js
-          grep -q "Search jobs, skills or companies" glueful-jobs-discover-v12-stable.js
-          grep -q "get-personalized-jobs" glueful-jobs-discover-v12-stable.js
-          grep -q "data-see" glueful-jobs-discover-v12-stable.js
-          grep -q "data-company" glueful-jobs-discover-v12-stable.js
-          grep -q "data-save" glueful-jobs-discover-v12-stable.js
-          grep -q "openDetails" glueful-jobs-discover-v12-stable.js
-          grep -q "replaceChildren(shell)" glueful-jobs-discover-v12-stable.js
-          grep -q "MutationObserver" glueful-jobs-discover-v12-stable.js
+          grep -q "Find your next big move" glueful-jobs-discover-v13-authoritative.js
+          grep -q "Curated for you" glueful-jobs-discover-v13-authoritative.js
+          grep -q "Top companies hiring" glueful-jobs-discover-v13-authoritative.js
+          grep -q "Search jobs, skills or companies" glueful-jobs-discover-v13-authoritative.js
+          grep -q "get-personalized-jobs" glueful-jobs-discover-v13-authoritative.js
+          grep -q "data-open" glueful-jobs-discover-v13-authoritative.js
+          grep -q "data-company" glueful-jobs-discover-v13-authoritative.js
+          grep -q "data-save" glueful-jobs-discover-v13-authoritative.js
+          grep -q "openDetails" glueful-jobs-discover-v13-authoritative.js
+          grep -q "MutationObserver" glueful-jobs-discover-v13-authoritative.js
+          grep -q "__GLUEFUL_JOBS_V13__" glueful-jobs-discover-v13-authoritative.js
       - name: Verified employer link contract
         run: |
           grep -q "verified_employer_link" glueful-jobs-official-link-guard-v1.js
           grep -q "adzuna" glueful-jobs-official-link-guard-v1.js
       - name: Service worker authoritative runtime
         run: |
-          grep -q 'const JOBS_V12=' sw.js
-          grep -q 'glueful-jobs-discover-v12-stable.js' sw.js
-          grep -q 'glueful-cache-v59-jobs-v12-renderer-fix' sw.js
+          grep -q 'const JOBS_V13=' sw.js
+          grep -q 'glueful-jobs-discover-v13-authoritative.js' sw.js
+          grep -q 'glueful-cache-v60-jobs-v13-authoritative' sw.js
+          ! grep -q 'const JOBS_V12=' sw.js
           ! grep -q 'const JOBS_V11=' sw.js
           ! grep -q 'glueful-jobs-discover-v11-stable.js' sw.js
+          ! grep -q 'glueful-jobs-discover-v12-stable.js' sw.js
           ! grep -q 'glueful-jobs-infinite-feed-v1.js' sw.js
