@@ -2,6 +2,7 @@ name: Jobs Discover Regression
 on:
   push:
     paths:
+      - 'glueful-jobs-auth-bootstrap-v1.js'
       - 'glueful-jobs-discover-v7.js'
       - 'glueful-jobs-discover-v8-interaction.js'
       - 'glueful-jobs-discover-v9-relevance-logo-interaction.js'
@@ -10,6 +11,7 @@ on:
       - '.github/workflows/jobs-feed-regression.yml'
   pull_request:
     paths:
+      - 'glueful-jobs-auth-bootstrap-v1.js'
       - 'glueful-jobs-discover-v7.js'
       - 'glueful-jobs-discover-v8-interaction.js'
       - 'glueful-jobs-discover-v9-relevance-logo-interaction.js'
@@ -26,6 +28,7 @@ jobs:
           node-version: 20
       - name: JavaScript syntax
         run: |
+          node --check glueful-jobs-auth-bootstrap-v1.js
           node --check glueful-jobs-discover-v7.js
           node --check glueful-jobs-discover-v8-interaction.js
           node --check glueful-jobs-discover-v9-relevance-logo-interaction.js
@@ -33,6 +36,7 @@ jobs:
           node --check sw.js
       - name: Jobs feed contract checks
         run: |
+          grep -q "createClient" glueful-jobs-auth-bootstrap-v1.js
           grep -q "get-personalized-jobs" glueful-jobs-discover-v7.js
           grep -q "Curated for you" glueful-jobs-discover-v7.js
           grep -q "Top companies hiring" glueful-jobs-discover-v7.js
@@ -43,6 +47,7 @@ jobs:
           grep -q "profile-aware relevance" glueful-jobs-discover-v9-relevance-logo-interaction.js
           grep -q "company_logo_url" glueful-jobs-discover-v9-relevance-logo-interaction.js
           grep -q "data-v9-id" glueful-jobs-discover-v9-relevance-logo-interaction.js
+          grep -q "JOBS_AUTH" sw.js
           grep -q "JOBS_V9" sw.js
-          grep -q "glueful-cache-v51-jobs-discover-v9" sw.js
+          grep -q "glueful-cache-v52-jobs-discover-auth-v1" sw.js
           if grep -q 'add(JOBS_V6' sw.js; then exit 1; fi
