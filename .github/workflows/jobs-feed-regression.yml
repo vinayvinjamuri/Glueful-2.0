@@ -1,0 +1,35 @@
+name: Jobs Discover Regression
+on:
+  push:
+    paths:
+      - 'glueful-jobs-discover-v3.js'
+      - 'glueful-jobs-discover-v4.js'
+      - 'sw.js'
+      - '.github/workflows/jobs-feed-regression.yml'
+  pull_request:
+    paths:
+      - 'glueful-jobs-discover-v3.js'
+      - 'glueful-jobs-discover-v4.js'
+      - 'sw.js'
+jobs:
+  syntax-and-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: JavaScript syntax
+        run: |
+          node --check glueful-jobs-discover-v3.js
+          node --check glueful-jobs-discover-v4.js
+          node --check sw.js
+      - name: Jobs feed contract checks
+        run: |
+          grep -q "get-personalized-jobs" glueful-jobs-discover-v4.js
+          grep -q "Roles based on your applications" glueful-jobs-discover-v4.js
+          grep -q "Curated for you" glueful-jobs-discover-v4.js
+          grep -q "Top companies on the hunt" glueful-jobs-discover-v4.js
+          grep -q "Recently seen" glueful-jobs-discover-v4.js
+          grep -q "JOBS_DISCOVER_V4" sw.js
+          grep -q "glueful-cache-v44-jobs-discover-v4" sw.js
