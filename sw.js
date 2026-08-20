@@ -1,4 +1,4 @@
-const CACHE_NAME="glueful-cache-v64-jobs-resume-action";
+const CACHE_NAME="glueful-cache-v65-fixed-resume-authority";
 const RENDER_DIAGNOSTICS_SCRIPT="./glueful-resume-render-diagnostics.js";
 const FIXED_PDF_BOOTSTRAP="./glueful-resume-fixed-page-bootstrap.js";
 const FIXED_PDF_MODEL="./glueful-resume-layout-model.js";
@@ -19,6 +19,9 @@ const RUNTIME=[RENDER_DIAGNOSTICS_SCRIPT,FIXED_PDF_BOOTSTRAP,FIXED_PDF_MODEL,FIX
 const ASSETS=["./manifest.json",...RUNTIME,"./icons/icon-192.png","./icons/icon-512.png","./icons/icon-180.png","./icons/icon-maskable-512.png"];
 async function networkResponse(request,preloadResponse){return (await preloadResponse)||fetch(request,{cache:"no-store"})}
 function stripCompetingRuntime(html){return html
+ .replace(/<script[^>]+src=["'][^"']*glueful-resume-studio-adobe\.js(?:\?[^"']*)?["'][^>]*><\/script>/gi,"")
+ .replace(/<script[^>]+src=["'][^"']*glueful-resume-studio-v41(?:-[^"']*)?\.js(?:\?[^"']*)?["'][^>]*><\/script>/gi,"")
+ .replace(/<script[^>]+src=["'][^"']*glueful-resume-docauth-v50\.js(?:\?[^"']*)?["'][^>]*><\/script>/gi,"")
  .replace(/<script[^>]+src=["'][^"']*glueful-jobs-auth-bootstrap-v1\.js(?:\?[^"']*)?["'][^>]*><\/script>/gi,"")
  .replace(/<script[^>]+src=["'][^"']*glueful-jobs-discover-v3\.js(?:\?[^"']*)?["'][^>]*><\/script>/gi,"")
  .replace(/<script[^>]+src=["'][^"']*glueful-jobs-discover-v4\.js(?:\?[^"']*)?["'][^>]*><\/script>/gi,"")
@@ -36,47 +39,8 @@ function stripCompetingRuntime(html){return html
  .replace(/<script[^>]+src=["'][^"']*glueful-jobs-official-link-guard-v1\.js(?:\?[^"']*)?["'][^>]*><\/script>/gi,"")
  .replace(/<script[^>]+src=["'][^"']*glueful-jobs-infinite-feed-v1\.js(?:\?[^"']*)?["'][^>]*><\/script>/gi,"")
  .replace(/<script[^>]+src=["'][^"']*glueful-jobs-logo-patch-v1\.js(?:\?[^"']*)?["'][^>]*><\/script>/gi,"");}
-async function buildAuthoritativeIndex(request,preloadResponse){const response=await networkResponse(request,preloadResponse);if(!response?.ok)return response;const type=response.headers.get("content-type")||"";if(!type.includes("text/html"))return response;let html=await response.text();html=stripCompetingRuntime(html);const scripts=[`<script src="${RENDER_DIAGNOSTICS_SCRIPT}?v=20260820-14" data-glueful-runtime="render-diagnostics"></script>`,`<script src="${FIXED_PDF_BOOTSTRAP}?v=20260820-fixedpdf29" data-glueful-runtime="fixed-pdf-bootstrap"></script>`,`<script src="${JOBS_AUTH}?v=20260820-auth1" data-glueful-runtime="jobs-auth"></script>`,`<script src="${JOBS_V15}?v=20260821-jobs-v15-authoritative" data-glueful-runtime="jobs-discover-v15"></script>`,`<script src="${JOBS_RESUME_ACTION}?v=20260821-resume-action1" data-glueful-runtime="jobs-resume-action"></script>`,`<script src="${OFFICIAL_LINK_GUARD}?v=20260821-verified-links" data-glueful-runtime="official-link-guard"></script>`];const marker="</body>",block=scripts.join("\n"),injected=html.includes(marker)?html.replace(marker,`${block}\n${marker}`):`${html}\n${block}`;const headers=new Headers(response.headers);headers.set("Content-Type","text/html; charset=UTF-8");headers.set("Cache-Control","no-store, no-cache, must-revalidate");return new Response(injected,{status:response.status,statusText:response.statusText,headers})}
+async function buildAuthoritativeIndex(request,preloadResponse){const response=await networkResponse(request,preloadResponse);if(!response?.ok)return response;const type=response.headers.get("content-type")||"";if(!type.includes("text/html"))return response;let html=await response.text();html=stripCompetingRuntime(html);const scripts=[`<script src="${RENDER_DIAGNOSTICS_SCRIPT}?v=20260821-15" data-glueful-runtime="render-diagnostics"></script>`,`<script src="${FIXED_PDF_BOOTSTRAP}?v=20260821-fixedpdf30" data-glueful-runtime="fixed-pdf-bootstrap"></script>`,`<script src="${JOBS_AUTH}?v=20260820-auth1" data-glueful-runtime="jobs-auth"></script>`,`<script src="${JOBS_V15}?v=20260821-jobs-v15-authoritative" data-glueful-runtime="jobs-discover-v15"></script>`,`<script src="${JOBS_RESUME_ACTION}?v=20260821-resume-action1" data-glueful-runtime="jobs-resume-action"></script>`,`<script src="${OFFICIAL_LINK_GUARD}?v=20260821-verified-links" data-glueful-runtime="official-link-guard"></script>`];const marker="</body>",block=scripts.join("\n"),injected=html.includes(marker)?html.replace(marker,`${block}\n${marker}`):`${html}\n${block}`;const headers=new Headers(response.headers);headers.set("Content-Type","text/html; charset=UTF-8");headers.set("Cache-Control","no-store, no-cache, must-revalidate");return new Response(injected,{status:response.status,statusText:response.statusText,headers})}
 async function cacheIndexResponse(request,response){if(!response?.ok)return;try{const c=await caches.open(CACHE_NAME);await c.put(request,response.clone())}catch(e){console.warn("[Glueful SW] index cache write failed:",e)}}
 self.addEventListener("install",e=>e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()).catch(err=>{console.warn("[Glueful SW] precache failed:",err);return self.skipWaiting()})));
 self.addEventListener("activate",e=>e.waitUntil((async()=>{const keys=await caches.keys();await Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)));if(self.registration.navigationPreload){try{await self.registration.navigationPreload.enable()}catch(_){}}await self.clients.claim()})()));
-self.addEventListener("fetch",e=>{
-  const r=e.request,u=new URL(r.url);
-  if(r.method==="GET"&&r.mode==="navigate"){
-    e.respondWith((async()=>{
-      try{
-        const res=await buildAuthoritativeIndex(r,e.preloadResponse);
-        e.waitUntil(cacheIndexResponse(r,res));
-        return res;
-      }catch(err){
-        console.warn("[Glueful SW] navigation failed:",err);
-        return (await caches.match(r))||Response.error();
-      }
-    })());
-    return;
-  }
-  if(r.method==="GET"&&RUNTIME.some(p=>u.pathname.endsWith(p.slice(2)))){
-    e.respondWith((async()=>{
-      try{
-        const res=await fetch(r,{cache:"no-store"});
-        if(res.ok)e.waitUntil((async()=>{try{const c=await caches.open(CACHE_NAME);await c.put(r,res.clone())}catch(_) {}})());
-        return res;
-      }catch(_){
-        return (await caches.match(r))||Response.error();
-      }
-    })());
-    return;
-  }
-  if(r.method==="GET"){
-    e.respondWith((async()=>{
-      const cached=await caches.match(r);
-      try{
-        const res=await fetch(r,{cache:"no-store"});
-        if(res.ok)e.waitUntil((async()=>{try{const c=await caches.open(CACHE_NAME);await c.put(r,res.clone())}catch(_) {}})());
-        return res;
-      }catch(_){
-        return cached||Response.error();
-      }
-    })());
-  }
-});
+self.addEventListener("fetch",e=>{const r=e.request,u=new URL(r.url);if(r.method==="GET"&&r.mode==="navigate"){e.respondWith((async()=>{try{const res=await buildAuthoritativeIndex(r,e.preloadResponse);e.waitUntil(cacheIndexResponse(r,res));return res}catch(err){console.warn("[Glueful SW] navigation failed:",err);return (await caches.match(r))||Response.error()}})());return}if(r.method==="GET"&&RUNTIME.some(p=>u.pathname.endsWith(p.slice(2)))){e.respondWith((async()=>{try{const res=await fetch(r,{cache:"no-store"});if(res.ok)e.waitUntil((async()=>{try{const c=await caches.open(CACHE_NAME);await c.put(r,res.clone())}catch(_) {}})());return res}catch(_){return (await caches.match(r))||Response.error()}})());return}if(r.method==="GET"){e.respondWith((async()=>{const cached=await caches.match(r);try{const res=await fetch(r,{cache:"no-store"});if(res.ok)e.waitUntil((async()=>{try{const c=await caches.open(CACHE_NAME);await c.put(r,res.clone())}catch(_) {}})());return res}catch(_){return cached||Response.error()}})());}});
