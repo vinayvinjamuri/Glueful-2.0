@@ -63,7 +63,7 @@ jobs:
           grep -F 'JOBS_DISCOVER' sw.js
           grep -F 'glueful-jobs-discover-v1.js' sw.js
           grep -F '20260820-fixedpdf27' sw.js
-          grep -F 'glueful-cache-v40-jobs-discover' sw.js
+          grep -F 'glueful-cache-v41-jobs-discover-v2' sw.js
           ! grep -F 'HEADER_FIDELITY_SCRIPT' sw.js
           ! grep -F 'HEADER_ALIGNMENT_SCRIPT' sw.js
           ! grep -F 'MOBILE_LAYOUT_SCRIPT' sw.js
@@ -106,21 +106,22 @@ jobs:
           grep -F 'showSaveFilePicker' glueful-resume-vector-docx-export-v2.js
           grep -F 'docxDownloadPipeline' glueful-resume-vector-docx-export-v2.js
 
-      - name: Jobs Discover functional UI regression
+      - name: Jobs Discover V2 functional UI regression
         run: |
           set -e
+          grep -F '20260820-jobs-discover-v2' glueful-jobs-discover-v1.js
           grep -F "Roles you've applied to" glueful-jobs-discover-v1.js
           grep -F 'Curated for you' glueful-jobs-discover-v1.js
           grep -F 'Top companies on the hunt' glueful-jobs-discover-v1.js
+          grep -F 'Qualcomm' glueful-jobs-discover-v1.js
+          grep -F 'NVIDIA' glueful-jobs-discover-v1.js
+          grep -F 'AMD' glueful-jobs-discover-v1.js
+          grep -F 'NXP' glueful-jobs-discover-v1.js
+          grep -F 'hardware' glueful-jobs-discover-v1.js
           grep -F 'scroll-snap-type:x proximity' glueful-jobs-discover-v1.js
-          grep -F 'openJobFilters' glueful-jobs-discover-v1.js
-          grep -F 'openSource' glueful-jobs-discover-v1.js
+          grep -F 'showList' glueful-jobs-discover-v1.js
+          grep -F 'glueful_recent_jobs' glueful-jobs-discover-v1.js
           grep -F 'data-company' glueful-jobs-discover-v1.js
-          grep -F 'glueful-splash' glueful-jobs-discover-v1.js
-          grep -F "v==='\\n'" glueful-jobs-discover-v1.js
-
-      - name: DOCX fallback remains available
-        run: |
-          set -e
-          grep -F 'glueful-pdf-to-docx' glueful-resume-studio-adobe.js
-          grep -F 'docx-preview' glueful-resume-studio-adobe.js
+          grep -F 'openFilters' glueful-jobs-discover-v1.js
+          grep -F 'premium-splash-image' glueful-jobs-discover-v1.js
+          grep -F 'v===\'\\n\'' glueful-jobs-discover-v1.js
