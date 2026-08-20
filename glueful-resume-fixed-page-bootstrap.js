@@ -1,7 +1,7 @@
 /* Glueful Resume Studio fixed-PDF bootstrap. Loaded directly and defensively by the service worker. */
 (function(){
 'use strict';
-const VERSION='20260820-fixedpdf24';
+const VERSION='20260820-fixedpdf25';
 window.__gluefulFixedPdfScheduled=true;
 window.__GLUEFUL_RENDER_DEBUG__=Object.assign(window.__GLUEFUL_RENDER_DEBUG__||{},{renderer:'fixed-pdf',fixedLoaded:true,fixedReady:false,fixedScheduled:true,adobeLoaded:!!window.gluefulAdobeResumeStudio,serviceWorkerControlled:!!navigator.serviceWorker?.controller,bootstrapVersion:VERSION});
 const PDFJS=['https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js','glueful-fixed-pdfjs-runtime'];
