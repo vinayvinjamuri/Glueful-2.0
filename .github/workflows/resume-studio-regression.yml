@@ -60,7 +60,7 @@ jobs:
           grep -F 'PDF_EXPORT_FIX' sw.js
           grep -F 'glueful-resume-pdf-export-fix-v1.js' sw.js
           grep -F '20260820-fixedpdf27' sw.js
-          grep -F 'glueful-cache-v38-pdf-export-fix' sw.js
+          grep -F 'glueful-cache-v39-resume-download-fix' sw.js
           ! grep -F 'HEADER_FIDELITY_SCRIPT' sw.js
           ! grep -F 'HEADER_ALIGNMENT_SCRIPT' sw.js
           ! grep -F 'MOBILE_LAYOUT_SCRIPT' sw.js
@@ -84,15 +84,24 @@ jobs:
           grep -F 'handleCandidateResumeUpload' glueful-resume-import-guard-v1.js
           grep -F 'glueful-resume-import-guard-v1.js' glueful-resume-fixed-page-bootstrap.js
 
-      - name: PDF export regression
+      - name: PDF download regression
         run: |
           set -e
-          grep -F 'glueful-resume-pdf-export-fix-v1.js' glueful-resume-fixed-page-bootstrap.js
-          grep -F 'pdfExportBlankPageFix:true' glueful-resume-pdf-export-fix-v1.js
+          grep -F '20260820-pdf-download-v2' glueful-resume-pdf-export-fix-v1.js
+          grep -F 'window.showSaveFilePicker' glueful-resume-pdf-export-fix-v1.js
+          grep -F 'html2canvas' glueful-resume-pdf-export-fix-v1.js
           grep -F 'pdfExportSelectionCleared:true' glueful-resume-pdf-export-fix-v1.js
-          grep -F 'window.getSelection' glueful-resume-pdf-export-fix-v1.js
-          grep -F 'querySelectorAll(PAGE_SEL)' glueful-resume-pdf-export-fix-v1.js
-          grep -F 'glueful-fixed-print-page' glueful-resume-pdf-export-fix-v1.js
+          grep -F 'pdfExportBlankPageFix:true' glueful-resume-pdf-export-fix-v1.js
+          grep -F 'pdfExportSkippedEmptyPages' glueful-resume-pdf-export-fix-v1.js
+          grep -F 'glueful-download-format-menu-v2' glueful-resume-pdf-export-fix-v1.js
+          grep -F 'Download PDF' glueful-resume-pdf-export-fix-v1.js
+          grep -F 'Download DOCX' glueful-resume-pdf-export-fix-v1.js
+
+      - name: DOCX save-picker path remains available
+        run: |
+          set -e
+          grep -F 'showSaveFilePicker' glueful-resume-vector-docx-export-v2.js
+          grep -F 'docxDownloadPipeline' glueful-resume-vector-docx-export-v2.js
 
       - name: DOCX fallback remains available
         run: |
