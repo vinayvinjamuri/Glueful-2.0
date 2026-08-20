@@ -7,6 +7,8 @@ on:
       - 'glueful-jobs-discover-v5.js'
       - 'glueful-jobs-discover-v6.js'
       - 'glueful-jobs-discover-v6-hotfix.js'
+      - 'glueful-jobs-discover-v7.js'
+      - 'glueful-jobs-logo-patch-v1.js'
       - 'sw.js'
       - '.github/workflows/jobs-feed-regression.yml'
   pull_request:
@@ -16,7 +18,10 @@ on:
       - 'glueful-jobs-discover-v5.js'
       - 'glueful-jobs-discover-v6.js'
       - 'glueful-jobs-discover-v6-hotfix.js'
+      - 'glueful-jobs-discover-v7.js'
+      - 'glueful-jobs-logo-patch-v1.js'
       - 'sw.js'
+      - '.github/workflows/jobs-feed-regression.yml'
 jobs:
   syntax-and-contract:
     runs-on: ubuntu-latest
@@ -32,19 +37,17 @@ jobs:
           node --check glueful-jobs-discover-v5.js
           node --check glueful-jobs-discover-v6.js
           node --check glueful-jobs-discover-v6-hotfix.js
+          node --check glueful-jobs-discover-v7.js
+          node --check glueful-jobs-logo-patch-v1.js
           node --check sw.js
       - name: Jobs feed contract checks
         run: |
-          grep -q "get-personalized-jobs" glueful-jobs-discover-v6.js
-          grep -q "Roles you\\'ve applied to" glueful-jobs-discover-v6.js
-          grep -q "Curated for you" glueful-jobs-discover-v6.js
-          grep -q "Top companies hiring" glueful-jobs-discover-v6.js
-          grep -q "Saved for later" glueful-jobs-discover-v6.js
-          grep -q "Recently seen" glueful-jobs-discover-v6.js
-          grep -q "g6-list-row" glueful-jobs-discover-v6.js
-          grep -q "g6-detail-sheet" glueful-jobs-discover-v6-hotfix.js
-          grep -q "JOBS_DISCOVER_V6" sw.js
-          grep -q "glueful-cache-v48-jobs-discover-v6-detail-click" sw.js
-          grep -q "JOBS_DISCOVER_V6_HOTFIX" sw.js
-          if grep -q 'add(JOBS_DISCOVER_V4' sw.js; then exit 1; fi
-          if grep -q 'add(JOBS_DISCOVER_V5' sw.js; then exit 1; fi
+          grep -q "get-personalized-jobs" glueful-jobs-discover-v7.js
+          grep -q "Curated for you" glueful-jobs-discover-v7.js
+          grep -q "Top companies hiring" glueful-jobs-discover-v7.js
+          grep -q "openId" glueful-jobs-discover-v7.js
+          grep -q "g7-row" glueful-jobs-discover-v7.js
+          grep -q "company_logo_url" glueful-jobs-discover-v7.js
+          grep -q "JOBS_V7" sw.js
+          grep -q "glueful-cache-v49-jobs-discover-v7" sw.js
+          if grep -q 'add(JOBS_V6' sw.js; then exit 1; fi
