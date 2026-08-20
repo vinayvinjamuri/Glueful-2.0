@@ -51,6 +51,9 @@
   const css=`.g-inf-sec{margin:30px 0}.g-inf-headline{display:flex;justify-content:space-between;align-items:end;gap:12px;margin-bottom:12px}.g-inf-headline h2{margin:0;font-size:20px}.g-inf-headline p{margin:5px 0 0;color:var(--text-muted,#9aa2b2);font-size:11px}.g-inf-count{color:#9b7cff;font-weight:900}.g-inf-company-rail{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;scroll-snap-type:x mandatory}.g-inf-company{flex:0 0 145px;padding:10px;border:1px solid var(--border,rgba(255,255,255,.1));background:var(--surface,#111620);color:var(--text,#fff);border-radius:14px;text-align:center;scroll-snap-align:start}.g-inf-company b{display:block;font-size:17px;color:#9b7cff}.g-inf-company span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10px}.g-inf-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.g-inf-card{position:relative;min-height:175px;background:linear-gradient(180deg,#151a25,#111620);border:1px solid rgba(255,255,255,.09);border-radius:17px;padding:14px;box-sizing:border-box}.g-inf-top{display:flex;gap:10px}.g-inf-logo{width:46px;height:46px;flex:0 0 46px;background:#fff;color:#4d38b8;border-radius:12px;display:grid;place-items:center;overflow:hidden}.g-inf-logo img{width:100%;height:100%;object-fit:contain}.g-inf-top strong{display:block;font-size:13px;line-height:1.3}.g-inf-top span,.g-inf-top small{display:block;color:var(--text-muted,#9aa2b2);font-size:10px;margin-top:4px}.g-inf-tag{display:inline-block;margin-top:15px;padding:5px 8px;border-radius:999px;background:rgba(71,211,157,.1);color:#61d8a7;font-size:9px;font-weight:900}.g-inf-open{float:right;margin-top:14px;border:0;background:none;color:#a98bff;font-weight:900;cursor:pointer}.g-inf-link-state{display:block;clear:both;margin-top:11px;color:var(--text-faint,#697184);font-size:8px}.g-inf-sentinel{height:60px;display:grid;place-items:center;color:var(--text-faint,#697184);font-size:10px}.g-inf-modal{position:fixed;inset:0;z-index:100001;background:rgba(3,5,10,.84);display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box}.g-inf-modal-box{width:100%;max-width:820px;max-height:90vh;overflow:auto;background:var(--card,#151a25);color:var(--text,#fff);border-radius:20px;padding:18px;box-sizing:border-box}.g-inf-modal header{display:flex;justify-content:space-between;gap:12px}.g-inf-head{display:flex;gap:10px}.g-inf-head h2{margin:3px 0;font-size:20px}.g-inf-head small,.g-inf-head p{color:var(--text-muted,#9aa2b2);font-size:11px;margin:4px 0}.g-inf-x{width:38px;height:38px;border:0;border-radius:11px;background:var(--surface,#111620);color:var(--text,#fff);font-size:25px}.g-inf-modal main{border-top:1px solid var(--border,rgba(255,255,255,.1));margin-top:16px;padding-top:16px;color:var(--text-muted,#9aa2b2);font-size:13px;line-height:1.65}.g-inf-action{display:block;text-align:center;margin-top:18px;padding:13px;border-radius:13px;background:linear-gradient(135deg,#7b36ff,#3e75ff);color:#fff;text-decoration:none;font-weight:900}.g-inf-action.secondary{background:var(--surface,#111620);border:1px solid var(--border,rgba(255,255,255,.1))}@media(max-width:700px){.g-inf-grid{grid-template-columns:1fr}.g-inf-modal{align-items:flex-end;padding:0}.g-inf-modal-box{max-height:92vh;border-radius:20px 20px 0 0}}
 `;
   function injectCss(){if(document.getElementById('g-inf-css'))return;const s=document.createElement('style');s.id='g-inf-css';s.textContent=css;document.head.appendChild(s)}
+  function seedSeen(){
+    document.querySelectorAll('[data-id],[data-inf-id]').forEach(el=>{const id=el.getAttribute('data-id')||el.getAttribute('data-inf-id');if(id)seen.add(String(id))});
+  }
   function ensureSection(){
     if(document.getElementById('g-inf-sec'))return document.getElementById('g-inf-sec');
     const view=document.getElementById('jobs-view');if(!view)return null;
@@ -61,7 +64,7 @@
     const rail=document.getElementById('g-inf-companies');if(!rail)return;
     const map=new Map([...rail.querySelectorAll('[data-inf-company]')].map(x=>[x.dataset.infCompany,Number(x.dataset.infCount||0)]));
     rows.forEach(j=>{const c=company(j);map.set(c,(map.get(c)||0)+1)});
-    rail.innerHTML=[...map.entries()].sort((a,b)=>b[1]-a[1]).slice(0,100).map(([c,n])=>`<button type="button" class="g-inf-company" data-inf-company="${esc(c)}" data-inf-count="${n}"><span>${esc(c)}</span><b>${n}</b><small>${n===1?'role':'roles'}</small></button>`).join('');
+    rail.innerHTML=[...map.entries()].sort((a,b)=>b[1]-a[1]).map(([c,n])=>`<button type="button" class="g-inf-company" data-inf-company="${esc(c)}" data-inf-count="${n}"><span>${esc(c)}</span><b>${n}</b><small>${n===1?'role':'roles'}</small></button>`).join('');
     rail.querySelectorAll('[data-inf-company]').forEach(b=>b.onclick=()=>{const c=b.dataset.infCompany;document.getElementById('g-inf-grid').querySelectorAll('.g-inf-card').forEach(card=>{card.hidden=card.querySelector('.g-inf-top span')?.textContent!==c})});
   }
   function addRows(rows){
@@ -84,6 +87,19 @@
       if(s)s.textContent=exhausted?'You’ve reached the end of the current job database. New jobs will appear after the next refresh.':'Scroll for more…';
     }catch(err){console.error('[Glueful Infinite Jobs]',err);if(s)s.textContent='Could not load more jobs. Try again.'}finally{loading=false}
   }
-  function boot(){injectCss();const sec=ensureSection();if(!sec)return;const observer=new MutationObserver(()=>{if(document.getElementById('g-inf-sec')){observer.disconnect();loadMore();const sentinel=document.getElementById('g-inf-sentinel');const io=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting))loadMore()},{rootMargin:'900px'});if(sentinel)io.observe(sentinel)}});observer.observe(document.body,{childList:true,subtree:true});setTimeout(()=>{if(!document.getElementById('g-inf-grid')?.children.length)loadMore()},1500)}
+  function wireInfiniteObserver(){
+    const sentinel=document.getElementById('g-inf-sentinel');if(!sentinel)return;
+    if(window.__GLUEFUL_INFINITE_IO__)return;
+    window.__GLUEFUL_INFINITE_IO__=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting))loadMore()},{rootMargin:'900px'});
+    window.__GLUEFUL_INFINITE_IO__.observe(sentinel);
+  }
+  function boot(){
+    injectCss();seedSeen();
+    const tryStart=()=>{const sec=ensureSection();if(!sec)return false;wireInfiniteObserver();if(!document.getElementById('g-inf-grid')?.children.length)loadMore();return true};
+    if(tryStart())return;
+    const observer=new MutationObserver(()=>{if(tryStart())observer.disconnect()});
+    observer.observe(document.body,{childList:true,subtree:true});
+    setTimeout(()=>observer.disconnect(),30000);
+  }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
