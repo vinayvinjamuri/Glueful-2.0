@@ -14,6 +14,7 @@ on:
       - 'glueful-resume-layout-model.js'
       - 'glueful-resume-pdf-layout-importer.js'
       - 'glueful-resume-import-guard-v1.js'
+      - 'glueful-resume-pdf-export-fix-v1.js'
       - 'sw.js'
       - '.github/workflows/resume-studio-regression.yml'
 
@@ -39,6 +40,7 @@ jobs:
             glueful-resume-layout-model.js \
             glueful-resume-pdf-layout-importer.js \
             glueful-resume-import-guard-v1.js \
+            glueful-resume-pdf-export-fix-v1.js \
             sw.js; do
             node --check "$f"
           done
@@ -77,6 +79,15 @@ jobs:
           grep -F 'cp-resume-file' glueful-resume-import-guard-v1.js
           grep -F 'handleCandidateResumeUpload' glueful-resume-import-guard-v1.js
           grep -F 'glueful-resume-import-guard-v1.js' glueful-resume-fixed-page-bootstrap.js
+
+      - name: PDF export regression
+        run: |
+          set -e
+          grep -F 'glueful-resume-pdf-export-fix-v1.js' glueful-resume-fixed-page-bootstrap.js
+          grep -F 'pdfExportBlankPageFix:true' glueful-resume-pdf-export-fix-v1.js
+          grep -F 'pdfExportSelectionCleared:true' glueful-resume-pdf-export-fix-v1.js
+          grep -F 'window.getSelection' glueful-resume-pdf-export-fix-v1.js
+          grep -F 'querySelectorAll(PAGE_SEL)' glueful-resume-pdf-export-fix-v1.js
 
       - name: DOCX fallback remains available
         run: |
