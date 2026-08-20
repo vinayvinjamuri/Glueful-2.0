@@ -46,7 +46,7 @@ jobs:
       - name: Fixed-page authority and visual-source regression
         run: |
           set -e
-          grep -F '__gluefulFixedPdfScheduled = true' glueful-resume-fixed-page-bootstrap.js
+          grep -F 'window.__gluefulFixedPdfScheduled=true' glueful-resume-fixed-page-bootstrap.js
           grep -F 'fixed-controller-v11' glueful-resume-fixed-page-controller.js
           grep -F 'original-pdf' glueful-resume-pdf-layout-importer.js
           grep -F 'explicitLogoExtraction:false' glueful-resume-pdf-layout-importer.js
