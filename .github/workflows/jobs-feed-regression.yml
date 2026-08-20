@@ -41,8 +41,10 @@ jobs:
           grep -q "Top companies hiring" glueful-jobs-discover-v6.js
           grep -q "Saved for later" glueful-jobs-discover-v6.js
           grep -q "Recently seen" glueful-jobs-discover-v6.js
+          grep -q "g6-list-row" glueful-jobs-discover-v6.js
+          grep -q "g6-detail-sheet" glueful-jobs-discover-v6-hotfix.js
           grep -q "JOBS_DISCOVER_V6" sw.js
-          grep -q "glueful-cache-v47-jobs-discover-v6-hotfix" sw.js
+          grep -q "glueful-cache-v48-jobs-discover-v6-detail-click" sw.js
           grep -q "JOBS_DISCOVER_V6_HOTFIX" sw.js
           if grep -q 'add(JOBS_DISCOVER_V4' sw.js; then exit 1; fi
           if grep -q 'add(JOBS_DISCOVER_V5' sw.js; then exit 1; fi
