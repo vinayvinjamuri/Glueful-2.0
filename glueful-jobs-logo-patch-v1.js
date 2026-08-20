@@ -1,11 +1,8 @@
-/* Glueful Jobs logo patch — reuse the same logo source as the existing application/job UI */
+/* Glueful Jobs V6 visual compatibility patch — fix company-name/card CSS collision */
 (function(){'use strict';
-const CLIENT='1id_c53sjhZ8vJteGbe';
-const DOMAINS={Qualcomm:'qualcomm.com','Qualcomm Technologies':'qualcomm.com',NVIDIA:'nvidia.com',AMD:'amd.com','NXP Semiconductors':'nxp.com','Texas Instruments':'ti.com',Infineon:'infineon.com','Analog Devices':'analog.com',Microchip:'microchip.com','STMicroelectronics':'st.com',Renesas:'renesas.com','Renesas Electronics':'renesas.com',MediaTek:'mediatek.com',Broadcom:'broadcom.com',Marvell:'marvell.com',Synopsys:'synopsys.com',Cadence:'cadence.com',Arm:'arm.com',Apple:'apple.com',Intel:'intel.com',Samsung:'samsung.com',Sony:'sony.com',Bosch:'bosch.com'};
-const norm=s=>String(s||'').toLowerCase().replace(/\s+/g,' ').trim();
-function existing(company){const q=norm(company);const nodes=[...document.querySelectorAll('.job-logo img,.application-card img')];const n=nodes.find(img=>{const host=img.closest('.job-logo,[class*="application"]');const txt=norm(host?.getAttribute('data-company-logo')||host?.getAttribute('alt')||img.alt||'');return txt===q||txt.includes(q)||q.includes(txt)});return n?.currentSrc||n?.src||''}
-function domain(company){const exact=Object.keys(DOMAINS).find(k=>norm(k)===norm(company));if(exact)return DOMAINS[exact];const key=Object.keys(DOMAINS).find(k=>norm(company).includes(norm(k))||norm(k).includes(norm(company)));return key?DOMAINS[key]:''}
-function patch(){const root=document.getElementById('glueful-discover-root');if(!root)return;root.querySelectorAll('.gd3-card,.gd3-list-logo').forEach(card=>{const company=card.querySelector('.gd3-company')?.textContent?.trim()||card.querySelector('strong')?.textContent?.trim()||'';const box=card.querySelector('.gd3-logo,.gd3-list-logo');if(!box||box.querySelector('img'))return;const src=existing(company)||((d)=>d?`https://cdn.brandfetch.io/domain/${encodeURIComponent(d)}?c=${encodeURIComponent(CLIENT)}`:'')(domain(company));if(!src)return;const img=document.createElement('img');img.src=src;img.alt=company+' logo';img.loading='lazy';img.style.cssText='width:100%;height:100%;object-fit:contain;display:block';img.onerror=()=>img.remove();box.replaceChildren(img)});}
-new MutationObserver(patch).observe(document.body,{childList:true,subtree:true});setInterval(patch,1200);patch();
-window.__GLUEFUL_JOBS_LOGO_PATCH__={version:'20260820-jobs-logo-patch-v1',patch};
+const style=document.createElement('style');
+style.id='glueful-jobs-v6-visual-fix';
+style.textContent=`#glueful-discover-root-v6 .g6-card .g6-company{box-sizing:content-box;flex:none;min-height:0;width:auto;border:0;background:transparent;border-radius:0;color:var(--text-muted);padding:0;text-align:left;font-size:11px;font-weight:400;margin-top:4px;display:block}#glueful-discover-root-v6 .g6-card .g6-company strong,#glueful-discover-root-v6 .g6-card .g6-company b,#glueful-discover-root-v6 .g6-card .g6-company small{display:inline;font-size:inherit;min-height:0;margin:0;color:inherit}`;
+document.head.appendChild(style);
+window.__GLUEFUL_JOBS_LOGO_PATCH__={version:'20260820-jobs-v6-visual-fix'};
 })();
