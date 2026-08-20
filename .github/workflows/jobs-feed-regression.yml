@@ -8,6 +8,7 @@ on:
       - 'glueful-jobs-discover-v6.js'
       - 'glueful-jobs-discover-v6-hotfix.js'
       - 'glueful-jobs-discover-v7.js'
+      - 'glueful-jobs-discover-v8-interaction.js'
       - 'glueful-jobs-logo-patch-v1.js'
       - 'sw.js'
       - '.github/workflows/jobs-feed-regression.yml'
@@ -19,6 +20,7 @@ on:
       - 'glueful-jobs-discover-v6.js'
       - 'glueful-jobs-discover-v6-hotfix.js'
       - 'glueful-jobs-discover-v7.js'
+      - 'glueful-jobs-discover-v8-interaction.js'
       - 'glueful-jobs-logo-patch-v1.js'
       - 'sw.js'
       - '.github/workflows/jobs-feed-regression.yml'
@@ -38,6 +40,7 @@ jobs:
           node --check glueful-jobs-discover-v6.js
           node --check glueful-jobs-discover-v6-hotfix.js
           node --check glueful-jobs-discover-v7.js
+          node --check glueful-jobs-discover-v8-interaction.js
           node --check glueful-jobs-logo-patch-v1.js
           node --check sw.js
       - name: Jobs feed contract checks
@@ -48,6 +51,8 @@ jobs:
           grep -q "openId" glueful-jobs-discover-v7.js
           grep -q "g7-row" glueful-jobs-discover-v7.js
           grep -q "company_logo_url" glueful-jobs-discover-v7.js
+          grep -q "g7-row" glueful-jobs-discover-v8-interaction.js
           grep -q "JOBS_V7" sw.js
-          grep -q "glueful-cache-v49-jobs-discover-v7" sw.js
+          grep -q "JOBS_V8" sw.js
+          grep -q "glueful-cache-v50-jobs-discover-v8" sw.js
           if grep -q 'add(JOBS_V6' sw.js; then exit 1; fi
