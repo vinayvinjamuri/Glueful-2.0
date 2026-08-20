@@ -109,7 +109,7 @@ jobs:
       - name: Jobs Discover functional UI regression
         run: |
           set -e
-          grep -F 'Roles you\x27ve applied to' glueful-jobs-discover-v1.js
+          grep -F "Roles you've applied to" glueful-jobs-discover-v1.js
           grep -F 'Curated for you' glueful-jobs-discover-v1.js
           grep -F 'Top companies on the hunt' glueful-jobs-discover-v1.js
           grep -F 'scroll-snap-type:x proximity' glueful-jobs-discover-v1.js
@@ -117,7 +117,7 @@ jobs:
           grep -F 'openSource' glueful-jobs-discover-v1.js
           grep -F 'data-company' glueful-jobs-discover-v1.js
           grep -F 'glueful-splash' glueful-jobs-discover-v1.js
-          grep -F "v==='\\\\n'" glueful-jobs-discover-v1.js
+          grep -F "v==='\\n'" glueful-jobs-discover-v1.js
 
       - name: DOCX fallback remains available
         run: |
