@@ -1,6 +1,8 @@
 /* Glueful Jobs Relevance V1
  * Safe post-render layer for the stable V15 Jobs runtime.
  * It does not replace V15, Supabase loading, search, filters, Apply or Resume Studio.
+ * Phase 1: observe Jobs DOM changes without observing mutations created by this
+ * layer itself, preventing recursive render scheduling on mobile.
  */
 (function(){
   'use strict';
@@ -72,9 +74,27 @@
     rail.querySelectorAll('img[data-rel-logo]').forEach(img=>img.addEventListener('error',()=>{const p=img.parentElement;if(p){img.remove();p.textContent=initials(p.closest('.g15-card')?.querySelector('.g15-main span')?.textContent||'Company');}}));
     root.dataset.relevancePatched='1';
   }
-  let timer=0;function schedule(){clearTimeout(timer);timer=setTimeout(patch,120);}
-  function boot(){schedule();setTimeout(schedule,500);setTimeout(schedule,1500);}
+  let timer=0;
+  let observer=null;
+  let observing=false;
+  function schedule(){clearTimeout(timer);timer=setTimeout(()=>{
+    if(!observer||observing===false)return;
+    observing=false;
+    try{observer.disconnect();}catch(_){ }
+    try{patch();}finally{
+      const root=document.getElementById('glueful-jobs-v15');
+      if(root){try{observer.observe(root,{childList:true,subtree:true});}catch(_){ }}
+      observing=true;
+    }
+  },120);}
+  function boot(){
+    schedule();setTimeout(schedule,500);setTimeout(schedule,1500);
+    const root=document.getElementById('glueful-jobs-v15');
+    if(!root){setTimeout(boot,500);return;}
+    observer=new MutationObserver(schedule);
+    observer.observe(root,{childList:true,subtree:true});
+    observing=true;
+  }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-  const observer=new MutationObserver(schedule);observer.observe(document.body,{childList:true,subtree:true});
   window.gluefulJobsRelevanceV1={refresh:patch};
 })();
