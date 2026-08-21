@@ -1,8 +1,9 @@
-/* GLUEFUL JOBS V7 visual + Quick Options / Plug-ins patch.
+/* GLUEFUL JOBS V7 visual + Quick Actions / Plug-ins patch.
  * Loaded by the authoritative service worker after Jobs V15.
  * Keeps existing job/application/resume behavior intact.
- * Phase 1: the observer disconnects while this patch mutates the drawer,
- * preventing self-triggered mutation churn on mobile.
+ * Phase 1: observe only the drawer after it exists; never observe the whole
+ * document. This prevents unrelated Jobs/DOM mutations from re-triggering
+ * Quick Actions work on mobile.
  */
 (function(){
   'use strict';
@@ -54,9 +55,9 @@
   function renameBrand(){
     const drawer=document.getElementById('glueful-drawer');
     if(!drawer) return false;
-    drawer.setAttribute('aria-label','Quick Options navigation');
+    drawer.setAttribute('aria-label','Quick Actions navigation');
     const explicit=drawer.querySelector('.drawer-brand-name');
-    if(explicit){if(explicit.textContent!=='Quick Options')explicit.textContent='Quick Options';explicit.classList.add('gq-brand-title');return true;}
+    if(explicit){if(explicit.textContent!=='Quick Actions')explicit.textContent='Quick Actions';explicit.classList.add('gq-brand-title');return true;}
     const brand=drawer.querySelector('.drawer-brand');
     if(!brand) return false;
     const walker=document.createTreeWalker(brand,NodeFilter.SHOW_TEXT);
@@ -64,7 +65,7 @@
     while(node=walker.nextNode()){
       if(String(node.nodeValue||'').trim().toLowerCase()==='glueful') matches.push(node);
     }
-    if(matches.length&&matches[0].nodeValue!=='Quick Options')matches[0].nodeValue='Quick Options';
+    if(matches.length&&matches[0].nodeValue!=='Quick Actions')matches[0].nodeValue='Quick Actions';
     return matches.length>0;
   }
 
@@ -101,7 +102,7 @@
     modal.setAttribute('role','dialog');
     modal.setAttribute('aria-modal','true');
     modal.setAttribute('aria-hidden','true');
-    modal.innerHTML=`<section class="gq-panel"><div class="gq-head"><div><div class="gq-kicker">Quick Options</div><h2>Plug-ins</h2><div class="gq-sub">Useful integrations and career workflow helpers.</div></div><button type="button" class="gq-close" aria-label="Close plug-ins">×</button></div><div class="gq-tabs"><button type="button" class="gq-tab active">All</button><button type="button" class="gq-tab">Active</button><button type="button" class="gq-tab">Recommended</button></div><div class="gq-card"><div class="gq-row"><div class="gq-icon">✦</div><div><div class="gq-name">Brand Fetch</div><div class="gq-meta">Company identity &amp; logo enrichment</div></div><span class="gq-status">ACTIVE</span></div><p class="gq-desc">Uses the existing company-branding pipeline wherever a job exposes a company logo. Existing job and application data are not replaced.</p><div class="gq-actions"><button type="button" class="gq-action primary" data-refresh>Refresh branding</button><button type="button" class="gq-action" data-done>Done</button></div><div class="gq-note">Plug-ins are additive. Jobs, Applications, Resumes, Placement Portal and Resume Studio keep their existing handlers.</div></div><div class="gq-card"><div class="gq-row"><div class="gq-icon">+</div><div><div class="gq-name">More plug-ins</div><div class="gq-meta">Future career integrations can be added here.</div></div><span class="gq-status" style="background:rgba(123,54,255,.10);border-color:rgba(123,54,255,.20);color:#B79AFF">SOON</span></div></div></section>`;
+    modal.innerHTML=`<section class="gq-panel"><div class="gq-head"><div><div class="gq-kicker">Glueful extensions</div><h2>Plug-ins</h2><div class="gq-sub">Supercharge your career workflow with useful integrations.</div></div><button type="button" class="gq-close" aria-label="Close plug-ins">×</button></div><div class="gq-tabs"><button type="button" class="gq-tab active">All</button><button type="button" class="gq-tab">Active</button><button type="button" class="gq-tab">Recommended</button></div><div class="gq-card"><div class="gq-row"><div class="gq-icon">✦</div><div><div class="gq-name">Brand Fetch</div><div class="gq-meta">Company identity &amp; logo enrichment</div></div><span class="gq-status">ACTIVE</span></div><p class="gq-desc">Uses the existing Glueful company-branding pipeline wherever a job exposes a company logo. Existing job and application data are not replaced.</p><div class="gq-actions"><button type="button" class="gq-action primary" data-refresh>Refresh branding</button><button type="button" class="gq-action" data-done>Done</button></div><div class="gq-note">Plug-ins are additive. Jobs, Applications, Resumes, Placement Portal and Resume Studio keep their existing handlers.</div></div><div class="gq-card"><div class="gq-row"><div class="gq-icon">+</div><div><div class="gq-name">More plug-ins</div><div class="gq-meta">Future career integrations can be added here.</div></div><span class="gq-status" style="background:rgba(123,54,255,.10);border-color:rgba(123,54,255,.20);color:#B79AFF">SOON</span></div></div></section>`;
     modal.addEventListener('click',e=>{if(e.target===modal)closePlugins()});
     modal.querySelector('.gq-close').addEventListener('click',closePlugins);
     modal.querySelector('[data-done]').addEventListener('click',closePlugins);
@@ -113,38 +114,27 @@
     const drawer=document.getElementById('glueful-drawer');
     if(!drawer) return false;
     if(drawer.querySelector('[data-glueful-plugin-item="v2"]')) return true;
-
-    const portalText=[...drawer.querySelectorAll('.drawer-item-title')].find(el=>el.textContent.trim().toLowerCase()==='placement portal');
-    if(!portalText) return false;
-    const portalItem=portalText.closest('.drawer-item');
-    if(!portalItem) return false;
+    const labels=[...drawer.querySelectorAll('.drawer-section-label')];
+    const account=labels.find(el=>el.textContent.trim().toLowerCase()==='account');
+    if(!account) return false;
 
     const divider=document.createElement('div');
     divider.className='drawer-divider';
     divider.dataset.gluefulPluginItem='v2';
     const label=document.createElement('div');
     label.className='drawer-section-label gq-plugin-section';
-    label.textContent='Account';
+    label.textContent='Plug-ins';
     label.dataset.gluefulPluginItem='v2';
     const button=document.createElement('button');
     button.type='button';
     button.className='drawer-item';
     button.dataset.gluefulPluginItem='v2';
     button.innerHTML=`<span class="drawer-item-icon"><svg class="premium-svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6v3h3a3 3 0 0 1 3 3v3h-3a3 3 0 0 0 0 6h3v3h-3a3 3 0 0 1-3-3v-3H9v3a3 3 0 0 1-3 3H3v-3h3a3 3 0 0 0 0-6H3V9a3 3 0 0 1 3-3h3z"></path></svg></span><span class="drawer-item-copy"><span class="drawer-item-title">Plug-ins</span><span class="drawer-item-subtitle">Explore and manage integrations</span></span><span class="gq-plugin-badge">New</span><span class="drawer-item-chevron">›</span>`;
-    button.addEventListener('click',()=>{try{window.toggleGluefulDrawer?.(false)}catch(_){ }openPlugins()});
+    button.addEventListener('click',()=>{try{window.toggleGluefulDrawer?.(false)}catch(_){ }try{window.gluefulOpenPlugins?.()}catch(_){openPlugins()}});
 
-    // Put Plug-ins after the entire Placement Portal block, including its connection card,
-    // but before the existing Account section.
-    let cursor=portalItem;
-    while(cursor.nextElementSibling){
-      const next=cursor.nextElementSibling;
-      const text=String(next.textContent||'').trim().toLowerCase();
-      if(text==='account' || next.classList.contains('drawer-section-label')&&text.includes('account')) break;
-      cursor=next;
-    }
-    const insertAfter=cursor.nextElementSibling;
-    drawer.insertBefore(divider,insertAfter||null);
-    drawer.insertBefore(button,insertAfter||null);
+    drawer.insertBefore(divider,account);
+    drawer.insertBefore(label,account);
+    drawer.insertBefore(button,account);
     return true;
   }
 
@@ -162,14 +152,26 @@
   function boot(){
     ensure();
     if(window.__GLUEFUL_QA_OBSERVER__) return;
-    const target=document.body;
-    if(!target) return;
-    const observer=new MutationObserver(()=>{
-      observer.disconnect();
-      try{ensure();}finally{observer.observe(target,{childList:true,subtree:true});}
-    });
-    observer.observe(target,{childList:true,subtree:true});
-    window.__GLUEFUL_QA_OBSERVER__=observer;
+
+    let drawer=document.getElementById('glueful-drawer');
+    let retries=0;
+    const maxRetries=40;
+    const waitForDrawer=()=>{
+      drawer=document.getElementById('glueful-drawer');
+      if(drawer){
+        ensure();
+        const observer=new MutationObserver(()=>{
+          observer.disconnect();
+          try{ensure();}finally{observer.observe(drawer,{childList:true,subtree:true});}
+        });
+        observer.observe(drawer,{childList:true,subtree:true});
+        window.__GLUEFUL_QA_OBSERVER__=observer;
+        return;
+      }
+      retries+=1;
+      if(retries<maxRetries) setTimeout(waitForDrawer,250);
+    };
+    waitForDrawer();
   }
 
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true});
