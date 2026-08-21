@@ -72,7 +72,8 @@ jobs:
           grep -q "Plug-ins" glueful-jobs-logo-patch-v1.js
           grep -q "Brand Fetch" glueful-jobs-logo-patch-v1.js
           grep -q "observer.disconnect" glueful-jobs-logo-patch-v1.js
-          grep -q "observer.observe(target" glueful-jobs-logo-patch-v1.js
+          grep -q "observer.observe(drawer" glueful-jobs-logo-patch-v1.js
+          ! grep -q "observer.observe(target" glueful-jobs-logo-patch-v1.js
       - name: Single Quick Actions / Plug-ins owner
         run: |
           set -e
