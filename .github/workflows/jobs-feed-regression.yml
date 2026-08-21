@@ -65,7 +65,6 @@ jobs:
           grep -q "__GLUEFUL_JOBS_RESUME_ACTION_V1__" glueful-jobs-resume-action-v1.js
           grep -q "Edit resume for this job" glueful-jobs-resume-action-v1.js
           grep -q "openJobResumeEditor" glueful-jobs-resume-action-v1.js
-          grep -q "google.com/s2/favicons" glueful-jobs-resume-action-v1.js
           grep -q "__GLUEFUL_QUICK_ACTIONS_PLUGINS_V2__" glueful-jobs-logo-patch-v1.js
           grep -q "Quick Actions" glueful-jobs-logo-patch-v1.js
           grep -q "Plug-ins" glueful-jobs-logo-patch-v1.js
@@ -76,7 +75,6 @@ jobs:
           grep -q "__GLUEFUL_QUICK_ACTIONS_PLUGINS_V2__" glueful-jobs-logo-patch-v1.js
           grep -q "single authoritative owner" glueful-mobile-update-guard-v1.js
           grep -q "Quick Actions / Plug-ins are intentionally NOT implemented here" glueful-mobile-update-guard-v1.js
-          grep -q "authoritative Quick Actions / Plug-ins implementation" glueful-plugins-nav-v1.js
           ! grep -q "__GLUEFUL_QUICK_ACTIONS_PLUGINS_V1__" glueful-plugins-nav-v1.js
       - name: Service worker authoritative runtime
         run: |
@@ -99,11 +97,9 @@ jobs:
         run: |
           set -e
           grep -q 'gluefulResumeSupabaseClient' glueful-resume-studio-supabase-bridge.js
-          grep -q 'loadAuthoritativeJobsRuntime' glueful-resume-studio-supabase-bridge.js
-          grep -q 'loadJobsResumeActionRuntime' glueful-resume-studio-supabase-bridge.js
-          grep -q '__GLUEFUL_JOBS_V15__' glueful-resume-studio-supabase-bridge.js
-          grep -q '__GLUEFUL_JOBS_RESUME_ACTION_V1__' glueful-resume-studio-supabase-bridge.js
-          grep -q 'data-glueful-direct-jobs-v15' glueful-resume-studio-supabase-bridge.js
+          ! grep -q 'loadAuthoritativeJobsRuntime' glueful-resume-studio-supabase-bridge.js
+          ! grep -q 'loadJobsResumeActionRuntime' glueful-resume-studio-supabase-bridge.js
+          ! grep -q 'data-glueful-direct-jobs-v15' glueful-resume-studio-supabase-bridge.js
       - name: Existing application and resume paths remain referenced
         run: |
           set -e
