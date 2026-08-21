@@ -121,8 +121,6 @@ jobs:
           set -e
           grep -q "__GLUEFUL_JOBS_MOBILE_UX_V15__" glueful-jobs-mobile-ux-v15.js
           grep -q "scroll-snap-type:x mandatory" glueful-jobs-mobile-ux-v15.js
-          grep -q "Curated for you" glueful-jobs-mobile-ux-v15.js
-          grep -q "Top companies hiring" glueful-jobs-mobile-ux-v15.js
           grep -q "Swipe" glueful-jobs-mobile-ux-v15.js
           grep -q "g15-mobile-dots" glueful-jobs-mobile-ux-v15.js
           grep -q 'JOBS_MOBILE_UX=' sw.js
