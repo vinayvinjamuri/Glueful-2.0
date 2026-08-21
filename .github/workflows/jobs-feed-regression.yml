@@ -1,1 +1,191 @@
 name: Jobs Discover Regression
+
+on:
+  push:
+    paths:
+      - 'glueful-jobs-discover-v15-authoritative.js'
+      - 'glueful-jobs-relevance-v1.js'
+      - 'glueful-jobs-resume-action-v1.js'
+      - 'glueful-jobs-logo-patch-v1.js'
+      - 'glueful-jobs-mobile-card-polish-v1.js'
+      - 'glueful-jobs-mobile-ux-v15.js'
+      - 'glueful-plugins-nav-v1.js'
+      - 'glueful-mobile-update-guard-v1.js'
+      - 'glueful-resume-studio-supabase-bridge.js'
+      - 'glueful-resume-render-diagnostics.js'
+      - 'glueful-resume-fixed-page-bootstrap.js'
+      - 'glueful-resume-layout-model.js'
+      - 'glueful-resume-pdf-layout-importer.js'
+      - 'glueful-resume-fixed-page-renderer.js'
+      - 'glueful-resume-fixed-page-ux-v6.js'
+      - 'glueful-resume-fixed-page-controller.js'
+      - 'glueful-resume-vector-docx-export-v2.js'
+      - 'glueful-resume-typography-patch-v1.js'
+      - 'glueful-resume-import-guard-v1.js'
+      - 'glueful-resume-pdf-export-fix-v1.js'
+      - 'sw.js'
+      - 'manifest.json'
+      - 'icons/**'
+      - '.github/workflows/jobs-feed-regression.yml'
+  pull_request:
+    paths:
+      - 'glueful-jobs-discover-v15-authoritative.js'
+      - 'glueful-jobs-relevance-v1.js'
+      - 'glueful-jobs-resume-action-v1.js'
+      - 'glueful-jobs-logo-patch-v1.js'
+      - 'glueful-jobs-mobile-card-polish-v1.js'
+      - 'glueful-jobs-mobile-ux-v15.js'
+      - 'glueful-plugins-nav-v1.js'
+      - 'glueful-mobile-update-guard-v1.js'
+      - 'glueful-resume-studio-supabase-bridge.js'
+      - 'glueful-resume-render-diagnostics.js'
+      - 'glueful-resume-fixed-page-bootstrap.js'
+      - 'glueful-resume-layout-model.js'
+      - 'glueful-resume-pdf-layout-importer.js'
+      - 'glueful-resume-fixed-page-renderer.js'
+      - 'glueful-resume-fixed-page-ux-v6.js'
+      - 'glueful-resume-fixed-page-controller.js'
+      - 'glueful-resume-vector-docx-export-v2.js'
+      - 'glueful-resume-typography-patch-v1.js'
+      - 'glueful-resume-import-guard-v1.js'
+      - 'glueful-resume-pdf-export-fix-v1.js'
+      - 'sw.js'
+      - 'manifest.json'
+      - 'icons/**'
+      - '.github/workflows/jobs-feed-regression.yml'
+
+jobs:
+  syntax-and-runtime-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: JavaScript syntax
+        run: |
+          set -e
+          node --check glueful-jobs-discover-v15-authoritative.js
+          node --check glueful-jobs-relevance-v1.js
+          node --check glueful-jobs-resume-action-v1.js
+          node --check glueful-jobs-logo-patch-v1.js
+          node --check glueful-jobs-mobile-card-polish-v1.js
+          node --check glueful-jobs-mobile-ux-v15.js
+          node --check glueful-plugins-nav-v1.js
+          node --check glueful-mobile-update-guard-v1.js
+          node --check glueful-resume-studio-supabase-bridge.js
+          node --check glueful-resume-render-diagnostics.js
+          node --check glueful-resume-fixed-page-bootstrap.js
+          node --check glueful-resume-layout-model.js
+          node --check glueful-resume-pdf-layout-importer.js
+          node --check glueful-resume-fixed-page-renderer.js
+          node --check glueful-resume-fixed-page-ux-v6.js
+          node --check glueful-resume-fixed-page-controller.js
+          node --check glueful-resume-vector-docx-export-v2.js
+          node --check glueful-resume-typography-patch-v1.js
+          node --check glueful-resume-import-guard-v1.js
+          node --check glueful-resume-pdf-export-fix-v1.js
+          node --check sw.js
+      - name: Stable Jobs V15 contract
+        run: |
+          set -e
+          grep -q "Find your next big move" glueful-jobs-discover-v15-authoritative.js
+          grep -q "Curated for you" glueful-jobs-discover-v15-authoritative.js
+          grep -q "Top companies hiring" glueful-jobs-discover-v15-authoritative.js
+          grep -q "Search jobs, skills or companies" glueful-jobs-discover-v15-authoritative.js
+          grep -q "data-open" glueful-jobs-discover-v15-authoritative.js
+          grep -q "data-company" glueful-jobs-discover-v15-authoritative.js
+          grep -q "data-save" glueful-jobs-discover-v15-authoritative.js
+          grep -q "openDetails" glueful-jobs-discover-v15-authoritative.js
+          grep -q "__GLUEFUL_JOBS_V15__" glueful-jobs-discover-v15-authoritative.js
+      - name: Relevance, Resume Studio and branding contracts
+        run: |
+          set -e
+          grep -q "__GLUEFUL_JOBS_RELEVANCE_V1__" glueful-jobs-relevance-v1.js
+          grep -q "profile" glueful-jobs-relevance-v1.js
+          grep -q "customer support" glueful-jobs-relevance-v1.js
+          grep -q "technical" glueful-jobs-relevance-v1.js
+          grep -q "observer.disconnect" glueful-jobs-relevance-v1.js
+          grep -q "observer.observe(root" glueful-jobs-relevance-v1.js
+          grep -q "__GLUEFUL_JOBS_RESUME_ACTION_V1__" glueful-jobs-resume-action-v1.js
+          grep -q "Edit resume for this job" glueful-jobs-resume-action-v1.js
+          grep -q "openJobResumeEditor" glueful-jobs-resume-action-v1.js
+          grep -q "__GLUEFUL_QUICK_ACTIONS_PLUGINS_V2__" glueful-jobs-logo-patch-v1.js
+          grep -q "Quick Options" glueful-jobs-logo-patch-v1.js
+          grep -q "Plug-ins" glueful-jobs-logo-patch-v1.js
+          grep -q "Brand Fetch" glueful-jobs-logo-patch-v1.js
+          grep -q "observer.disconnect" glueful-jobs-logo-patch-v1.js
+          grep -q "observer.observe(target" glueful-jobs-logo-patch-v1.js
+      - name: Jobs mobile swipe UX contract
+        run: |
+          set -e
+          grep -q "__GLUEFUL_JOBS_MOBILE_UX_V15__" glueful-jobs-mobile-ux-v15.js
+          grep -q "scroll-snap-type:x mandatory" glueful-jobs-mobile-ux-v15.js
+          grep -q "Swipe" glueful-jobs-mobile-ux-v15.js
+          grep -q "g15-mobile-dots" glueful-jobs-mobile-ux-v15.js
+          grep -q 'JOBS_MOBILE_UX=' sw.js
+          grep -q 'glueful-jobs-mobile-ux-v15.js' sw.js
+      - name: Single Quick Actions / Plug-ins owner
+        run: |
+          set -e
+          grep -q "__GLUEFUL_QUICK_ACTIONS_PLUGINS_V2__" glueful-jobs-logo-patch-v1.js
+          grep -q "__GLUEFUL_MOBILE_UPDATE_GUARD_V4__" glueful-mobile-update-guard-v1.js
+          grep -q "single authoritative owner" glueful-mobile-update-guard-v1.js
+          grep -q "Quick Actions / Plug-ins are intentionally NOT implemented here" glueful-mobile-update-guard-v1.js
+          ! grep -q "__GLUEFUL_QUICK_ACTIONS_PLUGINS_V1__" glueful-plugins-nav-v1.js
+      - name: Service worker authoritative runtime
+        run: |
+          set -e
+          grep -q 'const CACHE_NAME="glueful-cache-v72-jobs-mobile-ux"' sw.js
+          grep -q 'const JOBS_V15=' sw.js
+          grep -q 'const JOBS_RELEVANCE=' sw.js
+          grep -q 'const JOBS_RESUME_ACTION=' sw.js
+          grep -q 'const JOBS_LOGO_PATCH=' sw.js
+          grep -q 'const JOBS_MOBILE_CARD_POLISH=' sw.js
+          grep -q 'const JOBS_MOBILE_UX=' sw.js
+          grep -q 'const MOBILE_UPDATE_GUARD=' sw.js
+          grep -q 'glueful-jobs-discover-v15-authoritative.js' sw.js
+          grep -q 'glueful-jobs-relevance-v1.js' sw.js
+          grep -q 'glueful-jobs-resume-action-v1.js' sw.js
+          grep -q 'glueful-jobs-logo-patch-v1.js' sw.js
+          grep -q 'glueful-jobs-mobile-card-polish-v1.js' sw.js
+          grep -q 'glueful-jobs-mobile-ux-v15.js' sw.js
+          grep -q 'glueful-mobile-update-guard-v1.js' sw.js
+          ! grep -q 'glueful-resume-header-fidelity.js' sw.js
+          ! grep -q 'JOBS_V16' sw.js
+          ! grep -q 'glueful-jobs-discover-v16-authoritative.js' sw.js
+          ! grep -q 'glueful-jobs-infinite-feed-v1.js' sw.js
+      - name: Resume Studio fixed-PDF contracts
+        run: |
+          set -e
+          grep -q '__gluefulFixedPdfScheduled' glueful-resume-fixed-page-bootstrap.js
+          grep -q 'glueful-resume-vector-docx-export-v2.js' glueful-resume-fixed-page-bootstrap.js
+          grep -q 'glueful-resume-fixed-page-controller.js' glueful-resume-fixed-page-bootstrap.js
+          grep -q 'fixed-pdf-direct' glueful-resume-render-diagnostics.js
+          ! grep -q 'glueful-resume-header-fidelity.js' glueful-resume-render-diagnostics.js
+      - name: PWA icon contracts
+        run: |
+          set -e
+          test -f icons/icon-192.svg
+          test -f icons/icon-512.svg
+          test -f icons/icon-180.svg
+          test -f icons/icon-maskable-512.svg
+          grep -q 'icon-192.svg' manifest.json
+          grep -q 'icon-512.svg' manifest.json
+          grep -q 'icon-maskable-512.svg' manifest.json
+          grep -q 'icons/icon-192.svg' sw.js
+          grep -q 'icons/icon-512.svg' sw.js
+          grep -q 'icons/icon-maskable-512.svg' sw.js
+      - name: Resume Studio bridge contract
+        run: |
+          set -e
+          grep -q 'gluefulResumeSupabaseClient' glueful-resume-studio-supabase-bridge.js
+          ! grep -q 'loadAuthoritativeJobsRuntime' glueful-resume-studio-supabase-bridge.js
+          ! grep -q 'loadJobsResumeActionRuntime' glueful-resume-studio-supabase-bridge.js
+          ! grep -q 'data-glueful-direct-jobs-v15' glueful-resume-studio-supabase-bridge.js
+      - name: Existing application and resume paths remain referenced
+        run: |
+          set -e
+          grep -q 'glueful-jobs-resume-action-v1.js' sw.js
+          grep -q 'glueful-resume-studio-supabase-bridge.js' sw.js
+          grep -q 'glueful-jobs-official-link-guard-v1.js' sw.js
