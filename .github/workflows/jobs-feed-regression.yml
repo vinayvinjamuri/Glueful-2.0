@@ -8,6 +8,7 @@ on:
       - 'glueful-jobs-resume-action-v1.js'
       - 'glueful-jobs-logo-patch-v1.js'
       - 'glueful-jobs-mobile-card-polish-v1.js'
+      - 'glueful-jobs-mobile-ux-v1.js'
       - 'glueful-plugins-nav-v1.js'
       - 'glueful-mobile-update-guard-v1.js'
       - 'glueful-resume-studio-supabase-bridge.js'
@@ -33,6 +34,7 @@ on:
       - 'glueful-jobs-resume-action-v1.js'
       - 'glueful-jobs-logo-patch-v1.js'
       - 'glueful-jobs-mobile-card-polish-v1.js'
+      - 'glueful-jobs-mobile-ux-v1.js'
       - 'glueful-plugins-nav-v1.js'
       - 'glueful-mobile-update-guard-v1.js'
       - 'glueful-resume-studio-supabase-bridge.js'
@@ -68,6 +70,7 @@ jobs:
           node --check glueful-jobs-resume-action-v1.js
           node --check glueful-jobs-logo-patch-v1.js
           node --check glueful-jobs-mobile-card-polish-v1.js
+          node --check glueful-jobs-mobile-ux-v1.js
           node --check glueful-plugins-nav-v1.js
           node --check glueful-mobile-update-guard-v1.js
           node --check glueful-resume-studio-supabase-bridge.js
@@ -120,10 +123,21 @@ jobs:
           grep -q "g15-card" glueful-jobs-mobile-card-polish-v1.js
           grep -q "g15-logo img" glueful-jobs-mobile-card-polish-v1.js
           grep -q "fallbackLogo" glueful-jobs-mobile-card-polish-v1.js
-          grep -q "-webkit-line-clamp:2" glueful-jobs-mobile-card-polish-v1.js
+          grep -q -- "-webkit-line-clamp:2" glueful-jobs-mobile-card-polish-v1.js
           grep -q 'JOBS_MOBILE_CARD_POLISH=' sw.js
-          grep -q 'glueful-cache-v71-jobs-mobile-polish' sw.js
+          grep -q 'glueful-cache-v72-jobs-mobile-ux' sw.js
           grep -q 'jobs-mobile-card-polish1' sw.js
+      - name: Jobs mobile swipe UX contract
+        run: |
+          set -e
+          grep -q "__GLUEFUL_JOBS_MOBILE_UX_V1__" glueful-jobs-mobile-ux-v1.js
+          grep -q "scroll-snap-type:x mandatory" glueful-jobs-mobile-ux-v1.js
+          grep -q "Curated for you" glueful-jobs-mobile-ux-v1.js
+          grep -q "Top companies hiring" glueful-jobs-mobile-ux-v1.js
+          grep -q "Swipe" glueful-jobs-mobile-ux-v1.js
+          grep -q "pagination" glueful-jobs-mobile-ux-v1.js
+          grep -q 'JOBS_MOBILE_UX=' sw.js
+          grep -q 'glueful-jobs-mobile-ux-v1.js' sw.js
       - name: Single Quick Actions / Plug-ins owner
         run: |
           set -e
@@ -135,18 +149,20 @@ jobs:
       - name: Service worker authoritative runtime
         run: |
           set -e
-          grep -q 'const CACHE_NAME="glueful-cache-v71-jobs-mobile-polish"' sw.js
+          grep -q 'const CACHE_NAME="glueful-cache-v72-jobs-mobile-ux"' sw.js
           grep -q 'const JOBS_V15=' sw.js
           grep -q 'const JOBS_RELEVANCE=' sw.js
           grep -q 'const JOBS_RESUME_ACTION=' sw.js
           grep -q 'const JOBS_LOGO_PATCH=' sw.js
           grep -q 'const JOBS_MOBILE_CARD_POLISH=' sw.js
+          grep -q 'const JOBS_MOBILE_UX=' sw.js
           grep -q 'const MOBILE_UPDATE_GUARD=' sw.js
           grep -q 'glueful-jobs-discover-v15-authoritative.js' sw.js
           grep -q 'glueful-jobs-relevance-v1.js' sw.js
           grep -q 'glueful-jobs-resume-action-v1.js' sw.js
           grep -q 'glueful-jobs-logo-patch-v1.js' sw.js
           grep -q 'glueful-jobs-mobile-card-polish-v1.js' sw.js
+          grep -q 'glueful-jobs-mobile-ux-v1.js' sw.js
           grep -q 'glueful-mobile-update-guard-v1.js' sw.js
           ! grep -q 'glueful-resume-header-fidelity.js' sw.js
           ! grep -q 'JOBS_V16' sw.js
