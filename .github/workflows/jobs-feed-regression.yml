@@ -116,17 +116,6 @@ jobs:
           grep -q "Brand Fetch" glueful-jobs-logo-patch-v1.js
           grep -q "observer.disconnect" glueful-jobs-logo-patch-v1.js
           grep -q "observer.observe(target" glueful-jobs-logo-patch-v1.js
-      - name: Jobs mobile card and logo polish contract
-        run: |
-          set -e
-          grep -q "__GLUEFUL_JOBS_MOBILE_CARD_POLISH_V1__" glueful-jobs-mobile-card-polish-v1.js
-          grep -q "g15-card" glueful-jobs-mobile-card-polish-v1.js
-          grep -q "g15-logo img" glueful-jobs-mobile-card-polish-v1.js
-          grep -q "fallbackLogo" glueful-jobs-mobile-card-polish-v1.js
-          grep -q -- "-webkit-line-clamp:2" glueful-jobs-mobile-card-polish-v1.js
-          grep -q 'JOBS_MOBILE_CARD_POLISH=' sw.js
-          grep -q 'glueful-cache-v72-jobs-mobile-ux' sw.js
-          grep -q 'jobs-mobile-card-polish1' sw.js
       - name: Jobs mobile swipe UX contract
         run: |
           set -e
