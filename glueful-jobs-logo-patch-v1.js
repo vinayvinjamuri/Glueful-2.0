@@ -1,8 +1,9 @@
 /* Glueful Jobs V7 visual + Quick Actions / Plug-ins patch.
  * Loaded by the authoritative service worker after Jobs V15.
  * Keeps existing job/application/resume behavior intact.
- * Phase 1: the observer disconnects while this patch mutates the drawer,
- * preventing self-triggered mutation churn on mobile.
+ * Phase 1: observe only the drawer after it exists; never observe the whole
+ * document. This prevents unrelated Jobs/DOM mutations from re-triggering
+ * Quick Actions work on mobile.
  */
 (function(){
   'use strict';
@@ -151,14 +152,26 @@
   function boot(){
     ensure();
     if(window.__GLUEFUL_QA_OBSERVER__) return;
-    const target=document.body;
-    if(!target) return;
-    const observer=new MutationObserver(()=>{
-      observer.disconnect();
-      try{ensure();}finally{observer.observe(target,{childList:true,subtree:true});}
-    });
-    observer.observe(target,{childList:true,subtree:true});
-    window.__GLUEFUL_QA_OBSERVER__=observer;
+
+    let drawer=document.getElementById('glueful-drawer');
+    let retries=0;
+    const maxRetries=40;
+    const waitForDrawer=()=>{
+      drawer=document.getElementById('glueful-drawer');
+      if(drawer){
+        ensure();
+        const observer=new MutationObserver(()=>{
+          observer.disconnect();
+          try{ensure();}finally{observer.observe(drawer,{childList:true,subtree:true});}
+        });
+        observer.observe(drawer,{childList:true,subtree:true});
+        window.__GLUEFUL_QA_OBSERVER__=observer;
+        return;
+      }
+      retries+=1;
+      if(retries<maxRetries) setTimeout(waitForDrawer,250);
+    };
+    waitForDrawer();
   }
 
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true});
