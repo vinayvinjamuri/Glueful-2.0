@@ -63,6 +63,9 @@
     if(!curated.length)curated=sorted.filter(j=>technical.test(title(j))&&!bad.test(text(j))).slice(0,30);
     const section=root.querySelector('.g15-section'),rail=section?.querySelector('.g15-rail');
     if(!section||!rail)return;
+    const hash=curated.map(j=>String(j.id)).join('|');
+    if(rail.dataset.relevanceHash===hash)return;
+    rail.dataset.relevanceHash=hash;
     const count=section.querySelector('.g15-head h2 span');if(count)count.textContent=String(curated.length);
     const subtitle=section.querySelector('.g15-head p');if(subtitle)subtitle.textContent='Recommended from your profile, skills & job activity';
     rail.innerHTML=curated.map(card).join('')||'<div class="g15-empty">No strong matches yet. Try adding skills or searching for a role.</div>';
