@@ -77,6 +77,7 @@ jobs:
         run: |
           set -e
           grep -q "__GLUEFUL_QUICK_ACTIONS_PLUGINS_V2__" glueful-jobs-logo-patch-v1.js
+          grep -q "__GLUEFUL_MOBILE_UPDATE_GUARD_V4__" glueful-mobile-update-guard-v1.js
           grep -q "single authoritative owner" glueful-mobile-update-guard-v1.js
           grep -q "Quick Actions / Plug-ins are intentionally NOT implemented here" glueful-mobile-update-guard-v1.js
           ! grep -q "__GLUEFUL_QUICK_ACTIONS_PLUGINS_V1__" glueful-plugins-nav-v1.js
