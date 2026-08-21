@@ -10,7 +10,20 @@ on:
       - 'glueful-plugins-nav-v1.js'
       - 'glueful-mobile-update-guard-v1.js'
       - 'glueful-resume-studio-supabase-bridge.js'
+      - 'glueful-resume-render-diagnostics.js'
+      - 'glueful-resume-fixed-page-bootstrap.js'
+      - 'glueful-resume-layout-model.js'
+      - 'glueful-resume-pdf-layout-importer.js'
+      - 'glueful-resume-fixed-page-renderer.js'
+      - 'glueful-resume-fixed-page-ux-v6.js'
+      - 'glueful-resume-fixed-page-controller.js'
+      - 'glueful-resume-vector-docx-export-v2.js'
+      - 'glueful-resume-typography-patch-v1.js'
+      - 'glueful-resume-import-guard-v1.js'
+      - 'glueful-resume-pdf-export-fix-v1.js'
       - 'sw.js'
+      - 'manifest.json'
+      - 'icons/**'
       - '.github/workflows/jobs-feed-regression.yml'
   pull_request:
     paths:
@@ -21,7 +34,20 @@ on:
       - 'glueful-plugins-nav-v1.js'
       - 'glueful-mobile-update-guard-v1.js'
       - 'glueful-resume-studio-supabase-bridge.js'
+      - 'glueful-resume-render-diagnostics.js'
+      - 'glueful-resume-fixed-page-bootstrap.js'
+      - 'glueful-resume-layout-model.js'
+      - 'glueful-resume-pdf-layout-importer.js'
+      - 'glueful-resume-fixed-page-renderer.js'
+      - 'glueful-resume-fixed-page-ux-v6.js'
+      - 'glueful-resume-fixed-page-controller.js'
+      - 'glueful-resume-vector-docx-export-v2.js'
+      - 'glueful-resume-typography-patch-v1.js'
+      - 'glueful-resume-import-guard-v1.js'
+      - 'glueful-resume-pdf-export-fix-v1.js'
       - 'sw.js'
+      - 'manifest.json'
+      - 'icons/**'
       - '.github/workflows/jobs-feed-regression.yml'
 
 jobs:
@@ -42,6 +68,17 @@ jobs:
           node --check glueful-plugins-nav-v1.js
           node --check glueful-mobile-update-guard-v1.js
           node --check glueful-resume-studio-supabase-bridge.js
+          node --check glueful-resume-render-diagnostics.js
+          node --check glueful-resume-fixed-page-bootstrap.js
+          node --check glueful-resume-layout-model.js
+          node --check glueful-resume-pdf-layout-importer.js
+          node --check glueful-resume-fixed-page-renderer.js
+          node --check glueful-resume-fixed-page-ux-v6.js
+          node --check glueful-resume-fixed-page-controller.js
+          node --check glueful-resume-vector-docx-export-v2.js
+          node --check glueful-resume-typography-patch-v1.js
+          node --check glueful-resume-import-guard-v1.js
+          node --check glueful-resume-pdf-export-fix-v1.js
           node --check sw.js
       - name: Stable Jobs V15 contract
         run: |
@@ -84,6 +121,7 @@ jobs:
       - name: Service worker authoritative runtime
         run: |
           set -e
+          grep -q 'const CACHE_NAME="glueful-cache-v70-runtime-cleanup"' sw.js
           grep -q 'const JOBS_V15=' sw.js
           grep -q 'const JOBS_RELEVANCE=' sw.js
           grep -q 'const JOBS_RESUME_ACTION=' sw.js
@@ -94,10 +132,32 @@ jobs:
           grep -q 'glueful-jobs-resume-action-v1.js' sw.js
           grep -q 'glueful-jobs-logo-patch-v1.js' sw.js
           grep -q 'glueful-mobile-update-guard-v1.js' sw.js
-          grep -q 'glueful-cache-v69-mobile-update-quick-actions-v2' sw.js
+          ! grep -q 'glueful-resume-header-fidelity.js' sw.js
+          ! grep -q 'glueful-cache-v69-mobile-update-quick-actions-v2' sw.js
           ! grep -q 'JOBS_V16' sw.js
           ! grep -q 'glueful-jobs-discover-v16-authoritative.js' sw.js
           ! grep -q 'glueful-jobs-infinite-feed-v1.js' sw.js
+      - name: Resume Studio fixed-PDF contracts
+        run: |
+          set -e
+          grep -q '__gluefulFixedPdfScheduled' glueful-resume-fixed-page-bootstrap.js
+          grep -q 'glueful-resume-vector-docx-export-v2.js' glueful-resume-fixed-page-bootstrap.js
+          grep -q 'glueful-resume-fixed-page-controller.js' glueful-resume-fixed-page-bootstrap.js
+          grep -q 'fixed-pdf-direct' glueful-resume-render-diagnostics.js
+          ! grep -q 'glueful-resume-header-fidelity.js' glueful-resume-render-diagnostics.js
+      - name: PWA icon contracts
+        run: |
+          set -e
+          test -f icons/icon-192.svg
+          test -f icons/icon-512.svg
+          test -f icons/icon-180.svg
+          test -f icons/icon-maskable-512.svg
+          grep -q 'icon-192.svg' manifest.json
+          grep -q 'icon-512.svg' manifest.json
+          grep -q 'icon-maskable-512.svg' manifest.json
+          grep -q 'icons/icon-192.svg' sw.js
+          grep -q 'icons/icon-512.svg' sw.js
+          grep -q 'icons/icon-maskable-512.svg' sw.js
       - name: Resume Studio bridge contract
         run: |
           set -e
