@@ -15,6 +15,7 @@ on:
       - 'glueful-resume-pdf-layout-importer.js'
       - 'glueful-resume-import-guard-v1.js'
       - 'glueful-resume-pdf-export-fix-v1.js'
+      - 'glueful-resume-vector-docx-export-v2.js'
       - 'glueful-jobs-discover-v1.js'
       - 'glueful-jobs-discover-v3.js'
       - 'glueful-jobs-logo-patch-v1.js'
@@ -33,7 +34,7 @@ jobs:
       - name: JavaScript syntax regression
         run: |
           set -e
-          for f in glueful-resume-studio-adobe.js glueful-resume-docx-forensics.js glueful-resume-render-diagnostics.js glueful-resume-fixed-page-bootstrap.js glueful-resume-fixed-page-controller.js glueful-resume-fixed-page-renderer.js glueful-resume-layout-model.js glueful-resume-pdf-layout-importer.js glueful-resume-import-guard-v1.js glueful-resume-pdf-export-fix-v1.js glueful-jobs-discover-v1.js glueful-jobs-discover-v3.js glueful-jobs-logo-patch-v1.js glueful-jobs-relevance-v1.js sw.js; do node --check "$f"; done
+          for f in glueful-resume-studio-adobe.js glueful-resume-docx-forensics.js glueful-resume-render-diagnostics.js glueful-resume-fixed-page-bootstrap.js glueful-resume-fixed-page-controller.js glueful-resume-fixed-page-renderer.js glueful-resume-layout-model.js glueful-resume-pdf-layout-importer.js glueful-resume-import-guard-v1.js glueful-resume-pdf-export-fix-v1.js glueful-resume-vector-docx-export-v2.js glueful-jobs-discover-v1.js glueful-jobs-discover-v3.js glueful-jobs-logo-patch-v1.js glueful-jobs-relevance-v1.js sw.js; do node --check "$f"; done
       - name: Fixed-page authority and visual-source regression
         run: |
           set -e
@@ -43,8 +44,9 @@ jobs:
           grep -F 'explicitLogoExtraction:false' glueful-resume-pdf-layout-importer.js
           grep -F 'glueful-fixed-bg' glueful-resume-fixed-page-renderer.js
           grep -F 'glueful-fixed-text' glueful-resume-fixed-page-renderer.js
-          grep -F 'glueful-resume-studio-adobe\\.js' sw.js
-          grep -F 'glueful-cache-v66-jobs-v15-relevance-quick-actions' sw.js
+          grep -F 'glueful-resume-studio-adobe' sw.js
+          grep -F 'glueful-cache-v70-runtime-cleanup' sw.js
+          ! grep -F 'glueful-resume-header-fidelity.js' sw.js
           ! grep -F 'HEADER_FIDELITY_SCRIPT' sw.js
           ! grep -F 'HEADER_ALIGNMENT_SCRIPT' sw.js
           ! grep -F 'MOBILE_LAYOUT_SCRIPT' sw.js
