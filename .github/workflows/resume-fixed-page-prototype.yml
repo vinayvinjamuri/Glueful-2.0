@@ -11,7 +11,6 @@ on:
       - 'glueful-resume-fixed-page-renderer.js'
       - 'glueful-resume-fixed-page-controller.js'
       - 'glueful-resume-fixed-page-bootstrap.js'
-      - 'glueful-resume-studio-v41-bootstrap.js'
       - '.github/workflows/resume-fixed-page-prototype.yml'
 permissions:
   contents: read
@@ -23,7 +22,7 @@ jobs:
       - name: Syntax checks
         run: |
           set -e
-          for f in sw.js glueful-resume-layout-model.js glueful-resume-pdf-layout-importer.js glueful-resume-fixed-page-renderer.js glueful-resume-fixed-page-controller.js glueful-resume-fixed-page-bootstrap.js glueful-resume-studio-v41-bootstrap.js; do
+          for f in sw.js glueful-resume-layout-model.js glueful-resume-pdf-layout-importer.js glueful-resume-fixed-page-renderer.js glueful-resume-fixed-page-controller.js glueful-resume-fixed-page-bootstrap.js; do
             node --check "$f"
           done
       - name: Fixed-page visual-first invariants
@@ -35,9 +34,8 @@ jobs:
             'glueful-resume-pdf-layout-importer.js':['pdf-fixed-page-v2','original-pdf','PT_TO_PX','createMask','maskForLine'],
             'glueful-resume-fixed-page-renderer.js':['glueful-fixed-page-v4','glueful-fixed-mask','glueful-fixed-text','safeBlockWidth','overflow-wrap:break-word','caret-color:#202124','visibility:hidden','glueful-fixed-editing'],
             'glueful-resume-fixed-page-controller.js':['gluefulFixedPdfResumeStudio','fitToViewport','fixed-page-pdf-v5','viewportWidth','fixedPdfViewportWidth','surface.style.transform','orientationchange'],
-            'glueful-resume-fixed-page-bootstrap.js':['glueful-resume-fixed-page-controller.js','20260819-fixedpdf6','__gluefulFixedPdfScheduled'],
-            'glueful-resume-studio-v41-bootstrap.js':['fixedPdfScheduled','fixed-PDF runtime owns Resume Studio','if(fixedPdfScheduled()) return'],
-            'sw.js':['glueful-cache-v19-resume-fixed-pdf-authority','20260819-fixedpdf6','FIXED_PDF_BOOTSTRAP','FIXED_PDF_MODEL','FIXED_PDF_IMPORTER','FIXED_PDF_RENDERER','FIXED_PDF_CONTROLLER']
+            'glueful-resume-fixed-page-bootstrap.js':['glueful-resume-fixed-page-controller.js','20260820-fixedpdf27','__gluefulFixedPdfScheduled'],
+            'sw.js':['glueful-cache-v70-runtime-cleanup','FIXED_PDF_BOOTSTRAP','FIXED_PDF_MODEL','FIXED_PDF_IMPORTER','FIXED_PDF_RENDERER','FIXED_PDF_CONTROLLER']
           };
           for(const [file,needles] of Object.entries(checks)){
             const text=fs.readFileSync(file,'utf8');
