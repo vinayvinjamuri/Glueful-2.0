@@ -1,6 +1,8 @@
 /* Glueful Jobs V7 visual + Quick Actions / Plug-ins patch.
  * Loaded by the authoritative service worker after Jobs V15.
  * Keeps existing job/application/resume behavior intact.
+ * Phase 1: the observer disconnects while this patch mutates the drawer,
+ * preventing self-triggered mutation churn on mobile.
  */
 (function(){
   'use strict';
@@ -54,7 +56,7 @@
     if(!drawer) return false;
     drawer.setAttribute('aria-label','Quick Actions navigation');
     const explicit=drawer.querySelector('.drawer-brand-name');
-    if(explicit){explicit.textContent='Quick Actions';explicit.classList.add('gq-brand-title');return true;}
+    if(explicit){if(explicit.textContent!=='Quick Actions')explicit.textContent='Quick Actions';explicit.classList.add('gq-brand-title');return true;}
     const brand=drawer.querySelector('.drawer-brand');
     if(!brand) return false;
     const walker=document.createTreeWalker(brand,NodeFilter.SHOW_TEXT);
@@ -62,8 +64,8 @@
     while(node=walker.nextNode()){
       if(String(node.nodeValue||'').trim().toLowerCase()==='glueful') matches.push(node);
     }
-    if(matches.length){matches[0].nodeValue='Quick Actions';return true;}
-    return false;
+    if(matches.length&&matches[0].nodeValue!=='Quick Actions')matches[0].nodeValue='Quick Actions';
+    return matches.length>0;
   }
 
   function openPlugins(){
@@ -113,7 +115,6 @@
     if(drawer.querySelector('[data-glueful-plugin-item="v2"]')) return true;
     const labels=[...drawer.querySelectorAll('.drawer-section-label')];
     const account=labels.find(el=>el.textContent.trim().toLowerCase()==='account');
-    const placement=labels.find(el=>el.textContent.trim().toLowerCase()==='students');
     if(!account) return false;
 
     const divider=document.createElement('div');
@@ -152,7 +153,10 @@
     if(window.__GLUEFUL_QA_OBSERVER__) return;
     const target=document.body;
     if(!target) return;
-    const observer=new MutationObserver(()=>ensure());
+    const observer=new MutationObserver(()=>{
+      observer.disconnect();
+      try{ensure();}finally{observer.observe(target,{childList:true,subtree:true});}
+    });
     observer.observe(target,{childList:true,subtree:true});
     window.__GLUEFUL_QA_OBSERVER__=observer;
   }
