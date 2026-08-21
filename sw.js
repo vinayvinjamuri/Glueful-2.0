@@ -1,4 +1,4 @@
-const CACHE_NAME="glueful-cache-v69-mobile-update-quick-actions-v2";
+const CACHE_NAME="glueful-cache-v70-phase1-runtime-stabilization";
 const RENDER_DIAGNOSTICS_SCRIPT="./glueful-resume-render-diagnostics.js";
 const FIXED_PDF_BOOTSTRAP="./glueful-resume-fixed-page-bootstrap.js";
 const FIXED_PDF_MODEL="./glueful-resume-layout-model.js";
