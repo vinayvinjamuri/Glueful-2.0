@@ -77,7 +77,8 @@ jobs:
       - name: Single Quick Actions / Plug-ins owner
         run: |
           set -e
-          test "$(grep -Roh '__GLUEFUL_QUICK_ACTIONS_PLUGINS_V2__' --include='*.js' . | wc -l | tr -d ' ')" -eq 1
+          owner_count="$(grep -RIl --include='*.js' '__GLUEFUL_QUICK_ACTIONS_PLUGINS_V2__' . | wc -l | tr -d ' ')"
+          test "$owner_count" -eq 1
           grep -q "single authoritative owner" glueful-mobile-update-guard-v1.js
           grep -q "Quick Actions / Plug-ins are intentionally NOT implemented here" glueful-mobile-update-guard-v1.js
           ! grep -q "__GLUEFUL_QUICK_ACTIONS_PLUGINS_V1__" glueful-plugins-nav-v1.js
