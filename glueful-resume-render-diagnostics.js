@@ -15,7 +15,7 @@
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+      .replace(/\"/g, '&quot;');
   }
 
   function show(report) {
@@ -75,21 +75,7 @@
     loadFixedPdfBootstrap();
   }
 
-  /* Header fidelity is a legacy DOCX fallback. It must not run against the
-     fixed-PDF editor because the original PDF artwork is already authoritative. */
-  function loadHeaderFidelity() {
-    if (window.__gluefulFixedPdfScheduled || window.__gluefulFixedPdfReady) return;
-    if (window.gluefulResumeHeaderFidelity) return;
-    if (document.getElementById('glueful-resume-header-fidelity-script')) return;
-    const script = document.createElement('script');
-    script.id = 'glueful-resume-header-fidelity-script';
-    script.src = './glueful-resume-header-fidelity.js?v=20260819-1';
-    script.async = true;
-    script.onload = () => console.info('[Glueful Resume Studio] Header fidelity runtime loaded.');
-    script.onerror = () => console.warn('[Glueful Resume Studio] Header fidelity runtime failed to load.');
-    document.head.appendChild(script);
-  }
-
-  /* Give the fixed bootstrap a moment to set its synchronous authority flag. */
-  setTimeout(loadHeaderFidelity, 0);
+  /* Header fidelity is intentionally disabled in the current fixed-PDF phase.
+   * The legacy runtime is not present in the repository and must not be
+   * requested from production. Fixed-PDF owns the resume artwork here. */
 })();
