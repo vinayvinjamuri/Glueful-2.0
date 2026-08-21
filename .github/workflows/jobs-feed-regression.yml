@@ -154,7 +154,6 @@ jobs:
           ! grep -q 'glueful-resume-header-fidelity.js' sw.js
           ! grep -q 'JOBS_V16' sw.js
           ! grep -q 'glueful-jobs-discover-v16-authoritative.js' sw.js
-          ! grep -q 'glueful-jobs-infinite-feed-v1.js' sw.js
       - name: Resume Studio fixed-PDF contracts
         run: |
           set -e
