@@ -8,7 +8,7 @@ on:
       - 'glueful-jobs-resume-action-v1.js'
       - 'glueful-jobs-logo-patch-v1.js'
       - 'glueful-jobs-mobile-card-polish-v1.js'
-      - 'glueful-jobs-mobile-ux-v1.js'
+      - 'glueful-jobs-mobile-ux-v15.js'
       - 'glueful-plugins-nav-v1.js'
       - 'glueful-mobile-update-guard-v1.js'
       - 'glueful-resume-studio-supabase-bridge.js'
@@ -34,7 +34,7 @@ on:
       - 'glueful-jobs-resume-action-v1.js'
       - 'glueful-jobs-logo-patch-v1.js'
       - 'glueful-jobs-mobile-card-polish-v1.js'
-      - 'glueful-jobs-mobile-ux-v1.js'
+      - 'glueful-jobs-mobile-ux-v15.js'
       - 'glueful-plugins-nav-v1.js'
       - 'glueful-mobile-update-guard-v1.js'
       - 'glueful-resume-studio-supabase-bridge.js'
@@ -70,7 +70,7 @@ jobs:
           node --check glueful-jobs-resume-action-v1.js
           node --check glueful-jobs-logo-patch-v1.js
           node --check glueful-jobs-mobile-card-polish-v1.js
-          node --check glueful-jobs-mobile-ux-v1.js
+          node --check glueful-jobs-mobile-ux-v15.js
           node --check glueful-plugins-nav-v1.js
           node --check glueful-mobile-update-guard-v1.js
           node --check glueful-resume-studio-supabase-bridge.js
@@ -130,14 +130,14 @@ jobs:
       - name: Jobs mobile swipe UX contract
         run: |
           set -e
-          grep -q "__GLUEFUL_JOBS_MOBILE_UX_V1__" glueful-jobs-mobile-ux-v1.js
-          grep -q "scroll-snap-type:x mandatory" glueful-jobs-mobile-ux-v1.js
-          grep -q "Curated for you" glueful-jobs-mobile-ux-v1.js
-          grep -q "Top companies hiring" glueful-jobs-mobile-ux-v1.js
-          grep -q "Swipe" glueful-jobs-mobile-ux-v1.js
-          grep -q "pagination" glueful-jobs-mobile-ux-v1.js
+          grep -q "__GLUEFUL_JOBS_MOBILE_UX_V15__" glueful-jobs-mobile-ux-v15.js
+          grep -q "scroll-snap-type:x mandatory" glueful-jobs-mobile-ux-v15.js
+          grep -q "Curated for you" glueful-jobs-mobile-ux-v15.js
+          grep -q "Top companies hiring" glueful-jobs-mobile-ux-v15.js
+          grep -q "Swipe" glueful-jobs-mobile-ux-v15.js
+          grep -q "g15-mobile-dots" glueful-jobs-mobile-ux-v15.js
           grep -q 'JOBS_MOBILE_UX=' sw.js
-          grep -q 'glueful-jobs-mobile-ux-v1.js' sw.js
+          grep -q 'glueful-jobs-mobile-ux-v15.js' sw.js
       - name: Single Quick Actions / Plug-ins owner
         run: |
           set -e
@@ -162,7 +162,7 @@ jobs:
           grep -q 'glueful-jobs-resume-action-v1.js' sw.js
           grep -q 'glueful-jobs-logo-patch-v1.js' sw.js
           grep -q 'glueful-jobs-mobile-card-polish-v1.js' sw.js
-          grep -q 'glueful-jobs-mobile-ux-v1.js' sw.js
+          grep -q 'glueful-jobs-mobile-ux-v15.js' sw.js
           grep -q 'glueful-mobile-update-guard-v1.js' sw.js
           ! grep -q 'glueful-resume-header-fidelity.js' sw.js
           ! grep -q 'JOBS_V16' sw.js
