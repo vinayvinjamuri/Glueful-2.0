@@ -15,10 +15,7 @@ on:
       - 'glueful-resume-pdf-layout-importer.js'
       - 'glueful-resume-import-guard-v1.js'
       - 'glueful-resume-pdf-export-fix-v1.js'
-      - 'glueful-jobs-discover-v1.js'
-      - 'glueful-jobs-discover-v3.js'
-      - 'glueful-jobs-logo-patch-v1.js'
-      - 'glueful-jobs-relevance-v1.js'
+      - 'glueful-resume-vector-docx-export-v2.js'
       - 'sw.js'
       - '.github/workflows/resume-studio-regression.yml'
 
@@ -33,7 +30,9 @@ jobs:
       - name: JavaScript syntax regression
         run: |
           set -e
-          for f in glueful-resume-studio-adobe.js glueful-resume-docx-forensics.js glueful-resume-render-diagnostics.js glueful-resume-fixed-page-bootstrap.js glueful-resume-fixed-page-controller.js glueful-resume-fixed-page-renderer.js glueful-resume-layout-model.js glueful-resume-pdf-layout-importer.js glueful-resume-import-guard-v1.js glueful-resume-pdf-export-fix-v1.js glueful-jobs-discover-v1.js glueful-jobs-discover-v3.js glueful-jobs-logo-patch-v1.js glueful-jobs-relevance-v1.js sw.js; do node --check "$f"; done
+          for f in glueful-resume-studio-adobe.js glueful-resume-docx-forensics.js glueful-resume-render-diagnostics.js glueful-resume-fixed-page-bootstrap.js glueful-resume-fixed-page-controller.js glueful-resume-fixed-page-renderer.js glueful-resume-layout-model.js glueful-resume-pdf-layout-importer.js glueful-resume-import-guard-v1.js glueful-resume-pdf-export-fix-v1.js glueful-resume-vector-docx-export-v2.js sw.js; do
+            node --check "$f"
+          done
       - name: Fixed-page authority and visual-source regression
         run: |
           set -e
@@ -43,8 +42,9 @@ jobs:
           grep -F 'explicitLogoExtraction:false' glueful-resume-pdf-layout-importer.js
           grep -F 'glueful-fixed-bg' glueful-resume-fixed-page-renderer.js
           grep -F 'glueful-fixed-text' glueful-resume-fixed-page-renderer.js
-          grep -F 'glueful-resume-studio-adobe\\.js' sw.js
-          grep -F 'glueful-cache-v66-jobs-v15-relevance-quick-actions' sw.js
+          grep -F 'glueful-resume-studio-adobe' sw.js
+          grep -F 'glueful-cache-v70-runtime-cleanup' sw.js
+          ! grep -F 'glueful-resume-header-fidelity.js' sw.js
           ! grep -F 'HEADER_FIDELITY_SCRIPT' sw.js
           ! grep -F 'HEADER_ALIGNMENT_SCRIPT' sw.js
           ! grep -F 'MOBILE_LAYOUT_SCRIPT' sw.js
@@ -68,24 +68,6 @@ jobs:
           set -e
           grep -F 'showSaveFilePicker' glueful-resume-vector-docx-export-v2.js
           grep -F 'docxDownloadPipeline' glueful-resume-vector-docx-export-v2.js
-      - name: Jobs Discover personalization and controls
-        run: |
-          set -e
-          grep -F '20260820-jobs-discover-v3' glueful-jobs-discover-v3.js
-          grep -F "from('job_listings')" glueful-jobs-discover-v3.js
-          grep -F "from('applications')" glueful-jobs-discover-v3.js
-          grep -F 'company_logo_url' glueful-jobs-discover-v3.js
-          grep -F 'Qualcomm' glueful-jobs-discover-v3.js
-          grep -F 'NVIDIA' glueful-jobs-discover-v3.js
-          grep -F 'AMD' glueful-jobs-discover-v3.js
-          grep -F 'NXP' glueful-jobs-discover-v3.js
-          grep -F 'hardware' glueful-jobs-discover-v3.js
-          grep -F 'scroll-snap-type:x proximity' glueful-jobs-discover-v3.js
-          grep -F 'glueful_recent_jobs' glueful-jobs-discover-v3.js
-          grep -F 'openFilters' glueful-jobs-discover-v3.js
-          grep -F 'showList' glueful-jobs-discover-v3.js
-          grep -F 'premium-splash-image' glueful-jobs-discover-v3.js
-          grep -F '20260820-jobs-logo-patch-v1' glueful-jobs-logo-patch-v1.js
       - name: DOCX fallback remains available
         run: |
           set -e

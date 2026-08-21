@@ -25,15 +25,17 @@ jobs:
           node --check glueful-resume-studio-adobe.js
           node --check glueful-resume-docx-forensics.js
           node --check glueful-resume-render-diagnostics.js
+          node --check glueful-resume-vector-docx-export-v2.js
           node --check sw.js
       - name: Validate fixed-page visual authority
         run: |
           set -e
-          grep -q "__gluefulFixedPdfScheduled = true" glueful-resume-fixed-page-bootstrap.js
+          grep -q "window.__gluefulFixedPdfScheduled=true" glueful-resume-fixed-page-bootstrap.js
           grep -q "original-pdf" glueful-resume-pdf-layout-importer.js
           grep -q "explicitLogoExtraction" glueful-resume-pdf-layout-importer.js
           grep -q "glueful-fixed-bg" glueful-resume-fixed-page-renderer.js
           grep -q "glueful-fixed-text" glueful-resume-fixed-page-renderer.js
+          ! grep -q "glueful-resume-header-fidelity.js" glueful-resume-render-diagnostics.js
       - name: Ensure Adobe DOCX pipeline remains available for non-fixed fallback
         run: |
           set -e
