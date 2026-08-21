@@ -37,18 +37,30 @@
     document.head.appendChild(script);
   }
 
+  /*
+   * Jobs V15 must not depend on the service worker to become visible.
+   * index.html already loads this bridge on every page, so use it as the
+   * direct runtime bootstrap for the authoritative Jobs renderer.
+   * The loader is deliberately conditional: Resume Studio and all other
+   * screens are untouched when #jobs-view is not present.
+   */
   function loadAuthoritativeJobsRuntime() {
     if (!document.getElementById('jobs-view')) return;
+
+    /* If V15 was already injected by the service worker, do not load it a
+     * second time; still load the Resume Studio action layer. */
     if (window.__GLUEFUL_JOBS_V15__ || window.gluefulJobsV15) {
       loadJobsResumeActionRuntime();
       return;
     }
+
     const existing = document.querySelector(
       'script[data-glueful-direct-jobs-v15="1"]'
     );
     if (existing) return;
+
     const script = document.createElement('script');
-    script.src = './glueful-jobs-discover-v15-authoritative.js?v=20260821-jobs-v15-authoritative';
+    script.src = './glueful-jobs-discover-v15-authoritative.js?v=20260821-jobs-v15-direct';
     script.async = false;
     script.dataset.gluefulDirectJobsV15 = '1';
     script.onload = function () {
