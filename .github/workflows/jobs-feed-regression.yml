@@ -2,13 +2,21 @@ name: Jobs Discover Regression
 on:
   push:
     paths:
-      - 'glueful-jobs-discover-v13-authoritative.js'
+      - 'glueful-jobs-discover-v16-authoritative.js'
+      - 'glueful-jobs-discover-v15-authoritative.js'
+      - 'glueful-jobs-resume-action-v1.js'
+      - 'glueful-jobs-logo-patch-v1.js'
+      - 'glueful-resume-studio-supabase-bridge.js'
       - 'glueful-jobs-official-link-guard-v1.js'
       - 'sw.js'
       - '.github/workflows/jobs-feed-regression.yml'
   pull_request:
     paths:
-      - 'glueful-jobs-discover-v13-authoritative.js'
+      - 'glueful-jobs-discover-v16-authoritative.js'
+      - 'glueful-jobs-discover-v15-authoritative.js'
+      - 'glueful-jobs-resume-action-v1.js'
+      - 'glueful-jobs-logo-patch-v1.js'
+      - 'glueful-resume-studio-supabase-bridge.js'
       - 'glueful-jobs-official-link-guard-v1.js'
       - 'sw.js'
       - '.github/workflows/jobs-feed-regression.yml'
@@ -20,35 +28,57 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: JavaScript syntax
+      - name: JavaScript syntax regression
         run: |
-          node --check glueful-jobs-discover-v13-authoritative.js
+          set -e
+          node --check glueful-jobs-discover-v16-authoritative.js
+          node --check glueful-jobs-resume-action-v1.js
+          node --check glueful-jobs-logo-patch-v1.js
+          node --check glueful-resume-studio-supabase-bridge.js
           node --check glueful-jobs-official-link-guard-v1.js
           node --check sw.js
-      - name: Jobs V13 contract
+      - name: Jobs V16 product contract
         run: |
-          grep -q "Find your next big move" glueful-jobs-discover-v13-authoritative.js
-          grep -q "Curated for you" glueful-jobs-discover-v13-authoritative.js
-          grep -q "Top companies hiring" glueful-jobs-discover-v13-authoritative.js
-          grep -q "Search jobs, skills or companies" glueful-jobs-discover-v13-authoritative.js
-          grep -q "get-personalized-jobs" glueful-jobs-discover-v13-authoritative.js
-          grep -q "data-open" glueful-jobs-discover-v13-authoritative.js
-          grep -q "data-company" glueful-jobs-discover-v13-authoritative.js
-          grep -q "data-save" glueful-jobs-discover-v13-authoritative.js
-          grep -q "openDetails" glueful-jobs-discover-v13-authoritative.js
-          grep -q "MutationObserver" glueful-jobs-discover-v13-authoritative.js
-          grep -q "__GLUEFUL_JOBS_V13__" glueful-jobs-discover-v13-authoritative.js
-      - name: Verified employer link contract
+          set -e
+          grep -q 'YOUR NEXT MOVE · V16' glueful-jobs-discover-v16-authoritative.js
+          grep -q 'Curated for you' glueful-jobs-discover-v16-authoritative.js
+          grep -q 'Top companies hiring' glueful-jobs-discover-v16-authoritative.js
+          grep -q 'Search roles, skills, companies' glueful-jobs-discover-v16-authoritative.js
+          grep -q 'Personalized from your profile, skills, experience' glueful-jobs-discover-v16-authoritative.js
+          grep -q 'data-edit-resume' glueful-jobs-discover-v16-authoritative.js
+          grep -q 'openJobResumeEditor' glueful-jobs-discover-v16-authoritative.js
+          grep -q 'data-company' glueful-jobs-discover-v16-authoritative.js
+          grep -q 'data-save' glueful-jobs-discover-v16-authoritative.js
+          grep -q 'scroll-snap-type:x mandatory' glueful-jobs-discover-v16-authoritative.js
+          grep -q 'gluefulMasterResumeText' glueful-jobs-discover-v16-authoritative.js
+          grep -q 'profile.families' glueful-jobs-discover-v16-authoritative.js
+      - name: Quick Actions and plug-ins contract
         run: |
-          grep -q "verified_employer_link" glueful-jobs-official-link-guard-v1.js
-          grep -q "adzuna" glueful-jobs-official-link-guard-v1.js
-      - name: Service worker authoritative runtime
+          set -e
+          grep -q 'Quick Actions' glueful-jobs-logo-patch-v1.js
+          grep -q 'Plug-ins' glueful-jobs-logo-patch-v1.js
+          grep -q 'Brand Fetch' glueful-jobs-logo-patch-v1.js
+          grep -q '__GLUEFUL_QUICK_ACTIONS_PLUGINS_V1__' glueful-jobs-logo-patch-v1.js
+      - name: Resume action contract
         run: |
-          grep -q 'const JOBS_V13=' sw.js
-          grep -q 'glueful-jobs-discover-v13-authoritative.js' sw.js
-          grep -q 'glueful-cache-v60-jobs-v13-authoritative' sw.js
-          ! grep -q 'const JOBS_V12=' sw.js
-          ! grep -q 'const JOBS_V11=' sw.js
-          ! grep -q 'glueful-jobs-discover-v11-stable.js' sw.js
+          set -e
+          grep -q 'Edit resume for this job' glueful-jobs-resume-action-v1.js
+          grep -q 'openJobResumeEditor' glueful-jobs-resume-action-v1.js
+          grep -q 'company_logo_url' glueful-jobs-resume-action-v1.js
+      - name: Service worker authority
+        run: |
+          set -e
+          grep -q 'const JOBS_V16=' sw.js
+          grep -q 'glueful-jobs-discover-v16-authoritative.js' sw.js
+          grep -q 'glueful-jobs-logo-patch-v1.js' sw.js
+          grep -q 'glueful-jobs-resume-action-v1.js' sw.js
+          grep -q 'glueful-cache-v66-jobs-v16-quick-actions' sw.js
+          ! grep -q 'glueful-jobs-discover-v15-authoritative.js' sw.js
+          ! grep -q 'glueful-jobs-discover-v13-authoritative.js' sw.js
           ! grep -q 'glueful-jobs-discover-v12-stable.js' sw.js
           ! grep -q 'glueful-jobs-infinite-feed-v1.js' sw.js
+      - name: Direct bootstrap authority
+        run: |
+          set -e
+          grep -q 'glueful-jobs-discover-v16-authoritative.js' glueful-resume-studio-supabase-bridge.js
+          grep -q 'glueful-jobs-logo-patch-v1.js' glueful-resume-studio-supabase-bridge.js
