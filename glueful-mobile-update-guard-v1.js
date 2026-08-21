@@ -1,9 +1,37 @@
 (function(){
   'use strict';
-  if(window.__GLUEFUL_MOBILE_UPDATE_GUARD_V3__) return;
-  window.__GLUEFUL_MOBILE_UPDATE_GUARD_V3__=true;
+  if(window.__GLUEFUL_MOBILE_UPDATE_GUARD_V4__) return;
+  window.__GLUEFUL_MOBILE_UPDATE_GUARD_V4__=true;
 
   const norm=v=>String(v||'').replace(/\s+/g,' ').trim().toLowerCase();
+  let startupUpdatePromise=null;
+
+  async function syncServiceWorker(){
+    if(!('serviceWorker' in navigator)) return false;
+    if(startupUpdatePromise) return startupUpdatePromise;
+    startupUpdatePromise=(async()=>{
+      try{
+        const registration=await navigator.serviceWorker.getRegistration();
+        if(!registration) return false;
+        await registration.update();
+        if(registration.waiting){
+          registration.waiting.postMessage({type:'GLUEFUL_SKIP_WAITING'});
+          await new Promise(resolve=>{
+            let done=false;
+            const finish=()=>{if(done)return;done=true;resolve()};
+            navigator.serviceWorker.addEventListener('controllerchange',finish,{once:true});
+            setTimeout(finish,1800);
+          });
+          return true;
+        }
+        return false;
+      }catch(e){
+        console.warn('[Glueful update] startup service worker check failed:',e);
+        return false;
+      }
+    })();
+    return startupUpdatePromise;
+  }
 
   async function applyUpdate(button){
     if(window.__GLUEFUL_UPDATE_RUNNING__) return;
@@ -47,7 +75,7 @@
   }
 
   function bindUpdateButton(){
-    if(document.documentElement.dataset.gluefulUpdateBound==='3') return;
+    if(document.documentElement.dataset.gluefulUpdateBound==='4') return;
     document.addEventListener('click',function(e){
       const el=e.target.closest?.('button,a,[role="button"]');
       if(!el || norm(el.textContent)!=='update' || el.offsetParent===null) return;
@@ -56,7 +84,7 @@
       e.stopImmediatePropagation?.();
       void applyUpdate(el);
     },true);
-    document.documentElement.dataset.gluefulUpdateBound='3';
+    document.documentElement.dataset.gluefulUpdateBound='4';
   }
 
   /* Quick Actions / Plug-ins are intentionally NOT implemented here.
@@ -68,6 +96,11 @@
    * Keeping those features in one runtime prevents duplicate drawers,
    * duplicate observers, and competing click handlers on mobile. */
 
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bindUpdateButton,{once:true});
-  else bindUpdateButton();
+  function boot(){
+    bindUpdateButton();
+    void syncServiceWorker();
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true});
+  else boot();
 })();
