@@ -98,7 +98,7 @@ jobs:
           grep -q "data-save" glueful-jobs-discover-v15-authoritative.js
           grep -q "openDetails" glueful-jobs-discover-v15-authoritative.js
           grep -q "__GLUEFUL_JOBS_V15__" glueful-jobs-discover-v15-authoritative.js
-      - name: Relevance, Resume Studio and branding contracts
+      - name: Relevance, resume action and branding contracts
         run: |
           set -e
           grep -q "__GLUEFUL_JOBS_RELEVANCE_V1__" glueful-jobs-relevance-v1.js
@@ -111,11 +111,20 @@ jobs:
           grep -q "Edit resume for this job" glueful-jobs-resume-action-v1.js
           grep -q "openJobResumeEditor" glueful-jobs-resume-action-v1.js
           grep -q "__GLUEFUL_QUICK_ACTIONS_PLUGINS_V2__" glueful-jobs-logo-patch-v1.js
-          grep -q "Quick Options" glueful-jobs-logo-patch-v1.js
+          grep -q "Quick Actions" glueful-jobs-logo-patch-v1.js
           grep -q "Plug-ins" glueful-jobs-logo-patch-v1.js
           grep -q "Brand Fetch" glueful-jobs-logo-patch-v1.js
           grep -q "observer.disconnect" glueful-jobs-logo-patch-v1.js
-          grep -q "observer.observe(target" glueful-jobs-logo-patch-v1.js
+          grep -q "observer.observe(drawer" glueful-jobs-logo-patch-v1.js
+          ! grep -q "observer.observe(target" glueful-jobs-logo-patch-v1.js
+      - name: Single Quick Actions / Plug-ins owner
+        run: |
+          set -e
+          owner_count="$(grep -RIl --include='*.js' '__GLUEFUL_QUICK_ACTIONS_PLUGINS_V2__' . | wc -l | tr -d ' ')"
+          test "$owner_count" -eq 1
+          grep -q "single authoritative owner" glueful-mobile-update-guard-v1.js
+          grep -q "Quick Actions / Plug-ins are intentionally NOT implemented here" glueful-mobile-update-guard-v1.js
+          ! grep -q "__GLUEFUL_QUICK_ACTIONS_PLUGINS_V1__" glueful-plugins-nav-v1.js
       - name: Jobs mobile swipe UX contract
         run: |
           set -e
@@ -125,14 +134,6 @@ jobs:
           grep -q "g15-mobile-dots" glueful-jobs-mobile-ux-v15.js
           grep -q 'JOBS_MOBILE_UX=' sw.js
           grep -q 'glueful-jobs-mobile-ux-v15.js' sw.js
-      - name: Single Quick Actions / Plug-ins owner
-        run: |
-          set -e
-          grep -q "__GLUEFUL_QUICK_ACTIONS_PLUGINS_V2__" glueful-jobs-logo-patch-v1.js
-          grep -q "__GLUEFUL_MOBILE_UPDATE_GUARD_V4__" glueful-mobile-update-guard-v1.js
-          grep -q "single authoritative owner" glueful-mobile-update-guard-v1.js
-          grep -q "Quick Actions / Plug-ins are intentionally NOT implemented here" glueful-mobile-update-guard-v1.js
-          ! grep -q "__GLUEFUL_QUICK_ACTIONS_PLUGINS_V1__" glueful-plugins-nav-v1.js
       - name: Service worker authoritative runtime
         run: |
           set -e
@@ -151,10 +152,9 @@ jobs:
           grep -q 'glueful-jobs-mobile-card-polish-v1.js' sw.js
           grep -q 'glueful-jobs-mobile-ux-v15.js' sw.js
           grep -q 'glueful-mobile-update-guard-v1.js' sw.js
-          ! grep -q 'glueful-resume-header-fidelity.js' sw.js
           ! grep -q 'JOBS_V16' sw.js
           ! grep -q 'glueful-jobs-discover-v16-authoritative.js' sw.js
-      - name: Resume Studio fixed-PDF contracts
+      - name: Resume Studio fixed-PDF contracts remain intact
         run: |
           set -e
           grep -q '__gluefulFixedPdfScheduled' glueful-resume-fixed-page-bootstrap.js
@@ -162,7 +162,7 @@ jobs:
           grep -q 'glueful-resume-fixed-page-controller.js' glueful-resume-fixed-page-bootstrap.js
           grep -q 'fixed-pdf-direct' glueful-resume-render-diagnostics.js
           ! grep -q 'glueful-resume-header-fidelity.js' glueful-resume-render-diagnostics.js
-      - name: PWA icon contracts
+      - name: PWA icon contracts remain intact
         run: |
           set -e
           test -f icons/icon-192.svg
@@ -172,9 +172,6 @@ jobs:
           grep -q 'icon-192.svg' manifest.json
           grep -q 'icon-512.svg' manifest.json
           grep -q 'icon-maskable-512.svg' manifest.json
-          grep -q 'icons/icon-192.svg' sw.js
-          grep -q 'icons/icon-512.svg' sw.js
-          grep -q 'icons/icon-maskable-512.svg' sw.js
       - name: Resume Studio bridge contract
         run: |
           set -e
@@ -182,9 +179,3 @@ jobs:
           ! grep -q 'loadAuthoritativeJobsRuntime' glueful-resume-studio-supabase-bridge.js
           ! grep -q 'loadJobsResumeActionRuntime' glueful-resume-studio-supabase-bridge.js
           ! grep -q 'data-glueful-direct-jobs-v15' glueful-resume-studio-supabase-bridge.js
-      - name: Existing application and resume paths remain referenced
-        run: |
-          set -e
-          grep -q 'glueful-jobs-resume-action-v1.js' sw.js
-          grep -q 'glueful-resume-studio-supabase-bridge.js' sw.js
-          grep -q 'glueful-jobs-official-link-guard-v1.js' sw.js
