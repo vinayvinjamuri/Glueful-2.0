@@ -124,7 +124,7 @@
     divider.dataset.gluefulPluginItem='v2';
     const label=document.createElement('div');
     label.className='drawer-section-label gq-plugin-section';
-    label.textContent='Quick Options';
+    label.textContent='Account';
     label.dataset.gluefulPluginItem='v2';
     const button=document.createElement('button');
     button.type='button';
@@ -133,10 +133,18 @@
     button.innerHTML=`<span class="drawer-item-icon"><svg class="premium-svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6v3h3a3 3 0 0 1 3 3v3h-3a3 3 0 0 0 0 6h3v3h-3a3 3 0 0 1-3-3v-3H9v3a3 3 0 0 1-3 3H3v-3h3a3 3 0 0 0 0-6H3V9a3 3 0 0 1 3-3h3z"></path></svg></span><span class="drawer-item-copy"><span class="drawer-item-title">Plug-ins</span><span class="drawer-item-subtitle">Explore and manage integrations</span></span><span class="gq-plugin-badge">New</span><span class="drawer-item-chevron">›</span>`;
     button.addEventListener('click',()=>{try{window.toggleGluefulDrawer?.(false)}catch(_){ }openPlugins()});
 
-    const nextSection=portalItem.nextElementSibling;
-    drawer.insertBefore(divider,nextSection||null);
-    drawer.insertBefore(label,nextSection||null);
-    drawer.insertBefore(button,nextSection||null);
+    // Put Plug-ins after the entire Placement Portal block, including its connection card,
+    // but before the existing Account section.
+    let cursor=portalItem;
+    while(cursor.nextElementSibling){
+      const next=cursor.nextElementSibling;
+      const text=String(next.textContent||'').trim().toLowerCase();
+      if(text==='account' || next.classList.contains('drawer-section-label')&&text.includes('account')) break;
+      cursor=next;
+    }
+    const insertAfter=cursor.nextElementSibling;
+    drawer.insertBefore(divider,insertAfter||null);
+    drawer.insertBefore(button,insertAfter||null);
     return true;
   }
 
