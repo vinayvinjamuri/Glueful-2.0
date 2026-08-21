@@ -69,11 +69,21 @@
     });
   }
 
+  function loadMobileUx(){
+    if(window.__GLUEFUL_JOBS_MOBILE_UX_V15__||document.querySelector('script[data-glueful-jobs-mobile-ux]')) return;
+    const s=document.createElement('script');
+    s.src='./glueful-jobs-mobile-ux-v15.js?v=20260821-mobile-ux-v15-1';
+    s.async=true;
+    s.dataset.gluefulJobsMobileUx='1';
+    (document.head||document.documentElement).appendChild(s);
+  }
+
   function run(){
     const root=document.getElementById('glueful-jobs-v15');
     if(!root) return false;
     injectStyle();
     polishImages(root);
+    loadMobileUx();
     return true;
   }
 
