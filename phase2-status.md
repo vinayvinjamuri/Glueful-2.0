@@ -1,0 +1,1 @@
+Phase 2 backend candidate retrieval is deployed in Supabase. The existing V7 UI is intentionally kept unchanged until the pagination response is integrated into its state model, avoiding duplicate renderers or broken job-detail taps.
