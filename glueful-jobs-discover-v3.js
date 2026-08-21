@@ -1,8 +1,8 @@
 /* Glueful Jobs Discover V3 compatibility loader. */
 (function(){
   'use strict';
-  if(window.__GLUEFUL_JOBS_DISCOVER_V7_LOADER__) return;
-  window.__GLUEFUL_JOBS_DISCOVER_V7_LOADER__=true;
+  if(window.__GLUEFUL_JOBS_V7_LOADER__) return;
+  window.__GLUEFUL_JOBS_V7_LOADER__=true;
   function load(src,id,onload){
     if(id&&document.getElementById(id)){onload&&onload();return;}
     var s=document.createElement('script');
@@ -12,6 +12,7 @@
     s.onerror=function(){console.error('[Glueful Jobs] failed to load '+src)};
     document.head.appendChild(s);
   }
+  load('./glueful-jobs-smooth-runtime-v1.js?v=20260821','glueful-jobs-smooth-runtime-v1');
   function startEnhancements(){
     load('./glueful-jobs-fast-shell-v1.js?v=20260821','glueful-jobs-fast-shell-v1');
     load('./glueful-jobs-ranking-v1.js?v=20260821','glueful-jobs-ranking-v1');
