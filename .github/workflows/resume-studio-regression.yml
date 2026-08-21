@@ -16,8 +16,6 @@ on:
       - 'glueful-resume-import-guard-v1.js'
       - 'glueful-resume-pdf-export-fix-v1.js'
       - 'glueful-resume-vector-docx-export-v2.js'
-      - 'glueful-resume-logo-fidelity-runtime.js'
-      - 'glueful-resume-logo-fidelity-v2.js'
       - 'sw.js'
       - '.github/workflows/resume-studio-regression.yml'
 
