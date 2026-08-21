@@ -77,7 +77,7 @@ jobs:
       - name: Single Quick Actions / Plug-ins owner
         run: |
           set -e
-          grep -q "__GLUEFUL_QUICK_ACTIONS_PLUGINS_V2__" glueful-jobs-logo-patch-v1.js
+          test "$(grep -Roh '__GLUEFUL_QUICK_ACTIONS_PLUGINS_V2__' --include='*.js' . | wc -l | tr -d ' ')" -eq 1
           grep -q "single authoritative owner" glueful-mobile-update-guard-v1.js
           grep -q "Quick Actions / Plug-ins are intentionally NOT implemented here" glueful-mobile-update-guard-v1.js
           ! grep -q "__GLUEFUL_QUICK_ACTIONS_PLUGINS_V1__" glueful-plugins-nav-v1.js
@@ -98,10 +98,10 @@ jobs:
           ! grep -q 'JOBS_V16' sw.js
           ! grep -q 'glueful-jobs-discover-v16-authoritative.js' sw.js
           ! grep -q 'glueful-jobs-infinite-feed-v1.js' sw.js
-      - name: Resume Studio bridge contract
+      - name: Single Jobs bootstrap path
         run: |
           set -e
-          grep -q 'gluefulResumeSupabaseClient' glueful-resume-studio-supabase-bridge.js
+          grep -q 'Phase 1 runtime rule: Jobs is bootstrapped by the authoritative service-worker' glueful-resume-studio-supabase-bridge.js
           ! grep -q 'loadAuthoritativeJobsRuntime' glueful-resume-studio-supabase-bridge.js
           ! grep -q 'loadJobsResumeActionRuntime' glueful-resume-studio-supabase-bridge.js
           ! grep -q 'data-glueful-direct-jobs-v15' glueful-resume-studio-supabase-bridge.js
