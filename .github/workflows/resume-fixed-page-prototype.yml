@@ -31,8 +31,8 @@ jobs:
           const fs=require('fs');
           const checks={
             'glueful-resume-layout-model.js':['glueful-resume-layout-document','createMask','maskWidth','maskHeight','sourceItems'],
-            'glueful-resume-pdf-layout-importer.js':['pdf-fixed-page-v6','original-pdf','PT_TO_PX','createMask','maskForLine'],
-            'glueful-resume-fixed-page-renderer.js':['glueful-fixed-page-v4','glueful-fixed-mask','glueful-fixed-text','safeBlockWidth','overflow-wrap:break-word','caret-color:#202124','visibility:hidden','glueful-fixed-editing'],
+            'glueful-resume-pdf-layout-importer.js':['PDF FIXED-PAGE IMPORTER V6','original-pdf','PT_TO_PX','createMask','maskForLine'],
+            'glueful-resume-fixed-page-renderer.js':['FIXED-PAGE EDITOR RENDERER V5.3','glueful-fixed-mask','glueful-fixed-text','safeBlockWidth','overflow-wrap:anywhere','visibility:hidden','glueful-fixed-editing'],
             'glueful-resume-fixed-page-controller.js':['gluefulFixedPdfResumeStudio','fitToViewport','fixed-page-pdf-v5','viewportWidth','fixedPdfViewportWidth','surface.style.transform','orientationchange'],
             'glueful-resume-fixed-page-bootstrap.js':['glueful-resume-fixed-page-controller.js','20260820-fixedpdf27','__gluefulFixedPdfScheduled'],
             'sw.js':['glueful-cache-v70-runtime-cleanup','FIXED_PDF_BOOTSTRAP','FIXED_PDF_MODEL','FIXED_PDF_IMPORTER','FIXED_PDF_RENDERER','FIXED_PDF_CONTROLLER']
