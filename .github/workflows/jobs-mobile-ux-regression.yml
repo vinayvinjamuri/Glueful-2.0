@@ -1,0 +1,50 @@
+name: Jobs Mobile UX Regression
+
+on:
+  push:
+    paths:
+      - 'glueful-jobs-mobile-ux-v15.js'
+      - 'glueful-jobs-mobile-card-polish-v1.js'
+      - '.github/workflows/jobs-mobile-ux-regression.yml'
+  pull_request:
+    branches: ['main']
+    paths:
+      - 'glueful-jobs-mobile-ux-v15.js'
+      - 'glueful-jobs-mobile-card-polish-v1.js'
+      - 'sw.js'
+      - '.github/workflows/jobs-mobile-ux-regression.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  mobile-ux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: JavaScript syntax
+        run: |
+          set -e
+          node --check glueful-jobs-mobile-ux-v15.js
+          node --check glueful-jobs-mobile-card-polish-v1.js
+      - name: Swipeable Jobs and Companies contracts
+        run: |
+          set -e
+          grep -q 'g15-mobile-swipe-rail' glueful-jobs-mobile-ux-v15.js
+          grep -q 'g15-mobile-dots' glueful-jobs-mobile-ux-v15.js
+          grep -q 'Swipe to explore relevant jobs' glueful-jobs-mobile-ux-v15.js
+          grep -q 'Swipe to explore companies' glueful-jobs-mobile-ux-v15.js
+          grep -q 'scroll-snap-type:x mandatory' glueful-jobs-mobile-ux-v15.js
+          grep -q 'touch-action:pan-x pan-y' glueful-jobs-mobile-ux-v15.js
+          grep -q 'g15-rail' glueful-jobs-mobile-ux-v15.js
+          grep -q 'g15-company-rail' glueful-jobs-mobile-ux-v15.js
+          grep -q 'glueful-jobs-mobile-ux-v15.js' glueful-jobs-mobile-card-polish-v1.js
+      - name: Existing V15 card polish preserved
+        run: |
+          set -e
+          grep -q 'height:214px' glueful-jobs-mobile-card-polish-v1.js
+          grep -q 'Webkit-line-clamp' glueful-jobs-mobile-card-polish-v1.js || grep -q -- '-webkit-line-clamp:2' glueful-jobs-mobile-card-polish-v1.js
+          grep -q 'g15LogoFallback' glueful-jobs-mobile-card-polish-v1.js
