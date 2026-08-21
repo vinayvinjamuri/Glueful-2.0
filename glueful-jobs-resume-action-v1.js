@@ -4,7 +4,7 @@
  */
 (function(){
   'use strict';
-  if(window.__GLUEFUL_JOBS_RESUME_ACTION_V1__ || window.__GLUEFUL_JOBS_RESUME_ACTION_V4__) return;
+  if(window.__GLUEFUL_JOBS_RESUME_ACTION_V4__) return;
   window.__GLUEFUL_JOBS_RESUME_ACTION_V1__=true;
   window.__GLUEFUL_JOBS_RESUME_ACTION_V4__=true;
   const clean=v=>String(v??'').replace(/\s+/g,' ').trim();
