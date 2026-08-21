@@ -62,6 +62,8 @@ jobs:
           grep -q "profile" glueful-jobs-relevance-v1.js
           grep -q "customer support" glueful-jobs-relevance-v1.js
           grep -q "technical" glueful-jobs-relevance-v1.js
+          grep -q "observer.disconnect" glueful-jobs-relevance-v1.js
+          grep -q "observer.observe(root" glueful-jobs-relevance-v1.js
           grep -q "__GLUEFUL_JOBS_RESUME_ACTION_V1__" glueful-jobs-resume-action-v1.js
           grep -q "Edit resume for this job" glueful-jobs-resume-action-v1.js
           grep -q "openJobResumeEditor" glueful-jobs-resume-action-v1.js
@@ -69,6 +71,8 @@ jobs:
           grep -q "Quick Actions" glueful-jobs-logo-patch-v1.js
           grep -q "Plug-ins" glueful-jobs-logo-patch-v1.js
           grep -q "Brand Fetch" glueful-jobs-logo-patch-v1.js
+          grep -q "observer.disconnect" glueful-jobs-logo-patch-v1.js
+          grep -q "observer.observe(target" glueful-jobs-logo-patch-v1.js
       - name: Single Quick Actions / Plug-ins owner
         run: |
           set -e
