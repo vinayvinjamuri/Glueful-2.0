@@ -11,7 +11,7 @@
     load('./glueful-jobs-fast-shell-v1.js?v=20260821','glueful-jobs-fast-shell-v1');
     load('./glueful-jobs-ranking-v1.js?v=20260821','glueful-jobs-ranking-v1');
     load('./glueful-jobs-marketplace-lazy-v1.js?v=20260821','glueful-jobs-marketplace-lazy-v1');
-    load('./glueful-jobs-pagination-v2.js?v=20260821','glueful-jobs-pagination-v2',function(){load('./glueful-jobs-pagination-runtime-v1.js?v=20260821','glueful-jobs-pagination-runtime-v1')});
+    load('./glueful-jobs-pagination-v2.js?v=20260821','glueful-jobs-pagination-v2',function(){load('./glueful-jobs-pagination-runtime-v1.js?v=20260821','glueful-jobs-pagination-runtime-v1',function(){load('./glueful-jobs-infinite-scroll-v1.js?v=20260821','glueful-jobs-infinite-scroll-v1')})});
     load('./glueful-plugins-nav-v1.js?v=20260821','glueful-plugins-nav-v1');
   }
   load('./glueful-jobs-smooth-runtime-v1.js?v=20260821','glueful-jobs-smooth-runtime-v1',function(){enhancements();load('./glueful-jobs-discover-v7.js?v=20260821','glueful-jobs-discover-v7')});
