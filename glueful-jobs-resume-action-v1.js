@@ -1,12 +1,12 @@
-/* Glueful Jobs Resume Action V3
+/* Glueful Jobs Resume Action V4
  * Uses the authoritative Resume Studio controller on demand and cleans
  * provider-encoded job descriptions in the Jobs detail surface.
  */
 (function(){
   'use strict';
-  if(window.__GLUEFUL_JOBS_RESUME_ACTION_V1__ || window.__GLUEFUL_JOBS_RESUME_ACTION_V3__) return;
+  if(window.__GLUEFUL_JOBS_RESUME_ACTION_V1__ || window.__GLUEFUL_JOBS_RESUME_ACTION_V4__) return;
   window.__GLUEFUL_JOBS_RESUME_ACTION_V1__=true;
-  window.__GLUEFUL_JOBS_RESUME_ACTION_V3__=true;
+  window.__GLUEFUL_JOBS_RESUME_ACTION_V4__=true;
   const clean=v=>String(v??'').replace(/\s+/g,' ').trim();
   const title=j=>clean(j?.title||j?.job_title||j?.position||'');
   const company=j=>clean(j?.company||j?.company_name||j?.employer||'');
@@ -21,17 +21,25 @@
   function decodeEntities(value){let out=String(value??'');for(let i=0;i<4;i++){const ta=document.createElement('textarea');ta.innerHTML=out;const next=ta.value;if(next===out)break;out=next;}return out;}
   function readableDescription(value){let s=decodeEntities(value);s=s.replace(/<br\s*\/?>/gi,'\n').replace(/<\/p>/gi,'\n').replace(/<[^>]*>/g,' ');return s.replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').replace(/[ \t]{2,}/g,' ').trim();}
   function patchDescription(){document.querySelectorAll('.g15-detail .job-description,.g15-detail .job-detail-block p,[data-job-description]').forEach(node=>{const raw=node.textContent||'';if(/&(?:lt|gt|amp|quot|#39|nbsp);/i.test(raw)||/<(?:span|p|div|br)\b/i.test(raw)){node.textContent=readableDescription(raw);node.style.whiteSpace='pre-line';}});}
+  function ensureResumeJobResolver(){
+    if(typeof window.findActiveJobById==='function')return;
+    window.findActiveJobById=function(jobId){
+      const wanted=String(jobId??'');
+      const jobs=getJobs();
+      return jobs.find(j=>String(j?.id??'')===wanted)||jobs.find(j=>String(j?.sourceJobId??'')===wanted)||jobs.find(j=>String(j?.job_id??'')===wanted)||null;
+    };
+  }
   function loadAuthoritativeResumeStudio(){
     if(typeof window.gluefulAdobeResumeStudio?.openJobResumeEditor==='function')return Promise.resolve(window.gluefulAdobeResumeStudio.openJobResumeEditor);
     return new Promise((resolve,reject)=>{
       const id='glueful-resume-studio-adobe-runtime',existing=document.getElementById(id);
       const done=()=>{if(typeof window.gluefulAdobeResumeStudio?.openJobResumeEditor==='function')resolve(window.gluefulAdobeResumeStudio.openJobResumeEditor);else if(typeof window.openJobResumeEditor==='function')resolve(window.openJobResumeEditor);else reject(new Error('Resume Studio controller did not expose an editor opener.'));};
       if(existing){if(existing.dataset.loaded==='true')return done();existing.addEventListener('load',done,{once:true});existing.addEventListener('error',()=>reject(new Error('Resume Studio controller failed to load.')),{once:true});setTimeout(done,1200);return;}
-      const s=document.createElement('script');s.id=id;s.src='./glueful-resume-studio-adobe.js?v=20260822-resume-fix3';s.async=false;s.onload=done;s.onerror=()=>reject(new Error('Resume Studio controller failed to load.'));document.head.appendChild(s);
+      const s=document.createElement('script');s.id=id;s.src='./glueful-resume-studio-adobe.js?v=20260822-resume-fix4';s.async=false;s.onload=done;s.onerror=()=>reject(new Error('Resume Studio controller failed to load.'));document.head.appendChild(s);
     });
   }
   function openResume(job){
-    if(!job?.id)return;const id=String(job.id);window.gluefulResumeJobContext={id,title:title(job),company:company(job),location:clean(job.location||job.city||job.job_location||''),source:job};document.querySelector('.g15-layer')?.remove();document.body.style.removeProperty('overflow');
+    if(!job?.id)return;const id=String(job.id);window.gluefulResumeJobContext={id,title:title(job),company:company(job),location:clean(job.location||job.city||job.job_location||''),source:job};ensureResumeJobResolver();document.querySelector('.g15-layer')?.remove();document.body.style.removeProperty('overflow');
     loadAuthoritativeResumeStudio().then(fn=>{window.openJobResumeEditor=fn;const result=fn(id);if(result&&typeof result.catch==='function')result.catch(e=>console.error('[Glueful Jobs] Resume Studio failed:',e));}).catch(e=>console.error('[Glueful Jobs] Resume Studio unavailable:',e));
   }
   function editResumeForJob(job){openResume(job)}
