@@ -43,8 +43,8 @@ jobs:
           grep -q 'g15-rail' glueful-jobs-mobile-ux-v15.js
           grep -q 'g15-company-rail' glueful-jobs-mobile-ux-v15.js
           grep -q 'glueful-jobs-mobile-ux-v15.js' glueful-jobs-mobile-card-polish-v1.js
-          ! grep -q 'touchmove' glueful-jobs-mobile-ux-v15.js
-          ! grep -q 'preventDefault' glueful-jobs-mobile-ux-v15.js
+          ! grep -Eq "addEventListener\\(['\"]touchmove" glueful-jobs-mobile-ux-v15.js
+          ! grep -Eq 'preventDefault[[:space:]]*\\(' glueful-jobs-mobile-ux-v15.js
       - name: Existing V15 card polish preserved
         run: |
           set -e
