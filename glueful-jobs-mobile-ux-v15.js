@@ -1,18 +1,24 @@
-/* Glueful Jobs V15 — native mobile carousel UX.
- * Keeps the Jobs renderer/data/ranking unchanged. No JS touch interception.
+/* Glueful Jobs V15 — native mobile carousel UX V2.
+ * Keeps the Jobs renderer/data/ranking unchanged.
+ * Uses the browser's native gesture arbitration: no touchmove interception,
+ * no preventDefault(), no requestAnimationFrame-driven scrolling.
  */
 (function(){
   'use strict';
-  if(window.__GLUEFUL_JOBS_MOBILE_UX_NATIVE_V1__) return;
-  window.__GLUEFUL_JOBS_MOBILE_UX_NATIVE_V1__=true;
-  const STYLE='g15-mobile-ux-native-v1';
+  if(window.__GLUEFUL_JOBS_MOBILE_UX_NATIVE_V2__) return;
+  window.__GLUEFUL_JOBS_MOBILE_UX_NATIVE_V2__=true;
+
+  const STYLE='g15-mobile-ux-native-v2';
+
   function injectStyle(){
     if(document.getElementById(STYLE)) return;
-    const s=document.createElement('style'); s.id=STYLE;
+    const s=document.createElement('style');
+    s.id=STYLE;
     s.textContent=`
       #glueful-jobs-v15 .g15-rail,
       #glueful-jobs-v15 .g15-company-rail{
         display:flex!important;
+        flex-direction:row!important;
         flex-wrap:nowrap!important;
         overflow-x:auto!important;
         overflow-y:hidden!important;
@@ -21,17 +27,21 @@
         overscroll-behavior-y:auto!important;
         scroll-snap-type:x proximity!important;
         scroll-behavior:auto!important;
-        touch-action:pan-x!important;
+        /* Let the browser decide horizontal-vs-vertical from the gesture. */
+        touch-action:auto!important;
         scrollbar-width:none!important;
         -ms-overflow-style:none!important;
         gap:14px!important;
         padding-left:2px!important;
         padding-right:24px!important;
         cursor:grab!important;
+        user-select:none!important;
       }
+      #glueful-jobs-v15 .g15-rail:active,
+      #glueful-jobs-v15 .g15-company-rail:active{cursor:grabbing!important}
       #glueful-jobs-v15 .g15-rail::-webkit-scrollbar,
       #glueful-jobs-v15 .g15-company-rail::-webkit-scrollbar{display:none!important}
-      #glueful-jobs-v15 .g15-rail>* ,
+      #glueful-jobs-v15 .g15-rail>*,
       #glueful-jobs-v15 .g15-company-rail>*{
         flex:0 0 auto!important;
         scroll-snap-align:start!important;
@@ -57,40 +67,64 @@
     `;
     document.head.appendChild(s);
   }
+
   function dotsFor(rail){
-    const parent=rail.parentElement;if(!parent)return;
+    const parent=rail.parentElement;
+    if(!parent)return;
     if(!parent.classList.contains('g15-mobile-rail-wrap'))parent.classList.add('g15-mobile-rail-wrap');
     if(!parent.querySelector('.g15-mobile-swipe-hint')){
-      const hint=document.createElement('div');hint.className='g15-mobile-swipe-hint';
+      const hint=document.createElement('div');
+      hint.className='g15-mobile-swipe-hint';
       hint.textContent=rail.classList.contains('g15-company-rail')?'Swipe to explore companies':'Swipe to explore relevant jobs';
       parent.insertBefore(hint,rail);
     }
-    const children=[...rail.children];if(children.length<2)return;
+    const children=[...rail.children];
+    if(children.length<2)return;
     let dots=parent.querySelector('.g15-mobile-dots');
     if(!dots){dots=document.createElement('div');dots.className='g15-mobile-dots';parent.appendChild(dots)}
     const count=Math.min(children.length,8);
-    if(dots.childElementCount!==count){dots.replaceChildren(...Array.from({length:count},(_,i)=>{const d=document.createElement('span');d.className='g15-mobile-dot'+(i===0?' active':'');return d;}));}
+    if(dots.childElementCount!==count){
+      dots.replaceChildren(...Array.from({length:count},(_,i)=>{
+        const d=document.createElement('span');
+        d.className='g15-mobile-dot'+(i===0?' active':'');
+        return d;
+      }));
+    }
     const update=()=>{
-      const max=Math.max(0,rail.scrollWidth-rail.clientWidth),ratio=max?rail.scrollLeft/max:0;
+      const max=Math.max(0,rail.scrollWidth-rail.clientWidth);
+      const ratio=max?rail.scrollLeft/max:0;
       const idx=Math.max(0,Math.min(count-1,Math.round(ratio*(count-1))));
       [...dots.children].forEach((d,i)=>d.classList.toggle('active',i===idx));
     };
     if(rail.dataset.g15DotsBound!=='1'){
-      rail.dataset.g15DotsBound='1';rail.addEventListener('scroll',update,{passive:true});window.addEventListener('resize',update,{passive:true});
+      rail.dataset.g15DotsBound='1';
+      rail.addEventListener('scroll',update,{passive:true});
+      window.addEventListener('resize',update,{passive:true});
     }
     update();
   }
+
   function run(){
-    const root=document.getElementById('glueful-jobs-v15');if(!root)return false;injectStyle();
-    root.querySelectorAll('.g15-rail').forEach(dotsFor);root.querySelectorAll('.g15-company-rail').forEach(dotsFor);return true;
+    const root=document.getElementById('glueful-jobs-v15');
+    if(!root)return false;
+    injectStyle();
+    root.querySelectorAll('.g15-rail').forEach(dotsFor);
+    root.querySelectorAll('.g15-company-rail').forEach(dotsFor);
+    return true;
   }
+
   function boot(){
     if(!run())return;
-    if(window.__GLUEFUL_JOBS_MOBILE_UX_OBSERVER_NATIVE_V1__)return;
-    const root=document.getElementById('glueful-jobs-v15');if(!root)return;
-    let timer=0;const schedule=()=>{clearTimeout(timer);timer=setTimeout(run,100)};
-    const observer=new MutationObserver(schedule);observer.observe(root,{childList:true,subtree:true});
-    window.__GLUEFUL_JOBS_MOBILE_UX_OBSERVER_NATIVE_V1__=observer;
+    if(window.__GLUEFUL_JOBS_MOBILE_UX_OBSERVER_NATIVE_V2__)return;
+    const root=document.getElementById('glueful-jobs-v15');
+    if(!root)return;
+    let timer=0;
+    const schedule=()=>{clearTimeout(timer);timer=setTimeout(run,160)};
+    const observer=new MutationObserver(schedule);
+    observer.observe(root,{childList:true,subtree:true});
+    window.__GLUEFUL_JOBS_MOBILE_UX_OBSERVER_NATIVE_V2__=observer;
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});
+  else boot();
 })();
