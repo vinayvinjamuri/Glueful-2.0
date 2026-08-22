@@ -10,7 +10,21 @@
   const clean=v=>String(v??'').replace(/\s+/g,' ').trim();
   const title=j=>clean(j?.title||j?.job_title||j?.position||'');
   const company=j=>clean(j?.company||j?.company_name||j?.employer||'');
-  const getJobs=()=>{try{return typeof window.gluefulJobsV15?.getJobs==='function'?window.gluefulJobsV15.getJobs():[]}catch(_){return[]}};
+  const getJobs=()=>{
+    try{
+      if(typeof window.gluefulJobsV15?.getJobs==='function'){
+        const list=window.gluefulJobsV15.getJobs();
+        if(Array.isArray(list)&&list.length)return list;
+      }
+    }catch(_){}
+    try{
+      if(typeof window.getActiveJobData==='function'){
+        const list=window.getActiveJobData();
+        if(Array.isArray(list)&&list.length)return list;
+      }
+    }catch(_){}
+    return [];
+  };
 
   function findJobFromDetail(panel){
     const root=panel?.querySelector?.('.g15-detail')||panel;
