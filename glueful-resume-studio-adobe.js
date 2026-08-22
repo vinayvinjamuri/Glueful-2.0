@@ -79,11 +79,53 @@
     if (!pages && !renderHost.textContent.trim() && !images && !tables) throw new Error('docx-preview completed without producing document content.');
     return { html: renderHost.innerHTML, imported: true, pdfConverted: true, renderer: 'docx-preview' };
   }
-  async function sourceFileToEditor(file, ed) { if (!file) return null; const name = safeText(file.name).toLowerCase(); if (name.endsWith('.docx')) { return await renderDocxWithLayout(await file.arrayBuffer(), ed); } if (name.endsWith('.pdf')) { showConversionBanner('Converting your PDF to an editable Word document…'); showConversionNote('Converting your PDF with Adobe PDF Services…'); return await renderDocxWithLayout(await convertPdfWithAdobe(await file.arrayBuffer()), ed); } return null; }
+  async function sourceFileToEditor(file, ed) { if (!file) return null; const name = safeText(file.name).toLowerCase(); if (name.endsWith('.docx')) return await renderDocxWithLayout(await file.arrayBuffer(), ed); if (name.endsWith('.pdf')) { showConversionBanner('Converting your PDF to an editable Word document…'); showConversionNote('Converting your PDF with Adobe PDF Services…'); return await renderDocxWithLayout(await convertPdfWithAdobe(await file.arrayBuffer()), ed); } return null; }
   function preparePlainEditor(ed) { if (!ed) return; ed.classList.remove('pdf-structured-canvas', 'pdf-native-canvas', 'glueful-docx-layout-mode'); ed.classList.add('glueful-word-document-mode', 'job-resume-master-imported'); ed.contentEditable = 'true'; ed.setAttribute('role', 'textbox'); ed.setAttribute('aria-multiline', 'true'); ed.spellcheck = true; }
   async function loadMasterIntoEditor() { const ed = editor(); if (!ed) throw new Error('Resume editor surface is missing.'); let master = safeText(window.gluefulMasterResumeText); if (!master && typeof window.ensureMasterResumeText === 'function') master = safeText(await window.ensureMasterResumeText()); const base = master || (typeof window.buildProfileResumeFallback === 'function' ? safeText(window.buildProfileResumeFallback()) : ''); const imported = await sourceFileToEditor(await getSourceFile(), ed); if (imported?.html) { showConversionNote(imported.renderer === 'docx-preview' ? 'PDF converted by Adobe and rendered with docx-preview. Your master resume remains protected.' : 'Editable document loaded.'); return imported; } if (typeof window.resumeTextToEditorHtml === 'function') ed.innerHTML = window.resumeTextToEditorHtml(base); else ed.innerHTML = base.split(/\r?\n/).map((line) => line.trim() ? `<p>${line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>` : '<p><br></p>').join(''); preparePlainEditor(ed); return { html: ed.innerHTML, imported: false, pdfConverted: false, renderer: 'plain-fallback' }; }
-  async function openJobResumeEditor(id) { const job = typeof window.findActiveJobById === 'function' ? window.findActiveJobById(id) : null; if (!job) return; window.gluefulJobResumeEditorId = String(job.id); if (typeof window.openModal === 'function') window.openModal(MODAL_ID); const jobEl = $('job-resume-editor-job'); const ats = $('job-resume-editor-ats'); const ed = editor(); if (jobEl) { const logoHtml = typeof window.renderCompanyLogo === 'function' ? window.renderCompanyLogo(job) : ''; const escape = (value) => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\"/g, '&quot;').replace(/'/g, '&#39;'); jobEl.innerHTML = `${logoHtml}<div class="job-resume-editor-job-copy"><div class="job-resume-editor-job-title">${escape(job.title)}</div><div class="job-resume-editor-job-company">${escape(job.company)} · ${escape(job.location)}</div></div>`; if (typeof window.loadCompanyLogos === 'function') window.loadCompanyLogos(); } if (ats) ats.textContent = '…'; if (ed) { ed.innerHTML = '<p style="padding:40px;text-align:center;color:#777;font-family:Inter,Arial,sans-serif">Preparing editable Word document…</p>'; ed.contentEditable = 'true'; } try { clearConversionUi(); await loadMasterIntoEditor(); } catch (error) { console.error('[Glueful Resume Studio Adobe] load failed:', error); window.gluefulResumeRendererReport = { renderer: 'error', stage: 'PDF source acquisition / Supabase authentication / Adobe conversion / DOCX rendering', error: String(error?.message || error), stack: String(error?.stack || '') }; if (ed) { ed.innerHTML = `<div style="padding:40px;text-align:center;font-family:Inter,Arial,sans-serif;color:#8b1e1e;background:#fff7f7;border:1px solid #e8b4b4;border-radius:8px"><strong>Resume layout renderer failed.</strong><br><span style="font-size:12px">${String(error?.message || error).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span></div>`; ed.contentEditable = 'false'; } showConversionNote('Resume layout rendering failed; no semantic fallback was inserted.'); if (typeof window.showError === 'function') window.showError(error?.message || 'Could not render the Adobe-generated Word document.'); } finally { clearConversionUi(); } if (typeof window.updateJobResumeEditorAts === 'function') { try { window.updateJobResumeEditorAts(); } catch (_) {} } if (typeof window.gluefulResumeStudioEnhance === 'function') { try { window.gluefulResumeStudioEnhance(); } catch (_) {} } }
+  function normalizeJob(job) {
+    if (!job || typeof job !== 'object') return null;
+    return job;
+  }
+  async function openJobResumeEditorForJob(job) {
+    const activeJob = normalizeJob(job);
+    if (!activeJob) return;
+    window.gluefulJobResumeEditorId = String(activeJob.id ?? activeJob.sourceJobId ?? activeJob.job_id ?? '');
+    window.gluefulJobResumeEditorJob = activeJob;
+    if (typeof window.openModal === 'function') window.openModal(MODAL_ID);
+    const jobEl = $('job-resume-editor-job');
+    const ats = $('job-resume-editor-ats');
+    const ed = editor();
+    if (jobEl) {
+      const logoHtml = typeof window.renderCompanyLogo === 'function' ? window.renderCompanyLogo(activeJob) : '';
+      const escape = (value) => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\"/g, '&quot;').replace(/'/g, '&#39;');
+      jobEl.innerHTML = `${logoHtml}<div class="job-resume-editor-job-copy"><div class="job-resume-editor-job-title">${escape(activeJob.title || activeJob.job_title || activeJob.position || '')}</div><div class="job-resume-editor-job-company">${escape(activeJob.company || activeJob.company_name || activeJob.employer || '')} · ${escape(activeJob.location || activeJob.city || activeJob.job_location || '')}</div></div>`;
+      if (typeof window.loadCompanyLogos === 'function') window.loadCompanyLogos();
+    }
+    if (ats) ats.textContent = '…';
+    if (ed) { ed.innerHTML = '<p style="padding:40px;text-align:center;color:#777;font-family:Inter,Arial,sans-serif">Preparing editable Word document…</p>'; ed.contentEditable = 'true'; }
+    try {
+      clearConversionUi();
+      await loadMasterIntoEditor();
+    } catch (error) {
+      console.error('[Glueful Resume Studio Adobe] load failed:', error);
+      window.gluefulResumeRendererReport = { renderer: 'error', stage: 'PDF source acquisition / Supabase authentication / Adobe conversion / DOCX rendering', error: String(error?.message || error), stack: String(error?.stack || '') };
+      if (ed) { ed.innerHTML = `<div style="padding:40px;text-align:center;font-family:Inter,Arial,sans-serif;color:#8b1e1e;background:#fff7f7;border:1px solid #e8b4b4;border-radius:8px"><strong>Resume layout renderer failed.</strong><br><span style="font-size:12px">${String(error?.message || error).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span></div>`; ed.contentEditable = 'false'; }
+      showConversionNote('Resume layout rendering failed; no semantic fallback was inserted.');
+      if (typeof window.showError === 'function') window.showError(error?.message || 'Could not render the Adobe-generated Word document.');
+    } finally { clearConversionUi(); }
+    if (typeof window.updateJobResumeEditorAts === 'function') { try { window.updateJobResumeEditorAts(); } catch (_) {} }
+    if (typeof window.gluefulResumeStudioEnhance === 'function') { try { window.gluefulResumeStudioEnhance(); } catch (_) {} }
+  }
+  async function openJobResumeEditor(id) {
+    const wanted = String(id ?? '');
+    const job = typeof window.findActiveJobById === 'function' ? window.findActiveJobById(wanted) : null;
+    if (!job) { console.warn('[Glueful Resume Studio] No active job found for id:', wanted); return; }
+    return openJobResumeEditorForJob(job);
+  }
   async function resetJobResumeToMaster() { const ed = editor(); if (!ed) return; try { clearConversionUi(); await loadMasterIntoEditor(); if (typeof window.updateJobResumeEditorAts === 'function') { try { window.updateJobResumeEditorAts(); } catch (_) {} } ed.focus(); } catch (error) { console.error('[Glueful Resume Studio Adobe] reset failed:', error); if (typeof window.showError === 'function') window.showError(error?.message || 'Could not reset the temporary resume.'); } finally { clearConversionUi(); } }
-  window.gluefulAdobeResumeStudio = { version: '2.8.0', functionName: FUNCTION_NAME, pipeline: ['PDF master', 'Supabase glueful-pdf-to-docx', 'real DOCX', 'docx-preview layout renderer', 'existing contenteditable Word-style editor'], openJobResumeEditor, resetJobResumeToMaster };
-  window.openJobResumeEditor = openJobResumeEditor; window.resetJobResumeToMaster = resetJobResumeToMaster; console.info('[Glueful Resume Studio] authoritative DOCX layout controller loaded.');
+  window.gluefulAdobeResumeStudio = { version: '2.9.0', functionName: FUNCTION_NAME, pipeline: ['PDF master', 'Supabase glueful-pdf-to-docx', 'real DOCX', 'docx-preview layout renderer', 'existing contenteditable Word-style editor'], openJobResumeEditor, openJobResumeEditorForJob, resetJobResumeToMaster };
+  window.openJobResumeEditor = openJobResumeEditor;
+  window.openJobResumeEditorForJob = openJobResumeEditorForJob;
+  window.resetJobResumeToMaster = resetJobResumeToMaster;
+  console.info('[Glueful Resume Studio] authoritative DOCX layout controller loaded v2.9.0.');
 })();
