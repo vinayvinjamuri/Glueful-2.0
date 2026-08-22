@@ -30,18 +30,21 @@ jobs:
           set -e
           node --check glueful-jobs-mobile-ux-v15.js
           node --check glueful-jobs-mobile-card-polish-v1.js
-      - name: Swipeable Jobs and Companies contracts
+      - name: Native swipeable Jobs and Companies contracts
         run: |
           set -e
           grep -q 'g15-mobile-swipe-rail' glueful-jobs-mobile-ux-v15.js
           grep -q 'g15-mobile-dots' glueful-jobs-mobile-ux-v15.js
           grep -q 'Swipe to explore relevant jobs' glueful-jobs-mobile-ux-v15.js
           grep -q 'Swipe to explore companies' glueful-jobs-mobile-ux-v15.js
-          grep -q 'scroll-snap-type:x mandatory' glueful-jobs-mobile-ux-v15.js
+          grep -q 'scroll-snap-type:x proximity' glueful-jobs-mobile-ux-v15.js
           grep -q 'touch-action:pan-x pan-y' glueful-jobs-mobile-ux-v15.js
+          grep -q 'overflow-x:auto' glueful-jobs-mobile-ux-v15.js
           grep -q 'g15-rail' glueful-jobs-mobile-ux-v15.js
           grep -q 'g15-company-rail' glueful-jobs-mobile-ux-v15.js
           grep -q 'glueful-jobs-mobile-ux-v15.js' glueful-jobs-mobile-card-polish-v1.js
+          ! grep -q 'touchmove' glueful-jobs-mobile-ux-v15.js
+          ! grep -q 'preventDefault' glueful-jobs-mobile-ux-v15.js
       - name: Existing V15 card polish preserved
         run: |
           set -e
