@@ -1,14 +1,13 @@
-/* Glueful Jobs V15 — native mobile carousel UX V2.
- * Keeps the Jobs renderer/data/ranking unchanged.
- * Uses the browser's native gesture arbitration: no touchmove interception,
- * no preventDefault(), no requestAnimationFrame-driven scrolling.
+/* Glueful Jobs V15 — native mobile carousel UX V3.
+ * Native horizontal rails: the browser owns gesture arbitration and scrolling.
+ * No touchmove interception, preventDefault(), or JS-driven scrollLeft.
  */
 (function(){
   'use strict';
-  if(window.__GLUEFUL_JOBS_MOBILE_UX_NATIVE_V2__) return;
-  window.__GLUEFUL_JOBS_MOBILE_UX_NATIVE_V2__=true;
+  if(window.__GLUEFUL_JOBS_MOBILE_UX_NATIVE_V3__) return;
+  window.__GLUEFUL_JOBS_MOBILE_UX_NATIVE_V3__=true;
 
-  const STYLE='g15-mobile-ux-native-v2';
+  const STYLE='g15-mobile-ux-native-v3';
 
   function injectStyle(){
     if(document.getElementById(STYLE)) return;
@@ -20,20 +19,23 @@
         display:flex!important;
         flex-direction:row!important;
         flex-wrap:nowrap!important;
+        width:100%!important;
+        max-width:100%!important;
+        min-width:0!important;
         overflow-x:auto!important;
         overflow-y:hidden!important;
         -webkit-overflow-scrolling:touch!important;
-        overscroll-behavior-x:contain!important;
-        overscroll-behavior-y:auto!important;
+        overscroll-behavior-inline:contain!important;
+        overscroll-behavior-block:auto!important;
         scroll-snap-type:x proximity!important;
         scroll-behavior:auto!important;
-        /* Let the browser decide horizontal-vs-vertical from the gesture. */
-        touch-action:auto!important;
+        touch-action:pan-x pan-y!important;
         scrollbar-width:none!important;
         -ms-overflow-style:none!important;
         gap:14px!important;
         padding-left:2px!important;
-        padding-right:24px!important;
+        padding-right:28px!important;
+        box-sizing:border-box!important;
         cursor:grab!important;
         user-select:none!important;
       }
@@ -44,21 +46,26 @@
       #glueful-jobs-v15 .g15-rail>*,
       #glueful-jobs-v15 .g15-company-rail>*{
         flex:0 0 auto!important;
+        min-width:0!important;
         scroll-snap-align:start!important;
+        scroll-snap-stop:normal!important;
       }
       @media(max-width:600px){
-        #glueful-jobs-v15 .g15-rail{padding-right:28px!important}
+        #glueful-jobs-v15 .g15-rail{padding-right:32px!important}
         #glueful-jobs-v15 .g15-card{
           flex:0 0 calc(100vw - 72px)!important;
           width:calc(100vw - 72px)!important;
+          min-width:calc(100vw - 72px)!important;
           max-width:none!important;
         }
         #glueful-jobs-v15 .g15-company{
           flex:0 0 132px!important;
           width:132px!important;
+          min-width:132px!important;
         }
       }
-      #glueful-jobs-v15 .g15-mobile-rail-wrap{position:relative;margin:0}
+      #glueful-jobs-v15 .g15-mobile-rail-wrap{position:relative;margin:0;width:100%;min-width:0}
+      #glueful-jobs-v15 .g15-mobile-swipe-rail{touch-action:pan-x pan-y!important}
       #glueful-jobs-v15 .g15-mobile-dots{display:flex;justify-content:center;gap:5px;margin:-1px 0 12px;min-height:7px}
       #glueful-jobs-v15 .g15-mobile-dot{width:5px;height:5px;border-radius:999px;background:#454c5b;transition:width .14s ease,background .14s ease}
       #glueful-jobs-v15 .g15-mobile-dot.active{width:16px;background:linear-gradient(90deg,#7b36ff,#4b7cff)}
@@ -71,6 +78,7 @@
   function dotsFor(rail){
     const parent=rail.parentElement;
     if(!parent)return;
+    rail.classList.add('g15-mobile-swipe-rail');
     if(!parent.classList.contains('g15-mobile-rail-wrap'))parent.classList.add('g15-mobile-rail-wrap');
     if(!parent.querySelector('.g15-mobile-swipe-hint')){
       const hint=document.createElement('div');
@@ -115,14 +123,14 @@
 
   function boot(){
     if(!run())return;
-    if(window.__GLUEFUL_JOBS_MOBILE_UX_OBSERVER_NATIVE_V2__)return;
+    if(window.__GLUEFUL_JOBS_MOBILE_UX_OBSERVER_NATIVE_V3__)return;
     const root=document.getElementById('glueful-jobs-v15');
     if(!root)return;
     let timer=0;
     const schedule=()=>{clearTimeout(timer);timer=setTimeout(run,160)};
     const observer=new MutationObserver(schedule);
     observer.observe(root,{childList:true,subtree:true});
-    window.__GLUEFUL_JOBS_MOBILE_UX_OBSERVER_NATIVE_V2__=observer;
+    window.__GLUEFUL_JOBS_MOBILE_UX_OBSERVER_NATIVE_V3__=observer;
   }
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});
