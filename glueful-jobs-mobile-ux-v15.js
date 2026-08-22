@@ -7,7 +7,6 @@
   window.__GLUEFUL_JOBS_MOBILE_UX_V15__=true;
 
   const STYLE='g15-mobile-ux-v15-style';
-  const safe=s=>String(s||'').replace(/\s+/g,' ').trim();
 
   function injectStyle(){
     if(document.getElementById(STYLE)) return;
@@ -17,21 +16,19 @@
       #glueful-jobs-v15 .g15-company-rail{
         -webkit-overflow-scrolling:touch!important;
         overscroll-behavior-x:contain!important;
-        scroll-snap-type:x mandatory!important;
-        scroll-behavior:smooth!important;
-        touch-action:pan-x pan-y!important;
+        overscroll-behavior-y:auto!important;
+        scroll-snap-type:x proximity!important;
+        scroll-behavior:auto!important;
+        touch-action:auto!important;
         scrollbar-width:none!important;
         padding-left:2px!important;padding-right:18px!important;
       }
       #glueful-jobs-v15 .g15-rail::-webkit-scrollbar,
       #glueful-jobs-v15 .g15-company-rail::-webkit-scrollbar{display:none!important}
-      #glueful-jobs-v15 .g15-rail > .g15-card{
-        scroll-snap-align:start!important;
-        scroll-snap-stop:always!important;
-      }
+      #glueful-jobs-v15 .g15-rail > .g15-card,
       #glueful-jobs-v15 .g15-company-rail > .g15-company{
         scroll-snap-align:start!important;
-        scroll-snap-stop:always!important;
+        scroll-snap-stop:normal!important;
       }
       #glueful-jobs-v15 .g15-mobile-rail-wrap{position:relative;margin:0}
       #glueful-jobs-v15 .g15-mobile-dots{display:flex;justify-content:center;gap:5px;margin:-1px 0 12px;min-height:7px}
@@ -54,9 +51,7 @@
   function railLabel(rail,isCompanies){
     const parent=rail.parentElement;
     if(!parent) return;
-    if(!parent.classList.contains('g15-mobile-rail-wrap')){
-      parent.classList.add('g15-mobile-rail-wrap');
-    }
+    if(!parent.classList.contains('g15-mobile-rail-wrap')) parent.classList.add('g15-mobile-rail-wrap');
     if(!parent.querySelector('.g15-mobile-swipe-hint')){
       const hint=document.createElement('div');
       hint.className='g15-mobile-swipe-hint';
@@ -73,9 +68,13 @@
     let dots=parent.querySelector('.g15-mobile-dots');
     if(!dots){dots=document.createElement('div');dots.className='g15-mobile-dots';parent.appendChild(dots)}
     const count=Math.min(children.length,8);
-    dots.innerHTML='';
-    for(let i=0;i<count;i++){
-      const d=document.createElement('span');d.className='g15-mobile-dot'+(i===0?' active':'');dots.appendChild(d)
+    if(dots.childElementCount!==count){
+      dots.innerHTML='';
+      for(let i=0;i<count;i++){
+        const d=document.createElement('span');
+        d.className='g15-mobile-dot'+(i===0?' active':'');
+        dots.appendChild(d);
+      }
     }
     const update=()=>{
       const max=Math.max(0,rail.scrollWidth-rail.clientWidth);
@@ -87,8 +86,8 @@
       rail.dataset.g15DotsBound='1';
       rail.addEventListener('scroll',update,{passive:true});
       window.addEventListener('resize',update,{passive:true});
-      update();
     }
+    update();
   }
 
   function bindKeyboard(rail){
@@ -122,11 +121,15 @@
   function boot(){
     run();
     if(window.__GLUEFUL_JOBS_MOBILE_UX_OBSERVER__) return;
-    const observer=new MutationObserver(()=>{
-      observer.disconnect();
-      try{run()}finally{observer.observe(document.body,{childList:true,subtree:true})}
-    });
-    observer.observe(document.body,{childList:true,subtree:true});
+    const root=document.getElementById('glueful-jobs-v15');
+    if(!root) return;
+    let timer=0;
+    const schedule=()=>{
+      clearTimeout(timer);
+      timer=setTimeout(run,80);
+    };
+    const observer=new MutationObserver(schedule);
+    observer.observe(root,{childList:true,subtree:true});
     window.__GLUEFUL_JOBS_MOBILE_UX_OBSERVER__=observer;
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true});
