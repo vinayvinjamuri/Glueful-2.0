@@ -26,7 +26,7 @@
   const getData=()=>{try{return window.getActiveJobData?.()||[]}catch{return[]}};
   async function fetchJobs(){
     const url=`${API}?select=*&is_active=eq.true&order=posted_at.desc&limit=1000`;
-    const r=await fetch(url,{headers:{apikey:KEY,Authorization:`Bearer ${KEY}`},cache:'no-store'});
+    const r=await fetch(url,{headers:{apikey:KEY},cache:'no-store'});
     if(!r.ok)throw new Error(`jobs REST ${r.status}`);
     const data=await r.json();
     if(!Array.isArray(data)||!data.length)throw new Error('jobs REST returned no active rows');
