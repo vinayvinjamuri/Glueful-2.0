@@ -48,16 +48,23 @@ jobs:
           grep -q 'glueful-jobs-mobile-ux-v15.js' glueful-jobs-mobile-card-polish-v1.js
           ! grep -Eq "addEventListener\\(['\"]touchmove" glueful-jobs-mobile-ux-v15.js
           ! grep -Eq 'preventDefault[[:space:]]*\\(' glueful-jobs-mobile-ux-v15.js
-      - name: BrandFetch company-card contract
+      - name: BrandFetch and latest-company-jobs contract
         run: |
           set -e
-          grep -q '__GLUEFUL_JOBS_SMOOTH_LOGOS_V3__' glueful-jobs-smooth-logos-v1.js
+          grep -q '__GLUEFUL_JOBS_SMOOTH_LOGOS_V4__' glueful-jobs-smooth-logos-v1.js
           grep -q 'cdn.brandfetch.io' glueful-jobs-smooth-logos-v1.js
           grep -q 'g15-company' glueful-jobs-smooth-logos-v1.js
           grep -q 'dataset.company' glueful-jobs-smooth-logos-v1.js
           grep -q 'gluefulJobsV15?.getJobs' glueful-jobs-smooth-logos-v1.js
           grep -q 'MutationObserver' glueful-jobs-smooth-logos-v1.js
           grep -q "document.getElementById('glueful-jobs-v15')" glueful-jobs-smooth-logos-v1.js
+          grep -q 'g15-latest-company-jobs' glueful-jobs-smooth-logos-v1.js
+          grep -q 'Latest jobs from top companies' glueful-jobs-smooth-logos-v1.js
+          grep -q 'Swipe horizontally to explore more opportunities' glueful-jobs-smooth-logos-v1.js
+          grep -q 'uniqueCompanyJobs' glueful-jobs-smooth-logos-v1.js
+          grep -q 'g15-latest-rail' glueful-jobs-smooth-logos-v1.js
+          grep -q 'g15-latest-logo' glueful-jobs-smooth-logos-v1.js
+          grep -q 'company_logo_url||brandLogo' glueful-jobs-smooth-logos-v1.js
           ! grep -Eq "addEventListener\\(['\"]touchmove" glueful-jobs-smooth-logos-v1.js
           ! grep -Eq 'preventDefault[[:space:]]*\\(' glueful-jobs-smooth-logos-v1.js
       - name: Existing V15 card polish preserved
