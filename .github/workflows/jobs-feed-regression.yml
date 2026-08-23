@@ -98,7 +98,8 @@ jobs:
           grep -q "scroll-snap-type:x proximity" glueful-jobs-smooth-logos-v1.js
           grep -q "cdn.brandfetch.io" glueful-jobs-smooth-logos-v1.js
           grep -q "Latest jobs from top companies" glueful-jobs-smooth-logos-v1.js
-          grep -q "__GLUEFUL_MOBILE_JOBS_UX_V15__" glueful-jobs-mobile-ux-v15.js
+          grep -q "__GLUEFUL_JOBS_MOBILE_UX_NATIVE_V5__" glueful-jobs-mobile-ux-v15.js
+          grep -q "__GLUEFUL_JOBS_MOBILE_UX_READY_V5__" glueful-jobs-mobile-ux-v15.js
           grep -q "__GLUEFUL_JOBS_MOBILE_CARD_POLISH_V1__" glueful-jobs-mobile-card-polish-v1.js
       - name: Single Quick Actions / Plug-ins owner
         run: |
