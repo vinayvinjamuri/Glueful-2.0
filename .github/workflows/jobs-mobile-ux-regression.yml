@@ -45,6 +45,11 @@ jobs:
           grep -q 'overflow-x:auto' glueful-jobs-mobile-ux-v15.js
           grep -q 'g15-rail' glueful-jobs-mobile-ux-v15.js
           grep -q 'g15-company-rail' glueful-jobs-mobile-ux-v15.js
+          grep -q 'g15-latest-company-jobs' glueful-jobs-mobile-ux-v15.js
+          grep -q 'flex-direction:column' glueful-jobs-mobile-ux-v15.js
+          grep -q 'overflow-x:hidden' glueful-jobs-mobile-ux-v15.js
+          grep -q 'touch-action:pan-y' glueful-jobs-mobile-ux-v15.js
+          grep -q 'g15-latest-dots{display:none' glueful-jobs-mobile-ux-v15.js
           grep -q 'glueful-jobs-mobile-ux-v15.js' glueful-jobs-mobile-card-polish-v1.js
           ! grep -Eq "addEventListener\\(['\"]touchmove" glueful-jobs-mobile-ux-v15.js
           ! grep -Eq 'preventDefault[[:space:]]*\\(' glueful-jobs-mobile-ux-v15.js
