@@ -54,10 +54,10 @@ jobs:
           grep -q '__GLUEFUL_JOBS_SMOOTH_LOGOS_V3__' glueful-jobs-smooth-logos-v1.js
           grep -q 'cdn.brandfetch.io' glueful-jobs-smooth-logos-v1.js
           grep -q 'g15-company' glueful-jobs-smooth-logos-v1.js
-          grep -q 'data-company' glueful-jobs-smooth-logos-v1.js
+          grep -q 'dataset.company' glueful-jobs-smooth-logos-v1.js
           grep -q 'gluefulJobsV15?.getJobs' glueful-jobs-smooth-logos-v1.js
           grep -q 'MutationObserver' glueful-jobs-smooth-logos-v1.js
-          grep -q 'document.getElementById('\''glueful-jobs-v15'\'')' glueful-jobs-smooth-logos-v1.js
+          grep -q "document.getElementById('glueful-jobs-v15')" glueful-jobs-smooth-logos-v1.js
           ! grep -Eq "addEventListener\\(['\"]touchmove" glueful-jobs-smooth-logos-v1.js
           ! grep -Eq 'preventDefault[[:space:]]*\\(' glueful-jobs-smooth-logos-v1.js
       - name: Existing V15 card polish preserved
