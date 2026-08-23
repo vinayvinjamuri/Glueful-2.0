@@ -1,19 +1,20 @@
 /* Glueful Jobs V15 — mobile smooth scrolling + shared Brand Fetch logo layer.
  * Touch/scroll path is intentionally passive and does no rendering work.
+ * Company-logo enrichment is resilient to asynchronous Jobs rendering.
  */
 (function(){
   'use strict';
-  if(window.__GLUEFUL_JOBS_SMOOTH_LOGOS_V2__) return;
-  window.__GLUEFUL_JOBS_SMOOTH_LOGOS_V2__=true;
+  if(window.__GLUEFUL_JOBS_SMOOTH_LOGOS_V3__) return;
+  window.__GLUEFUL_JOBS_SMOOTH_LOGOS_V3__=true;
 
-  const STYLE_ID='g15-smooth-logos-v2-style';
+  const STYLE_ID='g15-smooth-logos-v3-style';
   const clean=v=>String(v??'').replace(/\s+/g,' ').trim();
   const company=j=>clean(j?.company||j?.company_name||j?.employer||'Company');
   const initials=n=>clean(n).split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'?';
-  const data=()=>{try{return window.getActiveJobData?.()||[]}catch{return[]}};
+  const data=()=>{try{return window.getActiveJobData?.()||window.gluefulJobsV15?.getJobs?.()||[]}catch{return[]}};
   const fallbackDomain=name=>{
     const n=clean(name).toLowerCase();
-    const known={figma:'figma.com',udemy:'udemy.com',britive:'britive.com',apple:'apple.com',google:'google.com',microsoft:'microsoft.com',amazon:'amazon.com',meta:'meta.com',nvidia:'nvidia.com',qualcomm:'qualcomm.com',intel:'intel.com',amd:'amd.com',arm:'arm.com',nxp:'nxp.com',renesas:'renesas.com','texas instruments':'ti.com',broadcom:'broadcom.com',samsung:'samsung.com',ibm:'ibm.com',oracle:'oracle.com',adobe:'adobe.com',salesforce:'salesforce.com',bosch:'bosch.com',siemens:'siemens.com',synopsys:'synopsys.com',cadence:'cadence.com'};
+    const known={figma:'figma.com',udemy:'udemy.com',britive:'britive.com',apple:'apple.com',google:'google.com',microsoft:'microsoft.com',amazon:'amazon.com',meta:'meta.com',nvidia:'nvidia.com',qualcomm:'qualcomm.com',intel:'intel.com',amd:'amd.com',arm:'arm.com',nxp:'nxp.com',renesas:'renesas.com','texas instruments':'ti.com',broadcom:'broadcom.com',samsung:'samsung.com',ibm:'ibm.com',oracle:'oracle.com',adobe:'adobe.com',salesforce:'salesforce.com',bosch:'bosch.com',siemens:'siemens.com',synopsys:'synopsys.com',cadence:'cadence.com',cloudflare:'cloudflare.com',reddit:'reddit.com',dialpad:'dialpad.com',chainguard:'chainguard.dev'};
     const hit=Object.keys(known).find(k=>n===k||n.includes(k));if(hit)return known[hit];
     const first=n.replace(/\b(inc|ltd|llc|corp|corporation|company|co|plc)\b/g,'').replace(/[^a-z0-9]+/g,' ').trim().split(/\s+/)[0];
     return first?`${first}.com`:'';
@@ -39,7 +40,8 @@
     `;document.head.appendChild(s);
   }
   function fallback(host,name){
-    if(!host||host.dataset.g15LogoReady==='1')return;host.dataset.g15LogoReady='1';host.innerHTML='';
+    if(!host||host.dataset.g15LogoReady==='1'&&host.querySelector('img'))return;
+    host.dataset.g15LogoReady='1';host.innerHTML='';
     const span=document.createElement('span');span.textContent=initials(name);span.setAttribute('aria-hidden','true');
     span.style.cssText='display:grid;place-items:center;width:100%;height:100%;font:900 15px Inter,system-ui,sans-serif;color:#5140b5;';host.appendChild(span);
   }
@@ -57,18 +59,25 @@
     return companyMap;
   }
   function enrich(root){
-    const map=getMap();if(!map)return;
+    const map=getMap();
     root.querySelectorAll('.g15-company').forEach(card=>{
-      const name=clean(card.dataset.recoveryCompany||card.querySelector('strong')?.textContent||'Company');const host=card.querySelector(':scope > div');if(!host)return;
-      const job=map.get(name.toLowerCase()),url=job?.company_logo_url||brandLogo(name);if(url)put(host,url,name);else fallback(host,name);
+      const name=clean(card.dataset.recoveryCompany||card.dataset.company||card.querySelector('strong')?.textContent||'Company');
+      const host=card.querySelector(':scope > div');if(!host)return;
+      const job=map?.get(name.toLowerCase()),url=job?.company_logo_url||brandLogo(name);if(url)put(host,url,name);else fallback(host,name);
     });
   }
   function polish(root){root.querySelectorAll('.g15-logo img,.g15-company img,.g15-row-logo img').forEach(img=>{img.loading='lazy';img.decoding='async';img.referrerPolicy='no-referrer';});}
   function run(){queued=false;const root=document.getElementById('glueful-jobs-v15');if(!root)return;enrich(root);polish(root);}
   function queue(){if(queued)return;queued=true;const work=()=>run();if('requestIdleCallback' in window)window.requestIdleCallback(work,{timeout:900});else setTimeout(work,180);}
+  let documentObserver=null;
   function boot(){
-    injectStyle();run();const root=document.getElementById('glueful-jobs-v15');if(!root||window.__GLUEFUL_JOBS_SMOOTH_LOGOS_OBSERVER__)return;
-    const observer=new MutationObserver(queue);observer.observe(root,{childList:true,subtree:true});window.__GLUEFUL_JOBS_SMOOTH_LOGOS_OBSERVER__=observer;
+    injectStyle();run();
+    if(documentObserver)return;
+    documentObserver=new MutationObserver(()=>{
+      const root=document.getElementById('glueful-jobs-v15');
+      if(root){queue();const marker=root.querySelector('.g15-company');if(marker)documentObserver.disconnect();}
+    });
+    if(document.body)documentObserver.observe(document.body,{childList:true,subtree:true});
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
   window.gluefulJobsLogoResolverV1={logoUrl:j=>j?.company_logo_url||brandLogo(company(j)),brandLogo,domainForName:fallbackDomain};
