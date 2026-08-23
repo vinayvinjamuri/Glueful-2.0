@@ -1,0 +1,56 @@
+name: Glueful Runtime Regression
+on: [push, pull_request]
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: JavaScript syntax
+        run: |
+          node --check glueful-runtime-bootstrap-v1.js
+          node --check glueful-jobs-discover-v15-authoritative.js
+          node --check glueful-jobs-relevance-v1.js
+          node --check glueful-jobs-resume-action-v1.js
+          node --check glueful-jobs-logo-patch-v1.js
+          node --check glueful-jobs-feed-recovery-v2.js
+          node --check glueful-jobs-mobile-card-polish-v1.js
+          node --check glueful-jobs-mobile-ux-v15.js
+          node --check glueful-jobs-smooth-logos-v1.js
+          node --check glueful-jobs-official-link-guard-v1.js
+          node --check glueful-mobile-update-guard-v1.js
+          node --check glueful-app-branding-v1.js
+          node --check glueful-resume-studio-supabase-bridge.js
+          node --check sw.js
+      - name: Runtime ownership
+        run: |
+          grep -q '__GLUEFUL_RUNTIME_BOOTSTRAP_V1__' glueful-runtime-bootstrap-v1.js
+          grep -q 'glueful-jobs-discover-v15-authoritative.js' glueful-runtime-bootstrap-v1.js
+          grep -q 'glueful-jobs-relevance-v1.js' glueful-runtime-bootstrap-v1.js
+          grep -q 'glueful-jobs-resume-action-v1.js' glueful-runtime-bootstrap-v1.js
+          grep -q 'glueful-jobs-logo-patch-v1.js' glueful-runtime-bootstrap-v1.js
+          grep -q 'RUNTIME_BOOTSTRAP' sw.js
+          grep -q 'glueful-runtime-bootstrap-v1.js' sw.js
+          ! grep -q 'const JOBS_V15=' sw.js
+          ! grep -q 'const JOBS_RELEVANCE=' sw.js
+          ! grep -q 'const JOBS_RESUME_ACTION=' sw.js
+          ! grep -q 'const JOBS_LOGO_PATCH=' sw.js
+          ! grep -q 'loadAuthoritativeJobsRuntime' glueful-resume-studio-supabase-bridge.js
+      - name: Jobs and Quick Actions contracts
+        run: |
+          grep -q 'Find your next big move' glueful-jobs-discover-v15-authoritative.js
+          grep -q 'Curated for you' glueful-jobs-discover-v15-authoritative.js
+          grep -q 'Top companies hiring' glueful-jobs-discover-v15-authoritative.js
+          grep -q 'Search jobs, skills or companies' glueful-jobs-discover-v15-authoritative.js
+          grep -q 'Edit resume for this job' glueful-jobs-resume-action-v1.js
+          grep -q '__GLUEFUL_QUICK_ACTIONS_PLUGINS_V2__' glueful-jobs-logo-patch-v1.js
+          grep -q 'Quick Actions' glueful-jobs-logo-patch-v1.js
+          grep -q 'Plug-ins' glueful-jobs-logo-patch-v1.js
+          grep -q 'Brand Fetch' glueful-jobs-logo-patch-v1.js
+      - name: Resume safety
+        run: |
+          test -f glueful-resume-fixed-page-bootstrap.js
+          test -f glueful-resume-pdf-layout-importer.js
+          grep -q 'explicitLogoExtraction' glueful-resume-pdf-layout-importer.js
