@@ -1,13 +1,15 @@
-/* Glueful Jobs V15 — native mobile carousel UX V3.
- * Native horizontal rails: the browser owns gesture arbitration and scrolling.
- * No touchmove interception, preventDefault(), or JS-driven scrollLeft.
+/* Glueful Jobs V15 — native mobile carousel UX V5.
+ * The browser owns horizontal gesture arbitration and scrolling.
+ * This runtime also waits for the authoritative Jobs root before initializing;
+ * the renderer is async, so the script can be injected before #glueful-jobs-v15 exists.
  */
 (function(){
   'use strict';
-  if(window.__GLUEFUL_JOBS_MOBILE_UX_NATIVE_V3__) return;
-  window.__GLUEFUL_JOBS_MOBILE_UX_NATIVE_V3__=true;
+  if(window.__GLUEFUL_JOBS_MOBILE_UX_NATIVE_V5__) return;
+  window.__GLUEFUL_JOBS_MOBILE_UX_NATIVE_V5__=true;
 
-  const STYLE='g15-mobile-ux-native-v3';
+  const STYLE='g15-mobile-ux-native-v5';
+  let rootObserver=null;
 
   function injectStyle(){
     if(document.getElementById(STYLE)) return;
@@ -25,22 +27,20 @@
         overflow-x:auto!important;
         overflow-y:hidden!important;
         -webkit-overflow-scrolling:touch!important;
-        overscroll-behavior-inline:contain!important;
-        overscroll-behavior-block:auto!important;
+        overscroll-behavior-x:contain!important;
+        overscroll-behavior-y:auto!important;
         scroll-snap-type:x proximity!important;
         scroll-behavior:auto!important;
         touch-action:pan-x pan-y!important;
         scrollbar-width:none!important;
         -ms-overflow-style:none!important;
-        gap:14px!important;
+        gap:12px!important;
         padding-left:2px!important;
-        padding-right:28px!important;
+        padding-right:32px!important;
         box-sizing:border-box!important;
-        cursor:grab!important;
         user-select:none!important;
+        -webkit-user-select:none!important;
       }
-      #glueful-jobs-v15 .g15-rail:active,
-      #glueful-jobs-v15 .g15-company-rail:active{cursor:grabbing!important}
       #glueful-jobs-v15 .g15-rail::-webkit-scrollbar,
       #glueful-jobs-v15 .g15-company-rail::-webkit-scrollbar{display:none!important}
       #glueful-jobs-v15 .g15-rail>*,
@@ -51,11 +51,11 @@
         scroll-snap-stop:normal!important;
       }
       @media(max-width:600px){
-        #glueful-jobs-v15 .g15-rail{padding-right:32px!important}
+        #glueful-jobs-v15 .g15-rail{padding-right:34px!important}
         #glueful-jobs-v15 .g15-card{
-          flex:0 0 calc(100vw - 72px)!important;
-          width:calc(100vw - 72px)!important;
-          min-width:calc(100vw - 72px)!important;
+          flex:0 0 calc(100vw - 54px)!important;
+          width:calc(100vw - 54px)!important;
+          min-width:calc(100vw - 54px)!important;
           max-width:none!important;
         }
         #glueful-jobs-v15 .g15-company{
@@ -65,7 +65,6 @@
         }
       }
       #glueful-jobs-v15 .g15-mobile-rail-wrap{position:relative;margin:0;width:100%;min-width:0}
-      #glueful-jobs-v15 .g15-mobile-swipe-rail{touch-action:pan-x pan-y!important}
       #glueful-jobs-v15 .g15-mobile-dots{display:flex;justify-content:center;gap:5px;margin:-1px 0 12px;min-height:7px}
       #glueful-jobs-v15 .g15-mobile-dot{width:5px;height:5px;border-radius:999px;background:#454c5b;transition:width .14s ease,background .14s ease}
       #glueful-jobs-v15 .g15-mobile-dot.active{width:16px;background:linear-gradient(90deg,#7b36ff,#4b7cff)}
@@ -86,7 +85,7 @@
       hint.textContent=rail.classList.contains('g15-company-rail')?'Swipe to explore companies':'Swipe to explore relevant jobs';
       parent.insertBefore(hint,rail);
     }
-    const children=[...rail.children];
+    const children=[...rail.children].filter(el=>el.nodeType===1);
     if(children.length<2)return;
     let dots=parent.querySelector('.g15-mobile-dots');
     if(!dots){dots=document.createElement('div');dots.className='g15-mobile-dots';parent.appendChild(dots)}
@@ -118,19 +117,38 @@
     injectStyle();
     root.querySelectorAll('.g15-rail').forEach(dotsFor);
     root.querySelectorAll('.g15-company-rail').forEach(dotsFor);
+    window.__GLUEFUL_JOBS_MOBILE_UX_READY_V5__=true;
     return true;
   }
 
-  function boot(){
-    if(!run())return;
-    if(window.__GLUEFUL_JOBS_MOBILE_UX_OBSERVER_NATIVE_V3__)return;
+  function observeRoot(){
+    if(rootObserver||!document.body)return;
+    rootObserver=new MutationObserver(()=>{
+      if(run()){
+        rootObserver.disconnect();
+        rootObserver=null;
+        observeJobsRoot();
+      }
+    });
+    rootObserver.observe(document.body,{childList:true,subtree:true});
+  }
+
+  function observeJobsRoot(){
     const root=document.getElementById('glueful-jobs-v15');
-    if(!root)return;
+    if(!root||root.__g15MobileObserverV5)return;
+    root.__g15MobileObserverV5=true;
     let timer=0;
-    const schedule=()=>{clearTimeout(timer);timer=setTimeout(run,160)};
+    const schedule=()=>{clearTimeout(timer);timer=setTimeout(run,80)};
     const observer=new MutationObserver(schedule);
     observer.observe(root,{childList:true,subtree:true});
-    window.__GLUEFUL_JOBS_MOBILE_UX_OBSERVER_NATIVE_V3__=observer;
+  }
+
+  function boot(){
+    if(run()){
+      observeJobsRoot();
+      return;
+    }
+    observeRoot();
   }
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});
