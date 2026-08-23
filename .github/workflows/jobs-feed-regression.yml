@@ -1,13 +1,17 @@
 name: Jobs Discover Regression
-
 on:
   push:
     paths:
+      - 'glueful-jobs-auth-bootstrap-v1.js'
       - 'glueful-jobs-discover-v15-authoritative.js'
       - 'glueful-jobs-relevance-v1.js'
       - 'glueful-jobs-resume-action-v1.js'
       - 'glueful-jobs-logo-patch-v1.js'
-      - 'glueful-jobs-feed-recovery-v1.js'
+      - 'glueful-jobs-mobile-card-polish-v1.js'
+      - 'glueful-jobs-mobile-ux-v15.js'
+      - 'glueful-jobs-smooth-logos-v1.js'
+      - 'glueful-jobs-feed-recovery-v2.js'
+      - 'glueful-jobs-official-link-guard-v1.js'
       - 'glueful-plugins-nav-v1.js'
       - 'glueful-mobile-update-guard-v1.js'
       - 'glueful-resume-studio-supabase-bridge.js'
@@ -15,11 +19,16 @@ on:
       - '.github/workflows/jobs-feed-regression.yml'
   pull_request:
     paths:
+      - 'glueful-jobs-auth-bootstrap-v1.js'
       - 'glueful-jobs-discover-v15-authoritative.js'
       - 'glueful-jobs-relevance-v1.js'
       - 'glueful-jobs-resume-action-v1.js'
       - 'glueful-jobs-logo-patch-v1.js'
-      - 'glueful-jobs-feed-recovery-v1.js'
+      - 'glueful-jobs-mobile-card-polish-v1.js'
+      - 'glueful-jobs-mobile-ux-v15.js'
+      - 'glueful-jobs-smooth-logos-v1.js'
+      - 'glueful-jobs-feed-recovery-v2.js'
+      - 'glueful-jobs-official-link-guard-v1.js'
       - 'glueful-plugins-nav-v1.js'
       - 'glueful-mobile-update-guard-v1.js'
       - 'glueful-resume-studio-supabase-bridge.js'
@@ -37,11 +46,16 @@ jobs:
       - name: JavaScript syntax
         run: |
           set -e
+          node --check glueful-jobs-auth-bootstrap-v1.js
           node --check glueful-jobs-discover-v15-authoritative.js
           node --check glueful-jobs-relevance-v1.js
           node --check glueful-jobs-resume-action-v1.js
           node --check glueful-jobs-logo-patch-v1.js
-          node --check glueful-jobs-feed-recovery-v1.js
+          node --check glueful-jobs-mobile-card-polish-v1.js
+          node --check glueful-jobs-mobile-ux-v15.js
+          node --check glueful-jobs-smooth-logos-v1.js
+          node --check glueful-jobs-feed-recovery-v2.js
+          node --check glueful-jobs-official-link-guard-v1.js
           node --check glueful-plugins-nav-v1.js
           node --check glueful-mobile-update-guard-v1.js
           node --check glueful-resume-studio-supabase-bridge.js
@@ -58,7 +72,7 @@ jobs:
           grep -q "data-save" glueful-jobs-discover-v15-authoritative.js
           grep -q "openDetails" glueful-jobs-discover-v15-authoritative.js
           grep -q "__GLUEFUL_JOBS_V15__" glueful-jobs-discover-v15-authoritative.js
-      - name: Relevance, Resume Studio, recovery and branding contracts
+      - name: Relevance, resume, recovery, mobile and branding contracts
         run: |
           set -e
           grep -q "__GLUEFUL_JOBS_RELEVANCE_V1__" glueful-jobs-relevance-v1.js
@@ -70,9 +84,9 @@ jobs:
           grep -q "__GLUEFUL_JOBS_RESUME_ACTION_V1__" glueful-jobs-resume-action-v1.js
           grep -q "Edit resume for this job" glueful-jobs-resume-action-v1.js
           grep -q "openJobResumeEditor" glueful-jobs-resume-action-v1.js
-          grep -q "__GLUEFUL_JOBS_FEED_RECOVERY_V1__" glueful-jobs-feed-recovery-v1.js
-          grep -q "job_listings" glueful-jobs-feed-recovery-v1.js
-          grep -q "rest/v1/job_listings" glueful-jobs-feed-recovery-v1.js
+          grep -q "__GLUEFUL_JOBS_FEED_RECOVERY_V2__" glueful-jobs-feed-recovery-v2.js
+          grep -q "job_listings" glueful-jobs-feed-recovery-v2.js
+          grep -q "rest/v1/job_listings" glueful-jobs-feed-recovery-v2.js
           grep -q "__GLUEFUL_QUICK_ACTIONS_PLUGINS_V2__" glueful-jobs-logo-patch-v1.js
           grep -q "Quick Actions" glueful-jobs-logo-patch-v1.js
           grep -q "Plug-ins" glueful-jobs-logo-patch-v1.js
@@ -80,6 +94,12 @@ jobs:
           grep -q "observer.disconnect" glueful-jobs-logo-patch-v1.js
           grep -q "observer.observe(drawer" glueful-jobs-logo-patch-v1.js
           ! grep -q "observer.observe(target" glueful-jobs-logo-patch-v1.js
+          grep -q "__GLUEFUL_JOBS_SMOOTH_LOGOS_V4__" glueful-jobs-smooth-logos-v1.js
+          grep -q "scroll-snap-type:x proximity" glueful-jobs-smooth-logos-v1.js
+          grep -q "cdn.brandfetch.io" glueful-jobs-smooth-logos-v1.js
+          grep -q "Latest jobs from top companies" glueful-jobs-smooth-logos-v1.js
+          grep -q "__GLUEFUL_MOBILE_JOBS_UX_V15__" glueful-jobs-mobile-ux-v15.js
+          grep -q "__GLUEFUL_JOBS_MOBILE_CARD_POLISH_V1__" glueful-jobs-mobile-card-polish-v1.js
       - name: Single Quick Actions / Plug-ins owner
         run: |
           set -e
@@ -91,19 +111,27 @@ jobs:
       - name: Service worker authoritative runtime
         run: |
           set -e
+          grep -q 'CACHE_NAME="glueful-cache-v82-app-branding"' sw.js
           grep -q 'const JOBS_V15=' sw.js
           grep -q 'const JOBS_RELEVANCE=' sw.js
           grep -q 'const JOBS_RESUME_ACTION=' sw.js
           grep -q 'const JOBS_LOGO_PATCH=' sw.js
+          grep -q 'const JOBS_MOBILE_CARD_POLISH=' sw.js
+          grep -q 'const JOBS_MOBILE_UX=' sw.js
+          grep -q 'const JOBS_SMOOTH_LOGOS=' sw.js
           grep -q 'const JOBS_FEED_RECOVERY=' sw.js
+          grep -q 'const OFFICIAL_LINK_GUARD=' sw.js
           grep -q 'const MOBILE_UPDATE_GUARD=' sw.js
           grep -q 'glueful-jobs-discover-v15-authoritative.js' sw.js
           grep -q 'glueful-jobs-relevance-v1.js' sw.js
           grep -q 'glueful-jobs-resume-action-v1.js' sw.js
           grep -q 'glueful-jobs-logo-patch-v1.js' sw.js
-          grep -q 'glueful-jobs-feed-recovery-v1.js' sw.js
+          grep -q 'glueful-jobs-mobile-card-polish-v1.js' sw.js
+          grep -q 'glueful-jobs-mobile-ux-v15.js' sw.js
+          grep -q 'glueful-jobs-smooth-logos-v1.js' sw.js
+          grep -q 'glueful-jobs-feed-recovery-v2.js' sw.js
+          grep -q 'glueful-jobs-official-link-guard-v1.js' sw.js
           grep -q 'glueful-mobile-update-guard-v1.js' sw.js
-          grep -q 'glueful-cache-v75-jobs-feed-recovery' sw.js
           ! grep -q 'JOBS_V16' sw.js
           ! grep -q 'glueful-jobs-discover-v16-authoritative.js' sw.js
           ! grep -q 'glueful-jobs-infinite-feed-v1.js' sw.js
