@@ -1,0 +1,27 @@
+name: Resume Studio fixed-page regression
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  fixed-page:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Syntax checks
+        run: |
+          node --check sw.js
+          node --check glueful-resume-layout-model.js
+          node --check glueful-resume-pdf-layout-importer.js
+          node --check glueful-resume-fixed-page-renderer.js
+          node --check glueful-resume-fixed-page-controller.js
+          node --check glueful-resume-fixed-page-bootstrap.js
+      - name: Current contracts
+        run: |
+          grep -q 'glueful-resume-layout-document' glueful-resume-layout-model.js
+          grep -q 'PDF FIXED-PAGE IMPORTER V6' glueful-resume-pdf-layout-importer.js
+          grep -q 'original-pdf' glueful-resume-pdf-layout-importer.js
+          grep -q 'FIXED-PAGE EDITOR RENDERER V5.3' glueful-resume-fixed-page-renderer.js
+          grep -q 'gluefulFixedPdfResumeStudio' glueful-resume-fixed-page-controller.js
+          grep -q 'RUNTIME_BOOTSTRAP' sw.js
+          grep -q 'glueful-cache-v83-phase1-runtime' sw.js
+          ! grep -q 'color:#202124;overflow:hidden;white-space:pre-wrap' glueful-resume-fixed-page-renderer.js
