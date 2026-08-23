@@ -40,18 +40,18 @@
     `;document.head.appendChild(s);
   }
   function fallback(host,name){
-    if(!host||host.dataset.g15LogoReady==='1'&&host.querySelector('img'))return;
-    host.dataset.g15LogoReady='1';host.innerHTML='';
+    if(!host)return;
+    host.dataset.g15LogoReady='1';host.dataset.g15LogoUrl='';host.innerHTML='';
     const span=document.createElement('span');span.textContent=initials(name);span.setAttribute('aria-hidden','true');
     span.style.cssText='display:grid;place-items:center;width:100%;height:100%;font:900 15px Inter,system-ui,sans-serif;color:#5140b5;';host.appendChild(span);
   }
   function put(host,url,name){
-    if(!host||!url)return false;if(host.dataset.g15LogoUrl===url)return true;
+    if(!host||!url)return false;if(host.dataset.g15LogoUrl===url&&host.querySelector('img'))return true;
     host.dataset.g15LogoUrl=url;host.dataset.g15LogoReady='1';host.innerHTML='';
     const img=document.createElement('img');img.src=url;img.alt=`${name} logo`;img.loading='lazy';img.decoding='async';img.referrerPolicy='no-referrer';
     img.addEventListener('error',()=>fallback(host,name),{once:true});host.appendChild(img);return true;
   }
-  let companyMap=null,mapSource=null,queued=false;
+  let companyMap=null,mapSource=null,queued=false,rootObserver=null,documentObserver=null;
   function getMap(){
     const jobs=data();if(!Array.isArray(jobs)||!jobs.length)return null;if(companyMap&&mapSource===jobs)return companyMap;
     companyMap=new Map();mapSource=jobs;
@@ -69,13 +69,19 @@
   function polish(root){root.querySelectorAll('.g15-logo img,.g15-company img,.g15-row-logo img').forEach(img=>{img.loading='lazy';img.decoding='async';img.referrerPolicy='no-referrer';});}
   function run(){queued=false;const root=document.getElementById('glueful-jobs-v15');if(!root)return;enrich(root);polish(root);}
   function queue(){if(queued)return;queued=true;const work=()=>run();if('requestIdleCallback' in window)window.requestIdleCallback(work,{timeout:900});else setTimeout(work,180);}
-  let documentObserver=null;
+  function attachRoot(root){
+    if(rootObserver)return;
+    run();
+    rootObserver=new MutationObserver(queue);rootObserver.observe(root,{childList:true,subtree:true});
+  }
   function boot(){
     injectStyle();run();
+    const existingRoot=document.getElementById('glueful-jobs-v15');
+    if(existingRoot){attachRoot(existingRoot);return;}
     if(documentObserver)return;
     documentObserver=new MutationObserver(()=>{
       const root=document.getElementById('glueful-jobs-v15');
-      if(root){queue();const marker=root.querySelector('.g15-company');if(marker)documentObserver.disconnect();}
+      if(root){documentObserver.disconnect();documentObserver=null;attachRoot(root);}
     });
     if(document.body)documentObserver.observe(document.body,{childList:true,subtree:true});
   }
