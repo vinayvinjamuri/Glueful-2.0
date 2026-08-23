@@ -5,12 +5,14 @@ on:
     paths:
       - 'glueful-jobs-mobile-ux-v15.js'
       - 'glueful-jobs-mobile-card-polish-v1.js'
+      - 'glueful-jobs-smooth-logos-v1.js'
       - '.github/workflows/jobs-mobile-ux-regression.yml'
   pull_request:
     branches: ['main']
     paths:
       - 'glueful-jobs-mobile-ux-v15.js'
       - 'glueful-jobs-mobile-card-polish-v1.js'
+      - 'glueful-jobs-smooth-logos-v1.js'
       - 'sw.js'
       - '.github/workflows/jobs-mobile-ux-regression.yml'
 
@@ -30,6 +32,7 @@ jobs:
           set -e
           node --check glueful-jobs-mobile-ux-v15.js
           node --check glueful-jobs-mobile-card-polish-v1.js
+          node --check glueful-jobs-smooth-logos-v1.js
       - name: Native swipeable Jobs and Companies contracts
         run: |
           set -e
@@ -45,6 +48,18 @@ jobs:
           grep -q 'glueful-jobs-mobile-ux-v15.js' glueful-jobs-mobile-card-polish-v1.js
           ! grep -Eq "addEventListener\\(['\"]touchmove" glueful-jobs-mobile-ux-v15.js
           ! grep -Eq 'preventDefault[[:space:]]*\\(' glueful-jobs-mobile-ux-v15.js
+      - name: BrandFetch company-card contract
+        run: |
+          set -e
+          grep -q '__GLUEFUL_JOBS_SMOOTH_LOGOS_V3__' glueful-jobs-smooth-logos-v1.js
+          grep -q 'cdn.brandfetch.io' glueful-jobs-smooth-logos-v1.js
+          grep -q 'g15-company' glueful-jobs-smooth-logos-v1.js
+          grep -q 'data-company' glueful-jobs-smooth-logos-v1.js
+          grep -q 'gluefulJobsV15?.getJobs' glueful-jobs-smooth-logos-v1.js
+          grep -q 'MutationObserver' glueful-jobs-smooth-logos-v1.js
+          grep -q 'document.getElementById('\''glueful-jobs-v15'\'')' glueful-jobs-smooth-logos-v1.js
+          ! grep -Eq "addEventListener\\(['\"]touchmove" glueful-jobs-smooth-logos-v1.js
+          ! grep -Eq 'preventDefault[[:space:]]*\\(' glueful-jobs-smooth-logos-v1.js
       - name: Existing V15 card polish preserved
         run: |
           set -e
