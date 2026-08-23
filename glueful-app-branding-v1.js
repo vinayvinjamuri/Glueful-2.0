@@ -1,6 +1,6 @@
 /* Glueful shared company branding V1.
  * Additive only: does not touch Jobs rendering or gesture behavior.
- * Reuses existing BrandFetch convention used by the Jobs/application pipeline.
+ * Reuses the existing BrandFetch convention used by the Jobs/application pipeline.
  */
 (function(){
   'use strict';
@@ -9,16 +9,16 @@
 
   const clean=v=>String(v??'').replace(/\s+/g,' ').trim();
   const known={
-    apple:'apple.com',google:'google.com',microsoft:'microsoft.com',amazon:'amazon.com',meta:'meta.com',nvidia:'nvidia.com',qualcomm:'qualcomm.com',intel:'intel.com',amd:'amd.com',arm:'arm.com',nxp:'nxp.com',renesas:'renesas.com',broadcom:'broadcom.com',samsung:'samsung.com',ibm:'ibm.com',oracle:'oracle.com',adobe:'adobe.com',salesforce:'salesforce.com',bosch:'bosch.com',siemens:'siemens.com',synopsys:'synopsys.com',cadence:'cadence.com',figma:'figma.com',udemy:'udemy.com',britive:'britive.com',cloudflare:'cloudflare.com',reddit:'reddit.com',dialpad:'dialpad.com',chain guard:'chainguard.dev',chainguard:'chainguard.dev'
+    apple:'apple.com',google:'google.com',microsoft:'microsoft.com',amazon:'amazon.com',meta:'meta.com',nvidia:'nvidia.com',qualcomm:'qualcomm.com',intel:'intel.com',amd:'amd.com',arm:'arm.com',nxp:'nxp.com',renesas:'renesas.com',broadcom:'broadcom.com',samsung:'samsung.com',ibm:'ibm.com',oracle:'oracle.com',adobe:'adobe.com',salesforce:'salesforce.com',bosch:'bosch.com',siemens:'siemens.com',synopsys:'synopsys.com',cadence:'cadence.com',figma:'figma.com',udemy:'udemy.com',britive:'britive.com',cloudflare:'cloudflare.com',reddit:'reddit.com',dialpad:'dialpad.com',chainguard:'chainguard.dev'
   };
   function domain(name){
     const n=clean(name).toLowerCase();
     const hit=Object.keys(known).find(k=>n===k||n.includes(k));
-    if(hit)return known[hit];
-    return '';
+    return hit?known[hit]:'';
   }
   function logo(name){
-    const d=domain(name);return d?`https://cdn.brandfetch.io/${encodeURIComponent(d)}/w/128/h/128`:'';
+    const d=domain(name);
+    return d?`https://cdn.brandfetch.io/${encodeURIComponent(d)}/w/128/h/128`:'';
   }
   function nameFrom(el){
     return clean(el?.dataset?.company||el?.dataset?.companyName||el?.dataset?.employer||el?.getAttribute?.('data-company-name')||'');
@@ -35,22 +35,17 @@
   }
   function scan(root){
     if(!root?.querySelectorAll)return;
-    const candidates=root.querySelectorAll('[data-company],[data-company-name],[data-employer]');
-    candidates.forEach(card=>{
+    root.querySelectorAll('[data-company],[data-company-name],[data-employer]').forEach(card=>{
       const name=nameFrom(card);if(!name)return;
-      const host=card.matches('img')?card:card.querySelector('[class*="logo"],[class*="Logo"],[class*="brand"],[class*="Brand"],img');
-      if(host && host.tagName==='IMG'){
-        const box=host.parentElement; if(box) apply(box,name);
-      } else if(host) apply(host,name);
+      const host=card.querySelector('[class*="logo"],[class*="Logo"],[class*="brand"],[class*="Brand"],img');
+      if(host?.tagName==='IMG'){
+        const box=host.parentElement;if(box)apply(box,name);
+      }else if(host)apply(host,name);
     });
   }
   function boot(){
     scan(document);
-    const observer=new MutationObserver(mutations=>{
-      for(const m of mutations){
-        m.addedNodes.forEach(n=>{if(n.nodeType===1)scan(n)});
-      }
-    });
+    const observer=new MutationObserver(mutations=>mutations.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===1)scan(n)})));
     observer.observe(document.body,{childList:true,subtree:true});
     window.gluefulBrandFetch={logo,domain,refresh:()=>scan(document)};
   }
