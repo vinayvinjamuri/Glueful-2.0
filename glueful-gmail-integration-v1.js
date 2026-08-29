@@ -1,12 +1,17 @@
-/* Glueful Gmail integration v3 */
+/* Glueful Gmail integration v4: startup-safe Gmail connection UI. */
 (function () {
   "use strict";
 
   const FUNCTION_URL = (window.SUPABASE_URL || "https://xztbhheexianejsvwpva.supabase.co") + "/functions/v1/gmail-application-capture";
   let gmailStatus = { connected: false, connection: null };
-  let syncTimer = null;
 
-  function getClient() { return window.supabaseClient || null; }
+  function getClient() {
+    if (window.supabaseClient) return window.supabaseClient;
+    try {
+      if (typeof supabaseClient !== "undefined") return supabaseClient;
+    } catch (_) {}
+    return null;
+  }
 
   async function getSession() {
     const client = getClient();
@@ -117,7 +122,7 @@
     backdrop.innerHTML = `
       <div class="glueful-gmail-modal" role="dialog" aria-modal="true" aria-label="Gmail integration">
         <h3>Gmail integration</h3>
-        <p id="glueful-gmail-copy">Connect Gmail so Glueful can detect LinkedIn application confirmation emails and add mobile applications automatically. Gmail access is read-only.</p>
+        <p id="glueful-gmail-copy">Checking Gmail connection…</p>
         <div class="glueful-gmail-actions">
           <button class="glueful-gmail-btn" id="glueful-gmail-primary">Connect Gmail</button>
           <button class="glueful-gmail-btn secondary" id="glueful-gmail-sync" style="display:none">Sync now</button>
@@ -133,7 +138,10 @@
     renderModalState();
   }
 
-  function openIntegration() { loadStatus().finally(openModal); }
+  function openIntegration() {
+    openModal();
+    loadStatus();
+  }
 
   function updateSettingsRows() {
     const rows = [...document.querySelectorAll("button.settings-item, .profile-row")];
@@ -165,8 +173,8 @@
   }
 
   function installGmailClickInterceptor() {
-    if (document.documentElement.dataset.gluefulGmailInterceptor === "3") return;
-    document.documentElement.dataset.gluefulGmailInterceptor = "3";
+    if (document.documentElement.dataset.gluefulGmailInterceptor === "4") return;
+    document.documentElement.dataset.gluefulGmailInterceptor = "4";
 
     document.addEventListener("click", function (event) {
       const row = findGmailClickable(event.target);
@@ -178,20 +186,6 @@
     }, true);
   }
 
-  async function autoSync() {
-    try {
-      const status = await loadStatus();
-      if (status?.connected) {
-        const result = await callGmail("sync");
-        if (result?.imported && typeof window.renderApplications === "function") {
-          try { window.renderApplications(); } catch (_) {}
-        }
-      }
-    } catch (error) {
-      console.warn("[Glueful] Gmail auto-sync skipped:", error.message || error);
-    }
-  }
-
   function install() {
     if (!getClient()) {
       setTimeout(install, 1200);
@@ -199,13 +193,6 @@
     }
     installGmailClickInterceptor();
     updateSettingsRows();
-    const observer = new MutationObserver(() => updateSettingsRows());
-    observer.observe(document.body, { childList: true, subtree: true });
-    autoSync();
-    document.addEventListener("visibilitychange", () => { if (!document.hidden) autoSync(); });
-    window.addEventListener("focus", autoSync);
-    if (syncTimer) clearInterval(syncTimer);
-    syncTimer = setInterval(autoSync, 15 * 60 * 1000);
   }
 
   window.openGmailIntegration = openIntegration;
