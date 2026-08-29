@@ -33,7 +33,7 @@ jobs:
           path = Path('index.html')
           html = path.read_text(encoding='utf-8')
           tag = '<script src="./glueful-mobile-cleanup-v1.js?v=20260829-logo-fix-v4"></script>'
-          html = re.sub(r'<script src="\./glueful-mobile-cleanup-v1\.js\?v=[^"]+"></script>\s*', '', html)
+          html = re.sub(r'<script src="\\./glueful-mobile-cleanup-v1\\.js\\?v=[^"]+"></script>\\s*', '', html)
           marker = '</head>'
           if marker not in html:
               raise SystemExit('index.html has no </head> marker')
@@ -49,8 +49,8 @@ jobs:
           import re
           path = Path('index.html')
           html = path.read_text(encoding='utf-8')
-          tag = '<script src="./glueful-gmail-integration-v1.js?v=20260829-gmail-v4"></script>'
-          html = re.sub(r'<script src="\./glueful-gmail-integration-v1\.js\?v=[^"]+"></script>\s*', '', html)
+          tag = '<script src="./glueful-gmail-integration-v1.js?v=20260829-gmail-v5"></script>'
+          html = re.sub(r'<script src="\\./glueful-gmail-integration-v1\\.js\\?v=[^"]+"></script>\\s*', '', html)
           marker = '</head>'
           if marker not in html:
               raise SystemExit('index.html has no </head> marker')
@@ -66,13 +66,15 @@ jobs:
           import re
           path = Path('index.html')
           html = path.read_text(encoding='utf-8')
-          tag = '''<script data-glueful-gmail-bridge="v4">
+          tag = '''<script data-glueful-gmail-bridge="v5">
           (function(){
             function handle(e){
               var node=e.target instanceof Element ? e.target : e.target && e.target.parentElement;
               while(node && node !== document.body){
                 var text=(node.textContent||'').replace(/\\s+/g,' ').trim().toLowerCase();
-                if(text.indexOf('gmail integration')!==-1 && text.length<=320){
+                var isGmail=text.indexOf('gmail integration')!==-1 && text.length<=320;
+                var isConnectedServices=text.indexOf('connected services')!==-1 && text.length<=320;
+                if(isGmail || isConnectedServices){
                   var clickable=node.matches('button,a,[role="button"],[onclick],.settings-item,.profile-row') || typeof node.onclick==='function' || node.tabIndex>=0;
                   if(clickable){
                     e.preventDefault();
@@ -89,7 +91,7 @@ jobs:
             document.addEventListener('pointerdown',handle,true);
           })();
           </script>'''
-          html = re.sub(r'<script data-glueful-gmail-bridge="[^"]+">[\s\S]*?</script>\s*', '', html, count=1)
+          html = re.sub(r'<script data-glueful-gmail-bridge="[^"]+">[\s\S]*?</script>\\s*', '', html, count=1)
           marker = '</head>'
           if marker not in html:
               raise SystemExit('index.html has no </head> marker')
