@@ -1,4 +1,4 @@
-const CACHE_NAME = "glueful-cache-v85-no-gmail-runtime";
+const CACHE_NAME = "glueful-cache-v87-startup-recovery";
 
 const RUNTIME = [
   "./glueful-resume-render-diagnostics.js",
@@ -64,7 +64,7 @@ function stripCompetingRuntime(html) {
   let out = html;
   for (const name of LEGACY_RUNTIME_NAMES) {
     out = out.replace(
-      new RegExp(`<script[^>]+src=["'][^"']*${escapeRegExp(name)}(?:\\?[^"']*)?["'][^>]*><\\/script>`, "gi"),
+      new RegExp(`<script[^>]+src=[\"'][^\"']*${escapeRegExp(name)}(?:\\?[^\"']*)?[\"'][^>]*><\\/script>`, "gi"),
       ""
     );
   }
