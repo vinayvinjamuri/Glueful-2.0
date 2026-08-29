@@ -1,11 +1,10 @@
-/* Glueful Gmail integration v1 */
+/* Glueful Gmail integration v2 */
 (function () {
   "use strict";
 
   const FUNCTION_URL = (window.SUPABASE_URL || "https://xztbhheexianejsvwpva.supabase.co") + "/functions/v1/gmail-application-capture";
   let gmailStatus = { connected: false, connection: null };
   let syncTimer = null;
-  let originalShowComingSoon = null;
 
   function getClient() { return window.supabaseClient || null; }
 
@@ -83,12 +82,17 @@
       if (gmailStatus.connected) {
         await callGmail("disconnect");
         gmailStatus = { connected: false, connection: null };
-        updateSettingsRows(); renderModalState(); setStatus("Gmail disconnected."); return;
+        updateSettingsRows();
+        renderModalState();
+        setStatus("Gmail disconnected.");
+        return;
       }
       const data = await callGmail("authorize");
       if (!data.authorization_url) throw new Error("Google authorization URL was not returned.");
       window.location.href = data.authorization_url;
-    } catch (error) { setStatus(error.message || "Unable to connect Gmail."); }
+    } catch (error) {
+      setStatus(error.message || "Unable to connect Gmail.");
+    }
   }
 
   async function syncNow() {
@@ -97,12 +101,17 @@
       const result = await callGmail("sync");
       await loadStatus();
       setStatus(`Gmail sync complete: ${result.imported || 0} new application${result.imported === 1 ? "" : "s"}.`);
-      if (result?.imported && typeof window.renderApplications === "function") { try { window.renderApplications(); } catch (_) {} }
-    } catch (error) { setStatus(error.message || "Gmail sync failed."); }
+      if (result?.imported && typeof window.renderApplications === "function") {
+        try { window.renderApplications(); } catch (_) {}
+      }
+    } catch (error) {
+      setStatus(error.message || "Gmail sync failed.");
+    }
   }
 
   function openModal() {
-    ensureStyles(); closeModal();
+    ensureStyles();
+    closeModal();
     const backdrop = document.createElement("div");
     backdrop.className = "glueful-gmail-modal-backdrop";
     backdrop.innerHTML = `
@@ -135,23 +144,37 @@
         row.onclick = openIntegration;
         const status = row.querySelector(".settings-status");
         if (status) status.textContent = gmailStatus.connected ? `Connected${gmailStatus.connection?.gmail_email ? ` · ${gmailStatus.connection.gmail_email}` : ""}` : "Not connected";
-      } else row.onclick = openIntegration;
+      } else {
+        row.onclick = openIntegration;
+      }
     });
   }
 
-  /* The existing Settings markup calls showComingSoon('Gmail integration').
-     Override only that one label; every other coming-soon item keeps its old behavior. */
-  function installGmailClickOverride() {
-    originalShowComingSoon = window.showComingSoon;
-    if (typeof originalShowComingSoon === "function" && !originalShowComingSoon.__gluefulGmailWrapped) {
-      const original = originalShowComingSoon;
-      const wrapped = function (label) {
-        if (String(label).toLowerCase() === "gmail integration") return openIntegration();
-        return original.apply(this, arguments);
-      };
-      wrapped.__gluefulGmailWrapped = true;
-      window.showComingSoon = wrapped;
-    }
+  /*
+   * The original Settings page owns the Gmail row and may attach an onclick
+   * handler that calls showComingSoon() from a private closure. Replacing the
+   * global function cannot intercept that closure. Capture-phase delegation
+   * runs before normal bubbling handlers, so Gmail always opens our integration.
+   */
+  function installGmailClickInterceptor() {
+    if (document.documentElement.dataset.gluefulGmailInterceptor === "1") return;
+    document.documentElement.dataset.gluefulGmailInterceptor = "1";
+
+    document.addEventListener("click", function (event) {
+      const target = event.target instanceof Element ? event.target : event.target?.parentElement;
+      if (!target) return;
+
+      const row = target.closest("button.settings-item, .profile-row");
+      if (!row) return;
+
+      const text = (row.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
+      if (!text.includes("gmail integration")) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      openIntegration();
+    }, true);
   }
 
   async function autoSync() {
@@ -159,16 +182,23 @@
       const status = await loadStatus();
       if (status?.connected) {
         const result = await callGmail("sync");
-        if (result?.imported && typeof window.renderApplications === "function") { try { window.renderApplications(); } catch (_) {} }
+        if (result?.imported && typeof window.renderApplications === "function") {
+          try { window.renderApplications(); } catch (_) {}
+        }
       }
-    } catch (error) { console.warn("[Glueful] Gmail auto-sync skipped:", error.message || error); }
+    } catch (error) {
+      console.warn("[Glueful] Gmail auto-sync skipped:", error.message || error);
+    }
   }
 
   function install() {
-    if (!getClient()) { setTimeout(install, 1200); return; }
-    installGmailClickOverride();
+    if (!getClient()) {
+      setTimeout(install, 1200);
+      return;
+    }
+    installGmailClickInterceptor();
     updateSettingsRows();
-    const observer = new MutationObserver(() => { installGmailClickOverride(); updateSettingsRows(); });
+    const observer = new MutationObserver(() => updateSettingsRows());
     observer.observe(document.body, { childList: true, subtree: true });
     autoSync();
     document.addEventListener("visibilitychange", () => { if (!document.hidden) autoSync(); });
@@ -179,5 +209,6 @@
 
   window.openGmailIntegration = openIntegration;
   window.gluefulGmailSync = syncNow;
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", install, { once: true }); else install();
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", install, { once: true });
+  else install();
 })();
