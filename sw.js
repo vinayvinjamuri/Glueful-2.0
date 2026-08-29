@@ -1,4 +1,4 @@
-const CACHE_NAME = "glueful-cache-v85-no-gmail-runtime";
+const CACHE_NAME = "glueful-cache-v86-gmail-runtime-restored";
 
 const RUNTIME = [
   "./glueful-resume-render-diagnostics.js",
@@ -25,7 +25,9 @@ const RUNTIME = [
   "./glueful-jobs-feed-recovery-v2.js",
   "./glueful-jobs-official-link-guard-v1.js",
   "./glueful-mobile-update-guard-v1.js",
-  "./glueful-app-branding-v1.js"
+  "./glueful-app-branding-v1.js",
+  "./glueful-gmail-integration-v1.js",
+  "./glueful-gmail-bridge-v6.js"
 ];
 
 const LEGACY_RUNTIME_NAMES = [
