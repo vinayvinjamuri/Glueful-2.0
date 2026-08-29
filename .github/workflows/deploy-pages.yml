@@ -24,9 +24,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
-
       - name: Inject mobile UI cleanup before app startup
         shell: bash
         run: |
@@ -52,7 +49,7 @@ jobs:
           import re
           path = Path('index.html')
           html = path.read_text(encoding='utf-8')
-          tag = '<script src="./glueful-gmail-integration-v1.js?v=20260829-gmail-v2"></script>'
+          tag = '<script src="./glueful-gmail-integration-v1.js?v=20260829-gmail-v3"></script>'
           html = re.sub(r'<script src="\./glueful-gmail-integration-v1\.js\?v=[^"]+"></script>\s*', '', html)
           marker = '</head>'
           if marker not in html:
@@ -66,14 +63,16 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
           path = Path('index.html')
           html = path.read_text(encoding='utf-8')
-          tag = '''<script data-glueful-gmail-bridge="v2">
+          tag = '''<script data-glueful-gmail-bridge="v3">
           (function(){
             function handle(e){
-              var el=e.target && e.target.closest ? e.target.closest('button, a, [role="button"], .profile-row, .settings-item') : null;
+              var t=e.target;
+              var el=t && t.closest ? t.closest('button, a, [role="button"], .profile-row, .settings-item') : null;
               if(!el) return;
-              var text=(el.textContent||'').trim().toLowerCase();
+              var text=(el.textContent||'').replace(/\\s+/g,' ').trim().toLowerCase();
               if(text.indexOf('gmail integration')===-1) return;
               e.preventDefault();
               e.stopPropagation();
@@ -81,9 +80,10 @@ jobs:
               if(typeof window.openGmailIntegration==='function') window.openGmailIntegration();
             }
             document.addEventListener('click',handle,true);
-            document.addEventListener('pointerup',handle,true);
+            document.addEventListener('pointerdown',handle,true);
           })();
           </script>'''
+          html = re.sub(r'<script data-glueful-gmail-bridge="[^"]+">[\\s\\S]*?</script>\\s*', '', html, count=1)
           marker = '</head>'
           if marker not in html:
               raise SystemExit('index.html has no </head> marker')
