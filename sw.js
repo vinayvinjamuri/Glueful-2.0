@@ -1,39 +1,199 @@
-const CACHE_NAME="glueful-cache-v84-recovery";
-const RENDER_DIAGNOSTICS_SCRIPT="./glueful-resume-render-diagnostics.js";
-const FIXED_PDF_BOOTSTRAP="./glueful-resume-fixed-page-bootstrap.js";
-const FIXED_PDF_MODEL="./glueful-resume-layout-model.js";
-const FIXED_PDF_IMPORTER="./glueful-resume-pdf-layout-importer.js";
-const FIXED_PDF_RENDERER="./glueful-resume-fixed-page-renderer.js";
-const FIXED_PDF_UX="./glueful-resume-fixed-page-ux-v6.js";
-const FIXED_PDF_CONTROLLER="./glueful-resume-fixed-page-controller.js";
-const FIXED_PDF_DOCX_EXPORT_V2="./glueful-resume-vector-docx-export-v2.js";
-const FIXED_PDF_TYPOGRAPHY="./glueful-resume-typography-patch-v1.js";
-const RESUME_IMPORT_GUARD="./glueful-resume-import-guard-v1.js";
-const PDF_EXPORT_FIX="./glueful-resume-pdf-export-fix-v1.js";
-const RESUME_VIEWER="./glueful-resume-viewer-v1.js";
-const JOBS_AUTH="./glueful-jobs-auth-bootstrap-v1.js";
-const JOBS_V15="./glueful-jobs-discover-v15-authoritative.js";
-const JOBS_RELEVANCE="./glueful-jobs-relevance-v1.js";
-const JOBS_DIRECT_BOOTSTRAP="./glueful-resume-studio-supabase-bridge.js";
-const JOBS_RESUME_ACTION="./glueful-jobs-resume-action-v1.js";
-const JOBS_LOGO_PATCH="./glueful-jobs-logo-patch-v1.js";
-const JOBS_MOBILE_CARD_POLISH="./glueful-jobs-mobile-card-polish-v1.js";
-const JOBS_MOBILE_UX="./glueful-jobs-mobile-ux-v15.js";
-const JOBS_SMOOTH_LOGOS="./glueful-jobs-smooth-logos-v1.js";
-const JOBS_FEED_RECOVERY="./glueful-jobs-feed-recovery-v2.js";
-const OFFICIAL_LINK_GUARD="./glueful-jobs-official-link-guard-v1.js";
-const MOBILE_UPDATE_GUARD="./glueful-mobile-update-guard-v1.js";
-const APP_BRANDING="./glueful-app-branding-v1.js";
-const GMAIL_INTEGRATION="./glueful-gmail-integration-v1.js";
-const RUNTIME=[RENDER_DIAGNOSTICS_SCRIPT,FIXED_PDF_BOOTSTRAP,FIXED_PDF_MODEL,FIXED_PDF_IMPORTER,FIXED_PDF_RENDERER,FIXED_PDF_UX,FIXED_PDF_CONTROLLER,FIXED_PDF_DOCX_EXPORT_V2,FIXED_PDF_TYPOGRAPHY,RESUME_IMPORT_GUARD,PDF_EXPORT_FIX,RESUME_VIEWER,JOBS_AUTH,JOBS_V15,JOBS_RELEVANCE,JOBS_DIRECT_BOOTSTRAP,JOBS_RESUME_ACTION,JOBS_LOGO_PATCH,JOBS_MOBILE_CARD_POLISH,JOBS_MOBILE_UX,JOBS_SMOOTH_LOGOS,JOBS_FEED_RECOVERY,OFFICIAL_LINK_GUARD,MOBILE_UPDATE_GUARD,APP_BRANDING,GMAIL_INTEGRATION];
-const ASSETS=["./manifest.json",...RUNTIME,"./icons/icon-192.svg","./icons/icon-512.svg","./icons/icon-180.svg","./icons/icon-maskable-512.svg"];
-const LEGACY_RUNTIME_NAMES=["glueful-resume-studio-adobe.js","glueful-resume-studio-v41","glueful-resume-docauth-v50.js","glueful-jobs-auth-bootstrap-v1.js","glueful-jobs-discover-v3.js","glueful-jobs-discover-v4.js","glueful-jobs-discover-v5.js","glueful-jobs-discover-v6-hotfix.js","glueful-jobs-discover-v7.js","glueful-jobs-discover-v8-interaction.js","glueful-jobs-discover-v9-relevance-logo-interaction.js","glueful-jobs-discover-v10-authoritative.js","glueful-jobs-discover-v11-stable.js","glueful-jobs-discover-v12-stable.js","glueful-jobs-discover-v13-authoritative.js","glueful-jobs-discover-v14-force.js","glueful-jobs-discover-v15-authoritative.js","glueful-jobs-relevance-v1.js","glueful-jobs-resume-action-v1.js","glueful-jobs-logo-patch-v1.js","glueful-jobs-mobile-card-polish-v1.js","glueful-jobs-mobile-ux-v1.js","glueful-jobs-mobile-ux-v15.js","glueful-jobs-official-link-guard-v1.js","glueful-jobs-infinite-feed-v1.js"];
-function escapeRegExp(value){return String(value).replace(/[.*+?^${}()|[\]\\]/g,"\\$&")}
-function stripCompetingRuntime(html){let out=html;for(const name of LEGACY_RUNTIME_NAMES){const escaped=escapeRegExp(name);out=out.replace(new RegExp(`<script[^>]+src=["'][^"']*${escaped}(?:\\?[^"']*)?["'][^>]*><\\/script>`,"gi"),"")}return out}
-async function networkResponse(request,preloadResponse){return (await preloadResponse)||fetch(request,{cache:"no-store"})}
-async function buildAuthoritativeIndex(request,preloadResponse){const response=await networkResponse(request,preloadResponse);if(!response?.ok)return response;const type=response.headers.get("content-type")||"";if(!type.includes("text/html"))return response;let html=await response.text();html=stripCompetingRuntime(html);const scripts=[`<script src="${RENDER_DIAGNOSTICS_SCRIPT}?v=20260823-21"></script>`,`<script src="${FIXED_PDF_BOOTSTRAP}?v=20260820-fixedpdf27"></script>`,`<script src="${RESUME_VIEWER}?v=20260823-viewer1"></script>`,`<script src="${JOBS_AUTH}?v=20260820-auth1"></script>`,`<script src="${JOBS_V15}?v=20260823-jobs-v15-authoritative3"></script>`,`<script src="${JOBS_RELEVANCE}?v=20260821-jobs-relevance1"></script>`,`<script src="${JOBS_RESUME_ACTION}?v=20260823-resume-action5"></script>`,`<script src="${JOBS_FEED_RECOVERY}?v=20260823-feed-recovery-v2"></script>`,`<script src="${JOBS_LOGO_PATCH}?v=20260821-brand-fetch5"></script>`,`<script src="${JOBS_MOBILE_CARD_POLISH}?v=20260821-mobile-card-polish1"></script>`,`<script src="${JOBS_MOBILE_UX}?v=20260823-mobile-ux5"></script>`,`<script src="${JOBS_SMOOTH_LOGOS}?v=20260823-smooth-logos1"></script>`,`<script src="${OFFICIAL_LINK_GUARD}?v=20260821-verified-links"></script>`,`<script src="${MOBILE_UPDATE_GUARD}?v=20260821-mobile-update2"></script>`,`<script src="${APP_BRANDING}?v=20260823-app-branding1"></script>`,`<script src="${GMAIL_INTEGRATION}?v=20260829-gmail-v6"></script>`];const marker="</body>",block=scripts.join("\n"),injected=html.includes(marker)?html.replace(marker,`${block}\n${marker}`):`${html}\n${block}`;const headers=new Headers(response.headers);headers.set("Content-Type","text/html; charset=UTF-8");headers.set("Cache-Control","no-store, no-cache, must-revalidate");return new Response(injected,{status:response.status,statusText:response.statusText,headers})}
-async function cacheIndexResponse(request,response){if(!response?.ok)return;try{const c=await caches.open(CACHE_NAME);await c.put(request,response.clone())}catch(e){console.warn("[Glueful SW] index cache write failed:",e)}}
-self.addEventListener("install",e=>e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()).catch(err=>{console.warn("[Glueful SW] precache failed:",err);return self.skipWaiting()})));
-self.addEventListener("activate",e=>e.waitUntil((async()=>{const keys=await caches.keys();await Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)));if(self.registration.navigationPreload){try{await self.registration.navigationPreload.enable()}catch(_){}}await self.clients.claim()})()));
-self.addEventListener("message",e=>{if(e.data?.type==="GLUEFUL_SKIP_WAITING") self.skipWaiting();});
-self.addEventListener("fetch",e=>{const r=e.request,u=new URL(r.url);if(r.method==="GET"&&r.mode==="navigate"){e.respondWith((async()=>{try{const res=await buildAuthoritativeIndex(r,e.preloadResponse);e.waitUntil(cacheIndexResponse(r,res));return res}catch(err){console.warn("[Glueful SW] navigation failed:",err);return(await caches.match(r))||Response.error()}})());return}if(r.method==="GET"&&RUNTIME.some(p=>u.pathname.endsWith(p.slice(2)))){e.respondWith((async()=>{try{const res=await fetch(r,{cache:"no-store"});if(res.ok)e.waitUntil((async()=>{try{const c=await caches.open(CACHE_NAME);await c.put(r,res.clone())}catch(_){}})());return res}catch(_){return(await caches.match(r))||Response.error()}})());return}if(r.method==="GET")e.respondWith((async()=>{const cached=await caches.match(r);try{const res=await fetch(r,{cache:"no-store"});if(res.ok)e.waitUntil((async()=>{try{const c=await caches.open(CACHE_NAME);await c.put(r,res.clone())}catch(_){}})());return res}catch(_){return cached||Response.error()}})());});
+const CACHE_NAME = "glueful-cache-v85-no-gmail-runtime";
+
+const RUNTIME = [
+  "./glueful-resume-render-diagnostics.js",
+  "./glueful-resume-fixed-page-bootstrap.js",
+  "./glueful-resume-layout-model.js",
+  "./glueful-resume-pdf-layout-importer.js",
+  "./glueful-resume-fixed-page-renderer.js",
+  "./glueful-resume-fixed-page-ux-v6.js",
+  "./glueful-resume-fixed-page-controller.js",
+  "./glueful-resume-vector-docx-export-v2.js",
+  "./glueful-resume-typography-patch-v1.js",
+  "./glueful-resume-import-guard-v1.js",
+  "./glueful-resume-pdf-export-fix-v1.js",
+  "./glueful-resume-viewer-v1.js",
+  "./glueful-jobs-auth-bootstrap-v1.js",
+  "./glueful-jobs-discover-v15-authoritative.js",
+  "./glueful-jobs-relevance-v1.js",
+  "./glueful-resume-studio-supabase-bridge.js",
+  "./glueful-jobs-resume-action-v1.js",
+  "./glueful-jobs-logo-patch-v1.js",
+  "./glueful-jobs-mobile-card-polish-v1.js",
+  "./glueful-jobs-mobile-ux-v15.js",
+  "./glueful-jobs-smooth-logos-v1.js",
+  "./glueful-jobs-feed-recovery-v2.js",
+  "./glueful-jobs-official-link-guard-v1.js",
+  "./glueful-mobile-update-guard-v1.js",
+  "./glueful-app-branding-v1.js"
+];
+
+const LEGACY_RUNTIME_NAMES = [
+  "glueful-resume-studio-adobe.js",
+  "glueful-resume-studio-v41",
+  "glueful-resume-docauth-v50.js",
+  "glueful-jobs-auth-bootstrap-v1.js",
+  "glueful-jobs-discover-v3.js",
+  "glueful-jobs-discover-v4.js",
+  "glueful-jobs-discover-v5.js",
+  "glueful-jobs-discover-v6-hotfix.js",
+  "glueful-jobs-discover-v7.js",
+  "glueful-jobs-discover-v8-interaction.js",
+  "glueful-jobs-discover-v9-relevance-logo-interaction.js",
+  "glueful-jobs-discover-v10-authoritative.js",
+  "glueful-jobs-discover-v11-stable.js",
+  "glueful-jobs-discover-v12-stable.js",
+  "glueful-jobs-discover-v13-authoritative.js",
+  "glueful-jobs-discover-v14-force.js",
+  "glueful-jobs-discover-v15-authoritative.js",
+  "glueful-jobs-relevance-v1.js",
+  "glueful-jobs-resume-action-v1.js",
+  "glueful-jobs-logo-patch-v1.js",
+  "glueful-jobs-mobile-card-polish-v1.js",
+  "glueful-jobs-mobile-ux-v1.js",
+  "glueful-jobs-mobile-ux-v15.js",
+  "glueful-jobs-official-link-guard-v1.js",
+  "glueful-jobs-infinite-feed-v1.js"
+];
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\\]\\]/g, "\\$&");
+}
+
+function stripCompetingRuntime(html) {
+  let out = html;
+  for (const name of LEGACY_RUNTIME_NAMES) {
+    out = out.replace(
+      new RegExp(`<script[^>]+src=["'][^"']*${escapeRegExp(name)}(?:\\?[^"']*)?["'][^>]*><\\/script>`, "gi"),
+      ""
+    );
+  }
+  return out;
+}
+
+async function networkResponse(request, preloadResponse) {
+  return (await preloadResponse) || fetch(request, { cache: "no-store" });
+}
+
+async function buildAuthoritativeIndex(request, preloadResponse) {
+  const response = await networkResponse(request, preloadResponse);
+  if (!response?.ok) return response;
+
+  const type = response.headers.get("content-type") || "";
+  if (!type.includes("text/html")) return response;
+
+  let html = await response.text();
+  html = stripCompetingRuntime(html);
+
+  const scripts = RUNTIME.map((src) => `<script src="${src}"></script>`);
+  const marker = "</body>";
+  const block = scripts.join("\n");
+  const injected = html.includes(marker)
+    ? html.replace(marker, `${block}\n${marker}`)
+    : `${html}\n${block}`;
+
+  const headers = new Headers(response.headers);
+  headers.set("Content-Type", "text/html; charset=UTF-8");
+  headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+
+  return new Response(injected, {
+    status: response.status,
+    statusText: response.statusText,
+    headers
+  });
+}
+
+async function cacheIndexResponse(request, response) {
+  if (!response?.ok) return;
+  try {
+    const cache = await caches.open(CACHE_NAME);
+    await cache.put(request, response.clone());
+  } catch (error) {
+    console.warn("[Glueful SW] index cache write failed:", error);
+  }
+}
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.addAll(["./manifest.json", ...RUNTIME]))
+      .catch((error) => console.warn("[Glueful SW] precache failed:", error))
+      .finally(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(
+      keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+    );
+    if (self.registration.navigationPreload) {
+      try { await self.registration.navigationPreload.enable(); } catch (_) {}
+    }
+    await self.clients.claim();
+  })());
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "GLUEFUL_SKIP_WAITING") self.skipWaiting();
+});
+
+self.addEventListener("fetch", (event) => {
+  const request = event.request;
+  const url = new URL(request.url);
+
+  if (request.method === "GET" && request.mode === "navigate") {
+    event.respondWith((async () => {
+      try {
+        const response = await buildAuthoritativeIndex(request, event.preloadResponse);
+        event.waitUntil(cacheIndexResponse(request, response));
+        return response;
+      } catch (error) {
+        console.warn("[Glueful SW] navigation failed:", error);
+        return (await caches.match(request)) || Response.error();
+      }
+    })());
+    return;
+  }
+
+  if (request.method === "GET" && RUNTIME.some((path) => url.pathname.endsWith(path.slice(2)))) {
+    event.respondWith((async () => {
+      try {
+        const response = await fetch(request, { cache: "no-store" });
+        if (response.ok) {
+          event.waitUntil((async () => {
+            try {
+              const cache = await caches.open(CACHE_NAME);
+              await cache.put(request, response.clone());
+            } catch (_) {}
+          })());
+        }
+        return response;
+      } catch (_) {
+        return (await caches.match(request)) || Response.error();
+      }
+    })());
+    return;
+  }
+
+  if (request.method === "GET") {
+    event.respondWith((async () => {
+      const cached = await caches.match(request);
+      try {
+        const response = await fetch(request, { cache: "no-store" });
+        if (response.ok) {
+          event.waitUntil((async () => {
+            try {
+              const cache = await caches.open(CACHE_NAME);
+              await cache.put(request, response.clone());
+            } catch (_) {}
+          })());
+        }
+        return response;
+      } catch (_) {
+        return cached || Response.error();
+      }
+    })());
+  }
+});
