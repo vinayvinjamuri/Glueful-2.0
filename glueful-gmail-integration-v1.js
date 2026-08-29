@@ -1,4 +1,4 @@
-/* Glueful Gmail integration v2 */
+/* Glueful Gmail integration v3 */
 (function () {
   "use strict";
 
@@ -150,26 +150,27 @@
     });
   }
 
-  /*
-   * The original Settings page owns the Gmail row and may attach an onclick
-   * handler that calls showComingSoon() from a private closure. Replacing the
-   * global function cannot intercept that closure. Capture-phase delegation
-   * runs before normal bubbling handlers, so Gmail always opens our integration.
-   */
+  function findGmailClickable(start) {
+    let node = start instanceof Element ? start : start?.parentElement;
+    while (node && node !== document.body) {
+      const text = (node.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
+      if (text.includes("gmail integration") && text.length <= 320) {
+        const clickable = node.matches("button, a, [role='button'], [onclick], .settings-item, .profile-row") ||
+          typeof node.onclick === "function" || node.tabIndex >= 0;
+        if (clickable) return node;
+      }
+      node = node.parentElement;
+    }
+    return null;
+  }
+
   function installGmailClickInterceptor() {
-    if (document.documentElement.dataset.gluefulGmailInterceptor === "1") return;
-    document.documentElement.dataset.gluefulGmailInterceptor = "1";
+    if (document.documentElement.dataset.gluefulGmailInterceptor === "3") return;
+    document.documentElement.dataset.gluefulGmailInterceptor = "3";
 
     document.addEventListener("click", function (event) {
-      const target = event.target instanceof Element ? event.target : event.target?.parentElement;
-      if (!target) return;
-
-      const row = target.closest("button.settings-item, .profile-row");
+      const row = findGmailClickable(event.target);
       if (!row) return;
-
-      const text = (row.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
-      if (!text.includes("gmail integration")) return;
-
       event.preventDefault();
       event.stopPropagation();
       event.stopImmediatePropagation();
