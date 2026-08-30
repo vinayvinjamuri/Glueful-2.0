@@ -1,10 +1,10 @@
-/* Glueful approved dashboard V4: mobile-safe greeting/header spacing and scrollable dashboard fit. */
+/* Glueful approved dashboard V5: mobile-safe greeting/header spacing, scrollable dashboard, and corrected activity grid sizing. */
 (function () {
   "use strict";
-  if (window.__GLUEFUL_APPROVED_DASHBOARD_V4__) return;
-  window.__GLUEFUL_APPROVED_DASHBOARD_V4__ = true;
+  if (window.__GLUEFUL_APPROVED_DASHBOARD_V5__) return;
+  window.__GLUEFUL_APPROVED_DASHBOARD_V5__ = true;
 
-  const STYLE_ID = "glueful-approved-dashboard-style-v4";
+  const STYLE_ID = "glueful-approved-dashboard-style-v5";
   const SYNC_ID = "glueful-dashboard-gmail-sync";
   const ACTIONS_ID = "glueful-dashboard-header-actions";
 
@@ -19,7 +19,6 @@
     style.id = STYLE_ID;
     style.textContent = `
       @media (max-width:700px) {
-        /* Header reserves space for both controls so the greeting never sits underneath them. */
         body.glueful-dashboard-fixed #view-dashboard .view-header {
           position:relative !important;
           display:block !important;
@@ -124,7 +123,6 @@
 
         @keyframes gluefulSyncSpin { to { transform:rotate(360deg); } }
 
-        /* Summary cards stay compact and evenly spaced. */
         body.glueful-dashboard-fixed #view-dashboard .stat-grid,
         body.glueful-dashboard-fixed #view-dashboard .stats-grid {
           gap:7px !important;
@@ -151,7 +149,9 @@
           line-height:1.2 !important;
         }
 
-        /* Activity calendar: prevent cramped labels/cells and keep the whole card inside the viewport. */
+        /* Activity calendar: every week is a fixed-height row. This prevents the
+           final row from stretching and creating the large empty area highlighted
+           in the mobile screenshot. */
         body.glueful-dashboard-fixed #view-dashboard .heat-card {
           width:100% !important;
           box-sizing:border-box !important;
@@ -163,9 +163,26 @@
         body.glueful-dashboard-fixed #view-dashboard .heat-grid {
           display:grid !important;
           grid-template-columns:repeat(7,minmax(0,1fr)) !important;
+          grid-auto-rows:29px !important;
+          grid-template-rows:repeat(6,29px) !important;
+          align-content:start !important;
+          align-items:start !important;
+          justify-items:stretch !important;
           gap:3px !important;
           margin-top:4px !important;
+          margin-bottom:0 !important;
+          padding:0 !important;
           width:100% !important;
+          min-height:0 !important;
+          height:189px !important;
+          box-sizing:border-box !important;
+        }
+        body.glueful-dashboard-fixed #view-dashboard .heat-grid > * {
+          min-height:0 !important;
+          max-height:29px !important;
+          height:29px !important;
+          align-self:start !important;
+          box-sizing:border-box !important;
         }
         body.glueful-dashboard-fixed #view-dashboard .heat-cell {
           width:100% !important;
@@ -175,6 +192,7 @@
           aspect-ratio:auto !important;
           border-radius:7px !important;
           box-sizing:border-box !important;
+          margin:0 !important;
         }
         body.glueful-dashboard-fixed #view-dashboard .heat-card .activity-nav {
           width:32px !important;
@@ -186,14 +204,29 @@
           font-size:17px !important;
           line-height:1.1 !important;
         }
-        body.glueful-dashboard-fixed #view-dashboard .heat-card .activity-label,
-        body.glueful-dashboard-fixed #view-dashboard .heat-card .heat-legend,
+        body.glueful-dashboard-fixed #view-dashboard .heat-card .activity-label {
+          font-size:9px !important;
+          line-height:1.15 !important;
+          margin-bottom:3px !important;
+        }
         body.glueful-dashboard-fixed #view-dashboard .heat-card .heat-hint {
+          display:block !important;
+          margin-top:7px !important;
+          margin-bottom:4px !important;
+          font-size:9px !important;
+          line-height:1.15 !important;
+          text-align:center !important;
+        }
+        body.glueful-dashboard-fixed #view-dashboard .heat-card .heat-legend {
+          display:flex !important;
+          align-items:center !important;
+          min-height:18px !important;
+          height:18px !important;
+          margin-top:0 !important;
           font-size:9px !important;
           line-height:1.15 !important;
         }
 
-        /* Upcoming Interviews follows the activity card cleanly and is reachable by scrolling. */
         body.glueful-dashboard-fixed #view-dashboard #dashboard-interviews {
           gap:5px !important;
           margin-top:0 !important;
