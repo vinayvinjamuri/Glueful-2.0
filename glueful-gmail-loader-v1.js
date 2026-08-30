@@ -1,4 +1,4 @@
-/* Glueful runtime loader v7: Gmail integration, approved dashboard layout, header cleanup, and stable mobile hamburger. */
+/* Glueful runtime loader v8: Gmail integration, approved dashboard layout, header cleanup, and stable mobile hamburger. */
 (function () {
   "use strict";
 
@@ -19,9 +19,9 @@
 
   function start() {
     window.setTimeout(function () {
-      load("./glueful-dashboard-fixed-v1.js?v=4");
-      load("./glueful-dashboard-header-fix-v1.js?v=2");
-      load("./glueful-dashboard-hamburger-v2.js?v=1");
+      load("./glueful-dashboard-fixed-v1.js?v=5");
+      load("./glueful-dashboard-header-fix-v1.js?v=3");
+      load("./glueful-dashboard-hamburger-v2.js?v=3");
       load("./glueful-gmail-integration-v1.js", function () {
         load("./glueful-gmail-bridge-v7.js");
       });
