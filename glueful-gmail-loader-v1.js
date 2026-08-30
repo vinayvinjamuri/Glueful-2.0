@@ -1,34 +1,54 @@
-/* Glueful runtime loader v14: dashboard runtime + direct Gmail integration + Orbit AI v2. */
+/* Glueful runtime loader v15: dashboard runtime + direct Gmail integration + Orbit AI v2. */
 (function () {
   "use strict";
+
+  /*
+   * Runtime fan-out is intentionally centralized here so Orbit is loaded
+   * by the same startup path already used by Glueful's Gmail/dashboard code.
+   *
+   * Complexity:
+   * - Time: O(k), where k is the number of runtime scripts loaded.
+   * - Space: O(k) for script elements held by the document.
+   */
   function load(src, onload) {
     const existing = document.querySelector(`script[data-glueful-runtime-src="${src}"]`);
     if (existing) {
       if (typeof onload === "function") onload();
       return;
     }
+
     const script = document.createElement("script");
     script.src = src;
     script.async = true;
     script.dataset.gluefulRuntimeSrc = src;
-    script.onload = function () { if (typeof onload === "function") onload(); };
-    script.onerror = function (error) { console.warn("[Glueful] runtime failed to load:", src, error); };
+    script.onload = function () {
+      if (typeof onload === "function") onload();
+    };
+    script.onerror = function (error) {
+      console.warn("[Glueful] runtime failed to load:", src, error);
+    };
     document.head.appendChild(script);
   }
+
   function start() {
     window.setTimeout(function () {
-      load("./glueful-dashboard-fixed-v1.js?v=6");
+      load("./glueful-dashboard-fixed-v1.js?v=7");
       load("./glueful-dashboard-header-fix-v1.js?v=4");
       load("./glueful-dashboard-hamburger-v2.js?v=4");
-      // Gmail integration owns its own exact entry-point click handler.
-      // Do not load the legacy document-level Gmail bridge here: it can
-      // intercept clicks from parent containers/sheets and reopen the modal.
+
+      /* Gmail integration owns its own exact entry-point click handler. */
       load("./glueful-gmail-integration-v1.js?v=4");
       load("./glueful-dashboard-approved-v1.js?v=2");
+
+      /* Orbit: bootstrap the existing Supabase client, then load the real-data AI runtime. */
       load("./glueful-orbit-bootstrap-v1.js?v=1");
-      load("./glueful-orbit-v2.js?v=2");
+      load("./glueful-orbit-v2.js?v=3");
     }, 1500);
   }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once: true });
-  else start();
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", start, { once: true });
+  } else {
+    start();
+  }
 })();
