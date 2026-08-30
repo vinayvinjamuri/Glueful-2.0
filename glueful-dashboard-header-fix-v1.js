@@ -1,15 +1,15 @@
-/* Glueful dashboard header fix v1.
- * On the fixed dashboard only, hide the legacy global top chrome so it cannot
- * overlap the approved dashboard header. Restore it automatically on all other views.
- * Also removes leaked literal \\n text nodes that appear outside the dashboard.
+/* Glueful dashboard header fix v2.
+ * Dashboard-only legacy header suppression with stable mutation handling.
+ * Also removes leaked literal \\n text nodes.
  */
 (function () {
   "use strict";
-  if (window.__GLUEFUL_DASHBOARD_HEADER_FIX_V1__) return;
-  window.__GLUEFUL_DASHBOARD_HEADER_FIX_V1__ = true;
+  if (window.__GLUEFUL_DASHBOARD_HEADER_FIX_V2__) return;
+  window.__GLUEFUL_DASHBOARD_HEADER_FIX_V2__ = true;
 
   const HIDDEN_CLASS = "glueful-dashboard-global-chrome-hidden";
   const STYLE_ID = "glueful-dashboard-header-fix-style";
+  let lastActive = null;
 
   function install() {
     if (document.getElementById(STYLE_ID)) return;
@@ -47,7 +47,6 @@
       }
     }
 
-    // Common global header/topbar names, but never anything inside the dashboard.
     document.querySelectorAll(
       "header, .app-header, .topbar, .navbar, .site-header, .main-header, [class*=\"app-header\"], [class*=\"topbar\"], [class*=\"navbar\"]"
     ).forEach(function (el) {
@@ -61,14 +60,18 @@
     return found;
   }
 
-  function setHidden(active) {
+  function applyDashboardChrome(active) {
+    if (lastActive === active) return;
+    lastActive = active;
+
     document.querySelectorAll("." + HIDDEN_CLASS).forEach(function (el) {
       el.classList.remove(HIDDEN_CLASS);
     });
+    document.body.classList.remove(HIDDEN_CLASS);
 
-    document.body.classList.toggle(HIDDEN_CLASS, active);
     if (!active) return;
 
+    document.body.classList.add(HIDDEN_CLASS);
     findLegacyChrome().forEach(function (el) {
       if (el.id === "view-dashboard" || el.closest("#view-dashboard")) return;
       el.classList.add(HIDDEN_CLASS);
@@ -91,7 +94,7 @@
 
   function sync() {
     install();
-    setHidden(isDashboardActive());
+    applyDashboardChrome(isDashboardActive());
     cleanLiteralNewlines();
   }
 
