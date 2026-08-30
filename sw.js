@@ -1,4 +1,4 @@
-const CACHE_NAME = "glueful-cache-v101-orbit-runtime-restore";
+const CACHE_NAME = "glueful-cache-v102-orbit-runtime-restore";
 
 const RUNTIME = [
   "./glueful-resume-render-diagnostics.js",
@@ -27,6 +27,8 @@ const RUNTIME = [
   "./glueful-mobile-update-guard-v1.js",
   "./glueful-app-branding-v1.js",
   "./glueful-gmail-loader-v1.js",
+  "./glueful-orbit-bootstrap-v1.js",
+  "./glueful-orbit-v2.js",
   "./glueful-orbit-ui-v3.js",
   "./glueful-orbit-ui-v6.js",
   "./glueful-dashboard-fixed-v1.js",
