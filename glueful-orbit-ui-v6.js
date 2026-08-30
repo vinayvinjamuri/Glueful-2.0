@@ -33,9 +33,19 @@
     const style = document.createElement("style");
     style.id = STYLE_ID;
     style.textContent = `
-      /* Orbit chat must remain a full-height column so the composer never floats upward. */
-      #${VIEW_ID} .ov2-chat {
+      /* Orbit chat must use the dynamic mobile viewport so the composer stays above the keyboard. */
+      #${ROOT_ID}.open {
+        height:100dvh !important;
+        max-height:100dvh !important;
+        overflow:hidden !important;
+      }
+      #${VIEW_ID} {
         height:100% !important;
+        min-height:0 !important;
+      }
+      #${VIEW_ID} .ov2-chat {
+        position:relative !important;
+        height:100dvh !important;
         min-height:0 !important;
         display:flex !important;
         flex-direction:column !important;
@@ -46,8 +56,9 @@
         min-height:0 !important;
         overflow-y:auto !important;
         overflow-x:hidden !important;
-        padding-bottom:10px !important;
+        padding-bottom:96px !important;
         overscroll-behavior:contain !important;
+        -webkit-overflow-scrolling:touch !important;
       }
 
       .ov5-chat-home .ov5-composer,
@@ -66,8 +77,13 @@
         box-shadow:0 10px 30px rgba(0,0,0,.35) !important;
       }
       .ov2-chat .ov2-composer {
-        margin-top:auto !important;
-        margin-bottom:calc(env(safe-area-inset-bottom) + 8px) !important;
+        position:absolute !important;
+        left:14px !important;
+        right:14px !important;
+        bottom:calc(env(safe-area-inset-bottom) + 8px) !important;
+        width:auto !important;
+        margin:0 !important;
+        z-index:20 !important;
         border-top:1px solid #293853 !important;
       }
       .ov6-plus,
@@ -133,8 +149,22 @@
       .ov6-app-main b { display:block; font-size:12px; }
       .ov6-app-main small { display:block; color:#8e99ad; margin-top:2px; font-size:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
       .ov6-app-status { font-size:9px; color:#63e2a6; white-space:nowrap; }
+
+      /* Prevent the document behind Orbit from moving while the mobile keyboard opens. */
+      body:has(#${ROOT_ID}.open) {
+        overflow:hidden !important;
+        overscroll-behavior:none !important;
+      }
     `;
     document.head.appendChild(style);
+  }
+
+  function syncViewportHeight() {
+    const root = getRoot();
+    if (!root?.classList.contains("open")) return;
+    const viewport = window.visualViewport;
+    const height = viewport?.height || window.innerHeight;
+    root.style.setProperty("--orbit-viewport-height", `${Math.round(height)}px`);
   }
 
   function getView() { return document.getElementById(VIEW_ID); }
@@ -251,6 +281,7 @@
 
   function sync() {
     installStyles();
+    syncViewportHeight();
     wireHome();
     decorateChatComposer();
   }
@@ -262,6 +293,11 @@
     if (!view) return;
     const observer = new MutationObserver(() => window.requestAnimationFrame(sync));
     observer.observe(view, { childList:true, subtree:true });
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", syncViewportHeight, { passive:true });
+      window.visualViewport.addEventListener("scroll", syncViewportHeight, { passive:true });
+    }
+    window.addEventListener("resize", syncViewportHeight, { passive:true });
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once:true });
