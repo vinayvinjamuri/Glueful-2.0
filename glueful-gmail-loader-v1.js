@@ -1,4 +1,4 @@
-/* Glueful runtime loader v21: centralized runtime + regression guard. */
+/* Glueful runtime loader v22: centralized runtime + mobile Gmail regression guard. */
 (function () {
   "use strict";
 
@@ -17,30 +17,41 @@
     document.head.appendChild(script);
   }
 
-  /* Gmail sync is automatic and available from the integration modal.
-   * Never allow the old floating dashboard sync control to appear. */
+  /* Gmail sync remains available on desktop. On mobile, the dashboard sync
+   * control is intentionally absent because it must never overlay navigation. */
   function installSyncControlGuard() {
-    const STYLE_ID = "glueful-sync-control-guard-v2";
+    const STYLE_ID = "glueful-sync-control-guard-v3";
     if (!document.getElementById(STYLE_ID)) {
       const style = document.createElement("style");
       style.id = STYLE_ID;
       style.textContent = `
-        #glueful-dashboard-gmail-sync {
-          display:none !important;
-          visibility:hidden !important;
-          pointer-events:none !important;
+        @media (max-width:700px) {
+          #glueful-dashboard-gmail-sync {
+            display:none !important;
+            visibility:hidden !important;
+            pointer-events:none !important;
+          }
         }
       `;
       document.head.appendChild(style);
     }
-    const remove = () => {
+
+    const isMobile = () => window.matchMedia("(max-width:700px)").matches;
+    const removeOnMobile = () => {
+      if (!isMobile()) return;
       const button = document.getElementById("glueful-dashboard-gmail-sync");
       if (button) button.remove();
     };
-    remove();
-    const observer = new MutationObserver(remove);
-    observer.observe(document.body, { childList:true, subtree:true, attributes:true, attributeFilter:["style", "class", "hidden"] });
-    window.addEventListener("resize", remove, { passive:true });
+
+    removeOnMobile();
+    const observer = new MutationObserver(removeOnMobile);
+    observer.observe(document.body, {
+      childList:true,
+      subtree:true,
+      attributes:true,
+      attributeFilter:["style", "class", "hidden"]
+    });
+    window.addEventListener("resize", removeOnMobile, { passive:true });
   }
 
   function start() {
@@ -49,7 +60,7 @@
       load("./glueful-dashboard-fixed-v1.js?v=8");
       load("./glueful-dashboard-header-fix-v1.js?v=5");
       load("./glueful-dashboard-hamburger-v2.js?v=5");
-      load("./glueful-gmail-integration-v1.js?v=6");
+      load("./glueful-gmail-integration-v1.js?v=7");
       load("./glueful-dashboard-approved-v1.js?v=3");
       load("./glueful-orbit-bootstrap-v1.js?v=2", function () {
         load("./glueful-orbit-v2.js?v=4", function () {
