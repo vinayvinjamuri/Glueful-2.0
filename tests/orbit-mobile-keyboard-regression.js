@@ -4,13 +4,14 @@ const vm = require("node:vm");
 
 const source = fs.readFileSync("glueful-orbit-ui-v9.js", "utf8");
 
-assert.match(source, /\.ov2-app > \.ov2-chat/);
-assert.match(source, /flex:1 1 auto !important/);
+assert.match(source, /\.ov2-app \.ov2-chat/);
+assert.match(source, /flex:1 1 0 !important/);
 assert.match(source, /height:auto !important/);
 assert.match(source, /\.ov2-chat \.ov2-composer/);
 assert.match(source, /visualViewport/);
 assert.match(source, /focusin/);
 assert.match(source, /focusout/);
+assert.match(source, /__GLUEFUL_ORBIT_UI_V10__/);
 
 let rootOpen = true;
 const root = {
@@ -77,7 +78,7 @@ vm.runInNewContext(source, context, { filename: "glueful-orbit-ui-v9.js" });
 assert.equal(root.style.height, "800px", "composer viewport should start at the full mobile viewport height");
 assert.equal(root.style.maxHeight, "800px");
 assert.equal(root.style.top, "0px");
-assert.equal(styles.length, 1, "v9 should install one layout style block");
+assert.equal(styles.length, 1, "v10 should install one layout style block");
 
 window.visualViewport.height = 420;
 window.visualViewport.offsetTop = 0;
