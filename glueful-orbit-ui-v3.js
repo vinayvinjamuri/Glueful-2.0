@@ -1,5 +1,5 @@
 /*
- * Glueful Orbit UI v8 — direct chat entry.
+ * Glueful Orbit UI v9 — direct chat entry.
  *
  * Orbit should open as a conversation, not as a separate landing page.
  * The existing Orbit v2 runtime owns the real chat, AI request flow,
@@ -14,11 +14,11 @@
 (function () {
   "use strict";
 
-  if (window.__GLUEFUL_ORBIT_UI_V8__) return;
-  window.__GLUEFUL_ORBIT_UI_V8__ = true;
+  if (window.__GLUEFUL_ORBIT_DIRECT_CHAT_V9__) return;
+  window.__GLUEFUL_ORBIT_DIRECT_CHAT_V9__ = true;
 
   const ROOT = "glueful-orbit-v2-root";
-  const MARK = "data-orbit-direct-chat-v8";
+  const MARK = "data-orbit-direct-chat-v9";
 
   function getApp() {
     return document.querySelector(`#${ROOT} .ov2-app`);
@@ -59,7 +59,7 @@
 
     app.setAttribute(MARK, "1");
 
-    // Do not render a second Orbit home screen.
+    // Do not render another Orbit landing page.
     // Immediately enter the real Orbit v2 chat runtime.
     openExistingChat(root);
   }
