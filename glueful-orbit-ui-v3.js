@@ -91,11 +91,6 @@
         padding: 4px 7px !important;
       }
 
-      /* Home: show only the most useful recent applications. */
-      .ov3-home .ov2-job:nth-of-type(n + 5) {
-        display: none !important;
-      }
-
       .ov3-home .ov3-view-all {
         width: 100%;
         margin-top: 9px;
@@ -158,6 +153,10 @@
 
     const label = app.querySelector(".ov2-label");
     if (!label) return;
+
+    jobs.slice(4).forEach(job => {
+      job.style.display = "none";
+    });
 
     if (!app.querySelector(".ov3-view-all") && jobs.length > 4) {
       const button = document.createElement("button");
