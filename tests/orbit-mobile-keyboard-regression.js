@@ -2,71 +2,69 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const vm = require("node:vm");
 
-const source = fs.readFileSync("glueful-orbit-ui-v9.js", "utf8");
+const orbitSource = fs.readFileSync("glueful-orbit-ui-v14.js", "utf8");
+const loaderSource = fs.readFileSync("glueful-gmail-loader-v1.js", "utf8");
+const serviceWorkerSource = fs.readFileSync("sw.js", "utf8");
 
-assert.match(source, /__GLUEFUL_ORBIT_UI_V12__/);
-assert.match(source, /\.ov2-app\.ov2-chat/);
-assert.match(source, /\.ov2-chat-messages/);
-assert.match(source, /\.ov2-composer/);
-assert.match(source, /height:100dvh/);
-assert.match(source, /visualViewport/);
-assert.match(source, /focusin/);
-assert.match(source, /focusout/);
-assert.match(source, /lockDocumentScroll/);
-assert.match(source, /restoreChatAnchor/);
-assert.match(source, /wasAtBottom/);
+// The loader must have exactly one Orbit viewport authority after the legacy
+// v9 runtime is removed. v6 may still exist for interaction/polish, but v14
+// owns mobile geometry and scrubs legacy inline geometry.
+assert.match(loaderSource, /glueful-orbit-ui-v14\.js\?v=1/);
+assert.doesNotMatch(loaderSource, /glueful-orbit-ui-v9\.js/);
+assert.match(serviceWorkerSource, /glueful-cache-v106-orbit-v14-ime-fix/);
+assert.match(serviceWorkerSource, /glueful-orbit-ui-v14\.js/);
+assert.match(serviceWorkerSource, /interactive-widget=resizes-content/);
 
-// Guard against the original regression: never copy a raw keyboard-sized
-// visualViewport height directly onto the Orbit root.
-assert.doesNotMatch(source, /el\.style\.height = `\$\{height\}px`/);
-assert.doesNotMatch(source, /const height = Math\.max\(1, Math\.round\(vv\?\.height/);
+assert.match(orbitSource, /__GLUEFUL_ORBIT_UI_V14__/);
+assert.match(orbitSource, /height:100dvh !important/);
+assert.match(orbitSource, /position:fixed !important/);
+assert.match(orbitSource, /\.ov2-chat-messages/);
+assert.match(orbitSource, /overflow-y:auto !important/);
+assert.match(orbitSource, /\.ov2-composer/);
+assert.match(orbitSource, /flex:0 0 auto !important/);
+assert.match(orbitSource, /scrubLegacyInlineGeometry/);
+assert.match(orbitSource, /attributeFilter:\["class", "style"\]/);
 
-let rootOpen = true;
-let scrollY = 120;
-const input = { matches: selector => selector === ".ov2-input" };
-const chatMessages = {
-  scrollHeight: 1200,
-  scrollTop: 900,
-  clientHeight: 300
-};
+// v14 must not recreate the failed v12 architecture.
+assert.doesNotMatch(orbitSource, /document\.body\.style\.position\s*=\s*["']fixed/);
+assert.doesNotMatch(orbitSource, /document\.body\.style\.top\s*=/);
+assert.doesNotMatch(orbitSource, /window\.scrollTo/);
+assert.doesNotMatch(orbitSource, /visualViewport\.(?:height|offsetTop)\s*=/);
+assert.doesNotMatch(orbitSource, /root\.style\.height\s*=\s*`/);
+
+// Simulate an older runtime writing keyboard-sized inline geometry. v14 must
+// remove it immediately and after a later DOM/style mutation as well.
 const root = {
-  style: {},
-  classList: { contains: name => name === "open" && rootOpen },
-  querySelector: selector => selector === ".ov2-chat-messages" ? chatMessages : null
+  style: {
+    height: "420px",
+    maxHeight: "420px",
+    top: "0px",
+    right: "0px",
+    bottom: "auto",
+    left: "0px",
+    removeProperty(name) { delete this[name]; }
+  },
+  classList: {
+    contains(name) { return name === "open"; }
+  }
 };
+
 const styles = [];
-const listeners = {};
-const viewportListeners = {};
-const mutations = [];
+let mutationCallback = null;
 const documentListeners = {};
 
-const htmlClassSet = new Set();
-const bodyClassSet = new Set();
 const document = {
   readyState: "complete",
-  documentElement: {
-    style: {},
-    classList: {
-      add: name => htmlClassSet.add(name),
-      remove: name => htmlClassSet.delete(name),
-      contains: name => htmlClassSet.has(name)
-    }
-  },
-  body: {
-    style: {},
-    classList: {
-      add: name => bodyClassSet.add(name),
-      remove: name => bodyClassSet.delete(name),
-      contains: name => bodyClassSet.has(name)
-    }
-  },
+  documentElement: {},
   head: {
-    appendChild(node) {
-      styles.push(node);
-    }
+    appendChild(node) { styles.push(node); }
   },
   createElement(tag) {
-    return { tagName: tag.toUpperCase(), id: "", style: {}, textContent: "" };
+    return {
+      tagName: tag.toUpperCase(),
+      id: "",
+      textContent: ""
+    };
   },
   getElementById(id) {
     if (id === "glueful-orbit-v2-root") return root;
@@ -77,77 +75,38 @@ const document = {
   }
 };
 
-const window = {
-  innerHeight: 800,
-  scrollY,
-  pageYOffset: scrollY,
-  visualViewport: {
-    // Simulate the stale keyboard-sized value that caused the earlier bug.
-    height: 420,
-    offsetTop: 0,
-    addEventListener(type, handler) {
-      viewportListeners[type] = handler;
-    }
-  },
-  addEventListener(type, handler) {
-    listeners[type] = handler;
-  },
-  scrollTo(x, y) {
-    scrollY = y;
-    this.scrollY = y;
-    this.pageYOffset = y;
-  },
-  setTimeout,
-  clearTimeout
-};
-
 function MutationObserver(callback) {
-  this.observe = () => mutations.push(callback);
+  mutationCallback = callback;
+  this.observe = () => {};
 }
 
 const context = {
-  window,
+  window: {},
   document,
   MutationObserver,
-  requestAnimationFrame: callback => {
-    callback();
-    return 1;
-  },
-  cancelAnimationFrame() {},
   console
 };
 
-vm.runInNewContext(source, context, { filename: "glueful-orbit-ui-v9.js" });
+vm.runInNewContext(orbitSource, context, { filename: "glueful-orbit-ui-v14.js" });
 
-assert.equal(root.style.height, "100dvh", "Orbit root must remain dynamic full-screen");
-assert.equal(root.style.maxHeight, "none");
-assert.equal(root.style.top, "0px");
-assert.equal(root.style.bottom, "0px");
-assert.equal(styles.length, 1, "v12 should install one layout style block");
+assert.equal(styles.length, 1, "v14 should install one style block");
+assert.equal(root.style.height, undefined, "legacy inline height must be removed");
+assert.equal(root.style.maxHeight, undefined, "legacy inline max-height must be removed");
+assert.equal(root.style.top, undefined, "legacy inline top must be removed");
+assert.equal(root.style.right, undefined, "legacy inline right must be removed");
+assert.equal(root.style.bottom, undefined, "legacy inline bottom must be removed");
+assert.equal(root.style.left, undefined, "legacy inline left must be removed");
+assert.ok(mutationCallback, "v14 must observe later runtime mutations");
 
-// Opening the keyboard must not move a chat that was already at the bottom.
-const focusHandler = listeners.focusin;
-assert.ok(focusHandler, "focusin handler must be installed");
-focusHandler({ target: input });
-assert.equal(htmlClassSet.has("glueful-orbit-scroll-locked"), true);
-assert.equal(bodyClassSet.has("glueful-orbit-scroll-locked"), true);
-assert.equal(chatMessages.scrollTop, 900, "chat should stay anchored to its bottom before resize");
+root.style.height = "380px";
+root.style.maxHeight = "380px";
+root.style.top = "12px";
+root.style.bottom = "auto";
+mutationCallback();
 
-// With a smaller visual viewport, the root still uses 100dvh rather than a
-// stale 420px root height; the message list is the only scrolling region.
-window.visualViewport.height = 420;
-viewportListeners.resize();
-assert.equal(root.style.height, "100dvh");
-assert.equal(chatMessages.scrollTop, 900, "keyboard resize must preserve bottom anchor");
+assert.equal(root.style.height, undefined, "recreated inline height must be removed");
+assert.equal(root.style.maxHeight, undefined, "recreated inline max-height must be removed");
+assert.equal(root.style.top, undefined, "recreated inline top must be removed");
+assert.equal(root.style.bottom, undefined, "recreated inline bottom must be removed");
 
-// Simulate the chat becoming taller after keyboard close.
-window.visualViewport.height = 800;
-viewportListeners.resize();
-assert.equal(root.style.height, "100dvh");
-assert.equal(chatMessages.scrollTop, 900, "closing keyboard must preserve bottom anchor");
-
-rootOpen = false;
-viewportListeners.resize();
-assert.equal(root.style.height, "100dvh", "closed Orbit must not receive keyboard-sized height");
-
-console.log("Orbit mobile IME scroll-anchor regression: PASS");
+console.log("Orbit mobile IME regression: PASS");
