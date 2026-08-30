@@ -1,4 +1,4 @@
-const CACHE_NAME = "glueful-cache-v89-dashboard-fixed";
+const CACHE_NAME = "glueful-cache-v90-dashboard-header-fix";
 
 const RUNTIME = [
   "./glueful-resume-render-diagnostics.js",
@@ -27,7 +27,8 @@ const RUNTIME = [
   "./glueful-mobile-update-guard-v1.js",
   "./glueful-app-branding-v1.js",
   "./glueful-gmail-loader-v1.js",
-  "./glueful-dashboard-fixed-v1.js"
+  "./glueful-dashboard-fixed-v1.js",
+  "./glueful-dashboard-header-fix-v1.js"
 ];
 
 const LEGACY_RUNTIME_NAMES = [
