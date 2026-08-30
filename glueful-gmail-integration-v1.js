@@ -1,4 +1,4 @@
-/* Glueful Gmail integration v5: automatic sync + dashboard control. */
+/* Glueful Gmail integration v6: automatic sync + dashboard control. */
 (function () {
   "use strict";
   const FUNCTION_URL = (window.SUPABASE_URL || "https://xztbhheexianejsvwpva.supabase.co") + "/functions/v1/gmail-application-capture";
@@ -41,6 +41,8 @@
       .glueful-gmail-actions{display:flex;gap:10px;flex-wrap:wrap}.glueful-gmail-btn{border:0;border-radius:13px;padding:12px 16px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,#7b36ff,#286dff);color:#fff}.glueful-gmail-btn.secondary{background:rgba(255,255,255,.08);color:#dce3f2}.glueful-gmail-status{font-size:12px;color:#8d9ab0;margin-top:12px;min-height:18px}
       #glueful-dashboard-gmail-sync{position:fixed;right:18px;bottom:18px;z-index:9000;border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:9px 13px;background:rgba(16,21,33,.94);color:#dce3f2;font:600 12px Inter,system-ui,sans-serif;box-shadow:0 8px 28px rgba(0,0,0,.28);cursor:pointer;backdrop-filter:blur(10px);display:none}
       #glueful-dashboard-gmail-sync.syncing{opacity:.65;cursor:wait}
+      /* Dashboard is intentionally free of background ingestion telemetry. */
+      .ingestion-monitor-card{display:none !important}
     `;
     document.head.appendChild(style);
   }
@@ -186,8 +188,8 @@
     return null;
   }
   function installGmailClickInterceptor() {
-    if (document.documentElement.dataset.gluefulGmailInterceptor === "5") return;
-    document.documentElement.dataset.gluefulGmailInterceptor = "5";
+    if (document.documentElement.dataset.gluefulGmailInterceptor === "6") return;
+    document.documentElement.dataset.gluefulGmailInterceptor = "6";
     document.addEventListener("click", function (event) {
       if (event.target instanceof Element && event.target.closest(".glueful-gmail-modal-backdrop")) return;
       const row = findGmailClickable(event.target);
