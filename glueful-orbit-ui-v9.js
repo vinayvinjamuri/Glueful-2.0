@@ -1,27 +1,22 @@
 /*
- * Glueful Orbit UI v9.1 — mobile composer/keyboard layout correction.
+ * Glueful Orbit UI v10 — mobile viewport/composer authority fix.
  *
- * The previous v9 patch was too specific about the chat element being a direct
- * child of .ov2-app. The Orbit renderer can wrap that element, so this patch
- * intentionally targets .ov2-app .ov2-chat at any descendant level.
- *
- * Desired mobile behavior:
- * - keyboard closed: composer is pinned to the bottom of Orbit;
- * - keyboard open: visualViewport shrinks Orbit and composer sits immediately
- *   above the Android keyboard;
- * - message history is the only scrolling region.
+ * The Orbit shell is a fixed overlay. On mobile, Android can shrink
+ * visualViewport when the keyboard opens while layout viewport remains tall.
+ * This patch makes visualViewport the explicit height authority and keeps the
+ * composer inside the flex chat column so it cannot float behind the keyboard.
  */
 (function () {
   "use strict";
 
-  if (window.__GLUEFUL_ORBIT_UI_V9_1__) return;
-  window.__GLUEFUL_ORBIT_UI_V9_1__ = true;
+  if (window.__GLUEFUL_ORBIT_UI_V10__) return;
+  window.__GLUEFUL_ORBIT_UI_V10__ = true;
 
   const ROOT_ID = "glueful-orbit-v2-root";
-  const STYLE_ID = "glueful-orbit-ui-v9-style";
+  const STYLE_ID = "glueful-orbit-ui-v10-style";
   let rafId = 0;
 
-  function getRoot() {
+  function root() {
     return document.getElementById(ROOT_ID);
   }
 
@@ -34,18 +29,22 @@
       #${ROOT_ID}.open {
         position:fixed !important;
         left:0 !important;
-        right:0 !important;
+        top:0 !important;
+        right:auto !important;
         bottom:auto !important;
         width:100% !important;
+        height:100dvh !important;
+        max-height:100dvh !important;
         overflow:hidden !important;
         transform:none !important;
+        display:block !important;
       }
 
       #${ROOT_ID}.open .ov2-app {
         width:100% !important;
         height:100% !important;
         min-height:0 !important;
-        max-height:100% !important;
+        max-height:none !important;
         display:flex !important;
         flex-direction:column !important;
         overflow:hidden !important;
@@ -55,7 +54,12 @@
         flex:0 0 auto !important;
       }
 
-      /* Do NOT use height:100% here. Header + chat must fit together. */
+      #${ROOT_ID}.open .ov2-app .ov2-body {
+        flex:1 1 0 !important;
+        min-height:0 !important;
+        overflow:auto !important;
+      }
+
       #${ROOT_ID}.open .ov2-app .ov2-chat {
         flex:1 1 0 !important;
         width:100% !important;
@@ -68,7 +72,7 @@
       }
 
       #${ROOT_ID}.open .ov2-app .ov2-chat-messages {
-        flex:1 1 auto !important;
+        flex:1 1 0 !important;
         width:100% !important;
         height:auto !important;
         min-height:0 !important;
@@ -82,29 +86,34 @@
       #${ROOT_ID}.open .ov2-app .ov2-chat .ov2-composer {
         flex:0 0 auto !important;
         position:relative !important;
+        left:auto !important;
+        right:auto !important;
+        top:auto !important;
+        bottom:auto !important;
         inset:auto !important;
         width:100% !important;
         height:auto !important;
         min-height:74px !important;
         margin:0 !important;
         box-sizing:border-box !important;
+        padding-bottom:calc(env(safe-area-inset-bottom) + 9px) !important;
       }
     `;
     document.head.appendChild(style);
   }
 
   function syncViewport() {
-    const root = getRoot();
-    if (!root || !root.classList.contains("open")) return;
+    const el = root();
+    if (!el || !el.classList.contains("open")) return;
 
-    const viewport = window.visualViewport;
-    const height = Math.max(1, Math.round(viewport?.height || window.innerHeight || 1));
-    const top = Math.max(0, Math.round(viewport?.offsetTop || 0));
+    const vv = window.visualViewport;
+    const height = Math.max(1, Math.round(vv?.height || window.innerHeight || 1));
+    const top = Math.max(0, Math.round(vv?.offsetTop || 0));
 
-    root.style.height = `${height}px`;
-    root.style.maxHeight = `${height}px`;
-    root.style.top = `${top}px`;
-    root.style.bottom = "auto";
+    el.style.height = `${height}px`;
+    el.style.maxHeight = `${height}px`;
+    el.style.top = `${top}px`;
+    el.style.bottom = "auto";
   }
 
   function scheduleSync() {
@@ -125,11 +134,12 @@
     }
 
     window.addEventListener("resize", scheduleSync, { passive:true });
+    window.addEventListener("orientationchange", scheduleSync, { passive:true });
     window.addEventListener("focusin", scheduleSync, { passive:true });
-    window.addEventListener("focusout", () => window.setTimeout(scheduleSync, 80), { passive:true });
+    window.addEventListener("focusout", () => window.setTimeout(scheduleSync, 120), { passive:true });
 
     const observer = new MutationObserver(() => {
-      if (getRoot()?.classList.contains("open")) scheduleSync();
+      if (root()?.classList.contains("open")) scheduleSync();
     });
     observer.observe(document.documentElement, {
       childList:true,
