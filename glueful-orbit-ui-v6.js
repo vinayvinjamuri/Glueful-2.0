@@ -1,8 +1,8 @@
 /*
  * Glueful Orbit UI v6 — consistent chat UI + real application prompt.
  *
- * Fixes the visual mismatch between Orbit home and Orbit Chat, and makes the
- * "My applications" quick action use the user's real applications directly.
+ * v3 remains responsible for rendering the redesigned Orbit home. v6 is an
+ * interaction/polish layer on top of that home and on the existing chat view.
  *
  * Complexity:
  * - Home/chat decoration: O(1) per DOM mutation.
@@ -33,7 +33,7 @@
     const style = document.createElement("style");
     style.id = STYLE_ID;
     style.textContent = `
-      /* Same composer language on home and chat. */
+      /* Keep the v3 home composer and v2 chat composer in one visual system. */
       .ov5-chat-home .ov5-composer,
       .ov2-chat .ov2-composer {
         display:flex !important;
@@ -53,11 +53,8 @@
         border-top:1px solid #293853 !important;
         padding-bottom:calc(env(safe-area-inset-bottom) + 8px) !important;
       }
-      .ov2-chat .ov2-chat-messages {
-        padding-bottom:10px !important;
-      }
+      .ov2-chat .ov2-chat-messages { padding-bottom:10px !important; }
       .ov6-plus,
-      .ov5-plus,
       .ov2-chat .ov6-plus {
         appearance:none !important;
         -webkit-appearance:none !important;
@@ -95,7 +92,6 @@
         cursor:pointer !important;
         font-size:17px !important;
       }
-      .ov2-chat .ov2-bubble.user { margin-bottom:8px !important; }
       .ov6-app-list { margin-top:8px; }
       .ov6-app-row {
         display:flex;
@@ -162,25 +158,21 @@
 
   async function showApplications() {
     let attempts = 0;
-    const waitForChat = () => {
-      const view = getView();
-      return view?.querySelector(".ov2-chat-messages") ? true : false;
-    };
-
-    while (!waitForChat() && attempts < 40) {
+    while (!getView()?.querySelector(".ov2-chat-messages") && attempts < 40) {
       attempts += 1;
       await new Promise(resolve => window.setTimeout(resolve, 50));
     }
-    if (!waitForChat()) return;
+    if (!getView()?.querySelector(".ov2-chat-messages")) return;
 
     addChatBubble("user", esc(APP_PROMPT));
 
     const client = getClient();
     let rows = [];
     try {
+      if (!client?.auth?.getUser || !client?.from) throw new Error("Supabase client unavailable");
       const { data: userData } = await client.auth.getUser();
       const userId = userData?.user?.id;
-      if (userId && client?.from) {
+      if (userId) {
         const { data, error } = await client
           .from("applications")
           .select("company,role,status,date,captured_at")
@@ -230,30 +222,16 @@
     view.querySelectorAll("[data-orbit-prompt]").forEach(button => {
       if (button.dataset.v6Bound === "1") return;
       button.dataset.v6Bound = "1";
+
+      /* Capture phase prevents v3's older listener from submitting the same prompt. */
       button.addEventListener("click", event => {
-        event.preventDefault();
         const text = String(button.dataset.orbitPrompt || "");
-        if (text === APP_PROMPT) {
-          openChat();
-          void showApplications();
-          return;
-        }
+        if (text !== APP_PROMPT) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
         openChat();
-        let attempts = 0;
-        const fill = () => {
-          attempts += 1;
-          const input = getView()?.querySelector(".ov2-input");
-          const form = getView()?.querySelector('form[data-action="send"]');
-          if (input && form) {
-            input.value = text;
-            input.focus();
-            form.dispatchEvent(new Event("submit", { bubbles:true, cancelable:true }));
-            return;
-          }
-          if (attempts < 40) window.setTimeout(fill, 50);
-        };
-        window.setTimeout(fill, 50);
-      });
+        void showApplications();
+      }, true);
     });
   }
 
