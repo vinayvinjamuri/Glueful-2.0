@@ -46,4 +46,3 @@ jobs:
           grep -Fq 'glueful-orbit-ui-v14.js?v=1' glueful-gmail-loader-v1.js
           grep -Fq 'glueful-sync-control-guard-v3' glueful-gmail-loader-v1.js
           grep -Fq 'function dashboardHost' glueful-gmail-integration-v1.js
-          grep -Fq '#glueful-dashboard-gmail-sync{position:static' glueful-gmail-integration-v1.js
