@@ -1,4 +1,4 @@
-const CACHE_NAME = "glueful-cache-v103-gmail-scope-fix";
+const CACHE_NAME = "glueful-cache-v106-orbit-v14-ime-fix";
 
 const RUNTIME = [
   "./glueful-resume-render-diagnostics.js",
@@ -31,6 +31,7 @@ const RUNTIME = [
   "./glueful-orbit-v2.js",
   "./glueful-orbit-ui-v3.js",
   "./glueful-orbit-ui-v6.js",
+  "./glueful-orbit-ui-v14.js",
   "./glueful-dashboard-fixed-v1.js",
   "./glueful-dashboard-header-fix-v1.js",
   "./glueful-dashboard-hamburger-v2.js",
@@ -89,6 +90,20 @@ function patchStartupSequence(html) {
     "        await syncPlacementPortalFromCloud(user);",
     "        void syncPlacementPortalFromCloud(user).catch(error => console.warn(\"[Glueful] Placement portal background sync failed:\", error));"
   );
+
+  // Android Chrome defaults to resizing only the visual viewport when the
+  // software keyboard opens. Orbit's composer is a normal flex child and
+  // needs the layout viewport to resize with the IME instead.
+  html = html.replace(
+    /<meta\s+name=[\"']viewport[\"']\s+content=[\"']([^\"']*)[\"']\s*\/?>/i,
+    (_, content) => {
+      if (/interactive-widget\s*=\s*[^,\s]+/i.test(content)) {
+        return `<meta name="viewport" content="${content}" />`;
+      }
+      return `<meta name="viewport" content="${content}, interactive-widget=resizes-content" />`;
+    }
+  );
+
   return html;
 }
 
