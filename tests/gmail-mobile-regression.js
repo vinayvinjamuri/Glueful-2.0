@@ -36,6 +36,7 @@ function runGuardScenario(mobile) {
       addEventListener() {}
     },
     window: {
+      setTimeout(fn) { fn(); },
       matchMedia() { return { matches: mobile }; },
       addEventListener() {}
     },
