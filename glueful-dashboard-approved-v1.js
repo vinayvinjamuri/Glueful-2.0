@@ -1,10 +1,10 @@
-/* Glueful approved dashboard V2: greeting header, top Gmail sync control, compact single-screen layout. */
+/* Glueful approved dashboard V3: compact user-fit greeting header and top Gmail sync control. */
 (function () {
   "use strict";
-  if (window.__GLUEFUL_APPROVED_DASHBOARD_V2__) return;
-  window.__GLUEFUL_APPROVED_DASHBOARD_V2__ = true;
+  if (window.__GLUEFUL_APPROVED_DASHBOARD_V3__) return;
+  window.__GLUEFUL_APPROVED_DASHBOARD_V3__ = true;
 
-  const STYLE_ID = "glueful-approved-dashboard-style-v2";
+  const STYLE_ID = "glueful-approved-dashboard-style-v3";
   const SYNC_ID = "glueful-dashboard-gmail-sync";
   const ACTIONS_ID = "glueful-dashboard-header-actions";
 
@@ -28,22 +28,24 @@
           padding:0 0 0 52px !important;
           box-sizing:border-box !important;
         }
+        /* Compact greeting: fit the complete user's name before the controls. */
         body.glueful-dashboard-fixed #view-dashboard .view-title {
           display:block !important;
-          width:calc(100% - 145px) !important;
-          max-width:calc(100% - 145px) !important;
-          font-size:23px !important;
-          line-height:1.05 !important;
+          width:calc(100% - 135px) !important;
+          max-width:calc(100% - 135px) !important;
+          font-size:20px !important;
+          line-height:1.08 !important;
+          letter-spacing:-0.35px !important;
           margin:0 !important;
-          padding:1px 0 0 !important;
+          padding:3px 0 0 !important;
           white-space:nowrap !important;
           overflow:hidden !important;
           text-overflow:ellipsis !important;
         }
         body.glueful-dashboard-fixed #view-dashboard .view-subtitle {
           display:block !important;
-          width:calc(100% - 145px) !important;
-          max-width:calc(100% - 145px) !important;
+          width:calc(100% - 135px) !important;
+          max-width:calc(100% - 135px) !important;
           margin:4px 0 0 !important;
           font-size:11px !important;
           line-height:1.15 !important;
