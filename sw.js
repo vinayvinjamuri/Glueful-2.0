@@ -1,4 +1,4 @@
-const CACHE_NAME = "glueful-cache-v91-dashboard-hamburger";
+const CACHE_NAME = "glueful-cache-v92-approved-dashboard";
 
 const RUNTIME = [
   "./glueful-resume-render-diagnostics.js",
@@ -26,10 +26,12 @@ const RUNTIME = [
   "./glueful-jobs-official-link-guard-v1.js",
   "./glueful-mobile-update-guard-v1.js",
   "./glueful-app-branding-v1.js",
+  "./glueful-mobile-cleanup-v1.js",
   "./glueful-gmail-loader-v1.js",
   "./glueful-dashboard-fixed-v1.js",
   "./glueful-dashboard-header-fix-v1.js",
-  "./glueful-dashboard-hamburger-v1.js"
+  "./glueful-dashboard-hamburger-v2.js",
+  "./glueful-dashboard-approved-v1.js"
 ];
 
 const LEGACY_RUNTIME_NAMES = [
@@ -120,44 +122,40 @@ self.addEventListener("activate", (event) => {
   })());
 });
 
-self.addEventListener("message", (event) => {
-  if (event.data?.type === "GLUEFUL_SKIP_WAITING") self.skipWaiting();
-});
-
 self.addEventListener("fetch", (event) => {
   const request = event.request;
+  if (request.method !== "GET") return;
+
   const url = new URL(request.url);
-  if (request.method === "GET" && request.mode === "navigate") {
+  const isNavigation = request.mode === "navigate" || request.destination === "document";
+  const isRuntime = RUNTIME.some((src) => url.pathname.endsWith(src.replace(/^\.\//, "")));
+
+  if (isNavigation) {
     event.respondWith((async () => {
       try {
         const response = await buildAuthoritativeIndex(request, event.preloadResponse);
-        event.waitUntil(cacheIndexResponse(request, response));
+        await cacheIndexResponse(request, response);
         return response;
       } catch (error) {
-        console.warn("[Glueful SW] navigation failed:", error);
-        return (await caches.match(request)) || Response.error();
+        const cache = await caches.open(CACHE_NAME);
+        return (await cache.match(request)) || fetch(request);
       }
     })());
     return;
   }
-  if (request.method === "GET" && RUNTIME.some((path) => url.pathname.endsWith(path.slice(2)))) {
+
+  if (isRuntime) {
     event.respondWith((async () => {
+      const cache = await caches.open(CACHE_NAME);
+      const cached = await cache.match(request);
+      if (cached) return cached;
       try {
         const response = await fetch(request, { cache: "no-store" });
-        if (response.ok) event.waitUntil((async () => { try { const cache = await caches.open(CACHE_NAME); await cache.put(request, response.clone()); } catch (_) {} })());
+        if (response.ok) await cache.put(request, response.clone());
         return response;
-      } catch (_) { return (await caches.match(request)) || Response.error(); }
-    })());
-    return;
-  }
-  if (request.method === "GET") {
-    event.respondWith((async () => {
-      const cached = await caches.match(request);
-      try {
-        const response = await fetch(request, { cache: "no-store" });
-        if (response.ok) event.waitUntil((async () => { try { const cache = await caches.open(CACHE_NAME); await cache.put(request, response.clone()); } catch (_) {} })());
-        return response;
-      } catch (_) { return cached || Response.error(); }
+      } catch (error) {
+        throw error;
+      }
     })());
   }
 });
