@@ -4,7 +4,7 @@ const vm = require("node:vm");
 
 const source = fs.readFileSync("glueful-orbit-ui-v9.js", "utf8");
 
-// The chat element is the .ov2-app itself; regressions must not target it as a child.
+assert.match(source, /__GLUEFUL_ORBIT_UI_V12__/);
 assert.match(source, /\.ov2-app\.ov2-chat/);
 assert.match(source, /\.ov2-chat-messages/);
 assert.match(source, /\.ov2-composer/);
@@ -12,29 +12,54 @@ assert.match(source, /height:100dvh/);
 assert.match(source, /visualViewport/);
 assert.match(source, /focusin/);
 assert.match(source, /focusout/);
-assert.match(source, /__GLUEFUL_ORBIT_UI_V11__/);
-assert.match(source, /Do NOT copy visualViewport\.height to the root/);
+assert.match(source, /lockDocumentScroll/);
+assert.match(source, /restoreChatAnchor/);
+assert.match(source, /wasAtBottom/);
 
-// Guard against the exact regression shown on Android: the root must never be
-// assigned a keyboard-sized visualViewport height such as 420px.
-assert.doesNotMatch(source, /const height = Math\.max\(1, Math\.round\(vv\?\.height/);
+// Guard against the original regression: never copy a raw keyboard-sized
+// visualViewport height directly onto the Orbit root.
 assert.doesNotMatch(source, /el\.style\.height = `\$\{height\}px`/);
+assert.doesNotMatch(source, /const height = Math\.max\(1, Math\.round\(vv\?\.height/);
 
 let rootOpen = true;
+let scrollY = 120;
+const input = { matches: selector => selector === ".ov2-input" };
+const chatMessages = {
+  scrollHeight: 1200,
+  scrollTop: 900,
+  clientHeight: 300
+};
 const root = {
-  style: {
-    setProperty() {}
-  },
-  classList: { contains: name => name === "open" && rootOpen }
+  style: {},
+  classList: { contains: name => name === "open" && rootOpen },
+  querySelector: selector => selector === ".ov2-chat-messages" ? chatMessages : null
 };
 const styles = [];
 const listeners = {};
 const viewportListeners = {};
 const mutations = [];
+const documentListeners = {};
 
+const htmlClassSet = new Set();
+const bodyClassSet = new Set();
 const document = {
   readyState: "complete",
-  documentElement: {},
+  documentElement: {
+    style: {},
+    classList: {
+      add: name => htmlClassSet.add(name),
+      remove: name => htmlClassSet.delete(name),
+      contains: name => htmlClassSet.has(name)
+    }
+  },
+  body: {
+    style: {},
+    classList: {
+      add: name => bodyClassSet.add(name),
+      remove: name => bodyClassSet.delete(name),
+      contains: name => bodyClassSet.has(name)
+    }
+  },
   head: {
     appendChild(node) {
       styles.push(node);
@@ -47,14 +72,17 @@ const document = {
     if (id === "glueful-orbit-v2-root") return root;
     return styles.find(node => node.id === id) || null;
   },
-  addEventListener() {}
+  addEventListener(type, handler) {
+    documentListeners[type] = handler;
+  }
 };
 
 const window = {
   innerHeight: 800,
+  scrollY,
+  pageYOffset: scrollY,
   visualViewport: {
-    // Deliberately simulate Android reporting a stale keyboard-sized viewport
-    // while the keyboard is closed. This must not shrink the Orbit root.
+    // Simulate the stale keyboard-sized value that caused the earlier bug.
     height: 420,
     offsetTop: 0,
     addEventListener(type, handler) {
@@ -63,6 +91,11 @@ const window = {
   },
   addEventListener(type, handler) {
     listeners[type] = handler;
+  },
+  scrollTo(x, y) {
+    scrollY = y;
+    this.scrollY = y;
+    this.pageYOffset = y;
   },
   setTimeout,
   clearTimeout
@@ -86,26 +119,35 @@ const context = {
 
 vm.runInNewContext(source, context, { filename: "glueful-orbit-ui-v9.js" });
 
-assert.equal(root.style.height, "100dvh", "Orbit root must remain full-screen when visualViewport is stale");
+assert.equal(root.style.height, "100dvh", "Orbit root must remain dynamic full-screen");
 assert.equal(root.style.maxHeight, "none");
 assert.equal(root.style.top, "0px");
 assert.equal(root.style.bottom, "0px");
-assert.equal(styles.length, 1, "v11 should install one layout style block");
+assert.equal(styles.length, 1, "v12 should install one layout style block");
 
-// A later viewport resize must still never copy the raw visualViewport height
-// to the root. The chat shell uses 100dvh and flex layout for IME behavior.
+// Opening the keyboard must not move a chat that was already at the bottom.
+const focusHandler = listeners.focusin;
+assert.ok(focusHandler, "focusin handler must be installed");
+focusHandler({ target: input });
+assert.equal(htmlClassSet.has("glueful-orbit-scroll-locked"), true);
+assert.equal(bodyClassSet.has("glueful-orbit-scroll-locked"), true);
+assert.equal(chatMessages.scrollTop, 900, "chat should stay anchored to its bottom before resize");
+
+// With a smaller visual viewport, the root still uses 100dvh rather than a
+// stale 420px root height; the message list is the only scrolling region.
 window.visualViewport.height = 420;
 viewportListeners.resize();
-assert.equal(root.style.height, "100dvh", "keyboard-sized visualViewport must not shrink Orbit root");
-assert.equal(root.style.maxHeight, "none");
+assert.equal(root.style.height, "100dvh");
+assert.equal(chatMessages.scrollTop, 900, "keyboard resize must preserve bottom anchor");
 
+// Simulate the chat becoming taller after keyboard close.
 window.visualViewport.height = 800;
 viewportListeners.resize();
-assert.equal(root.style.height, "100dvh", "closing keyboard keeps full dynamic viewport");
+assert.equal(root.style.height, "100dvh");
+assert.equal(chatMessages.scrollTop, 900, "closing keyboard must preserve bottom anchor");
 
 rootOpen = false;
-window.visualViewport.height = 420;
 viewportListeners.resize();
-assert.equal(root.style.height, "100dvh", "closed Orbit must not retain viewport sizing");
+assert.equal(root.style.height, "100dvh", "closed Orbit must not receive keyboard-sized height");
 
-console.log("Orbit mobile keyboard regression: PASS");
+console.log("Orbit mobile IME scroll-anchor regression: PASS");
