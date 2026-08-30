@@ -1,0 +1,48 @@
+name: Gmail Mobile UI Regression
+
+on:
+  push:
+    paths:
+      - 'glueful-gmail-loader-v1.js'
+      - 'glueful-gmail-integration-v1.js'
+      - 'glueful-dashboard-approved-v1.js'
+      - 'tests/gmail-mobile-regression.js'
+      - '.github/workflows/gmail-mobile-regression.yml'
+  pull_request:
+    branches: ['main']
+    paths:
+      - 'glueful-gmail-loader-v1.js'
+      - 'glueful-gmail-integration-v1.js'
+      - 'glueful-dashboard-approved-v1.js'
+      - 'tests/gmail-mobile-regression.js'
+      - 'sw.js'
+      - '.github/workflows/gmail-mobile-regression.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  gmail-mobile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: JavaScript syntax
+        run: |
+          set -e
+          node --check glueful-gmail-loader-v1.js
+          node --check glueful-gmail-integration-v1.js
+          node --check glueful-dashboard-approved-v1.js
+          node --check tests/gmail-mobile-regression.js
+      - name: Gmail mobile overlay regression
+        run: node tests/gmail-mobile-regression.js
+      - name: Runtime cache contract
+        run: |
+          set -e
+          grep -q 'glueful-cache-v103-gmail-scope-fix' sw.js
+          grep -q 'glueful-gmail-loader-v1.js?v=7' glueful-gmail-loader-v1.js
+          grep -q 'glueful-sync-control-guard-v3' glueful-gmail-loader-v1.js
+          grep -q 'function dashboardHost' glueful-gmail-integration-v1.js
+          ! grep -Eq '#glueful-dashboard-gmail-sync\{position:fixed' glueful-gmail-integration-v1.js
