@@ -27,6 +27,7 @@
       load("./glueful-gmail-integration-v1.js", function () {
         load("./glueful-gmail-bridge-v7.js");
       });
+      load("./glueful-dashboard-fixed-v1.js");
     }, 1500);
   }
 
