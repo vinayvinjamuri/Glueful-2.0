@@ -1,5 +1,5 @@
 /*
- * Glueful Orbit UI v7 — Android keyboard viewport fix.
+ * Glueful Orbit UI v8 — Android keyboard viewport fix.
  *
  * Complexity:
  * - Home/chat decoration: O(1) per DOM mutation.
@@ -10,13 +10,13 @@
 (function () {
   "use strict";
 
-  if (window.__GLUEFUL_ORBIT_UI_V7__) return;
-  window.__GLUEFUL_ORBIT_UI_V7__ = true;
+  if (window.__GLUEFUL_ORBIT_UI_V8__) return;
+  window.__GLUEFUL_ORBIT_UI_V8__ = true;
 
   const ROOT_ID = "glueful-orbit-v2-root";
   const VIEW_ID = "glueful-orbit-v2-view";
-  const BRIDGE_ID = "glueful-orbit-v7-open-chat";
-  const STYLE_ID = "glueful-orbit-ui-v7-style";
+  const BRIDGE_ID = "glueful-orbit-v8-open-chat";
+  const STYLE_ID = "glueful-orbit-ui-v8-style";
   const APP_PROMPT = "Tell me about my current job applications";
 
   const esc = value => String(value ?? "")
@@ -176,11 +176,6 @@
     root.style.maxHeight = `${Math.max(1, Math.round(viewport.height))}px`;
     root.style.top = `${Math.max(0, Math.round(viewport.offsetTop))}px`;
     root.style.bottom = "auto";
-
-    requestAnimationFrame(() => {
-      const messages = getView()?.querySelector(".ov2-chat-messages");
-      if (messages) messages.scrollTop = messages.scrollHeight;
-    });
   }
 
   function hiddenChatEntry() {
@@ -278,8 +273,8 @@
     const view = getView();
     if (!view) return;
     view.querySelectorAll("[data-orbit-prompt]").forEach(button => {
-      if (button.dataset.v7Bound === "1") return;
-      button.dataset.v7Bound = "1";
+      if (button.dataset.v8Bound === "1") return;
+      button.dataset.v8Bound = "1";
       button.addEventListener("click", event => {
         const text = String(button.dataset.orbitPrompt || "");
         if (text !== APP_PROMPT) return;
