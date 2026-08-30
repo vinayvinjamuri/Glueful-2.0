@@ -1,4 +1,4 @@
-/* Glueful Gmail bridge v7: safe entry-point interception without blocking modal controls. */
+/* Glueful Gmail bridge v8: only intercept the actual Gmail/Connected Services entry. */
 (function () {
   "use strict";
 
@@ -10,42 +10,45 @@
     return false;
   }
 
-  function relevantEntry(node) {
+  function isGmailEntry(node) {
     if (!(node instanceof Element)) return false;
     if (node.closest(".glueful-gmail-modal-backdrop")) return false;
+
+    // IMPORTANT: inspect only the clickable element itself. Do not inspect
+    // large parent containers, otherwise every item in the account sheet can
+    // inherit the words "Connected services" and open Gmail accidentally.
     const text = (node.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
-    if (!text.includes("gmail integration") && !text.includes("connected services")) return false;
-    return node.matches("button, a, [role='button'], [onclick], .settings-item, .profile-row") ||
-      typeof node.onclick === "function" || node.tabIndex >= 0;
+    if (text !== "gmail integration" && text !== "connected services") return false;
+
+    return node.matches("button, a, [role='button'], [onclick], .settings-item, .profile-row");
   }
 
   document.addEventListener("click", function (event) {
     if (event.target instanceof Element && event.target.closest(".glueful-gmail-modal-backdrop")) return;
 
     let node = event.target instanceof Element ? event.target : event.target?.parentElement;
-    let entry = null;
-    for (let i = 0; node && i < 12; i++, node = node.parentElement) {
-      if (relevantEntry(node)) {
-        entry = node;
-        break;
-      }
+    // Walk only a few levels to find the specific clickable row. We never
+    // accept a generic sheet/container just because it contains the label.
+    for (let i = 0; node && i < 5; i++, node = node.parentElement) {
+      if (!isGmailEntry(node)) continue;
+      if (!openGmail()) return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (event.stopImmediatePropagation) event.stopImmediatePropagation();
+      return;
     }
-    if (!entry) return;
-    if (!openGmail()) return;
-    event.preventDefault();
-    event.stopPropagation();
-    if (event.stopImmediatePropagation) event.stopImmediatePropagation();
   }, true);
 
-  // Replace only the legacy Gmail/Connected Services placeholder handler.
+  // Keep legacy placeholder handling, but only when the feature name itself
+  // explicitly refers to Gmail or Connected Services.
   let attempts = 0;
   const timer = setInterval(function () {
     attempts++;
     if (typeof window.showComingSoon === "function" && !window.showComingSoon.__gluefulWrapped) {
       const original = window.showComingSoon;
       function wrapped(feature) {
-        const value = String(feature || "").toLowerCase();
-        if (value.includes("gmail") || value.includes("connected services")) {
+        const value = String(feature || "").toLowerCase().trim();
+        if (value === "gmail" || value === "gmail integration" || value === "connected services") {
           return openGmail();
         }
         return original.apply(this, arguments);
