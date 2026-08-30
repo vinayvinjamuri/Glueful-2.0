@@ -16,6 +16,9 @@ on:
       - 'glueful-resume-import-guard-v1.js'
       - 'glueful-resume-pdf-export-fix-v1.js'
       - 'glueful-resume-vector-docx-export-v2.js'
+      - 'glueful-orbit-v2.js'
+      - 'glueful-orbit-ui-v9.js'
+      - 'glueful-gmail-loader-v1.js'
       - 'sw.js'
       - '.github/workflows/resume-studio-regression.yml'
 
@@ -30,7 +33,7 @@ jobs:
       - name: JavaScript syntax regression
         run: |
           set -e
-          for f in glueful-resume-studio-adobe.js glueful-resume-docx-forensics.js glueful-resume-render-diagnostics.js glueful-resume-fixed-page-bootstrap.js glueful-resume-fixed-page-controller.js glueful-resume-fixed-page-renderer.js glueful-resume-layout-model.js glueful-resume-pdf-layout-importer.js glueful-resume-import-guard-v1.js glueful-resume-pdf-export-fix-v1.js glueful-resume-vector-docx-export-v2.js sw.js; do
+          for f in glueful-resume-studio-adobe.js glueful-resume-docx-forensics.js glueful-resume-render-diagnostics.js glueful-resume-fixed-page-bootstrap.js glueful-resume-fixed-page-controller.js glueful-resume-fixed-page-renderer.js glueful-resume-layout-model.js glueful-resume-pdf-layout-importer.js glueful-resume-import-guard-v1.js glueful-resume-pdf-export-fix-v1.js glueful-resume-vector-docx-export-v2.js glueful-orbit-v2.js glueful-orbit-ui-v9.js glueful-gmail-loader-v1.js sw.js; do
             node --check "$f"
           done
       - name: Fixed-page authority and visual-source regression
@@ -43,11 +46,19 @@ jobs:
           grep -F 'glueful-fixed-bg' glueful-resume-fixed-page-renderer.js
           grep -F 'glueful-fixed-text' glueful-resume-fixed-page-renderer.js
           grep -F 'glueful-resume-studio-adobe' sw.js
-          grep -F 'glueful-cache-v82-app-branding' sw.js
+          grep -F 'glueful-cache-v103-gmail-scope-fix' sw.js
           ! grep -F 'glueful-resume-header-fidelity.js' sw.js
           ! grep -F 'HEADER_FIDELITY_SCRIPT' sw.js
           ! grep -F 'HEADER_ALIGNMENT_SCRIPT' sw.js
           ! grep -F 'MOBILE_LAYOUT_SCRIPT' sw.js
+      - name: Orbit mobile keyboard regression
+        run: |
+          set -e
+          grep -F '__GLUEFUL_ORBIT_UI_V10__' glueful-orbit-ui-v9.js
+          grep -F 'visualViewport' glueful-orbit-ui-v9.js
+          grep -F 'ov2-chat-messages' glueful-orbit-ui-v9.js
+          grep -F 'ov2-composer' glueful-orbit-ui-v9.js
+          grep -F 'glueful-orbit-ui-v9.js?v=2' glueful-gmail-loader-v1.js
       - name: Resume import controls remain bound
         run: |
           set -e
