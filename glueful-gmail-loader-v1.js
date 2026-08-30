@@ -1,4 +1,4 @@
-/* Glueful Gmail loader v2: load Gmail integration and bridge after app startup. */
+/* Glueful Gmail loader v3: load Gmail integration and safe bridge after app startup. */
 (function () {
   "use strict";
 
@@ -22,12 +22,10 @@
   }
 
   function start() {
-    // Let the core app finish startup, then install both Gmail runtimes.
+    // Let the core app finish startup, then install the Gmail integration and safe bridge.
     window.setTimeout(function () {
       load("./glueful-gmail-integration-v1.js", function () {
-        // The bridge handles the legacy inline showComingSoon handlers,
-        // including the Connected services entry point.
-        load("./glueful-gmail-bridge-v6.js");
+        load("./glueful-gmail-bridge-v7.js");
       });
     }, 1500);
   }
