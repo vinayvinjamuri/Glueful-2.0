@@ -1,4 +1,4 @@
-/* Glueful runtime loader v23: centralized runtime + mobile Gmail regression guard + Orbit keyboard layout fix. */
+/* Glueful runtime loader v24: centralized runtime + mobile Gmail regression guard + Orbit keyboard layout fix. */
 (function () {
   "use strict";
 
@@ -66,7 +66,7 @@
         load("./glueful-orbit-v2.js?v=4", function () {
           load("./glueful-orbit-ui-v3.js?v=11", function () {
             load("./glueful-orbit-ui-v6.js?v=9", function () {
-              load("./glueful-orbit-ui-v9.js?v=1");
+              load("./glueful-orbit-ui-v9.js?v=2");
             });
           });
         });
