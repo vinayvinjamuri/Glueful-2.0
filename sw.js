@@ -1,4 +1,4 @@
-const CACHE_NAME = "glueful-cache-v92-approved-dashboard";
+const CACHE_NAME = "glueful-cache-v93-compact-greeting";
 
 const RUNTIME = [
   "./glueful-resume-render-diagnostics.js",
