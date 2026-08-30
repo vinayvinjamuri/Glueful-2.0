@@ -1,0 +1,1 @@
+Temporary restore branch marker. This file documents that production Resume Studio is being returned to the known-good pre-Architecture-E tree before isolated renderer work resumes.
