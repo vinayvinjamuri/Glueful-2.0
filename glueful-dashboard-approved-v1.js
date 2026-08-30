@@ -1,10 +1,10 @@
-/* Glueful approved dashboard V3: compact user-fit greeting header and top Gmail sync control. */
+/* Glueful approved dashboard V4: mobile-safe greeting/header spacing and scrollable dashboard fit. */
 (function () {
   "use strict";
-  if (window.__GLUEFUL_APPROVED_DASHBOARD_V3__) return;
-  window.__GLUEFUL_APPROVED_DASHBOARD_V3__ = true;
+  if (window.__GLUEFUL_APPROVED_DASHBOARD_V4__) return;
+  window.__GLUEFUL_APPROVED_DASHBOARD_V4__ = true;
 
-  const STYLE_ID = "glueful-approved-dashboard-style-v3";
+  const STYLE_ID = "glueful-approved-dashboard-style-v4";
   const SYNC_ID = "glueful-dashboard-gmail-sync";
   const ACTIONS_ID = "glueful-dashboard-header-actions";
 
@@ -19,40 +19,45 @@
     style.id = STYLE_ID;
     style.textContent = `
       @media (max-width:700px) {
+        /* Header reserves space for both controls so the greeting never sits underneath them. */
         body.glueful-dashboard-fixed #view-dashboard .view-header {
           position:relative !important;
           display:block !important;
+          width:100% !important;
           min-height:58px !important;
           height:58px !important;
-          margin:0 0 7px !important;
+          margin:0 0 9px !important;
           padding:0 0 0 52px !important;
           box-sizing:border-box !important;
+          overflow:visible !important;
         }
-        /* Compact greeting: fit the complete user's name before the controls. */
+
         body.glueful-dashboard-fixed #view-dashboard .view-title {
           display:block !important;
-          width:calc(100% - 135px) !important;
-          max-width:calc(100% - 135px) !important;
-          font-size:20px !important;
+          width:calc(100% - 205px) !important;
+          max-width:calc(100% - 205px) !important;
+          font-size:18px !important;
           line-height:1.08 !important;
-          letter-spacing:-0.35px !important;
+          letter-spacing:-0.25px !important;
           margin:0 !important;
-          padding:3px 0 0 !important;
+          padding:5px 0 0 !important;
           white-space:nowrap !important;
           overflow:hidden !important;
           text-overflow:ellipsis !important;
         }
+
         body.glueful-dashboard-fixed #view-dashboard .view-subtitle {
           display:block !important;
-          width:calc(100% - 135px) !important;
-          max-width:calc(100% - 135px) !important;
+          width:calc(100% - 205px) !important;
+          max-width:calc(100% - 205px) !important;
           margin:4px 0 0 !important;
-          font-size:11px !important;
+          font-size:10px !important;
           line-height:1.15 !important;
           white-space:nowrap !important;
           overflow:hidden !important;
           text-overflow:ellipsis !important;
         }
+
         body.glueful-dashboard-fixed #${ACTIONS_ID} {
           position:absolute !important;
           top:0 !important;
@@ -60,10 +65,12 @@
           display:flex !important;
           align-items:center !important;
           justify-content:flex-end !important;
-          gap:7px !important;
+          gap:6px !important;
+          width:151px !important;
           height:42px !important;
           z-index:20 !important;
         }
+
         body.glueful-dashboard-fixed #${ACTIONS_ID} > #${SYNC_ID} {
           position:relative !important;
           right:auto !important;
@@ -87,6 +94,7 @@
           backdrop-filter:blur(10px) !important;
           z-index:21 !important;
         }
+
         body.glueful-dashboard-fixed #${ACTIONS_ID} > #${SYNC_ID}.glueful-gmail-show { display:flex !important; }
         body.glueful-dashboard-fixed #${SYNC_ID}::before {
           content:"↻" !important;
@@ -96,31 +104,120 @@
           content:"↻" !important;
           animation:gluefulSyncSpin .9s linear infinite !important;
         }
+
         body.glueful-dashboard-fixed #${ACTIONS_ID} .glueful-approved-application {
           position:relative !important;
-          flex:0 0 auto !important;
-          width:auto !important;
-          min-width:118px !important;
+          flex:0 0 103px !important;
+          width:103px !important;
+          min-width:103px !important;
+          max-width:103px !important;
           height:42px !important;
           min-height:42px !important;
           margin:0 !important;
-          padding:0 14px !important;
+          padding:0 8px !important;
           border-radius:13px !important;
           white-space:nowrap !important;
+          font-size:13px !important;
+          overflow:hidden !important;
+          text-overflow:ellipsis !important;
         }
+
         @keyframes gluefulSyncSpin { to { transform:rotate(360deg); } }
 
+        /* Summary cards stay compact and evenly spaced. */
         body.glueful-dashboard-fixed #view-dashboard .stat-grid,
-        body.glueful-dashboard-fixed #view-dashboard .stats-grid { gap:7px !important; margin-bottom:7px !important; }
-        body.glueful-dashboard-fixed #view-dashboard .stat-card { padding:9px !important; border-radius:15px !important; }
-        body.glueful-dashboard-fixed #view-dashboard .stat-card .stat-value { font-size:27px !important; margin:4px 0 !important; }
-        body.glueful-dashboard-fixed #view-dashboard .heat-card { padding:8px !important; margin-bottom:6px !important; border-radius:16px !important; }
-        body.glueful-dashboard-fixed #view-dashboard .heat-grid { gap:3px !important; margin-top:3px !important; }
-        body.glueful-dashboard-fixed #view-dashboard .heat-cell { height:29px !important; min-height:29px !important; max-height:29px !important; border-radius:7px !important; }
-        body.glueful-dashboard-fixed #view-dashboard .heat-card .activity-nav { width:32px !important; height:32px !important; min-width:32px !important; min-height:32px !important; }
-        body.glueful-dashboard-fixed #view-dashboard .heat-card .activity-month { font-size:17px !important; }
-        body.glueful-dashboard-fixed #view-dashboard #dashboard-interviews .empty-state { min-height:70px !important; height:70px !important; padding:7px !important; }
-        body.glueful-dashboard-fixed #view-dashboard #dashboard-interviews .empty-state > * { margin-top:2px !important; margin-bottom:2px !important; }
+        body.glueful-dashboard-fixed #view-dashboard .stats-grid {
+          gap:7px !important;
+          margin-bottom:8px !important;
+        }
+        body.glueful-dashboard-fixed #view-dashboard .stat-card {
+          padding:9px !important;
+          border-radius:15px !important;
+          min-width:0 !important;
+          box-sizing:border-box !important;
+        }
+        body.glueful-dashboard-fixed #view-dashboard .stat-card .stat-label {
+          font-size:12px !important;
+          line-height:1.15 !important;
+        }
+        body.glueful-dashboard-fixed #view-dashboard .stat-card .stat-value {
+          font-size:27px !important;
+          line-height:1 !important;
+          margin:4px 0 !important;
+        }
+        body.glueful-dashboard-fixed #view-dashboard .stat-card .stat-meta,
+        body.glueful-dashboard-fixed #view-dashboard .stat-card .stat-description {
+          font-size:10px !important;
+          line-height:1.2 !important;
+        }
+
+        /* Activity calendar: prevent cramped labels/cells and keep the whole card inside the viewport. */
+        body.glueful-dashboard-fixed #view-dashboard .heat-card {
+          width:100% !important;
+          box-sizing:border-box !important;
+          padding:8px !important;
+          margin:0 0 8px !important;
+          border-radius:16px !important;
+          overflow:hidden !important;
+        }
+        body.glueful-dashboard-fixed #view-dashboard .heat-grid {
+          display:grid !important;
+          grid-template-columns:repeat(7,minmax(0,1fr)) !important;
+          gap:3px !important;
+          margin-top:4px !important;
+          width:100% !important;
+        }
+        body.glueful-dashboard-fixed #view-dashboard .heat-cell {
+          width:100% !important;
+          height:29px !important;
+          min-height:29px !important;
+          max-height:29px !important;
+          aspect-ratio:auto !important;
+          border-radius:7px !important;
+          box-sizing:border-box !important;
+        }
+        body.glueful-dashboard-fixed #view-dashboard .heat-card .activity-nav {
+          width:32px !important;
+          height:32px !important;
+          min-width:32px !important;
+          min-height:32px !important;
+        }
+        body.glueful-dashboard-fixed #view-dashboard .heat-card .activity-month {
+          font-size:17px !important;
+          line-height:1.1 !important;
+        }
+        body.glueful-dashboard-fixed #view-dashboard .heat-card .activity-label,
+        body.glueful-dashboard-fixed #view-dashboard .heat-card .heat-legend,
+        body.glueful-dashboard-fixed #view-dashboard .heat-card .heat-hint {
+          font-size:9px !important;
+          line-height:1.15 !important;
+        }
+
+        /* Upcoming Interviews follows the activity card cleanly and is reachable by scrolling. */
+        body.glueful-dashboard-fixed #view-dashboard #dashboard-interviews {
+          gap:5px !important;
+          margin-top:0 !important;
+          margin-bottom:12px !important;
+        }
+        body.glueful-dashboard-fixed #view-dashboard .section-title {
+          font-size:11px !important;
+          line-height:1.15 !important;
+          margin:0 0 5px !important;
+        }
+        body.glueful-dashboard-fixed #view-dashboard #dashboard-interviews .empty-state {
+          min-height:76px !important;
+          height:76px !important;
+          padding:7px !important;
+          display:flex !important;
+          align-items:center !important;
+          justify-content:center !important;
+          box-sizing:border-box !important;
+          overflow:hidden !important;
+        }
+        body.glueful-dashboard-fixed #view-dashboard #dashboard-interviews .empty-state > * {
+          margin-top:2px !important;
+          margin-bottom:2px !important;
+        }
       }
     `;
     document.head.appendChild(style);
