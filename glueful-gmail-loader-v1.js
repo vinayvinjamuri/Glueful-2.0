@@ -1,4 +1,4 @@
-/* Glueful runtime loader v4: Gmail integration plus approved dashboard layout. */
+/* Glueful runtime loader v5: Gmail integration plus approved dashboard layout and header cleanup. */
 (function () {
   "use strict";
 
@@ -24,7 +24,8 @@
 
   function start() {
     window.setTimeout(function () {
-      load("./glueful-dashboard-fixed-v1.js?v=2");
+      load("./glueful-dashboard-fixed-v1.js?v=3");
+      load("./glueful-dashboard-header-fix-v1.js?v=1");
       load("./glueful-gmail-integration-v1.js", function () {
         load("./glueful-gmail-bridge-v7.js");
       });
