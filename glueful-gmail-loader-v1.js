@@ -1,4 +1,4 @@
-/* Glueful runtime loader v11: dashboard runtime + direct Gmail integration. */
+/* Glueful runtime loader v12: dashboard runtime + direct Gmail integration + Orbit AI. */
 (function () {
   "use strict";
   function load(src, onload) {
@@ -25,6 +25,7 @@
       // intercept clicks from parent containers/sheets and reopen the modal.
       load("./glueful-gmail-integration-v1.js?v=4");
       load("./glueful-dashboard-approved-v1.js?v=2");
+      load("./glueful-orbit-v1.js?v=1");
     }, 1500);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once: true });
