@@ -122,40 +122,44 @@ self.addEventListener("activate", (event) => {
   })());
 });
 
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "GLUEFUL_SKIP_WAITING") self.skipWaiting();
+});
+
 self.addEventListener("fetch", (event) => {
   const request = event.request;
-  if (request.method !== "GET") return;
-
   const url = new URL(request.url);
-  const isNavigation = request.mode === "navigate" || request.destination === "document";
-  const isRuntime = RUNTIME.some((src) => url.pathname.endsWith(src.replace(/^\.\//, "")));
-
-  if (isNavigation) {
+  if (request.method === "GET" && request.mode === "navigate") {
     event.respondWith((async () => {
       try {
         const response = await buildAuthoritativeIndex(request, event.preloadResponse);
-        await cacheIndexResponse(request, response);
+        event.waitUntil(cacheIndexResponse(request, response));
         return response;
       } catch (error) {
-        const cache = await caches.open(CACHE_NAME);
-        return (await cache.match(request)) || fetch(request);
+        console.warn("[Glueful SW] navigation failed:", error);
+        return (await caches.match(request)) || Response.error();
       }
     })());
     return;
   }
-
-  if (isRuntime) {
+  if (request.method === "GET" && RUNTIME.some((path) => url.pathname.endsWith(path.slice(2)))) {
     event.respondWith((async () => {
-      const cache = await caches.open(CACHE_NAME);
-      const cached = await cache.match(request);
-      if (cached) return cached;
       try {
         const response = await fetch(request, { cache: "no-store" });
-        if (response.ok) await cache.put(request, response.clone());
+        if (response.ok) event.waitUntil((async () => { try { const cache = await caches.open(CACHE_NAME); await cache.put(request, response.clone()); } catch (_) {} })());
         return response;
-      } catch (error) {
-        throw error;
-      }
+      } catch (_) { return (await caches.match(request)) || Response.error(); }
+    })());
+    return;
+  }
+  if (request.method === "GET") {
+    event.respondWith((async () => {
+      const cached = await caches.match(request);
+      try {
+        const response = await fetch(request, { cache: "no-store" });
+        if (response.ok) event.waitUntil((async () => { try { const cache = await caches.open(CACHE_NAME); await cache.put(request, response.clone()); } catch (_) {} })());
+        return response;
+      } catch (_) { return cached || Response.error(); }
     })());
   }
 });
