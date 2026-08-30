@@ -1,4 +1,4 @@
-/* Glueful runtime loader v10: dashboard runtime and corrected Gmail integration bridge. */
+/* Glueful runtime loader v11: dashboard runtime + direct Gmail integration. */
 (function () {
   "use strict";
   function load(src, onload) {
@@ -20,8 +20,10 @@
       load("./glueful-dashboard-fixed-v1.js?v=6");
       load("./glueful-dashboard-header-fix-v1.js?v=4");
       load("./glueful-dashboard-hamburger-v2.js?v=4");
-      load("./glueful-gmail-integration-v1.js?v=3");
-      load("./glueful-gmail-bridge-v7.js?v=3");
+      // Gmail integration owns its own exact entry-point click handler.
+      // Do not load the legacy document-level Gmail bridge here: it can
+      // intercept clicks from parent containers/sheets and reopen the modal.
+      load("./glueful-gmail-integration-v1.js?v=4");
       load("./glueful-dashboard-approved-v1.js?v=2");
     }, 1500);
   }
