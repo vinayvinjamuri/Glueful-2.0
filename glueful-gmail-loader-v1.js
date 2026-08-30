@@ -1,19 +1,7 @@
-/* Glueful runtime loader v19: dashboard runtime + direct Gmail integration + Orbit AI v2 + Orbit UI v3/v6. */
+/* Glueful runtime loader v20: centralized runtime + mobile regression guard. */
 (function () {
   "use strict";
 
-  /*
-   * Runtime fan-out is intentionally centralized here so Orbit is loaded
-   * by the same startup path already used by Glueful's Gmail/dashboard code.
-   *
-   * Orbit UI layering:
-   * 1. UI v3 owns the redesigned home screen and base home composer.
-   * 2. UI v6 adds chat/home consistency and real application quick actions.
-   *
-   * Complexity:
-   * - Time: O(k), where k is the number of runtime scripts loaded.
-   * - Space: O(k) for script elements held by the document.
-   */
   function load(src, onload) {
     const existing = document.querySelector(`script[data-glueful-runtime-src="${src}"]`);
     if (existing) {
@@ -34,21 +22,63 @@
     document.head.appendChild(script);
   }
 
+  /*
+   * Regression guard:
+   * Gmail sync is automatic and can still be triggered from the Gmail
+   * integration modal. The floating mobile sync control must never cover
+   * the bottom navigation or reappear after navigation/DOM updates.
+   */
+  function installMobileRegressionGuard() {
+    const STYLE_ID = "glueful-mobile-regression-guard-v1";
+    if (!document.getElementById(STYLE_ID)) {
+      const style = document.createElement("style");
+      style.id = STYLE_ID;
+      style.textContent = `
+        @media (max-width:700px) {
+          #glueful-dashboard-gmail-sync {
+            display:none !important;
+            position:static !important;
+            right:auto !important;
+            bottom:auto !important;
+            pointer-events:none !important;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    const hide = () => {
+      const button = document.getElementById("glueful-dashboard-gmail-sync");
+      if (button && window.matchMedia("(max-width:700px)").matches) {
+        button.style.setProperty("display", "none", "important");
+      }
+    };
+
+    hide();
+    const observer = new MutationObserver(hide);
+    observer.observe(document.body, {
+      childList:true,
+      subtree:true,
+      attributes:true,
+      attributeFilter:["style", "class", "hidden"]
+    });
+    window.addEventListener("resize", hide, { passive:true });
+  }
+
   function start() {
     window.setTimeout(function () {
-      load("./glueful-dashboard-fixed-v1.js?v=7");
-      load("./glueful-dashboard-header-fix-v1.js?v=4");
-      load("./glueful-dashboard-hamburger-v2.js?v=4");
-      load("./glueful-gmail-integration-v1.js?v=4");
-      load("./glueful-dashboard-approved-v1.js?v=2");
+      load("./glueful-dashboard-fixed-v1.js?v=8");
+      load("./glueful-dashboard-header-fix-v1.js?v=5");
+      load("./glueful-dashboard-hamburger-v2.js?v=5");
+      load("./glueful-gmail-integration-v1.js?v=5");
+      load("./glueful-dashboard-approved-v1.js?v=3");
+      installMobileRegressionGuard();
 
-      /* Orbit: bootstrap the existing Supabase client, then load Orbit and UI layers. */
-      load("./glueful-orbit-bootstrap-v1.js?v=1", function () {
-        load("./glueful-orbit-v2.js?v=3", function () {
-          /* v3 must run first because it owns the redesigned Orbit home. */
-          load("./glueful-orbit-ui-v3.js?v=6", function () {
-            /* v6 then augments the home/chat interaction without replacing v3. */
-            load("./glueful-orbit-ui-v6.js?v=2");
+      /* Orbit: shared Supabase client -> real runtime -> direct-chat UI. */
+      load("./glueful-orbit-bootstrap-v1.js?v=2", function () {
+        load("./glueful-orbit-v2.js?v=4", function () {
+          load("./glueful-orbit-ui-v3.js?v=10", function () {
+            load("./glueful-orbit-ui-v6.js?v=9");
           });
         });
       });
