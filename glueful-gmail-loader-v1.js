@@ -1,10 +1,14 @@
-/* Glueful runtime loader v18: dashboard runtime + direct Gmail integration + Orbit AI v2 + Orbit UI v6. */
+/* Glueful runtime loader v19: dashboard runtime + direct Gmail integration + Orbit AI v2 + Orbit UI v3/v6. */
 (function () {
   "use strict";
 
   /*
    * Runtime fan-out is intentionally centralized here so Orbit is loaded
    * by the same startup path already used by Glueful's Gmail/dashboard code.
+   *
+   * Orbit UI layering:
+   * 1. UI v3 owns the redesigned home screen and base home composer.
+   * 2. UI v6 adds chat/home consistency and real application quick actions.
    *
    * Complexity:
    * - Time: O(k), where k is the number of runtime scripts loaded.
@@ -38,10 +42,14 @@
       load("./glueful-gmail-integration-v1.js?v=4");
       load("./glueful-dashboard-approved-v1.js?v=2");
 
-      /* Orbit: bootstrap the existing Supabase client, then load Orbit and its UI. */
+      /* Orbit: bootstrap the existing Supabase client, then load Orbit and UI layers. */
       load("./glueful-orbit-bootstrap-v1.js?v=1", function () {
         load("./glueful-orbit-v2.js?v=3", function () {
-          load("./glueful-orbit-ui-v6.js?v=1");
+          /* v3 must run first because it owns the redesigned Orbit home. */
+          load("./glueful-orbit-ui-v3.js?v=6", function () {
+            /* v6 then augments the home/chat interaction without replacing v3. */
+            load("./glueful-orbit-ui-v6.js?v=2");
+          });
         });
       });
     }, 1500);
