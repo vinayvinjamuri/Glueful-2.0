@@ -1,18 +1,24 @@
 /*
- * Glueful Orbit UI v3
+ * Glueful Orbit UI v4 — chat-first home experience.
  *
- * Keeps the existing Orbit data/actions intact while presenting a cleaner,
- * more focused mobile experience: two primary actions + compact application cards.
+ * The Orbit home now starts like a familiar AI chat: greeting, suggested
+ * prompts, and a message composer. Existing Orbit preparation/chat flows are
+ * preserved and are entered through the existing data-action handlers.
  *
  * Complexity:
- * - Time: O(n) per Orbit render observation, where n is the number of visible job cards.
- * - Space: O(1) extra JavaScript state; CSS/DOM nodes are owned by the existing Orbit UI.
+ * - Time: O(n) per home render observation, where n is the number of existing
+ *   Orbit DOM nodes inspected; prompt rendering itself is O(1).
+ * - Space: O(1) additional JavaScript state; the browser owns the chat DOM.
  */
 (function () {
   "use strict";
 
-  const STYLE_ID = "glueful-orbit-ui-v3-style";
+  if (window.__GLUEFUL_ORBIT_UI_V4__) return;
+  window.__GLUEFUL_ORBIT_UI_V4__ = true;
+
+  const STYLE_ID = "glueful-orbit-ui-v4-style";
   const VIEW_ID = "glueful-orbit-v2-view";
+  const HOME_MARK = "data-orbit-chat-home";
 
   function installStyles() {
     if (document.getElementById(STYLE_ID)) return;
@@ -20,220 +26,253 @@
     const style = document.createElement("style");
     style.id = STYLE_ID;
     style.textContent = `
-      /* Orbit v3 — focused home screen */
-      .ov3-home .ov2-hero {
-        padding: 24px 16px 18px !important;
-        margin-bottom: 12px !important;
+      .ov4-chat-home {
+        display:flex !important;
+        flex-direction:column !important;
+        min-height:100% !important;
+        padding:10px 14px 18px !important;
       }
-
-      .ov3-home .ov2-orbit {
-        width: 126px !important;
-        height: 126px !important;
-        margin: 0 auto 14px !important;
+      .ov4-welcome {
+        flex:1;
+        display:flex;
+        flex-direction:column;
+        justify-content:center;
+        align-items:center;
+        text-align:center;
+        padding:28px 6px 20px;
       }
-
-      .ov3-home .ov2-card:nth-of-type(2) {
-        padding: 10px !important;
+      .ov4-orbit {
+        width:92px;
+        height:92px;
+        border-radius:30px;
+        display:grid;
+        place-items:center;
+        font-size:48px;
+        margin-bottom:20px;
+        background:radial-gradient(circle,#6438ff,#17112f 68%);
+        box-shadow:0 0 42px rgba(115,64,255,.32);
       }
-
-      .ov3-home .ov2-action {
-        margin-top: 0 !important;
-        margin-bottom: 8px !important;
-        padding: 15px !important;
-        min-height: 72px !important;
+      .ov4-welcome h2 {
+        margin:0;
+        font-size:24px;
+        line-height:1.15;
+        letter-spacing:-.35px;
       }
-
-      .ov3-home .ov2-action:last-child {
-        margin-bottom: 0 !important;
+      .ov4-welcome p {
+        max-width:330px;
+        margin:9px auto 0;
+        color:#929db1;
+        font-size:13px;
+        line-height:1.5;
       }
-
-      .ov3-home .ov2-label {
-        margin-top: 18px !important;
+      .ov4-prompts {
+        width:100%;
+        display:flex;
+        flex-wrap:wrap;
+        justify-content:center;
+        gap:8px;
+        margin-top:22px;
       }
-
-      /* Compact recent-application cards instead of a tall list. */
-      .ov3-home .ov2-job,
-      .ov3-prepare .ov2-job {
-        min-height: 74px !important;
-        margin-bottom: 0 !important;
-        padding: 10px !important;
-        border-radius: 16px !important;
+      .ov4-prompt {
+        border:1px solid #273650;
+        background:#0d1625;
+        color:#dce2ec;
+        border-radius:999px;
+        padding:10px 13px;
+        font-size:11px;
+        line-height:1.2;
+        cursor:pointer;
       }
-
-      .ov3-home .ov2-job {
-        display: grid !important;
-        grid-template-columns: 36px minmax(0, 1fr) auto !important;
-        gap: 8px !important;
+      .ov4-prompt:hover { border-color:#7c45ff; }
+      .ov4-composer {
+        display:flex;
+        align-items:center;
+        gap:8px;
+        width:100%;
+        padding:8px;
+        border:1px solid #293853;
+        border-radius:17px;
+        background:#0c1422;
+        box-shadow:0 10px 30px rgba(0,0,0,.2);
       }
-
-      .ov3-home .ov2-logo,
-      .ov3-prepare .ov2-logo {
-        width: 36px !important;
-        height: 36px !important;
-        border-radius: 11px !important;
-        font-size: 11px !important;
+      .ov4-plus,
+      .ov4-send {
+        flex:0 0 42px;
+        width:42px;
+        height:42px;
+        border-radius:13px;
+        border:1px solid #26364f;
+        background:#101a2a;
+        color:#dbe2ef;
+        cursor:pointer;
       }
-
-      .ov3-home .ov2-job-main b,
-      .ov3-prepare .ov2-job-main b {
-        font-size: 12px !important;
+      .ov4-send {
+        border:0;
+        background:#743cff;
+        color:#fff;
+        font-size:17px;
       }
-
-      .ov3-home .ov2-job-main small,
-      .ov3-prepare .ov2-job-main small {
-        font-size: 10px !important;
-        line-height: 1.2 !important;
+      .ov4-input {
+        flex:1;
+        min-width:0;
+        border:0;
+        outline:0;
+        background:transparent;
+        color:#fff;
+        font-size:13px;
+        padding:11px 2px;
       }
-
-      .ov3-home .ov2-pill,
-      .ov3-prepare .ov2-pill {
-        font-size: 8px !important;
-        padding: 4px 7px !important;
+      .ov4-input::placeholder { color:#7f8ba0; }
+      .ov4-note {
+        text-align:center;
+        color:#68758a;
+        font-size:9px;
+        margin:8px 0 0;
       }
-
-      .ov3-home .ov3-view-all {
-        width: 100%;
-        margin-top: 9px;
-        padding: 10px 12px;
-        border-radius: 12px;
-        border: 1px solid #293a58;
-        background: #0b1422;
-        color: #b8c2d4;
-        font-size: 11px;
-        cursor: pointer;
+      #glueful-orbit-v4-open-chat {
+        display:none !important;
       }
-
-      /* Prepare screen: compact 2-column application picker. */
-      .ov3-prepare .ov3-applications-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-      }
-
-      .ov3-prepare .ov2-job {
-        display: flex !important;
-        align-items: flex-start !important;
-        flex-direction: column !important;
-        position: relative !important;
-        gap: 7px !important;
-      }
-
-      .ov3-prepare .ov2-job-main {
-        width: 100% !important;
-      }
-
-      .ov3-prepare .ov2-pill {
-        position: absolute !important;
-        top: 9px !important;
-        right: 9px !important;
-      }
-
-      .ov3-prepare .ov2-job .ov2-job-main small {
-        white-space: normal !important;
-        display: -webkit-box !important;
-        -webkit-line-clamp: 2 !important;
-        -webkit-box-orient: vertical !important;
-        overflow: hidden !important;
-      }
-
-      @media (max-width: 380px) {
-        .ov3-prepare .ov3-applications-grid {
-          grid-template-columns: 1fr !important;
-        }
+      @media (max-width:380px) {
+        .ov4-welcome { padding-top:18px; }
+        .ov4-orbit { width:78px; height:78px; font-size:40px; }
+        .ov4-welcome h2 { font-size:21px; }
+        .ov4-prompt { font-size:10px; padding:9px 11px; }
       }
     `;
     document.head.appendChild(style);
   }
 
-  function makeHomeCompact(app) {
-    app.classList.add("ov3-home");
-
-    const jobs = Array.from(app.querySelectorAll(".ov2-job"));
-    if (!jobs.length) return;
-
-    const label = app.querySelector(".ov2-label");
-    if (!label) return;
-
-    jobs.slice(4).forEach(job => {
-      job.style.display = "none";
-    });
-
-    if (!app.querySelector(".ov3-view-all") && jobs.length > 4) {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "ov3-view-all";
-      button.textContent = `View all ${jobs.length} applications`;
-      let expanded = false;
-      button.addEventListener("click", function () {
-        expanded = !expanded;
-        jobs.forEach((job, index) => {
-          if (index >= 4) job.style.display = expanded ? "grid" : "none";
-        });
-        button.textContent = expanded
-          ? "Show fewer applications"
-          : `View all ${jobs.length} applications`;
-      });
-      jobs[3].insertAdjacentElement("afterend", button);
-    }
+  function getView() {
+    return document.getElementById(VIEW_ID);
   }
 
-  function makePrepareCompact(app) {
-    app.classList.add("ov3-prepare");
+  function getApp() {
+    return getView()?.querySelector(".ov2-app") || null;
+  }
 
-    const jobs = Array.from(app.querySelectorAll(".ov2-job"));
-    if (!jobs.length) return;
+  function getName() {
+    try {
+      const client = window.supabaseClient || window.gluefulSupabaseClient;
+      if (client?.auth?.getUser) {
+        return client.auth.getUser().then(({ data }) => {
+          const meta = data?.user?.user_metadata || {};
+          const raw = meta.first_name || meta.full_name || meta.name || "";
+          return String(raw).trim().split(/\\s+/)[0] || "there";
+        }).catch(() => "there");
+      }
+    } catch (_) {}
+    return Promise.resolve("there");
+  }
 
-    if (jobs.length > 6) {
-      jobs.slice(6).forEach(job => {
-        job.style.display = "none";
-      });
-    }
+  function hiddenChatEntry() {
+    let button = document.getElementById("glueful-orbit-v4-open-chat");
+    if (button) return button;
+    button = document.createElement("button");
+    button.id = "glueful-orbit-v4-open-chat";
+    button.type = "button";
+    button.dataset.action = "glueful";
+    button.textContent = "Open Orbit chat";
+    document.body.appendChild(button);
+    return button;
+  }
 
-    const label = app.querySelector(".ov2-label");
-    if (!label || label.nextElementSibling?.classList.contains("ov3-applications-grid")) return;
+  function openExistingChat(text) {
+    const button = hiddenChatEntry();
+    button.click();
 
-    const grid = document.createElement("div");
-    grid.className = "ov3-applications-grid";
-    jobs.slice(0, 6).forEach(job => grid.appendChild(job));
-    label.insertAdjacentElement("afterend", grid);
+    if (!text) return;
+
+    /* The v2 runtime renders its chat asynchronously after the action. */
+    let attempts = 0;
+    const fill = () => {
+      attempts += 1;
+      const input = getView()?.querySelector(".ov2-input");
+      const send = getView()?.querySelector('[data-action="send"]');
+      if (input && send) {
+        input.value = text;
+        input.dispatchEvent(new Event("input", { bubbles:true }));
+        send.click();
+        return;
+      }
+      if (attempts < 30) window.setTimeout(fill, 50);
+    };
+    window.setTimeout(fill, 50);
+  }
+
+  function renderHome(app) {
+    if (app.getAttribute(HOME_MARK) === "1") return;
+
+    const body = app.querySelector(".ov2-body");
+    if (!body) return;
+
+    app.setAttribute(HOME_MARK, "1");
+    body.classList.add("ov4-chat-home");
+    body.innerHTML = `
+      <section class="ov4-welcome">
+        <div class="ov4-orbit">🪐</div>
+        <h2 id="ov4-greeting">Hi there! 👋</h2>
+        <p>How can I help you with your career today?</p>
+        <div class="ov4-prompts">
+          <button type="button" class="ov4-prompt" data-orbit-prompt="Help me prepare for an interview">🎯 Prepare for an interview</button>
+          <button type="button" class="ov4-prompt" data-orbit-prompt="Review my resume">📄 Review my resume</button>
+          <button type="button" class="ov4-prompt" data-orbit-prompt="How should I answer behavioral questions?">💬 Behavioral questions</button>
+          <button type="button" class="ov4-prompt" data-orbit-prompt="Tell me about my current job applications">📋 My applications</button>
+        </div>
+      </section>
+      <form class="ov4-composer" id="ov4-composer">
+        <button type="button" class="ov4-plus" aria-label="Attach">+</button>
+        <input class="ov4-input" autocomplete="off" placeholder="Message Orbit AI..." aria-label="Message Orbit AI" />
+        <button type="submit" class="ov4-send" aria-label="Send">➤</button>
+      </form>
+      <div class="ov4-note">Orbit can make mistakes. Please verify important information.</div>
+    `;
+
+    const input = body.querySelector(".ov4-input");
+    const form = body.querySelector("#ov4-composer");
+
+    body.querySelectorAll("[data-orbit-prompt]").forEach(button => {
+      button.addEventListener("click", () => openExistingChat(button.dataset.orbitPrompt || ""));
+    });
+
+    form?.addEventListener("submit", event => {
+      event.preventDefault();
+      const text = String(input?.value || "").trim();
+      if (!text) return;
+      openExistingChat(text);
+    });
+
+    getName().then(name => {
+      const greeting = body.querySelector("#ov4-greeting");
+      if (greeting && app.getAttribute(HOME_MARK) === "1") {
+        greeting.textContent = `Hi ${name}! 👋`;
+      }
+    });
   }
 
   function sync() {
     installStyles();
-
-    const view = document.getElementById(VIEW_ID);
-    const app = view?.querySelector(".ov2-app");
+    const app = getApp();
     if (!app) return;
 
-    app.classList.remove("ov3-home", "ov3-prepare");
-
     const title = app.querySelector(".ov2-title")?.textContent?.trim() || "";
-
-    if (title === "Orbit AI") {
-      makeHomeCompact(app);
-    } else if (title === "Prepare for a Job") {
-      makePrepareCompact(app);
-    }
+    if (title === "Orbit AI") renderHome(app);
   }
 
   function start() {
     installStyles();
     sync();
-
-    const view = document.getElementById(VIEW_ID);
+    const view = getView();
     if (!view) return;
 
-    const observer = new MutationObserver(sync);
-    observer.observe(view, {
-      childList: true,
-      subtree: true
+    const observer = new MutationObserver(() => {
+      window.requestAnimationFrame(sync);
     });
-
-    window.addEventListener("resize", sync, { passive: true });
+    observer.observe(view, { childList:true, subtree:true });
+    window.addEventListener("resize", sync, { passive:true });
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", start, { once: true });
+    document.addEventListener("DOMContentLoaded", start, { once:true });
   } else {
     start();
   }
