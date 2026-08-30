@@ -19,7 +19,8 @@ jobs:
 
       - name: Syntax check Orbit runtime
         run: |
-          node --check glueful-orbit-ui-v9.js
+          node --check glueful-orbit-ui-v14.js
+          node --check glueful-orbit-ui-v6.js
           node --check glueful-gmail-loader-v1.js
 
       - name: Run Orbit keyboard regression
