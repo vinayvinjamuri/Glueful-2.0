@@ -87,7 +87,6 @@
     const dashboard = document.getElementById("view-dashboard");
     const active = !!dashboard && (
       dashboard.classList.contains("active") ||
-      dashboard.hidden === false ||
       dashboard.style.display === "block"
     );
     document.documentElement.classList.toggle("glueful-dashboard-fixed", active);
