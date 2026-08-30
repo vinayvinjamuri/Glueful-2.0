@@ -1,4 +1,4 @@
-/* Glueful runtime loader v17: dashboard runtime + direct Gmail integration + Orbit AI v2 + Orbit UI v4. */
+/* Glueful runtime loader v17: dashboard runtime + direct Gmail integration + Orbit AI v2 + Orbit UI v5. */
 (function () {
   "use strict";
 
@@ -43,7 +43,7 @@
       /* Orbit: bootstrap the existing Supabase client, then load Orbit, then its UI polish. */
       load("./glueful-orbit-bootstrap-v1.js?v=1", function () {
         load("./glueful-orbit-v2.js?v=3", function () {
-          load("./glueful-orbit-ui-v3.js?v=2");
+          load("./glueful-orbit-ui-v3.js?v=5");
         });
       });
     }, 1500);
