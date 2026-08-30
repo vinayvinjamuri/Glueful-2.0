@@ -1,4 +1,4 @@
-const CACHE_NAME = "glueful-cache-v96-startup";
+const CACHE_NAME = "glueful-cache-v97-orbit-ui";
 
 const RUNTIME = [
   "./glueful-resume-render-diagnostics.js",
@@ -27,6 +27,8 @@ const RUNTIME = [
   "./glueful-mobile-update-guard-v1.js",
   "./glueful-app-branding-v1.js",
   "./glueful-gmail-loader-v1.js",
+  "./glueful-orbit-ui-v3.js",
+  "./glueful-orbit-ui-v6.js",
   "./glueful-dashboard-fixed-v1.js",
   "./glueful-dashboard-header-fix-v1.js",
   "./glueful-dashboard-hamburger-v2.js",
@@ -78,7 +80,6 @@ function stripCompetingRuntime(html) {
 }
 
 function patchStartupSequence(html) {
-  /* Keep the app's real #glueful-splash. Never inject a second overlay. */
   const blocking = `        await loadAll();\n\n        renderAll();\n\n        /*\n         * The authenticated app is now ready:\n         * session + user data + rendering are complete.\n         */\n        hideGluefulSplash();`;
   const fast = `        /* Paint the authenticated shell first; hydrate account data in background. */\n        renderAll();\n        hideGluefulSplash();\n\n        void loadAll()\n          .then(() => renderAll())\n          .catch(error => console.error("[Glueful] Background account hydration failed:", error));`;
   if (html.includes(blocking)) html = html.replace(blocking, fast);
