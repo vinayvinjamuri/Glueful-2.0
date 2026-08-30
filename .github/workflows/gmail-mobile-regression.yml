@@ -36,12 +36,5 @@ jobs:
           node --check glueful-gmail-integration-v1.js
           node --check glueful-dashboard-approved-v1.js
           node --check tests/gmail-mobile-regression.js
-      - name: Gmail mobile overlay regression
+      - name: Gmail mobile overlay and runtime contract regression
         run: node tests/gmail-mobile-regression.js
-      - name: Runtime cache contract
-        run: |
-          set -e
-          grep -Fq 'glueful-cache-v106-orbit-v14-ime-fix' sw.js
-          grep -Fq 'glueful-gmail-loader-v1.js?v=7' glueful-gmail-loader-v1.js
-          grep -Fq 'glueful-orbit-ui-v14.js?v=1' glueful-gmail-loader-v1.js
-          grep -Fq 'glueful-sync-control-guard-v3' glueful-gmail-loader-v1.js
