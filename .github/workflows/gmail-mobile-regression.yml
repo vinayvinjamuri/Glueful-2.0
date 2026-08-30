@@ -41,8 +41,9 @@ jobs:
       - name: Runtime cache contract
         run: |
           set -e
-          grep -q 'glueful-cache-v103-gmail-scope-fix' sw.js
+          grep -q 'glueful-cache-v106-orbit-v14-ime-fix' sw.js
           grep -q 'glueful-gmail-loader-v1.js?v=7' glueful-gmail-loader-v1.js
+          grep -q 'glueful-orbit-ui-v14.js?v=1' glueful-gmail-loader-v1.js
           grep -q 'glueful-sync-control-guard-v3' glueful-gmail-loader-v1.js
           grep -q 'function dashboardHost' glueful-gmail-integration-v1.js
           ! grep -Eq '#glueful-dashboard-gmail-sync\{position:fixed' glueful-gmail-integration-v1.js
