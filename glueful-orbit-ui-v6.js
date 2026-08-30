@@ -1,24 +1,22 @@
 /*
- * Glueful Orbit UI v6 — consistent chat UI + real application prompt.
- *
- * v3 remains responsible for rendering the redesigned Orbit home. v6 is an
- * interaction/polish layer on top of that home and on the existing chat view.
+ * Glueful Orbit UI v7 — Android keyboard viewport fix.
  *
  * Complexity:
  * - Home/chat decoration: O(1) per DOM mutation.
  * - Application lookup: O(n) for n application rows returned by Supabase.
  * - Application message rendering: O(n) time and O(n) DOM space.
+ * - Viewport synchronization: O(1) per visualViewport resize event.
  */
 (function () {
   "use strict";
 
-  if (window.__GLUEFUL_ORBIT_UI_V6__) return;
-  window.__GLUEFUL_ORBIT_UI_V6__ = true;
+  if (window.__GLUEFUL_ORBIT_UI_V7__) return;
+  window.__GLUEFUL_ORBIT_UI_V7__ = true;
 
   const ROOT_ID = "glueful-orbit-v2-root";
   const VIEW_ID = "glueful-orbit-v2-view";
-  const BRIDGE_ID = "glueful-orbit-v6-open-chat";
-  const STYLE_ID = "glueful-orbit-ui-v6-style";
+  const BRIDGE_ID = "glueful-orbit-v7-open-chat";
+  const STYLE_ID = "glueful-orbit-ui-v7-style";
   const APP_PROMPT = "Tell me about my current job applications";
 
   const esc = value => String(value ?? "")
@@ -30,62 +28,111 @@
 
   function installStyles() {
     if (document.getElementById(STYLE_ID)) return;
+
     const style = document.createElement("style");
     style.id = STYLE_ID;
     style.textContent = `
-      /* Orbit chat must use the dynamic mobile viewport so the composer stays above the keyboard. */
+      html:has(#${ROOT_ID}.open),
+      body:has(#${ROOT_ID}.open) {
+        overflow:hidden !important;
+        height:100% !important;
+        overscroll-behavior:none !important;
+      }
+
       #${ROOT_ID}.open {
+        position:fixed !important;
+        left:0 !important;
+        right:0 !important;
+        top:0 !important;
+        bottom:auto !important;
+        width:100% !important;
         height:100dvh !important;
         max-height:100dvh !important;
         overflow:hidden !important;
+        transform:none !important;
+        touch-action:pan-y !important;
+        overscroll-behavior:none !important;
       }
-      #${VIEW_ID} {
+
+      #${ROOT_ID} .ov2-app {
+        width:100% !important;
         height:100% !important;
         min-height:0 !important;
+        max-height:100% !important;
+        overflow:hidden !important;
       }
-      #${VIEW_ID} .ov2-chat {
-        position:relative !important;
-        height:100dvh !important;
+
+      #${ROOT_ID} .ov2-chat {
+        height:100% !important;
         min-height:0 !important;
         display:flex !important;
         flex-direction:column !important;
         overflow:hidden !important;
       }
-      #${VIEW_ID} .ov2-chat-messages {
+
+      #${ROOT_ID} .ov2-chat-messages {
         flex:1 1 auto !important;
         min-height:0 !important;
+        height:auto !important;
         overflow-y:auto !important;
         overflow-x:hidden !important;
-        padding-bottom:96px !important;
+        padding:8px 14px 14px !important;
         overscroll-behavior:contain !important;
         -webkit-overflow-scrolling:touch !important;
       }
 
-      .ov5-chat-home .ov5-composer,
-      .ov2-chat .ov2-composer {
+      #${ROOT_ID} .ov2-chat .ov2-composer {
+        position:relative !important;
+        left:auto !important;
+        right:auto !important;
+        bottom:auto !important;
+        flex:0 0 auto !important;
+        width:100% !important;
+        min-height:74px !important;
+        margin:0 !important;
+        padding:10px 13px calc(env(safe-area-inset-bottom) + 10px) !important;
         display:flex !important;
         align-items:center !important;
         gap:8px !important;
-        width:calc(100% - 28px) !important;
-        margin:8px 14px 0 !important;
-        padding:8px !important;
-        min-height:58px !important;
-        flex:0 0 auto !important;
-        border:1px solid #293853 !important;
-        border-radius:17px !important;
-        background:#0c1422 !important;
-        box-shadow:0 10px 30px rgba(0,0,0,.35) !important;
+        border-top:1px solid #182236 !important;
+        background:#080d17 !important;
+        box-sizing:border-box !important;
       }
-      .ov2-chat .ov2-composer {
-        position:absolute !important;
-        left:14px !important;
-        right:14px !important;
-        bottom:calc(env(safe-area-inset-bottom) + 8px) !important;
-        width:auto !important;
-        margin:0 !important;
-        z-index:20 !important;
-        border-top:1px solid #293853 !important;
+
+      #${ROOT_ID} .ov2-chat .ov2-input {
+        flex:1 1 auto !important;
+        min-width:0 !important;
+        width:0 !important;
+        height:46px !important;
+        min-height:46px !important;
+        max-height:46px !important;
+        padding:11px 12px !important;
+        border:1px solid #26354e !important;
+        outline:0 !important;
+        background:#0d1522 !important;
+        color:#fff !important;
+        border-radius:14px !important;
+        font-size:16px !important;
+        line-height:22px !important;
+        box-sizing:border-box !important;
+        transform:none !important;
       }
+
+      #${ROOT_ID} .ov2-chat .ov2-send {
+        flex:0 0 44px !important;
+        width:44px !important;
+        min-width:44px !important;
+        height:44px !important;
+        min-height:44px !important;
+        border:0 !important;
+        border-radius:13px !important;
+        background:#743cff !important;
+        color:#fff !important;
+        cursor:pointer !important;
+      }
+
+      .ov5-chat-home .ov5-composer { box-sizing:border-box !important; }
+
       .ov6-plus,
       .ov2-chat .ov6-plus {
         appearance:none !important;
@@ -101,75 +148,40 @@
         color:#dbe2ef !important;
         cursor:pointer !important;
       }
-      .ov2-chat .ov2-input {
-        flex:1 !important;
-        min-width:0 !important;
-        width:auto !important;
-        height:42px !important;
-        border:0 !important;
-        outline:0 !important;
-        background:transparent !important;
-        color:#fff !important;
-        border-radius:12px !important;
-        padding:11px 4px !important;
-      }
-      .ov2-chat .ov2-send {
-        flex:0 0 42px !important;
-        width:42px !important;
-        height:42px !important;
-        border:0 !important;
-        border-radius:13px !important;
-        background:#743cff !important;
-        color:#fff !important;
-        cursor:pointer !important;
-        font-size:17px !important;
-      }
+
       .ov6-app-list { margin-top:8px; }
-      .ov6-app-row {
-        display:flex;
-        align-items:center;
-        gap:9px;
-        padding:9px 0;
-        border-top:1px solid #1d2a40;
-      }
+      .ov6-app-row { display:flex; align-items:center; gap:9px; padding:9px 0; border-top:1px solid #1d2a40; }
       .ov6-app-row:first-child { border-top:0; }
-      .ov6-app-logo {
-        width:34px;
-        height:34px;
-        flex:0 0 34px;
-        display:grid;
-        place-items:center;
-        border-radius:10px;
-        background:#17233a;
-        color:#a77bff;
-        font-size:10px;
-        font-weight:800;
-      }
+      .ov6-app-logo { width:34px; height:34px; flex:0 0 34px; display:grid; place-items:center; border-radius:10px; background:#17233a; color:#a77bff; font-size:10px; font-weight:800; }
       .ov6-app-main { min-width:0; flex:1; }
       .ov6-app-main b { display:block; font-size:12px; }
       .ov6-app-main small { display:block; color:#8e99ad; margin-top:2px; font-size:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
       .ov6-app-status { font-size:9px; color:#63e2a6; white-space:nowrap; }
-
-      /* Prevent the document behind Orbit from moving while the mobile keyboard opens. */
-      body:has(#${ROOT_ID}.open) {
-        overflow:hidden !important;
-        overscroll-behavior:none !important;
-      }
     `;
     document.head.appendChild(style);
-  }
-
-  function syncViewportHeight() {
-    const root = getRoot();
-    if (!root?.classList.contains("open")) return;
-    const viewport = window.visualViewport;
-    const height = viewport?.height || window.innerHeight;
-    root.style.setProperty("--orbit-viewport-height", `${Math.round(height)}px`);
   }
 
   function getView() { return document.getElementById(VIEW_ID); }
   function getRoot() { return document.getElementById(ROOT_ID); }
   function getClient() { return window.supabaseClient || window.gluefulSupabaseClient || null; }
+
+  function syncViewport() {
+    const root = getRoot();
+    if (!root?.classList.contains("open")) return;
+
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+
+    root.style.height = `${Math.max(1, Math.round(viewport.height))}px`;
+    root.style.maxHeight = `${Math.max(1, Math.round(viewport.height))}px`;
+    root.style.top = `${Math.max(0, Math.round(viewport.offsetTop))}px`;
+    root.style.bottom = "auto";
+
+    requestAnimationFrame(() => {
+      const messages = getView()?.querySelector(".ov2-chat-messages");
+      if (messages) messages.scrollTop = messages.scrollHeight;
+    });
+  }
 
   function hiddenChatEntry() {
     const root = getRoot();
@@ -266,8 +278,8 @@
     const view = getView();
     if (!view) return;
     view.querySelectorAll("[data-orbit-prompt]").forEach(button => {
-      if (button.dataset.v6Bound === "1") return;
-      button.dataset.v6Bound = "1";
+      if (button.dataset.v7Bound === "1") return;
+      button.dataset.v7Bound = "1";
       button.addEventListener("click", event => {
         const text = String(button.dataset.orbitPrompt || "");
         if (text !== APP_PROMPT) return;
@@ -281,23 +293,25 @@
 
   function sync() {
     installStyles();
-    syncViewportHeight();
     wireHome();
     decorateChatComposer();
+    if (getRoot()?.classList.contains("open")) syncViewport();
   }
 
   function start() {
     installStyles();
     sync();
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", syncViewport, { passive:true });
+      window.visualViewport.addEventListener("scroll", syncViewport, { passive:true });
+    }
+
     const view = getView();
     if (!view) return;
     const observer = new MutationObserver(() => window.requestAnimationFrame(sync));
     observer.observe(view, { childList:true, subtree:true });
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener("resize", syncViewportHeight, { passive:true });
-      window.visualViewport.addEventListener("scroll", syncViewportHeight, { passive:true });
-    }
-    window.addEventListener("resize", syncViewportHeight, { passive:true });
+    window.addEventListener("resize", syncViewport, { passive:true });
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start, { once:true });
