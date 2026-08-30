@@ -33,7 +33,23 @@
     const style = document.createElement("style");
     style.id = STYLE_ID;
     style.textContent = `
-      /* Keep the v3 home composer and v2 chat composer in one visual system. */
+      /* Orbit chat must remain a full-height column so the composer never floats upward. */
+      #${VIEW_ID} .ov2-chat {
+        height:100% !important;
+        min-height:0 !important;
+        display:flex !important;
+        flex-direction:column !important;
+        overflow:hidden !important;
+      }
+      #${VIEW_ID} .ov2-chat-messages {
+        flex:1 1 auto !important;
+        min-height:0 !important;
+        overflow-y:auto !important;
+        overflow-x:hidden !important;
+        padding-bottom:10px !important;
+        overscroll-behavior:contain !important;
+      }
+
       .ov5-chat-home .ov5-composer,
       .ov2-chat .ov2-composer {
         display:flex !important;
@@ -43,17 +59,17 @@
         margin:8px 14px 0 !important;
         padding:8px !important;
         min-height:58px !important;
+        flex:0 0 auto !important;
         border:1px solid #293853 !important;
         border-radius:17px !important;
         background:#0c1422 !important;
         box-shadow:0 10px 30px rgba(0,0,0,.35) !important;
       }
       .ov2-chat .ov2-composer {
-        flex:0 0 auto !important;
+        margin-top:auto !important;
+        margin-bottom:calc(env(safe-area-inset-bottom) + 8px) !important;
         border-top:1px solid #293853 !important;
-        padding-bottom:calc(env(safe-area-inset-bottom) + 8px) !important;
       }
-      .ov2-chat .ov2-chat-messages { padding-bottom:10px !important; }
       .ov6-plus,
       .ov2-chat .ov6-plus {
         appearance:none !important;
@@ -222,8 +238,6 @@
     view.querySelectorAll("[data-orbit-prompt]").forEach(button => {
       if (button.dataset.v6Bound === "1") return;
       button.dataset.v6Bound = "1";
-
-      /* Capture phase prevents v3's older listener from submitting the same prompt. */
       button.addEventListener("click", event => {
         const text = String(button.dataset.orbitPrompt || "");
         if (text !== APP_PROMPT) return;
