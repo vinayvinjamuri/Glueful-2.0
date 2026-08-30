@@ -1,20 +1,21 @@
 /*
- * Glueful Orbit UI v9 — mobile composer/keyboard layout correction.
+ * Glueful Orbit UI v9.1 — mobile composer/keyboard layout correction.
  *
- * Root cause addressed here:
- * v8 made .ov2-chat height:100% inside .ov2-app, while .ov2-app also contains
- * the chat header. That makes the chat column consume the full app height
- * instead of the remaining height, so the composer can stop above the bottom.
+ * The previous v9 patch was too specific about the chat element being a direct
+ * child of .ov2-app. The Orbit renderer can wrap that element, so this patch
+ * intentionally targets .ov2-app .ov2-chat at any descendant level.
  *
- * v9 keeps the app as a single flex column: header + remaining chat viewport.
- * The root tracks visualViewport height so Android keyboard resize moves the
- * composer above the keyboard without scrolling the whole Orbit surface.
+ * Desired mobile behavior:
+ * - keyboard closed: composer is pinned to the bottom of Orbit;
+ * - keyboard open: visualViewport shrinks Orbit and composer sits immediately
+ *   above the Android keyboard;
+ * - message history is the only scrolling region.
  */
 (function () {
   "use strict";
 
-  if (window.__GLUEFUL_ORBIT_UI_V9__) return;
-  window.__GLUEFUL_ORBIT_UI_V9__ = true;
+  if (window.__GLUEFUL_ORBIT_UI_V9_1__) return;
+  window.__GLUEFUL_ORBIT_UI_V9_1__ = true;
 
   const ROOT_ID = "glueful-orbit-v2-root";
   const STYLE_ID = "glueful-orbit-ui-v9-style";
@@ -30,8 +31,18 @@
     const style = document.createElement("style");
     style.id = STYLE_ID;
     style.textContent = `
-      /* The app is a header + chat column. The chat must consume only the remaining space. */
+      #${ROOT_ID}.open {
+        position:fixed !important;
+        left:0 !important;
+        right:0 !important;
+        bottom:auto !important;
+        width:100% !important;
+        overflow:hidden !important;
+        transform:none !important;
+      }
+
       #${ROOT_ID}.open .ov2-app {
+        width:100% !important;
         height:100% !important;
         min-height:0 !important;
         max-height:100% !important;
@@ -40,12 +51,14 @@
         overflow:hidden !important;
       }
 
-      #${ROOT_ID}.open .ov2-app > .ov2-head {
+      #${ROOT_ID}.open .ov2-app .ov2-head {
         flex:0 0 auto !important;
       }
 
-      #${ROOT_ID}.open .ov2-app > .ov2-chat {
-        flex:1 1 auto !important;
+      /* Do NOT use height:100% here. Header + chat must fit together. */
+      #${ROOT_ID}.open .ov2-app .ov2-chat {
+        flex:1 1 0 !important;
+        width:100% !important;
         height:auto !important;
         min-height:0 !important;
         max-height:none !important;
@@ -54,23 +67,25 @@
         overflow:hidden !important;
       }
 
-      #${ROOT_ID}.open .ov2-chat-messages {
+      #${ROOT_ID}.open .ov2-app .ov2-chat-messages {
         flex:1 1 auto !important;
+        width:100% !important;
         height:auto !important;
         min-height:0 !important;
         max-height:none !important;
         overflow-y:auto !important;
         overflow-x:hidden !important;
+        overscroll-behavior:contain !important;
+        -webkit-overflow-scrolling:touch !important;
       }
 
-      #${ROOT_ID}.open .ov2-chat .ov2-composer {
+      #${ROOT_ID}.open .ov2-app .ov2-chat .ov2-composer {
         flex:0 0 auto !important;
         position:relative !important;
-        top:auto !important;
-        right:auto !important;
-        bottom:auto !important;
-        left:auto !important;
+        inset:auto !important;
         width:100% !important;
+        height:auto !important;
+        min-height:74px !important;
         margin:0 !important;
         box-sizing:border-box !important;
       }
@@ -111,11 +126,10 @@
 
     window.addEventListener("resize", scheduleSync, { passive:true });
     window.addEventListener("focusin", scheduleSync, { passive:true });
-    window.addEventListener("focusout", () => window.setTimeout(scheduleSync, 50), { passive:true });
+    window.addEventListener("focusout", () => window.setTimeout(scheduleSync, 80), { passive:true });
 
     const observer = new MutationObserver(() => {
-      const root = getRoot();
-      if (root?.classList.contains("open")) scheduleSync();
+      if (getRoot()?.classList.contains("open")) scheduleSync();
     });
     observer.observe(document.documentElement, {
       childList:true,
