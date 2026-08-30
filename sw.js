@@ -1,4 +1,4 @@
-const CACHE_NAME = "glueful-cache-v93-compact-greeting";
+const CACHE_NAME = "glueful-cache-v94-startup-paint";
 
 const RUNTIME = [
   "./glueful-resume-render-diagnostics.js",
@@ -62,6 +62,63 @@ const LEGACY_RUNTIME_NAMES = [
   "glueful-jobs-infinite-feed-v1.js"
 ];
 
+const EARLY_STARTUP_BLOCK = `
+<style id="glueful-early-startup-paint">
+  html, body {
+    margin:0 !important;
+    padding:0 !important;
+    min-height:100% !important;
+    background:#070A10 !important;
+    color-scheme:dark !important;
+  }
+  #glueful-early-splash {
+    position:fixed;
+    inset:0;
+    z-index:2147483646;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:
+      radial-gradient(circle at 50% 45%, rgba(92,63,220,.16), transparent 28%),
+      radial-gradient(circle at 20% 20%, rgba(47,111,255,.08), transparent 22%),
+      #070A10;
+    color:#fff;
+    font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  }
+  #glueful-early-splash .early-logo {
+    width:86px;
+    height:86px;
+    border-radius:24px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:linear-gradient(145deg,#7B36FF,#286DFF);
+    font:700 47px/1 "Space Grotesk",Inter,system-ui,sans-serif;
+    box-shadow:0 0 22px rgba(112,61,255,.65),0 0 65px rgba(47,111,255,.28);
+  }
+</style>
+<div id="glueful-early-splash" aria-hidden="true"><div class="early-logo">G</div></div>
+<script>
+(function(){
+  function handoff(){
+    var early=document.getElementById("glueful-early-splash");
+    var real=document.getElementById("glueful-splash");
+    if(early && real) early.remove();
+  }
+  if(document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", handoff, {once:true});
+  } else {
+    handoff();
+  }
+  var observer=new MutationObserver(function(){
+    if(document.getElementById("glueful-splash")) handoff();
+  });
+  observer.observe(document.documentElement,{subtree:true,childList:true});
+  setTimeout(function(){ observer.disconnect(); }, 15000);
+})();
+</script>
+`;
+
 function escapeRegExp(value) {
   return String(value).replace(/[.*+?^${}()|[\\]\\]/g, "\\$&");
 }
@@ -88,6 +145,19 @@ async function buildAuthoritativeIndex(request, preloadResponse) {
   if (!type.includes("text/html")) return response;
   let html = await response.text();
   html = stripCompetingRuntime(html);
+
+  /*
+   * The native WebView can paint a white frame while the HTML parser is
+   * blocked on the first external script. Put a tiny startup shell directly
+   * after <head>, before Supabase/CDN scripts. It is removed as soon as the
+   * real Glueful splash is parsed, so this does not change the app's normal
+   * splash or readiness behavior.
+   */
+  const headMarker = "<head>";
+  if (html.includes(headMarker) && !html.includes("glueful-early-startup-paint")) {
+    html = html.replace(headMarker, `${headMarker}\n${EARLY_STARTUP_BLOCK}`);
+  }
+
   const scripts = RUNTIME.map((src) => `<script src="${src}"></script>`);
   const marker = "</body>";
   const block = scripts.join("\n");
