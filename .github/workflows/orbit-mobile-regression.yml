@@ -1,0 +1,26 @@
+name: Orbit mobile regression
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  orbit-mobile-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Syntax check Orbit runtime
+        run: |
+          node --check glueful-orbit-ui-v9.js
+          node --check glueful-gmail-loader-v1.js
+
+      - name: Run Orbit keyboard regression
+        run: node tests/orbit-mobile-keyboard-regression.js
