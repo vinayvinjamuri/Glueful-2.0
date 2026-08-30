@@ -1,4 +1,4 @@
-const CACHE_NAME = "glueful-cache-v90-dashboard-header-fix";
+const CACHE_NAME = "glueful-cache-v91-dashboard-hamburger";
 
 const RUNTIME = [
   "./glueful-resume-render-diagnostics.js",
@@ -28,7 +28,8 @@ const RUNTIME = [
   "./glueful-app-branding-v1.js",
   "./glueful-gmail-loader-v1.js",
   "./glueful-dashboard-fixed-v1.js",
-  "./glueful-dashboard-header-fix-v1.js"
+  "./glueful-dashboard-header-fix-v1.js",
+  "./glueful-dashboard-hamburger-v1.js"
 ];
 
 const LEGACY_RUNTIME_NAMES = [
@@ -81,39 +82,24 @@ async function networkResponse(request, preloadResponse) {
 async function buildAuthoritativeIndex(request, preloadResponse) {
   const response = await networkResponse(request, preloadResponse);
   if (!response?.ok) return response;
-
   const type = response.headers.get("content-type") || "";
   if (!type.includes("text/html")) return response;
-
   let html = await response.text();
   html = stripCompetingRuntime(html);
-
   const scripts = RUNTIME.map((src) => `<script src="${src}"></script>`);
   const marker = "</body>";
   const block = scripts.join("\n");
-  const injected = html.includes(marker)
-    ? html.replace(marker, `${block}\n${marker}`)
-    : `${html}\n${block}`;
-
+  const injected = html.includes(marker) ? html.replace(marker, `${block}\n${marker}`) : `${html}\n${block}`;
   const headers = new Headers(response.headers);
   headers.set("Content-Type", "text/html; charset=UTF-8");
   headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
-
-  return new Response(injected, {
-    status: response.status,
-    statusText: response.statusText,
-    headers
-  });
+  return new Response(injected, { status: response.status, statusText: response.statusText, headers });
 }
 
 async function cacheIndexResponse(request, response) {
   if (!response?.ok) return;
-  try {
-    const cache = await caches.open(CACHE_NAME);
-    await cache.put(request, response.clone());
-  } catch (error) {
-    console.warn("[Glueful SW] index cache write failed:", error);
-  }
+  try { const cache = await caches.open(CACHE_NAME); await cache.put(request, response.clone()); }
+  catch (error) { console.warn("[Glueful SW] index cache write failed:", error); }
 }
 
 self.addEventListener("install", (event) => {
@@ -128,12 +114,8 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(
-      keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-    );
-    if (self.registration.navigationPreload) {
-      try { await self.registration.navigationPreload.enable(); } catch (_) {}
-    }
+    await Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)));
+    if (self.registration.navigationPreload) { try { await self.registration.navigationPreload.enable(); } catch (_) {} }
     await self.clients.claim();
   })());
 });
@@ -145,7 +127,6 @@ self.addEventListener("message", (event) => {
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   const url = new URL(request.url);
-
   if (request.method === "GET" && request.mode === "navigate") {
     event.respondWith((async () => {
       try {
@@ -159,44 +140,24 @@ self.addEventListener("fetch", (event) => {
     })());
     return;
   }
-
   if (request.method === "GET" && RUNTIME.some((path) => url.pathname.endsWith(path.slice(2)))) {
     event.respondWith((async () => {
       try {
         const response = await fetch(request, { cache: "no-store" });
-        if (response.ok) {
-          event.waitUntil((async () => {
-            try {
-              const cache = await caches.open(CACHE_NAME);
-              await cache.put(request, response.clone());
-            } catch (_) {}
-          })());
-        }
+        if (response.ok) event.waitUntil((async () => { try { const cache = await caches.open(CACHE_NAME); await cache.put(request, response.clone()); } catch (_) {} })());
         return response;
-      } catch (_) {
-        return (await caches.match(request)) || Response.error();
-      }
+      } catch (_) { return (await caches.match(request)) || Response.error(); }
     })());
     return;
   }
-
   if (request.method === "GET") {
     event.respondWith((async () => {
       const cached = await caches.match(request);
       try {
         const response = await fetch(request, { cache: "no-store" });
-        if (response.ok) {
-          event.waitUntil((async () => {
-            try {
-              const cache = await caches.open(CACHE_NAME);
-              await cache.put(request, response.clone());
-            } catch (_) {}
-          })());
-        }
+        if (response.ok) event.waitUntil((async () => { try { const cache = await caches.open(CACHE_NAME); await cache.put(request, response.clone()); } catch (_) {} })());
         return response;
-      } catch (_) {
-        return cached || Response.error();
-      }
+      } catch (_) { return cached || Response.error(); }
     })());
   }
 });
