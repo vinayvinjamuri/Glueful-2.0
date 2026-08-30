@@ -6,9 +6,6 @@ const orbitSource = fs.readFileSync("glueful-orbit-ui-v14.js", "utf8");
 const loaderSource = fs.readFileSync("glueful-gmail-loader-v1.js", "utf8");
 const serviceWorkerSource = fs.readFileSync("sw.js", "utf8");
 
-// The loader must have exactly one Orbit viewport authority after the legacy
-// v9 runtime is removed. v6 may still exist for interaction/polish, but v14
-// owns mobile geometry and scrubs legacy inline geometry.
 assert.match(loaderSource, /glueful-orbit-ui-v14\.js\?v=1/);
 assert.doesNotMatch(loaderSource, /glueful-orbit-ui-v9\.js/);
 assert.match(serviceWorkerSource, /glueful-cache-v106-orbit-v14-ime-fix/);
@@ -32,8 +29,6 @@ assert.doesNotMatch(orbitSource, /window\.scrollTo/);
 assert.doesNotMatch(orbitSource, /visualViewport\.(?:height|offsetTop)\s*=/);
 assert.doesNotMatch(orbitSource, /root\.style\.height\s*=\s*`/);
 
-// Simulate an older runtime writing keyboard-sized inline geometry. v14 must
-// remove it immediately and after a later DOM/style mutation as well.
 const root = {
   style: {
     height: "420px",
@@ -42,7 +37,10 @@ const root = {
     right: "0px",
     bottom: "auto",
     left: "0px",
-    removeProperty(name) { delete this[name]; }
+    removeProperty(name) {
+      const camel = name.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
+      delete this[camel];
+    }
   },
   classList: {
     contains(name) { return name === "open"; }
