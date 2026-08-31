@@ -3,6 +3,7 @@ const fs = require("node:fs");
 const vm = require("node:vm");
 
 const orbitSource = fs.readFileSync("glueful-orbit-ui-v14.js", "utf8");
+const orbitV6Source = fs.readFileSync("glueful-orbit-ui-v6.js", "utf8");
 const loaderSource = fs.readFileSync("glueful-gmail-loader-v1.js", "utf8");
 const serviceWorkerSource = fs.readFileSync("sw.js", "utf8");
 
@@ -21,6 +22,13 @@ assert.match(orbitSource, /\.ov2-composer/);
 assert.match(orbitSource, /flex:0 0 auto !important/);
 assert.match(orbitSource, /scrubLegacyInlineGeometry/);
 assert.match(orbitSource, /attributeFilter:\["class", "style"\]/);
+
+// v6 is still needed for Orbit interaction/quick actions, but it must not
+// remain a second mobile viewport authority. If it writes visualViewport
+// geometry on Android, focusing the composer can move the whole chat again.
+assert.match(orbitV6Source, /function syncViewport\(\)/);
+assert.match(orbitV6Source, /matchMedia\?\.\("\(max-width:700px\)"\)\.matches/);
+assert.match(orbitV6Source, /if \(window\.matchMedia.*max-width:700px.*\) return;/);
 
 // v14 must not recreate the failed v12 architecture.
 assert.doesNotMatch(orbitSource, /document\.body\.style\.position\s*=\s*["']fixed/);
