@@ -5,7 +5,7 @@
  * - Home/chat decoration: O(1) per DOM mutation.
  * - Application lookup: O(n) for n application rows returned by Supabase.
  * - Application message rendering: O(n) time and O(n) DOM space.
- * - Viewport synchronization: O(1) per visualViewport resize event.
+ * - Viewport synchronization: O(1) per visualViewport resize event on desktop.
  */
 (function () {
   "use strict";
@@ -168,6 +168,10 @@
   function syncViewport() {
     const root = getRoot();
     if (!root?.classList.contains("open")) return;
+
+    // v14 is the sole mobile viewport authority. v6 keeps its desktop
+    // behavior, but must never write visualViewport geometry on mobile.
+    if (window.matchMedia?.("(max-width:700px)").matches) return;
 
     const viewport = window.visualViewport;
     if (!viewport) return;
