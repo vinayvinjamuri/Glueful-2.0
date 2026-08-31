@@ -10,6 +10,9 @@ assert.match(loaderSource, /glueful-orbit-ui-v16\.js\?v=1/);
 assert.doesNotMatch(loaderSource, /glueful-orbit-ui-v6\.js/);
 assert.doesNotMatch(loaderSource, /glueful-orbit-ui-v14\.js/);
 assert.doesNotMatch(loaderSource, /glueful-orbit-ui-v15\.js/);
+assert.match(serviceWorkerSource, /glueful-orbit-ui-v16\.js/);
+assert.doesNotMatch(serviceWorkerSource, /glueful-orbit-ui-v6\.js/);
+assert.doesNotMatch(serviceWorkerSource, /glueful-orbit-ui-v14\.js/);
 assert.match(serviceWorkerSource, /interactive-widget=resizes-content/);
 
 assert.match(orbitSource, /__GLUEFUL_ORBIT_UI_V16__/);
@@ -19,11 +22,14 @@ assert.match(orbitSource, /\.ov2-chat-messages/);
 assert.match(orbitSource, /overflow-y:auto !important/);
 assert.match(orbitSource, /\.ov2-composer/);
 assert.match(orbitSource, /flex:0 0 auto !important/);
-assert.doesNotMatch(orbitSource, /visualViewport/);
-assert.doesNotMatch(orbitSource, /window\.scrollTo/);
-assert.doesNotMatch(orbitSource, /root\.style\.height\s*=\s*`/);
-assert.match(orbitSource, /stopImmediatePropagation/);
-assert.match(orbitSource, /orbit-ai/);
+
+// Ignore explanatory comments when checking for forbidden runtime APIs.
+const orbitExecutableSource = orbitSource.replace(/\/\*[\s\S]*?\*\//g, "");
+assert.doesNotMatch(orbitExecutableSource, /visualViewport/);
+assert.doesNotMatch(orbitExecutableSource, /window\.scrollTo/);
+assert.doesNotMatch(orbitExecutableSource, /root\.style\.height\s*=\s*`/);
+assert.match(orbitExecutableSource, /stopImmediatePropagation/);
+assert.match(orbitExecutableSource, /orbit-ai/);
 
 const styles = [];
 const document = {
