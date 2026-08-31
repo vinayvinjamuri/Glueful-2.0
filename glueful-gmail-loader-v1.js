@@ -1,4 +1,4 @@
-/* Glueful runtime loader v27: centralized runtime + mobile Gmail regression guard + Orbit keyboard layout fix. */
+/* Glueful runtime loader v28: centralized runtime + mobile Gmail regression guard + consolidated Orbit runtime. */
 (function () {
   "use strict";
 
@@ -17,8 +17,6 @@
     document.head.appendChild(script);
   }
 
-  /* Gmail sync remains available on desktop. On mobile, the dashboard sync
-   * control is intentionally absent because it must never overlay navigation. */
   function installSyncControlGuard() {
     const STYLE_ID = "glueful-sync-control-guard-v3";
     if (!document.getElementById(STYLE_ID)) {
@@ -65,11 +63,7 @@
       load("./glueful-orbit-bootstrap-v1.js?v=2", function () {
         load("./glueful-orbit-v2.js?v=4", function () {
           load("./glueful-orbit-ui-v3.js?v=11", function () {
-            load("./glueful-orbit-ui-v6.js?v=9", function () {
-              load("./glueful-orbit-ui-v14.js?v=1", function () {
-                load("./glueful-orbit-ui-v15.js?v=1");
-              });
-            });
+            load("./glueful-orbit-ui-v16.js?v=1");
           });
         });
       });
