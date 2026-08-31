@@ -1,5 +1,8 @@
-const CACHE_NAME = "glueful-cache-v106-orbit-v14-ime-fix";
+const CACHE_NAME = "glueful-cache-v107-orbit-v16-ime-fix";
 
+// Keep one authoritative Orbit UI runtime. The service worker injects these
+// scripts into navigations, so legacy Orbit keyboard layers must not appear
+// here even if the normal runtime loader has already stopped loading them.
 const RUNTIME = [
   "./glueful-resume-render-diagnostics.js",
   "./glueful-resume-fixed-page-bootstrap.js",
@@ -30,8 +33,7 @@ const RUNTIME = [
   "./glueful-orbit-bootstrap-v1.js",
   "./glueful-orbit-v2.js",
   "./glueful-orbit-ui-v3.js",
-  "./glueful-orbit-ui-v6.js",
-  "./glueful-orbit-ui-v14.js",
+  "./glueful-orbit-ui-v16.js",
   "./glueful-dashboard-fixed-v1.js",
   "./glueful-dashboard-header-fix-v1.js",
   "./glueful-dashboard-hamburger-v2.js",
@@ -91,17 +93,11 @@ function patchStartupSequence(html) {
     "        void syncPlacementPortalFromCloud(user).catch(error => console.warn(\"[Glueful] Placement portal background sync failed:\", error));"
   );
 
-  // Android Chrome defaults to resizing only the visual viewport when the
-  // software keyboard opens. Orbit's composer is a normal flex child and
-  // needs the layout viewport to resize with the IME instead.
   html = html.replace(
     /<meta\s+name=[\"']viewport[\"']\s+content=[\"']([^\"']*)[\"']\s*\/?>/i,
-    (_, content) => {
-      if (/interactive-widget\s*=\s*[^,\s]+/i.test(content)) {
-        return `<meta name="viewport" content="${content}" />`;
-      }
-      return `<meta name="viewport" content="${content}, interactive-widget=resizes-content" />`;
-    }
+    (_, content) => /interactive-widget\s*=\s*[^,\s]+/i.test(content)
+      ? `<meta name="viewport" content="${content}" />`
+      : `<meta name="viewport" content="${content}, interactive-widget=resizes-content" />`
   );
 
   return html;
