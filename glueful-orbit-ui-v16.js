@@ -282,11 +282,20 @@
   function handleSubmit(event) {
     const form = event.target.closest?.('form[data-action="send"]');
     if (!form) return;
-    // Capture-phase ownership prevents legacy Orbit v2 from issuing a second request.
     event.preventDefault();
     event.stopImmediatePropagation();
     const input = form.elements.message;
     void ask(input?.value || "");
+  }
+
+  function loadCareerEngine() {
+    if (window.__GLUEFUL_ORBIT_CAREER_ENGINE_V1__) return;
+    if (document.querySelector('script[data-orbit-career-engine="v1"]')) return;
+    const script = document.createElement("script");
+    script.src = "./glueful-orbit-career-engine-v1.js";
+    script.async = true;
+    script.dataset.orbitCareerEngine = "v1";
+    document.head.appendChild(script);
   }
 
   function observeChat() {
@@ -301,9 +310,11 @@
       if (!app) return;
       const applicationId = currentApplicationId();
       void loadExistingConversation(applicationId);
+      loadCareerEngine();
     });
     observer.observe(root, { childList: true, subtree: true });
     void loadExistingConversation(currentApplicationId());
+    loadCareerEngine();
   }
 
   function start() {
