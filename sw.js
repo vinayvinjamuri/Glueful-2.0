@@ -1,8 +1,5 @@
-const CACHE_NAME = "glueful-cache-v107-orbit-v16-ime-fix";
+const CACHE_NAME = "glueful-cache-v108-orbit-career-v1";
 
-// Keep one authoritative Orbit UI runtime. The service worker injects these
-// scripts into navigations, so legacy Orbit keyboard layers must not appear
-// here even if the normal runtime loader has already stopped loading them.
 const RUNTIME = [
   "./glueful-resume-render-diagnostics.js",
   "./glueful-resume-fixed-page-bootstrap.js",
@@ -34,6 +31,7 @@ const RUNTIME = [
   "./glueful-orbit-v2.js",
   "./glueful-orbit-ui-v3.js",
   "./glueful-orbit-ui-v16.js",
+  "./glueful-orbit-career-engine-v1.js",
   "./glueful-dashboard-fixed-v1.js",
   "./glueful-dashboard-header-fix-v1.js",
   "./glueful-dashboard-hamburger-v2.js",
@@ -41,158 +39,28 @@ const RUNTIME = [
 ];
 
 const LEGACY_RUNTIME_NAMES = [
-  "glueful-resume-studio-adobe.js",
-  "glueful-resume-studio-v41",
-  "glueful-resume-docauth-v50.js",
-  "glueful-jobs-auth-bootstrap-v1.js",
-  "glueful-jobs-discover-v3.js",
-  "glueful-jobs-discover-v4.js",
-  "glueful-jobs-discover-v5.js",
-  "glueful-jobs-discover-v6-hotfix.js",
-  "glueful-jobs-discover-v7.js",
-  "glueful-jobs-discover-v8-interaction.js",
-  "glueful-jobs-discover-v9-relevance-logo-interaction.js",
-  "glueful-jobs-discover-v10-authoritative.js",
-  "glueful-jobs-discover-v11-stable.js",
-  "glueful-jobs-discover-v12-stable.js",
-  "glueful-jobs-discover-v13-authoritative.js",
-  "glueful-jobs-discover-v14-force.js",
-  "glueful-jobs-discover-v15-authoritative.js",
-  "glueful-jobs-relevance-v1.js",
-  "glueful-jobs-resume-action-v1.js",
-  "glueful-jobs-logo-patch-v1.js",
-  "glueful-jobs-mobile-card-polish-v1.js",
-  "glueful-jobs-mobile-ux-v1.js",
-  "glueful-jobs-mobile-ux-v15.js",
-  "glueful-jobs-official-link-guard-v1.js",
-  "glueful-jobs-infinite-feed-v1.js",
-  "glueful-mobile-cleanup-v1.js"
+  "glueful-resume-studio-adobe.js","glueful-resume-studio-v41","glueful-resume-docauth-v50.js",
+  "glueful-jobs-discover-v3.js","glueful-jobs-discover-v4.js","glueful-jobs-discover-v5.js",
+  "glueful-jobs-discover-v6-hotfix.js","glueful-jobs-discover-v7.js","glueful-jobs-discover-v8-interaction.js",
+  "glueful-jobs-discover-v9-relevance-logo-interaction.js","glueful-jobs-discover-v10-authoritative.js",
+  "glueful-jobs-discover-v11-stable.js","glueful-jobs-discover-v12-stable.js","glueful-jobs-discover-v13-authoritative.js",
+  "glueful-jobs-discover-v14-force.js","glueful-jobs-mobile-ux-v1.js","glueful-jobs-infinite-feed-v1.js","glueful-mobile-cleanup-v1.js"
 ];
-
-function escapeRegExp(value) {
-  return String(value).replace(/[.*+?^${}()|[\\]\\]/g, "\\$&");
-}
-
-function stripCompetingRuntime(html) {
-  let out = html;
-  for (const name of LEGACY_RUNTIME_NAMES) {
-    out = out.replace(
-      new RegExp(`<script[^>]+src=[\"'][^\"']*${escapeRegExp(name)}(?:\\?[^\"']*)?[\"'][^>]*><\\/script>`, "gi"),
-      ""
-    );
-  }
-  return out;
-}
-
-function patchStartupSequence(html) {
-  const blocking = `        await loadAll();\n\n        renderAll();\n\n        /*\n         * The authenticated app is now ready:\n         * session + user data + rendering are complete.\n         */\n        hideGluefulSplash();`;
-  const fast = `        /* Paint the authenticated shell first; hydrate account data in background. */\n        renderAll();\n        hideGluefulSplash();\n\n        void loadAll()\n          .then(() => renderAll())\n          .catch(error => console.error("[Glueful] Background account hydration failed:", error));`;
-  if (html.includes(blocking)) html = html.replace(blocking, fast);
-  html = html.replace(
-    "        await syncPlacementPortalFromCloud(user);",
-    "        void syncPlacementPortalFromCloud(user).catch(error => console.warn(\"[Glueful] Placement portal background sync failed:\", error));"
-  );
-
-  html = html.replace(
-    /<meta\s+name=[\"']viewport[\"']\s+content=[\"']([^\"']*)[\"']\s*\/?>/i,
-    (_, content) => /interactive-widget\s*=\s*[^,\s]+/i.test(content)
-      ? `<meta name="viewport" content="${content}" />`
-      : `<meta name="viewport" content="${content}, interactive-widget=resizes-content" />`
-  );
-
+function escapeRegExp(value){return String(value).replace(/[.*+?^${}()|[\\]\\]/g,"\\$&")}
+function stripCompetingRuntime(html){let out=html;for(const name of LEGACY_RUNTIME_NAMES){out=out.replace(new RegExp(`<script[^>]+src=[\"'][^\"']*${escapeRegExp(name)}(?:\\?[^\"']*)?[\"'][^>]*><\\/script>`,"gi"),"")}return out}
+function patchStartupSequence(html){
+  const blocking=`        await loadAll();\n\n        renderAll();\n\n        /*\n         * The authenticated app is now ready:\n         * session + user data + rendering are complete.\n         */\n        hideGluefulSplash();`;
+  const fast=`        renderAll();\n        hideGluefulSplash();\n        void loadAll().then(() => renderAll()).catch(error => console.error("[Glueful] Background account hydration failed:", error));`;
+  if(html.includes(blocking))html=html.replace(blocking,fast);
+  html=html.replace("        await syncPlacementPortalFromCloud(user);","        void syncPlacementPortalFromCloud(user).catch(error => console.warn(\"[Glueful] Placement portal background sync failed:\", error));");
+  html=html.replace(/<meta\s+name=[\"']viewport[\"']\s+content=[\"']([^\"']*)[\"']\s*\/?>/i,(_,content)=>/interactive-widget\s*=\s*[^,\s]+/i.test(content)?`<meta name="viewport" content="${content}" />`:`<meta name="viewport" content="${content}, interactive-widget=resizes-content" />`);
   return html;
 }
-
-async function buildIndex(request, preloadResponse) {
-  const response = (await preloadResponse) || await fetch(request, { cache: "no-store" });
-  if (!response?.ok) return response;
-  const type = response.headers.get("content-type") || "";
-  if (!type.includes("text/html")) return response;
-
-  let html = await response.text();
-  html = patchStartupSequence(stripCompetingRuntime(html));
-  const scripts = RUNTIME.map(src => `<script src="${src}"></script>`).join("\n");
-  html = html.includes("</body>") ? html.replace("</body>", `${scripts}\n</body>`) : `${html}\n${scripts}`;
-
-  const headers = new Headers(response.headers);
-  headers.set("Content-Type", "text/html; charset=UTF-8");
-  headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
-  return new Response(html, { status: response.status, statusText: response.statusText, headers });
+async function injectRuntimeScripts(html){
+  const tags=RUNTIME.map(src=>`<script src="${src}"></script>`).join("\n");
+  if(html.includes("</body>"))return html.replace("</body>",`${tags}\n</body>`);
+  return `${html}\n${tags}`;
 }
-
-async function cacheIndex(request, response) {
-  if (!response?.ok) return;
-  try { await (await caches.open(CACHE_NAME)).put(request, response.clone()); }
-  catch (error) { console.warn("[Glueful SW] cache write failed:", error); }
-}
-
-self.addEventListener("install", event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(["./manifest.json", ...RUNTIME]))
-      .catch(error => console.warn("[Glueful SW] precache failed:", error))
-      .finally(() => self.skipWaiting())
-  );
-});
-
-self.addEventListener("activate", event => {
-  event.waitUntil((async () => {
-    const keys = await caches.keys();
-    await Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key)));
-    if (self.registration.navigationPreload) { try { await self.registration.navigationPreload.enable(); } catch (_) {} }
-    await self.clients.claim();
-  })());
-});
-
-self.addEventListener("message", event => {
-  if (event.data?.type === "GLUEFUL_SKIP_WAITING") self.skipWaiting();
-});
-
-self.addEventListener("fetch", event => {
-  const request = event.request;
-  const url = new URL(request.url);
-
-  if (request.method === "GET" && request.mode === "navigate") {
-    event.respondWith((async () => {
-      try {
-        const response = await buildIndex(request, event.preloadResponse);
-        event.waitUntil(cacheIndex(request, response));
-        return response;
-      } catch (error) {
-        console.warn("[Glueful SW] navigation failed:", error);
-        return (await caches.match(request)) || Response.error();
-      }
-    })());
-    return;
-  }
-
-  if (request.method === "GET" && RUNTIME.some(path => url.pathname.endsWith(path.slice(2)))) {
-    event.respondWith((async () => {
-      try {
-        const response = await fetch(request, { cache: "no-store" });
-        if (response.ok) event.waitUntil((async () => {
-          try { await (await caches.open(CACHE_NAME)).put(request, response.clone()); } catch (_) {}
-        })());
-        return response;
-      } catch (_) {
-        return (await caches.match(request)) || Response.error();
-      }
-    })());
-    return;
-  }
-
-  if (request.method === "GET") {
-    event.respondWith((async () => {
-      const cached = await caches.match(request);
-      try {
-        const response = await fetch(request, { cache: "no-store" });
-        if (response.ok) event.waitUntil((async () => {
-          try { await (await caches.open(CACHE_NAME)).put(request, response.clone()); } catch (_) {}
-        })());
-        return response;
-      } catch (_) {
-        return cached || Response.error();
-      }
-    })());
-  }
-});
+self.addEventListener("install",event=>event.waitUntil((async()=>{const cache=await caches.open(CACHE_NAME);await cache.addAll(RUNTIME);await self.skipWaiting()})()));
+self.addEventListener("activate",event=>event.waitUntil((async()=>{const keys=await caches.keys();await Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)));await self.clients.claim()})()));
+self.addEventListener("fetch",event=>{if(event.request.method!=="GET")return;const url=new URL(event.request.url);if(url.origin!==location.origin)return;if(event.request.mode==="navigate"){event.respondWith((async()=>{const network=await fetch(event.request);const text=await network.text();const patched=await injectRuntimeScripts(patchStartupSequence(stripCompetingRuntime(text)));return new Response(patched,{status:network.status,statusText:network.statusText,headers:network.headers})})());return}event.respondWith((async()=>{const cached=await caches.match(event.request);if(cached)return cached;try{const response=await fetch(event.request);if(response.ok)event.waitUntil((async()=>{const c=await caches.open(CACHE_NAME);await c.put(event.request,response.clone())})());return response}catch(e){return cached||Response.error()}})())});
