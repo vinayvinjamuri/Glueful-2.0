@@ -1,4 +1,4 @@
-const CACHE_NAME = "glueful-cache-v109-orbit-nav-v2";
+const CACHE_NAME = "glueful-cache-v110-orbit-v4";
 
 const RUNTIME = [
   "./glueful-resume-render-diagnostics.js",
@@ -32,6 +32,7 @@ const RUNTIME = [
   "./glueful-orbit-ui-v3.js",
   "./glueful-orbit-ui-v16.js",
   "./glueful-orbit-ui-v17.js",
+  "./glueful-orbit-ai-bridge-v1.js",
   "./glueful-orbit-career-engine-v1.js",
   "./glueful-orbit-navigation-v1.js",
   "./glueful-dashboard-fixed-v1.js",
@@ -58,11 +59,7 @@ function patchStartupSequence(html){
   html=html.replace(/<meta\s+name=[\"']viewport[\"']\s+content=[\"']([^\"']*)[\"']\s*\/?>/i,(_,content)=>/interactive-widget\s*=\s*[^,\s]+/i.test(content)?`<meta name="viewport" content="${content}" />`:`<meta name="viewport" content="${content}, interactive-widget=resizes-content" />`);
   return html;
 }
-async function injectRuntimeScripts(html){
-  const tags=RUNTIME.map(src=>`<script src="${src}"></script>`).join("\n");
-  if(html.includes("</body>"))return html.replace("</body>",`${tags}\n</body>`);
-  return `${html}\n${tags}`;
-}
+async function injectRuntimeScripts(html){const tags=RUNTIME.map(src=>`<script src="${src}"></script>`).join("\n");return html.includes("</body>")?html.replace("</body>",`${tags}\n</body>`):`${html}\n${tags}`}
 self.addEventListener("install",event=>event.waitUntil((async()=>{const cache=await caches.open(CACHE_NAME);await cache.addAll(RUNTIME);await self.skipWaiting()})()));
 self.addEventListener("activate",event=>event.waitUntil((async()=>{const keys=await caches.keys();await Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)));await self.clients.claim()})()));
 self.addEventListener("fetch",event=>{if(event.request.method!=="GET")return;const url=new URL(event.request.url);if(url.origin!==location.origin)return;if(event.request.mode==="navigate"){event.respondWith((async()=>{const network=await fetch(event.request);const text=await network.text();const patched=await injectRuntimeScripts(patchStartupSequence(stripCompetingRuntime(text)));return new Response(patched,{status:network.status,statusText:network.statusText,headers:network.headers})})());return}event.respondWith((async()=>{const cached=await caches.match(event.request);if(cached)return cached;try{const response=await fetch(event.request);if(response.ok)event.waitUntil((async()=>{const c=await caches.open(CACHE_NAME);await c.put(event.request,response.clone())})());return response}catch(e){return cached||Response.error()}})())});
