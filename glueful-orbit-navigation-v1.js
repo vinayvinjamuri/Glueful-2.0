@@ -1,104 +1,24 @@
-/* Glueful Orbit navigation v2: robust mobile destination injection. */
-(function () {
-  "use strict";
-  if (window.__GLUEFUL_ORBIT_NAV_V2__) return;
-  window.__GLUEFUL_ORBIT_NAV_V2__ = true;
-
-  const ITEM_ID = "glueful-orbit-nav-item";
-  const STYLE_ID = "glueful-orbit-nav-style-v2";
-
-  function textOf(el) {
-    return [el?.textContent || "", el?.getAttribute?.("aria-label") || "", el?.getAttribute?.("title") || "", el?.getAttribute?.("data-page") || "", el?.getAttribute?.("data-view") || ""].join(" ").replace(/\s+/g, " ").trim().toLowerCase();
-  }
-
-  function installStyle() {
-    if (document.getElementById(STYLE_ID)) return;
-    const s = document.createElement("style");
-    s.id = STYLE_ID;
-    s.textContent = `
-      #${ITEM_ID}{-webkit-tap-highlight-color:transparent;cursor:pointer;}
-      #${ITEM_ID} .orbit-nav-icon{font-size:20px;line-height:1;display:block;}
-      #${ITEM_ID}.glueful-orbit-active{color:var(--accent,#7b36ff)!important;}
-      @media(max-width:700px){#${ITEM_ID}{display:flex!important;flex:1 1 0!important;min-width:0!important;}}
-    `;
-    document.head.appendChild(s);
-  }
-
-  function knownItems(root) {
-    return Array.from(root?.querySelectorAll?.("button,a,[role='button']") || []).filter(el => /dashboard|jobs|applications|resume/.test(textOf(el)));
-  }
-
-  function score(el) {
-    const items = knownItems(el);
-    if (items.length < 2 || items.length > 8) return -1;
-    const text = textOf(el);
-    let score = items.length * 20;
-    if (/dashboard/.test(text)) score += 35;
-    if (/jobs/.test(text)) score += 25;
-    if (/applications|resume/.test(text)) score += 20;
-    const r = el.getBoundingClientRect?.();
-    if (r && r.width > innerWidth * .45 && r.height >= 40 && r.height <= 150) score += 20;
-    if (r && r.bottom >= innerHeight - 30) score += 30;
-    return score;
-  }
-
-  function findNav() {
-    let best = null;
-    let bestScore = -1;
-    const candidates = new Set();
-    document.querySelectorAll("nav,footer,[role='navigation'],button,a,[role='button']").forEach(el => {
-      if (/dashboard|jobs|applications|resume/.test(textOf(el))) {
-        let p = el;
-        for(let i=0;i<8 && p;i++,p=p.parentElement) candidates.add(p);
-      }
-      if (/nav|navigation|bottom|tabbar|mobile/i.test(`${el.id||""} ${el.className||""}`)) candidates.add(el);
-    });
-    for(const el of candidates){
-      const s=score(el);
-      if(s>bestScore){bestScore=s;best=el;}
-    }
-    return bestScore>=55?best:null;
-  }
-
-  function openOrbit() {
-    if(typeof window.gluefulOpenOrbit === "function") {
-      Promise.resolve(window.gluefulOpenOrbit()).catch(e=>console.warn("[Glueful] Orbit open failed",e));
-      return;
-    }
-    const root=document.getElementById("glueful-orbit-v2-root");
-    if(root) root.classList.add("open");
-    else console.warn("[Glueful] Orbit runtime is not ready yet");
-  }
-
-  function ensure() {
-    installStyle();
-    const nav=findNav();
-    if(!nav) return false;
-    let item=document.getElementById(ITEM_ID);
-    if(!item){
-      const sample=knownItems(nav)[0];
-      item=document.createElement(sample?.tagName?.toLowerCase()==="a"?"a":"button");
-      item.id=ITEM_ID;
-      item.type="button";
-      if(item.tagName==="A") item.href="#";
-      item.setAttribute("aria-label","Orbit AI");
-      item.setAttribute("title","Orbit AI");
-      item.innerHTML='<span class="orbit-nav-icon" aria-hidden="true">✦</span><span>Orbit</span>';
-      item.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();item.classList.add("glueful-orbit-active");openOrbit();},true);
-    }
-    if(item.parentElement!==nav) nav.appendChild(item);
-    for(const el of knownItems(nav)){
-      if(el===item || el.dataset.gluefulOrbitBound==="2") continue;
-      el.dataset.gluefulOrbitBound="2";
-      el.addEventListener("click",()=>item.classList.remove("glueful-orbit-active"),{passive:true});
-    }
-    return true;
-  }
-
-  function start(){
-    ensure();
-    [250,750,1500,3000,5000,8000].forEach(t=>setTimeout(ensure,t));
-    new MutationObserver(()=>requestAnimationFrame(ensure)).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:["class","style","hidden"]});
-  }
-  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",start,{once:true}); else start();
+/* Glueful Orbit navigation v3 — exact mobile tab-bar integration. */
+(function(){
+  'use strict';
+  if(window.__GLUEFUL_ORBIT_NAV_V3__)return;
+  window.__GLUEFUL_ORBIT_NAV_V3__=true;
+  const ITEM_ID='glueful-orbit-nav-item',STYLE_ID='glueful-orbit-nav-style-v3';
+  const text=e=>[e?.textContent||'',e?.getAttribute?.('aria-label')||'',e?.getAttribute?.('title')||'',e?.dataset?.page||'',e?.dataset?.view||''].join(' ').replace(/\s+/g,' ').trim().toLowerCase();
+  function style(){if(document.getElementById(STYLE_ID))return;const s=document.createElement('style');s.id=STYLE_ID;s.textContent=`
+    #${ITEM_ID}{-webkit-tap-highlight-color:transparent!important;appearance:none!important;-webkit-appearance:none!important;background:transparent!important;background-image:none!important;border:0!important;box-shadow:none!important;outline:0!important;color:inherit!important;cursor:pointer!important;margin:0!important;padding:0!important;font:inherit!important;text-align:center!important;text-decoration:none!important;}
+    #${ITEM_ID},#${ITEM_ID} *{box-sizing:border-box!important;}
+    #${ITEM_ID}{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:3px!important;line-height:1!important;}
+    #${ITEM_ID} .orbit-nav-icon{width:26px!important;height:26px!important;display:grid!important;place-items:center!important;font-size:19px!important;line-height:1!important;border-radius:9px!important;}
+    #${ITEM_ID} .orbit-nav-label{font-size:11px!important;line-height:1.1!important;font-weight:500!important;}
+    #${ITEM_ID}.glueful-orbit-active{color:#8b5cf6!important;}
+    #${ITEM_ID}.glueful-orbit-active .orbit-nav-icon{background:linear-gradient(135deg,#7440ee,#5731c7)!important;color:#fff!important;}
+    @media(max-width:700px){#${ITEM_ID}{flex:1 1 0!important;min-width:0!important;height:100%!important;min-height:56px!important;max-width:none!important;}}
+  `;document.head.appendChild(s)}
+  function findItems(){return Array.from(document.querySelectorAll('button,a,[role="button"]')).filter(e=>{const t=text(e);return (/dashboard/.test(t)||/^jobs$/.test(t)||/^jobs\s/.test(t))&&!e.closest('#'+ITEM_ID)})}
+  function findNav(){const items=findItems();const dash=items.find(e=>/^dashboard$/.test(text(e))||/dashboard/.test(text(e)));const jobs=items.find(e=>/^jobs$/.test(text(e))||/^jobs\s/.test(text(e)));if(!dash||!jobs)return null;if(dash.parentElement===jobs.parentElement)return dash.parentElement;let a=dash.parentElement,b=jobs.parentElement;for(let i=0;i<7&&a;i++,a=a.parentElement){for(let j=0;j<7&&b;j++,j++,b=b.parentElement){if(a===b)return a}}return null}
+  function make(nav){let item=document.getElementById(ITEM_ID);if(item)return item;const sample=findItems()[0];item=document.createElement(sample?.tagName?.toLowerCase()==='a'?'a':'button');item.id=ITEM_ID;if(item.tagName==='BUTTON')item.type='button';else item.href='#';item.setAttribute('aria-label','Orbit AI');item.setAttribute('title','Orbit AI');item.innerHTML='<span class="orbit-nav-icon" aria-hidden="true">✦</span><span class="orbit-nav-label">Orbit</span>';item.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();item.classList.add('glueful-orbit-active');if(typeof window.gluefulOpenOrbit==='function')window.gluefulOpenOrbit();else document.getElementById('glueful-orbit-v2-root')?.classList.add('open')},true);return item}
+  function ensure(){style();const nav=findNav();if(!nav)return false;let item=make(nav);if(item.parentElement!==nav)nav.appendChild(item);return true}
+  function start(){ensure();[300,800,1600,3000,6000].forEach(t=>setTimeout(ensure,t));new MutationObserver(()=>requestAnimationFrame(ensure)).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','hidden']})}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
