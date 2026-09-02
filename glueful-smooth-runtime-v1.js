@@ -1,7 +1,7 @@
 /* Glueful — Smooth Runtime V1
  * App-wide, non-invasive rendering pass.
  * Keeps feature logic untouched and only improves compositor behavior,
- * image decoding, touch scrolling, and transition handling.
+ * image decoding, and touch scrolling.
  */
 (function(){
   'use strict';
@@ -34,23 +34,18 @@
     optimizeImages(root);
   }
 
-  function reduceExpensiveTransitions(){
+  function installStyle(){
     if(document.getElementById('glueful-smooth-runtime-style')) return;
     const s=document.createElement('style');
     s.id='glueful-smooth-runtime-style';
     s.textContent=`
-      html{ text-rendering:optimizeLegibility; }
-      img{ content-visibility:auto; }
       button,a,[role="button"],input,textarea,select{ -webkit-tap-highlight-color:transparent; }
-      @media (prefers-reduced-motion:no-preference){
-        button,a,[role="button"]{ transition-duration:.16s !important; }
-      }
     `;
     document.head.appendChild(s);
   }
 
   function boot(){
-    reduceExpensiveTransitions();
+    installStyle();
     scan(document);
     if(document.body && !window.__GLUEFUL_SMOOTH_OBSERVER__){
       window.__GLUEFUL_SMOOTH_OBSERVER__=new MutationObserver(mutations=>{
