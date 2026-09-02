@@ -1,61 +1,54 @@
-/* Glueful Gmail bridge v8: only intercept the actual Gmail/Connected Services entry. */
+/* Glueful Gmail bridge v9: direct Connected Services entry only. */
 (function () {
   "use strict";
 
   function openGmail() {
-    if (typeof window.openGmailIntegration === "function") {
-      window.openGmailIntegration();
-      return true;
+    if (typeof window.openGmailIntegration !== "function") {
+      return false;
     }
-    return false;
+    window.openGmailIntegration();
+    return true;
   }
 
   function isGmailEntry(node) {
     if (!(node instanceof Element)) return false;
     if (node.closest(".glueful-gmail-modal-backdrop")) return false;
-
-    // IMPORTANT: inspect only the clickable element itself. Do not inspect
-    // large parent containers, otherwise every item in the account sheet can
-    // inherit the words "Connected services" and open Gmail accidentally.
     const text = (node.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
-    if (text !== "gmail integration" && text !== "connected services") return false;
-
-    return node.matches("button, a, [role='button'], [onclick], .settings-item, .profile-row");
+    return text === "connected services" || text === "gmail integration";
   }
 
-  document.addEventListener("click", function (event) {
-    if (event.target instanceof Element && event.target.closest(".glueful-gmail-modal-backdrop")) return;
-
-    let node = event.target instanceof Element ? event.target : event.target?.parentElement;
-    // Walk only a few levels to find the specific clickable row. We never
-    // accept a generic sheet/container just because it contains the label.
-    for (let i = 0; node && i < 5; i++, node = node.parentElement) {
-      if (!isGmailEntry(node)) continue;
+  function bindEntry(node) {
+    if (!isGmailEntry(node) || node.dataset.gluefulGmailEntryBound === "1") return;
+    node.dataset.gluefulGmailEntryBound = "1";
+    node.addEventListener("click", function (event) {
       if (!openGmail()) return;
       event.preventDefault();
       event.stopPropagation();
       if (event.stopImmediatePropagation) event.stopImmediatePropagation();
-      return;
-    }
-  }, true);
+    }, true);
+  }
 
-  // Keep legacy placeholder handling, but only when the feature name itself
-  // explicitly refers to Gmail or Connected Services.
-  let attempts = 0;
-  const timer = setInterval(function () {
-    attempts++;
-    if (typeof window.showComingSoon === "function" && !window.showComingSoon.__gluefulWrapped) {
-      const original = window.showComingSoon;
-      function wrapped(feature) {
-        const value = String(feature || "").toLowerCase().trim();
-        if (value === "gmail" || value === "gmail integration" || value === "connected services") {
-          return openGmail();
-        }
-        return original.apply(this, arguments);
+  function scan(root) {
+    if (!(root instanceof Element || root instanceof Document)) return;
+    if (root instanceof Element) bindEntry(root);
+    root.querySelectorAll?.("*").forEach(bindEntry);
+  }
+
+  function install() {
+    scan(document);
+    const observer = new MutationObserver(function (mutations) {
+      for (const mutation of mutations) {
+        mutation.addedNodes.forEach(function (node) {
+          if (node.nodeType === 1) scan(node);
+        });
       }
-      wrapped.__gluefulWrapped = true;
-      window.showComingSoon = wrapped;
-    }
-    if (attempts > 120) clearInterval(timer);
-  }, 500);
+    });
+    if (document.body) observer.observe(document.body, { childList: true, subtree: true });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", install, { once: true });
+  } else {
+    install();
+  }
 })();
