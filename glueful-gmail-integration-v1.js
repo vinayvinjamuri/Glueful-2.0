@@ -1,4 +1,4 @@
-/* Glueful Gmail integration v10: single authoritative Gmail entry point. */
+/* Glueful Gmail integration v11: single authoritative Gmail entry point. */
 (function () {
   "use strict";
   const FUNCTION_URL = (window.SUPABASE_URL || "https://xztbhheexianejsvwpva.supabase.co") + "/functions/v1/gmail-application-capture";
@@ -44,7 +44,7 @@
     accounts.innerHTML=`<div class="glueful-gmail-section-label">Connected account${rows.length===1?"":"s"}</div>${rows.map(c=>`<div class="glueful-gmail-account"><div class="glueful-gmail-account-head"><div class="glueful-gmail-logo">${icon()}</div><div class="glueful-gmail-account-main"><div class="glueful-gmail-email">${esc(c.gmail_email||"Gmail account")}</div><div class="glueful-gmail-meta">${esc(fmt(c.last_synced_at))}</div></div><span class="glueful-gmail-pill">Connected</span></div><div class="glueful-gmail-account-actions"><button type="button" data-gmail-sync="${esc(c.id)}">↻ Sync now</button><button type="button" class="danger" data-gmail-disconnect="${esc(c.id)}">Disconnect</button></div></div>`).join("")}<div class="glueful-gmail-section-label">Add another account</div><button type="button" class="glueful-gmail-add" id="glueful-gmail-add"><span>＋</span>Integrate another Gmail</button>`;
     accounts.querySelectorAll("[data-gmail-sync]").forEach(b=>b.addEventListener("click",()=>syncNow(true,b.dataset.gmailSync))); accounts.querySelectorAll("[data-gmail-disconnect]").forEach(b=>b.addEventListener("click",()=>disconnect(b.dataset.gmailDisconnect))); document.getElementById("glueful-gmail-add")?.addEventListener("click",connectAnother);
   }
-  async function loadStatus() { try { gmailStatus=await callGmail("status"); render(); updateDashboardButton(); configureAutoSync(); updateSettingsRows(); } catch(e) { console.warn("[Glueful] Gmail status:",e.message||e); } }
+  async function loadStatus() { try { gmailStatus=await callGmail("status"); render(); updateDashboardButton(); configureAutoSync(); bindSettingsEntries(); } catch(e) { console.warn("[Glueful] Gmail status:",e.message||e); } }
   async function connectAnother() { statusText("Opening Google account picker…"); try { const d=await callGmail("authorize"); if(!d.authorization_url) throw new Error("Google authorization URL was not returned."); window.location.href=d.authorization_url; } catch(e) { statusText(e.message||"Unable to connect Gmail."); } }
   async function disconnect(id) { const c=list().find(x=>x.id===id); if(!c) return; if(!window.confirm(`Disconnect ${c.gmail_email||"this Gmail account"}?`)) return; statusText("Disconnecting…"); try { await callGmail("disconnect",{connection_id:id}); await loadStatus(); statusText("Gmail account disconnected."); } catch(e) { statusText(e.message||"Unable to disconnect Gmail."); } }
   async function syncNow(show=false,id=null) { if(syncInFlight||!gmailStatus.connected) return; syncInFlight=true; updateDashboardButton(); if(show) statusText("Checking Gmail…"); try { const d=await callGmail("sync",id?{connection_id:id}:{}); await loadStatus(); if(show) statusText(`Gmail sync complete: ${Number(d?.imported||0)} new application${Number(d?.imported||0)===1?"":"s"}.`); if(d?.imported&&typeof window.renderApplications==="function") window.renderApplications(); } catch(e) { if(show) statusText(e.message||"Gmail sync failed."); } finally { syncInFlight=false; updateDashboardButton(); } }
@@ -55,24 +55,26 @@
   function openModal() { ensureStyles(); closeModal(); const back=document.createElement("div"); back.className="glueful-gmail-modal-backdrop"; back.innerHTML=`<div class="glueful-gmail-modal" role="dialog" aria-modal="true" aria-label="Gmail integration"><h3>Gmail integration</h3><p id="glueful-gmail-copy">Checking Gmail connection…</p><div id="glueful-gmail-accounts"></div><div class="glueful-gmail-actions" style="margin-top:14px"><button class="glueful-gmail-btn" id="glueful-gmail-primary">Connect Gmail</button><button class="glueful-gmail-btn secondary" id="glueful-gmail-sync" style="display:none">Sync all now</button><button class="glueful-gmail-btn secondary" id="glueful-gmail-close">Close</button></div><div class="glueful-gmail-status" id="glueful-gmail-status"></div></div>`; document.body.appendChild(back); back.addEventListener("click",e=>{if(e.target===back)closeModal();}); document.getElementById("glueful-gmail-close").onclick=closeModal; document.getElementById("glueful-gmail-primary").onclick=connectAnother; document.getElementById("glueful-gmail-sync").onclick=()=>syncNow(true); render(); loadStatus(); }
   function normalizeText(v) { return String(v||"").replace(/\s+/g," ").trim().toLowerCase(); }
   function isGmailEntry(node) { if (!(node instanceof Element)) return false; if (node.closest(".glueful-gmail-modal-backdrop")) return false; const text=normalizeText(node.textContent); return text==="connected services" || text==="gmail integration"; }
-  function installEntryHandler() {
-    if (window.__gluefulGmailEntryHandlerInstalled) return;
-    window.__gluefulGmailEntryHandlerInstalled=true;
-    document.addEventListener("click", function(event) {
-      if (event.target instanceof Element && event.target.closest(".glueful-gmail-modal-backdrop")) return;
-      let node=event.target instanceof Element ? event.target : event.target?.parentElement;
-      for(let i=0; node && i<6; i++, node=node.parentElement) {
-        if(!isGmailEntry(node)) continue;
-        openModal();
-        event.preventDefault();
-        event.stopPropagation();
-        if(event.stopImmediatePropagation) event.stopImmediatePropagation();
-        return;
-      }
-    }, true);
+  function bindSettingsEntries(root=document) {
+    const nodes=[];
+    if(root instanceof Element && isGmailEntry(root)) nodes.push(root);
+    root.querySelectorAll?.("*").forEach(node=>{if(isGmailEntry(node)) nodes.push(node);});
+    nodes.forEach(row=>{
+      if(row.dataset.gluefulGmailEntryBound==="1") return;
+      row.dataset.gluefulGmailEntryBound="1";
+      row.style.cursor="pointer";
+      row.onclick=function(event){ event.preventDefault(); event.stopPropagation(); openModal(); };
+    });
   }
-  function updateSettingsRows() { document.querySelectorAll("button.settings-item, .profile-row").forEach(row=>{ const t=normalizeText(row.textContent); if(t!=="gmail integration"&&t!=="connected services") return; row.onclick=openModal; const s=row.querySelector(".settings-status"); if(s) s.textContent=gmailStatus.connected?`Connected · ${list().length} account${list().length===1?"":"s"}`:"Not connected"; }); }
-  function install() { if(!client()){setTimeout(install,1200);return;} ensureDashboardButton(); installEntryHandler(); updateSettingsRows(); loadStatus(); }
+  function installEntryObserver() {
+    bindSettingsEntries(document);
+    if(window.__gluefulGmailEntryObserver) return;
+    window.__gluefulGmailEntryObserver=new MutationObserver(function(mutations){
+      mutations.forEach(function(m){m.addedNodes.forEach(function(node){if(node.nodeType===1) bindSettingsEntries(node);});});
+    });
+    if(document.body) window.__gluefulGmailEntryObserver.observe(document.body,{childList:true,subtree:true});
+  }
+  function install() { if(!client()){setTimeout(install,1200);return;} ensureDashboardButton(); installEntryObserver(); loadStatus(); }
   window.openGmailIntegration=openModal; window.gluefulGmailSync=syncNow;
   if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",install,{once:true}); else install();
 })();
