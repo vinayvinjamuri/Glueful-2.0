@@ -1,4 +1,4 @@
-/* Glueful runtime loader v38 */
+/* Glueful runtime loader v39 */
 (function(){
   "use strict";
 
@@ -34,12 +34,20 @@
     addEventListener('resize',remove,{passive:true});
   }
 
+  function normalizeText(value){
+    return String(value||'').replace(/\s+/g,' ').trim().toLowerCase();
+  }
+
+  /*
+   * The account sheet is created dynamically and its exact row element can
+   * vary between dashboard revisions. Match the visible row by its exact
+   * label instead of requiring a particular CSS class/tag.
+   */
   function gmailEntry(node){
     if(!(node instanceof Element)) return false;
     if(node.closest('.glueful-gmail-modal-backdrop')) return false;
-    const text=(node.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
-    if(text!=='connected services' && text!=='gmail integration') return false;
-    return node.matches('button,a,[role="button"],[onclick],.settings-item,.profile-row') || node.closest('button,a,[role="button"],[onclick],.settings-item,.profile-row')===node;
+    const text=normalizeText(node.innerText || node.textContent);
+    return text==='connected services' || text==='gmail integration';
   }
 
   let gmailLoading=null;
@@ -50,7 +58,7 @@
     }
     if(!gmailLoading){
       gmailLoading=new Promise(resolve=>{
-        const s=load('./glueful-gmail-integration-v1.js?v=12',resolve);
+        const s=load('./glueful-gmail-integration-v1.js?v=13',resolve);
         if(s?.dataset.gluefulRuntimeLoaded==='1') resolve();
       });
     }
@@ -64,7 +72,7 @@
     window.__gluefulGmailInstantEntry=true;
     document.addEventListener('click',event=>{
       let node=event.target instanceof Element?event.target:event.target?.parentElement;
-      for(let i=0;node&&i<8;i++,node=node.parentElement){
+      for(let i=0;node&&i<12;i++,node=node.parentElement){
         if(!gmailEntry(node)) continue;
         event.preventDefault();
         event.stopPropagation();
@@ -79,7 +87,7 @@
     guard();
     installEntryGuard();
     /* Gmail is critical for the Connected Services entry, so load it immediately. */
-    load('./glueful-gmail-integration-v1.js?v=12');
+    load('./glueful-gmail-integration-v1.js?v=13');
     load('./glueful-dashboard-fixed-v1.js?v=8');
     load('./glueful-dashboard-header-fix-v1.js?v=5');
     load('./glueful-dashboard-hamburger-v2.js?v=5');
