@@ -1,8 +1,8 @@
-/* Glueful Orbit AI bridge v1 — connects the new Orbit surface to the existing Supabase Edge Function. */
+/* Glueful Orbit AI bridge v2 — connects the Orbit surface to the existing Supabase Edge Function. */
 (function(){
   'use strict';
-  if(window.__GLUEFUL_ORBIT_AI_BRIDGE_V1__)return;
-  window.__GLUEFUL_ORBIT_AI_BRIDGE_V1__=true;
+  if(window.__GLUEFUL_ORBIT_AI_BRIDGE_V2__)return;
+  window.__GLUEFUL_ORBIT_AI_BRIDGE_V2__=true;
   const KEY='glueful_orbit_conversation_v2:';
   const client=()=>window.supabaseClient||window.gluefulSupabaseClient||window.gluefulResumeSupabaseClient||null;
   const root=()=>document.getElementById('glueful-orbit-v2-root');
@@ -10,8 +10,8 @@
   function getConversation(id){try{return localStorage.getItem(conversationKey(id))||null}catch(_){return null}}
   function setConversation(id,value){if(!value)return;try{localStorage.setItem(conversationKey(id),value)}catch(_){} }
   function append(r,role,text){
-    const m=r?.querySelector('.orbit4-messages'); if(!m)return;
-    const n=document.createElement('div'); n.className='orbit4-message '+(role==='user'?'user':'assistant'); n.textContent=String(text||''); m.appendChild(n); m.scrollTop=m.scrollHeight; return n;
+    const m=r?.querySelector('.orbit5-messages'); if(!m)return;
+    const n=document.createElement('div'); n.className='orbit5-message '+(role==='user'?'user':'assistant'); n.textContent=String(text||''); m.appendChild(n); m.scrollTop=m.scrollHeight; return n;
   }
   async function ask(message,r,thinking){
     const c=client();
