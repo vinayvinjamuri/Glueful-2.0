@@ -1,22 +1,15 @@
-const CACHE_NAME = "glueful-cache-v146-single-update-surface";
+const CACHE_NAME = "glueful-cache-v147-unified-dashboard";
 
-/*
- * Only lightweight global scripts are injected globally.
- * Jobs / Resume / Orbit / Gmail / Dashboard code is loaded on demand
- * after its corresponding view becomes active.
- *
- * Critical navigation is global because hamburger/profile interaction must
- * never wait for the lazy dashboard feature group to finish booting.
- */
 const RUNTIME = [
   "./glueful-feature-loader-v1.js",
   "./glueful-app-branding-v1.js",
   "./glueful-mobile-update-guard-v2.js",
   "./glueful-resume-studio-supabase-bridge.js",
-  "./glueful-critical-navigation-v1.js"
+  "./glueful-critical-navigation-v1.js",
+  "./glueful-universal-dashboard-v1.js"
 ];
 
-const LEGACY_RUNTIME_NAMES=[
+const LEGACY_RUNTIME_NAMES = [
   "glueful-resume-studio-adobe.js",
   "glueful-resume-studio-v41",
   "glueful-resume-docauth-v50.js",
@@ -52,14 +45,14 @@ function patchStartupSequence(html){
   const fast=`        renderAll();\n        hideGluefulSplash();\n        void loadAll().then(() => renderAll()).catch(error => console.error("[Glueful] Background account hydration failed:", error));`;
   if(html.includes(blocking))html=html.replace(blocking,fast);
   html=html.replace("        await syncPlacementPortalFromCloud(user);","        void syncPlacementPortalFromCloud(user).catch(error => console.warn(\"[Glueful] Placement portal background sync failed:\", error));");
-html=html.replace(/<meta\s+name=["']viewport["']\s+content=["']([^"']*)["']\s*\/?>/i,(_,c)=>/interactive-widget\s*=\s*[^,\s]+/i.test(c)?`<meta name="viewport" content="${c}" />`:`<meta name="viewport" content="${c}, interactive-widget=resizes-content" />`);  return html;
+  html=html.replace(/<meta\s+name=["']viewport["']\s+content=["']([^"']*)["']\s*\/?>/i,(_,c)=>/interactive-widget\s*=\s*[^,\s]+/i.test(c)?`<meta name="viewport" content="${c}" />`:`<meta name="viewport" content="${c}, interactive-widget=resizes-content" />`);
+  return html;
 }
 async function injectRuntimeScripts(html){const tags=RUNTIME.map(src=>`<script src="${src}"></script>`).join("\n");return html.includes("</body>")?html.replace("</body>",`${tags}\n</body>`):`${html}\n${tags}`}
 
 self.addEventListener("install",e=>e.waitUntil((async()=>{
   const c=await caches.open(CACHE_NAME);
   await c.addAll(RUNTIME);
-  /* First install should take control; updates should wait for the user. */
   const clients=await self.clients.matchAll({type:"window",includeUncontrolled:true});
   if(!clients.some(client=>client.controlled)) await self.skipWaiting();
 })()));
