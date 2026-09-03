@@ -1,6 +1,7 @@
-/* Glueful — Feature Loader V1
+/* Glueful — Feature Loader V2
  * Loads feature-specific JavaScript only when its view becomes active.
- * Keeps the initial main thread free from Jobs / Resume / Orbit work.
+ * V2 deliberately yields between feature scripts so route taps can paint
+ * immediately instead of feeling frozen while a feature boots.
  */
 (function () {
   'use strict';
@@ -14,7 +15,8 @@
       './glueful-dashboard-hamburger-v2.js',
       './glueful-dashboard-approved-v1.js',
       './glueful-dashboard-job-network-removal-v1.js',
-      './glueful-profile-instant-open-v1.js'
+      './glueful-profile-instant-open-v1.js',
+      './glueful-navigation-responsive-v1.js'
     ],
     jobs: [
       './glueful-jobs-auth-bootstrap-v1.js',
@@ -67,6 +69,19 @@
 
   const loaded = Object.create(null);
   const loading = Object.create(null);
+  const scheduled = Object.create(null);
+
+  function yieldToBrowser() {
+    return new Promise(function (resolve) {
+      if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(function () {
+          setTimeout(resolve, 0);
+        });
+      } else {
+        setTimeout(resolve, 0);
+      }
+    });
+  }
 
   function loadScript(src) {
     return new Promise(function (resolve, reject) {
@@ -93,6 +108,8 @@
 
     loading[name] = (async function () {
       for (const src of files) {
+        // Let the active view paint before the next feature script executes.
+        await yieldToBrowser();
         try {
           await loadScript(src);
         } catch (error) {
@@ -110,15 +127,35 @@
     return !!el && (el.classList.contains('active') || el.style.display === 'block');
   }
 
+  function scheduleGroup(name) {
+    if (loaded[name] || loading[name] || scheduled[name]) return;
+    scheduled[name] = true;
+    // The extra task after rAF guarantees the current interaction gets a
+    // browser paint before feature initialization begins.
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(function () {
+        setTimeout(function () {
+          scheduled[name] = false;
+          void loadGroup(name);
+        }, 0);
+      });
+    } else {
+      setTimeout(function () {
+        scheduled[name] = false;
+        void loadGroup(name);
+      }, 0);
+    }
+  }
+
   function sync() {
-    if (isActive('view-dashboard')) void loadGroup('dashboard');
-    if (isActive('view-jobs') || document.getElementById('jobs-view')?.closest('.active')) void loadGroup('jobs');
-    if (isActive('view-resume')) void loadGroup('resume');
-    if (isActive('view-gmail')) void loadGroup('gmail');
+    if (isActive('view-dashboard')) scheduleGroup('dashboard');
+    if (isActive('view-jobs') || document.getElementById('jobs-view')?.closest('.active')) scheduleGroup('jobs');
+    if (isActive('view-resume')) scheduleGroup('resume');
+    if (isActive('view-gmail')) scheduleGroup('gmail');
 
     const orbit = document.getElementById('glueful-orbit-v2-root');
     if (orbit && (orbit.classList.contains('open') || orbit.style.display === 'block')) {
-      void loadGroup('orbit');
+      scheduleGroup('orbit');
     }
   }
 
