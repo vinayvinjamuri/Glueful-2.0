@@ -2,6 +2,9 @@
  * Loads feature-specific JavaScript only when its view becomes active.
  * V2 yields between feature scripts and schedules group boot one browser turn
  * after a view becomes active so the view can paint first.
+ *
+ * Orbit AI + Gmail are bootstrapped eagerly so every current Glueful client
+ * receives the integrations even when their views are opened from dynamic UI.
  */
 (function () {
   'use strict';
@@ -161,6 +164,11 @@
   window.gluefulFeatureLoader = { sync: sync, loaded: loaded, groups: Object.keys(GROUPS) };
 
   function boot() {
+    /* Orbit AI and Gmail are global integrations. Bootstrap them regardless
+       of which dynamic view is currently active. This prevents a missing
+       integration when the entry point is created after initial page load. */
+    scheduleGroup('orbit');
+    scheduleGroup('gmail');
     sync();
     if (!document.body) return;
     const observer = new MutationObserver(function (mutations) {
