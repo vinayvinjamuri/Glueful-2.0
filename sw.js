@@ -1,4 +1,4 @@
-const CACHE_NAME = "glueful-cache-v142-idle-feature-boot";
+const CACHE_NAME = "glueful-cache-v143-navigation-loader-fix";
 
 /*
  * Only the lightweight feature loader is injected globally.
