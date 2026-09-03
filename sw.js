@@ -1,15 +1,19 @@
-const CACHE_NAME = "glueful-cache-v143-navigation-loader-fix";
+const CACHE_NAME = "glueful-cache-v144-critical-navigation";
 
 /*
- * Only the lightweight feature loader is injected globally.
+ * Only lightweight global scripts are injected globally.
  * Jobs / Resume / Orbit / Gmail / Dashboard code is loaded on demand
  * after its corresponding view becomes active.
+ *
+ * Critical navigation is global because hamburger/profile interaction must
+ * never wait for the lazy dashboard feature group to finish booting.
  */
 const RUNTIME = [
   "./glueful-feature-loader-v1.js",
   "./glueful-app-branding-v1.js",
   "./glueful-mobile-update-guard-v1.js",
-  "./glueful-resume-studio-supabase-bridge.js"
+  "./glueful-resume-studio-supabase-bridge.js",
+  "./glueful-critical-navigation-v1.js"
 ];
 
 const LEGACY_RUNTIME_NAMES=[
