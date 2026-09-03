@@ -18111,29 +18111,35 @@ document.addEventListener("click", (event)=>{
        PROFILE
     ====================================================== */
 
-    async function openProfile() {
+    function openProfile() {
 
-      const {
-        data
-      } =
-        await supabaseClient.auth
-          .getUser();
+      const sheet = document.getElementById("profile-sheet");
+      const emailEl = document.getElementById("profile-email");
 
+      // PHASE 1 — show the profile UI immediately.
+      // Never make the visible sheet wait for Supabase/auth.
+      if (emailEl) {
+        emailEl.textContent = "Signed in user";
+      }
 
-      document.getElementById(
-        "profile-email"
-      ).textContent =
-        data?.user?.email ||
-        "Signed in user";
+      if (sheet) {
+        sheet.classList.add("open");
+      }
 
-      await loadThemePreference(data?.user);
+      // PHASE 2 — hydrate account data in the background.
+      // A slow auth/network request must never block the UI.
+      supabaseClient.auth.getUser()
+        .then(({ data }) => {
+          if (emailEl) {
+            emailEl.textContent =
+              data?.user?.email || "Signed in user";
+          }
 
-
-      document.getElementById(
-        "profile-sheet"
-      ).classList.add(
-        "open"
-      );
+          return loadThemePreference(data?.user);
+        })
+        .catch(error => {
+          console.warn("[Glueful] Profile hydration failed:", error);
+        });
 
     }
 
@@ -22669,6 +22675,5 @@ console.info('[Glueful Resume Studio] authoritative Adobe controller bootstrappe
 
 })();
 </script>
-
 </body>
 </html>
