@@ -16,7 +16,8 @@
       './glueful-dashboard-header-fix-v1.js',
       './glueful-dashboard-hamburger-v2.js',
       './glueful-dashboard-approved-v1.js',
-      './glueful-dashboard-job-network-removal-v1.js'
+      './glueful-dashboard-job-network-removal-v1.js',
+      './glueful-universal-dashboard-v1.js'
     ],
     jobs: [
       './glueful-jobs-auth-bootstrap-v1.js',
