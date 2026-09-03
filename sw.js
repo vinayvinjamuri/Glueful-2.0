@@ -1,4 +1,4 @@
-const CACHE_NAME = "glueful-cache-v145-premium-update";
+const CACHE_NAME = "glueful-cache-v146-single-update-surface";
 
 /*
  * Only lightweight global scripts are injected globally.
@@ -11,7 +11,7 @@ const CACHE_NAME = "glueful-cache-v145-premium-update";
 const RUNTIME = [
   "./glueful-feature-loader-v1.js",
   "./glueful-app-branding-v1.js",
-  "./glueful-mobile-update-guard-v1.js",
+  "./glueful-mobile-update-guard-v2.js",
   "./glueful-resume-studio-supabase-bridge.js",
   "./glueful-critical-navigation-v1.js"
 ];
