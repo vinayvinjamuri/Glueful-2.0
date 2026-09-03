@@ -1,4 +1,4 @@
-const CACHE_NAME = "glueful-cache-v144-critical-navigation";
+const CACHE_NAME = "glueful-cache-v145-premium-update";
 
 /*
  * Only lightweight global scripts are injected globally.
@@ -57,6 +57,17 @@ function patchStartupSequence(html){
 }
 async function injectRuntimeScripts(html){const tags=RUNTIME.map(src=>`<script src="${src}"></script>`).join("\n");return html.includes("</body>")?html.replace("</body>",`${tags}\n</body>`):`${html}\n${tags}`}
 
-self.addEventListener("install",e=>e.waitUntil((async()=>{const c=await caches.open(CACHE_NAME);await c.addAll(RUNTIME);await self.skipWaiting()})()));
+self.addEventListener("install",e=>e.waitUntil((async()=>{
+  const c=await caches.open(CACHE_NAME);
+  await c.addAll(RUNTIME);
+  /* First install should take control; updates should wait for the user. */
+  const clients=await self.clients.matchAll({type:"window",includeUncontrolled:true});
+  if(!clients.some(client=>client.controlled)) await self.skipWaiting();
+})()));
+
+self.addEventListener("message",e=>{
+  if(e.data?.type==="GLUEFUL_SKIP_WAITING") self.skipWaiting();
+});
+
 self.addEventListener("activate",e=>e.waitUntil((async()=>{const k=await caches.keys();await Promise.all(k.filter(x=>x!==CACHE_NAME).map(x=>caches.delete(x)));await self.clients.claim()})()));
 self.addEventListener("fetch",e=>{if(e.request.method!=="GET")return;const u=new URL(e.request.url);if(u.origin!==location.origin)return;if(e.request.mode==="navigate"){e.respondWith((async()=>{const n=await fetch(e.request);const t=await n.text();const p=await injectRuntimeScripts(patchStartupSequence(stripCompetingRuntime(t)));return new Response(p,{status:n.status,statusText:n.statusText,headers:n.headers})})());return}e.respondWith((async()=>{const c=await caches.match(e.request);if(c)return c;try{const r=await fetch(e.request);if(r.ok)e.waitUntil((async()=>{const x=await caches.open(CACHE_NAME);await x.put(e.request,r.clone())})());return r}catch(err){return c||Response.error()}})())});
