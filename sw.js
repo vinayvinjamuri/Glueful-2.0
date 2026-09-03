@@ -1,4 +1,4 @@
-const CACHE_NAME = "glueful-cache-v139-lazy-features";
+const CACHE_NAME = "glueful-cache-v140-profile-instant-open";
 
 /*
  * Only the lightweight feature loader is injected globally.
