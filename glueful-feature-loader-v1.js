@@ -1,7 +1,7 @@
-/* Glueful — Feature Loader V2
+/* Glueful — Feature Loader V3
  * Loads feature-specific JavaScript only when its view becomes active.
- * V2 deliberately yields between feature scripts so route taps can paint
- * immediately instead of feeling frozen while a feature boots.
+ * V3 keeps feature initialization out of the user's interaction window:
+ * non-critical feature boot waits for an actual browser idle period.
  */
 (function () {
   'use strict';
@@ -108,7 +108,6 @@
 
     loading[name] = (async function () {
       for (const src of files) {
-        // Let the active view paint before the next feature script executes.
         await yieldToBrowser();
         try {
           await loadScript(src);
@@ -127,24 +126,27 @@
     return !!el && (el.classList.contains('active') || el.style.display === 'block');
   }
 
+  function runWhenIdle(callback) {
+    if (typeof requestIdleCallback === 'function') {
+      requestIdleCallback(function () {
+        callback();
+      }, { timeout: 8000 });
+      return;
+    }
+    setTimeout(callback, 1500);
+  }
+
   function scheduleGroup(name) {
     if (loaded[name] || loading[name] || scheduled[name]) return;
     scheduled[name] = true;
-    // The extra task after rAF guarantees the current interaction gets a
-    // browser paint before feature initialization begins.
-    if (typeof requestAnimationFrame === 'function') {
-      requestAnimationFrame(function () {
-        setTimeout(function () {
-          scheduled[name] = false;
-          void loadGroup(name);
-        }, 0);
-      });
-    } else {
-      setTimeout(function () {
-        scheduled[name] = false;
-        void loadGroup(name);
-      }, 0);
-    }
+
+    // Feature boot is enhancement work, not interaction-critical work.
+    // Wait for an actual idle window so opening the drawer and tapping a
+    // destination remains responsive even during startup.
+    runWhenIdle(function () {
+      scheduled[name] = false;
+      void loadGroup(name);
+    });
   }
 
   function sync() {
