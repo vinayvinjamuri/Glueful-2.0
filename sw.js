@@ -1,12 +1,11 @@
-const CACHE_NAME = "glueful-cache-v147-unified-dashboard";
+const CACHE_NAME = "glueful-cache-v148-latest-sync";
 
 const RUNTIME = [
   "./glueful-feature-loader-v1.js",
   "./glueful-app-branding-v1.js",
   "./glueful-mobile-update-guard-v2.js",
   "./glueful-resume-studio-supabase-bridge.js",
-  "./glueful-critical-navigation-v1.js",
-  "./glueful-universal-dashboard-v1.js"
+  "./glueful-critical-navigation-v1.js"
 ];
 
 const LEGACY_RUNTIME_NAMES = [
@@ -48,18 +47,68 @@ function patchStartupSequence(html){
   html=html.replace(/<meta\s+name=["']viewport["']\s+content=["']([^"']*)["']\s*\/?>/i,(_,c)=>/interactive-widget\s*=\s*[^,\s]+/i.test(c)?`<meta name="viewport" content="${c}" />`:`<meta name="viewport" content="${c}, interactive-widget=resizes-content" />`);
   return html;
 }
-async function injectRuntimeScripts(html){const tags=RUNTIME.map(src=>`<script src="${src}"></script>`).join("\n");return html.includes("</body>")?html.replace("</body>",`${tags}\n</body>`):`${html}\n${tags}`}
+function injectRuntimeScripts(html){
+  const tags=RUNTIME.map(src=>`<script src="${src}?v=148"></script>`).join("\n");
+  return html.includes("</body>")?html.replace("</body>",`${tags}\n</body>`):`${html}\n${tags}`;
+}
+function noStoreRequest(request){
+  try{return new Request(request,{cache:"no-store"})}catch(_){return request}
+}
 
-self.addEventListener("install",e=>e.waitUntil((async()=>{
-  const c=await caches.open(CACHE_NAME);
-  await c.addAll(RUNTIME);
-  const clients=await self.clients.matchAll({type:"window",includeUncontrolled:true});
-  if(!clients.some(client=>client.controlled)) await self.skipWaiting();
-})()));
-
-self.addEventListener("message",e=>{
-  if(e.data?.type==="GLUEFUL_SKIP_WAITING") self.skipWaiting();
+self.addEventListener("install",event=>{
+  event.waitUntil(self.skipWaiting());
 });
 
-self.addEventListener("activate",e=>e.waitUntil((async()=>{const k=await caches.keys();await Promise.all(k.filter(x=>x!==CACHE_NAME).map(x=>caches.delete(x)));await self.clients.claim()})()));
-self.addEventListener("fetch",e=>{if(e.request.method!=="GET")return;const u=new URL(e.request.url);if(u.origin!==location.origin)return;if(e.request.mode==="navigate"){e.respondWith((async()=>{const n=await fetch(e.request);const t=await n.text();const p=await injectRuntimeScripts(patchStartupSequence(stripCompetingRuntime(t)));return new Response(p,{status:n.status,statusText:n.statusText,headers:n.headers})})());return}e.respondWith((async()=>{const c=await caches.match(e.request);if(c)return c;try{const r=await fetch(e.request);if(r.ok)e.waitUntil((async()=>{const x=await caches.open(CACHE_NAME);await x.put(e.request,r.clone())})());return r}catch(err){return c||Response.error()}})())});
+self.addEventListener("message",event=>{
+  if(event.data?.type==="GLUEFUL_SKIP_WAITING") self.skipWaiting();
+});
+
+self.addEventListener("activate",event=>event.waitUntil((async()=>{
+  const keys=await caches.keys();
+  await Promise.all(keys.filter(key=>key!==CACHE_NAME).map(key=>caches.delete(key)));
+  await self.clients.claim();
+  const clients=await self.clients.matchAll({type:"window",includeUncontrolled:true});
+  for(const client of clients) client.postMessage({type:"GLUEFUL_SW_ACTIVATED",cache:CACHE_NAME});
+})()));
+
+self.addEventListener("fetch",event=>{
+  if(event.request.method!=="GET")return;
+  const url=new URL(event.request.url);
+  if(url.origin!==location.origin)return;
+
+  if(event.request.mode==="navigate"){
+    event.respondWith((async()=>{
+      try{
+        const network=await fetch(noStoreRequest(event.request));
+        const text=await network.text();
+        const patched=injectRuntimeScripts(patchStartupSequence(stripCompetingRuntime(text)));
+        const headers=new Headers(network.headers);
+        headers.set("Cache-Control","no-store, no-cache, must-revalidate, max-age=0");
+        return new Response(patched,{status:network.status,statusText:network.statusText,headers});
+      }catch(error){
+        const cached=await caches.match(event.request);
+        if(cached)return cached;
+        throw error;
+      }
+    })());
+    return;
+  }
+
+  event.respondWith((async()=>{
+    try{
+      const response=await fetch(noStoreRequest(event.request));
+      if(response.ok){
+        const copy=response.clone();
+        event.waitUntil((async()=>{
+          const cache=await caches.open(CACHE_NAME);
+          await cache.put(event.request,copy);
+        })());
+      }
+      return response;
+    }catch(error){
+      const cached=await caches.match(event.request);
+      if(cached)return cached;
+      throw error;
+    }
+  })());
+});
