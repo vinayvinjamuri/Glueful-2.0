@@ -4,10 +4,10 @@
  */
 (function(){
   'use strict';
-  if(window.__GLUEFUL_DASHBOARD_REFERENCE_STEP6_V1__) return;
-  window.__GLUEFUL_DASHBOARD_REFERENCE_STEP6_V1__=true;
+  if(window.__GLUEFUL_DASHBOARD_REFERENCE_STEP6_V2__) return;
+  window.__GLUEFUL_DASHBOARD_REFERENCE_STEP6_V2__=true;
 
-  const STYLE_ID='glueful-dashboard-reference-step6-v1-style';
+  const STYLE_ID='glueful-dashboard-reference-step6-v2-style';
 
   function active(){
     const d=document.getElementById('view-dashboard');
@@ -19,10 +19,8 @@
     const s=document.createElement('style');
     s.id=STYLE_ID;
     s.textContent=`
-      @media(min-width:1101px){
-        body.glueful-apple-dashboard #view-dashboard .glueful-reference-duplicate-stats{display:none!important}
-      }
-      body.glueful-apple-dashboard #view-dashboard #dashboard-interviews{display:none!important}
+      body.glueful-apple-dashboard #view-dashboard #dashboard-interviews{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;overflow:hidden!important}
+      body.glueful-apple-dashboard #view-dashboard .glueful-reference-duplicate-stats{display:none!important}
     `;
     document.head.appendChild(s);
   }
@@ -31,30 +29,36 @@
     const d=document.getElementById('view-dashboard');
     if(!d||!active()) return;
 
-    const grids=Array.from(d.querySelectorAll('.stat-grid,.stats-grid'))
-      .filter(el=>!el.closest('#'+STYLE_ID));
-
-    // Keep the first dashboard stats surface and suppress later duplicate surfaces.
+    const grids=Array.from(d.querySelectorAll('.stat-grid,.stats-grid'));
     grids.forEach((grid,index)=>{
-      if(index===0) grid.classList.remove('glueful-reference-duplicate-stats');
-      else grid.classList.add('glueful-reference-duplicate-stats');
+      if(index>0) grid.classList.add('glueful-reference-duplicate-stats');
     });
 
     const interviews=d.querySelector('#dashboard-interviews');
-    if(interviews) interviews.style.display='none';
+    if(interviews){
+      interviews.style.display='none';
+      interviews.style.height='0';
+      interviews.style.minHeight='0';
+      interviews.style.margin='0';
+      interviews.style.padding='0';
+    }
 
-    d.querySelectorAll('h1,h2,h3').forEach(el=>{
+    /* The legacy heading is sometimes outside #dashboard-interviews and is
+       rendered as a div rather than h1/h2/h3. Hide only an exact dashboard
+       heading match, never arbitrary text containing these words. */
+    d.querySelectorAll('*').forEach(el=>{
+      if(el===d || el.id===STYLE_ID || el.closest('#'+STYLE_ID)) return;
       const text=(el.textContent||'').trim().replace(/\s+/g,' ').toUpperCase();
-      if(text==='UPCOMING INTERVIEWS' && !el.closest('#dashboard-interviews')){
+      if(text==='UPCOMING INTERVIEWS' && !el.querySelector('*')){
         el.style.display='none';
+        el.style.height='0';
+        el.style.margin='0';
+        el.style.padding='0';
       }
     });
   }
 
-  function sync(){
-    install();
-    if(active()) cleanup();
-  }
+  function sync(){install();if(active())cleanup();}
 
   function start(){
     install();
