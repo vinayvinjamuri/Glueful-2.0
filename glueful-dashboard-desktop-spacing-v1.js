@@ -22,23 +22,23 @@
           max-width:1240px!important;
           margin-left:270px!important;
           margin-right:24px!important;
-          margin-top:-20px!important;
+          margin-top:-45px!important;
           padding:0 0 48px!important;
           box-sizing:border-box!important;
           overflow:visible!important;
           height:auto!important;
           max-height:none!important;
         }
-        /* Keep Add Application beside the fixed Profile control in the top chrome row. */
+        /* Add Application sits beside Profile at the top, but scrolls with the dashboard content. */
         body.glueful-apple-dashboard #view-dashboard .view-header{
           position:relative!important;
           padding-right:150px!important;
           box-sizing:border-box!important;
         }
         body.glueful-apple-dashboard #view-dashboard #glueful-dashboard-header-actions{
-          position:fixed!important;
-          top:23px!important;
-          right:86px!important;
+          position:absolute!important;
+          top:32px!important;
+          right:0!important;
           width:auto!important;
           height:auto!important;
           margin:0!important;
