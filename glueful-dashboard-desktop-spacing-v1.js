@@ -14,6 +14,10 @@
       @media(min-width:1101px){
         body.glueful-apple-dashboard #view-dashboard{
           padding-top:0!important;
+          margin-top:-44px!important;
+          margin-left:238px!important;
+          margin-right:24px!important;
+          width:min(1200px,calc(100vw - 262px))!important;
         }
         body.glueful-apple-dashboard #view-dashboard .view-header{
           margin-top:0!important;
