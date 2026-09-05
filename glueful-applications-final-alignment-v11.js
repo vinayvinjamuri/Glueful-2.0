@@ -1,63 +1,138 @@
-/* Glueful — Applications Final Alignment V11
- * Corrects the remaining desktop/tablet workspace offset and removes the
- * dashboard hamburger from non-dashboard views. Presentation only.
+/* Glueful — Applications Final Alignment V12
+ * Desktop/tablet three-column layout for the persistent sidebar.
+ * Presentation/navigation only; application data and handlers are untouched.
  */
 (function(){
   'use strict';
-  if(window.__GLUEFUL_APPLICATIONS_FINAL_ALIGNMENT_V11__) return;
-  window.__GLUEFUL_APPLICATIONS_FINAL_ALIGNMENT_V11__=true;
-  const STYLE_ID='glueful-applications-final-alignment-v11-style';
+  if(window.__GLUEFUL_APPLICATIONS_FINAL_ALIGNMENT_V12__) return;
+  window.__GLUEFUL_APPLICATIONS_FINAL_ALIGNMENT_V12__=true;
 
   function install(){
-    if(document.getElementById(STYLE_ID)) return;
-    const s=document.createElement('style');s.id=STYLE_ID;
+    const id='glueful-applications-final-alignment-v12-style';
+    if(document.getElementById(id)) return;
+    const s=document.createElement('style');
+    s.id=id;
     s.textContent=`
       @media(min-width:1101px){
+        /* Sidebar: 230px. Left workspace: 250px. Main: 570px. Right: 300px. */
         body #view-applications{
-          position:relative!important;left:-380px!important;
-          width:916px!important;max-width:916px!important;
-          margin-left:373px!important;margin-right:0!important;
-          padding:32px 0 48px!important;box-sizing:border-box!important;
-          overflow:visible!important;height:auto!important;max-height:none!important;
+          position:relative!important;
+          left:0!important;
+          width:720px!important;
+          max-width:720px!important;
+          margin-left:570px!important;
+          margin-right:0!important;
+          padding:32px 0 48px!important;
+          box-sizing:border-box!important;
+          overflow:visible!important;
+          height:auto!important;
+          max-height:none!important;
           transform:none!important;
         }
         body #view-applications .view-header{
-          position:relative!important;top:0!important;width:100%!important;
-          margin:0 0 28px!important;padding:0!important;
+          position:relative!important;
+          display:flex!important;
+          align-items:flex-start!important;
+          justify-content:space-between!important;
+          width:100%!important;
+          min-height:82px!important;
+          margin:0 0 28px!important;
+          padding:0!important;
         }
+
+        /* Applications does not use a desktop hamburger when the sidebar is persistent. */
+        body #view-applications .view-header > button:first-child,
+        body #view-applications .view-header > [aria-label*="menu" i],
+        body #view-applications .view-header > [title*="menu" i],
+        body #view-applications .view-header > .menu,
+        body #view-applications .view-header > .hamburger,
+        body #view-applications .view-header > .menu-button,
+        body #view-applications .view-header > .hamburger-button,
+        body #glueful-dashboard-hamburger,
+        body:not(.glueful-apple-dashboard) [aria-label="Open navigation menu"],
+        body:not(.glueful-apple-dashboard) [title="Open navigation menu"]{
+          display:none!important;
+          visibility:hidden!important;
+          pointer-events:none!important;
+        }
+
+        /* Keep the real Add Application action visible at the top-right. */
+        body #view-applications .view-header > button:not(:first-child),
+        body #view-applications .view-header > a{
+          position:fixed!important;
+          top:23px!important;
+          right:290px!important;
+          z-index:1001!important;
+        }
+
         body #glueful-applications-left-v1{
-          position:fixed!important;left:239px!important;top:208px!important;
-          width:276px!important;display:flex!important;flex-direction:column!important;
-          gap:16px!important;z-index:20!important;
+          position:fixed!important;
+          top:208px!important;
+          left:250px!important;
+          width:290px!important;
+          display:flex!important;
+          flex-direction:column!important;
+          gap:16px!important;
+          z-index:20!important;
         }
         body #glueful-applications-workspace-v1{
-          position:fixed!important;right:28px!important;top:208px!important;
-          width:286px!important;display:flex!important;flex-direction:column!important;
-          gap:16px!important;z-index:20!important;
-        }
-        body:has(#view-applications.active) #glueful-dashboard-hamburger,
-        body:has(#view-applications.active) [aria-label="Open navigation menu"],
-        body:has(#view-applications.active) [title="Open navigation menu"],
-        body:has(#view-applications.active) #bottom-nav,
-        body:has(#view-applications.active) .bottom-nav{
-          display:none!important;visibility:hidden!important;pointer-events:none!important;
+          position:fixed!important;
+          top:208px!important;
+          right:28px!important;
+          width:300px!important;
+          display:flex!important;
+          flex-direction:column!important;
+          gap:16px!important;
+          z-index:20!important;
         }
       }
+
       @media(min-width:701px) and (max-width:1100px){
-        body:has(#view-applications.active) #glueful-dashboard-hamburger,
-        body:has(#view-applications.active) [aria-label="Open navigation menu"],
-        body:has(#view-applications.active) [title="Open navigation menu"],
-        body:has(#view-applications.active) #bottom-nav,
-        body:has(#view-applications.active) .bottom-nav{
-          display:none!important;visibility:hidden!important;pointer-events:none!important;
+        body #glueful-dashboard-hamburger,
+        body:not(.glueful-apple-dashboard) [aria-label="Open navigation menu"],
+        body:not(.glueful-apple-dashboard) [title="Open navigation menu"]{
+          display:none!important;
+          visibility:hidden!important;
+          pointer-events:none!important;
         }
+        body #view-applications{
+          position:relative!important;
+          left:0!important;
+          width:calc(100% - 254px)!important;
+          max-width:none!important;
+          margin-left:230px!important;
+          margin-right:24px!important;
+          padding:28px 0 40px!important;
+          box-sizing:border-box!important;
+        }
+        body #view-applications .view-header > button:first-child{display:none!important;}
+        body #view-applications .view-header > button:not(:first-child),
+        body #view-applications .view-header > a{position:fixed!important;top:23px!important;right:24px!important;z-index:1001!important;}
+      }
+
+      @media(max-width:700px){
+        body #view-applications .view-header > button:first-child{display:block!important;}
       }
     `;
     document.head.appendChild(s);
   }
-  function active(){const v=document.getElementById('view-applications');return !!v&&(v.classList.contains('active')||v.style.display==='block');}
-  function removeMenu(){if(!active())return;const b=document.getElementById('glueful-dashboard-hamburger');if(b)b.remove();document.querySelectorAll('[aria-label="Open navigation menu"],[title="Open navigation menu"]').forEach(function(el){if(el.id!=='glueful-dashboard-hamburger')el.style.setProperty('display','none','important');});}
-  function resetScroll(){if(!active())return;try{history.scrollRestoration='manual';}catch(e){};[document.scrollingElement,document.documentElement,document.body,document.getElementById('view-applications')].forEach(function(el){if(el)el.scrollTop=0;});try{window.scrollTo(0,0);}catch(e){}}
-  function boot(){install();removeMenu();resetScroll();requestAnimationFrame(function(){removeMenu();resetScroll();});setTimeout(function(){removeMenu();resetScroll();},100);setTimeout(function(){removeMenu();resetScroll();},400);}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+
+  function resetScroll(){
+    try{
+      history.scrollRestoration='manual';
+      const view=document.getElementById('view-applications');
+      const roots=[document.scrollingElement,document.documentElement,document.body,view];
+      for(const el of roots){ if(el) el.scrollTop=0; }
+      window.scrollTo(0,0);
+    }catch(e){try{window.scrollTo(0,0);}catch(ignore){}}
+  }
+
+  function start(){
+    install();
+    resetScroll();
+    requestAnimationFrame(()=>{resetScroll();setTimeout(resetScroll,100);setTimeout(resetScroll,400);});
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true});
+  else start();
 })();
