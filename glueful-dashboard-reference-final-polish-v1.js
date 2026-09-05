@@ -1,13 +1,13 @@
-/* Glueful — Dashboard Reference Final Polish V1
- * Presentation only. Matches the approved desktop reference composition.
+/* Glueful — Dashboard Reference Final Polish V2
+ * Presentation only. Expands the approved desktop dashboard composition.
  * Keeps dashboard data, navigation, and existing feature behavior unchanged.
  */
 (function(){
   'use strict';
-  if(window.__GLUEFUL_DASHBOARD_REFERENCE_FINAL_POLISH_V1__)return;
-  window.__GLUEFUL_DASHBOARD_REFERENCE_FINAL_POLISH_V1__=true;
+  if(window.__GLUEFUL_DASHBOARD_REFERENCE_FINAL_POLISH_V2__)return;
+  window.__GLUEFUL_DASHBOARD_REFERENCE_FINAL_POLISH_V2__=true;
 
-  const STYLE_ID='glueful-dashboard-reference-final-polish-v1-style';
+  const STYLE_ID='glueful-dashboard-reference-final-polish-v2-style';
 
   function install(){
     if(document.getElementById(STYLE_ID))return;
@@ -15,11 +15,11 @@
     s.id=STYLE_ID;
     s.textContent=`
       @media(min-width:1101px){
-        /* Pull the dashboard upward so the greeting sits close to the top edge. */
+        /* Keep the approved vertical position, but let the dashboard use the desktop width. */
         body.glueful-apple-dashboard #view-dashboard{
           transform:translate(-53px,-90px)!important;
-          width:calc(100% - 202px)!important;
-          max-width:1240px!important;
+          width:calc(100% - 254px)!important;
+          max-width:none!important;
         }
 
         /* Keep the greeting/header compact like the reference. */
