@@ -1,4 +1,4 @@
-const CACHE_NAME = "glueful-cache-v150-premium-ui";
+const CACHE_NAME = "glueful-cache-v151-premium-ui";
 
 const RUNTIME = [
   "./glueful-feature-loader-v1.js",
@@ -49,7 +49,7 @@ function patchStartupSequence(html){
   return html;
 }
 function injectRuntimeScripts(html){
-  const tags=RUNTIME.map(src=>`<script src="${src}?v=150"></script>`).join("\n");
+  const tags=RUNTIME.map(src=>`<script src="${src}?v=151"></script>`).join("\n");
   return html.includes("</body>")?html.replace("</body>",`${tags}\n</body>`):`${html}\n${tags}`;
 }
 function noStoreRequest(request){
