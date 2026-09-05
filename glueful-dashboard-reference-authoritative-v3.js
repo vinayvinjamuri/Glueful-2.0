@@ -72,7 +72,30 @@
           box-sizing:border-box!important;
         }
 
-        /* Never allow a historical centered shell to shrink the five-card row. */
+        /* Header actions belong to the scrolling dashboard header. Some older
+           layers made this group fixed; force it back into normal header flow. */
+        body.glueful-apple-dashboard #view-dashboard .view-header{
+          position:relative!important;
+        }
+        body.glueful-apple-dashboard #view-dashboard #glueful-dashboard-header-actions{
+          position:absolute!important;
+          top:0!important;
+          right:0!important;
+          left:auto!important;
+          bottom:auto!important;
+          margin:0!important;
+          transform:none!important;
+          z-index:10!important;
+        }
+        body.glueful-apple-dashboard #view-dashboard #glueful-dashboard-header-actions .glueful-approved-application{
+          position:relative!important;
+          top:auto!important;
+          right:auto!important;
+          left:auto!important;
+          transform:none!important;
+        }
+
+        /* Keep the five-card row fully inside the dashboard viewport. */
         body.glueful-apple-dashboard #view-dashboard #glueful-reference-stats-v1{
           width:100%!important;
           max-width:none!important;
@@ -85,10 +108,36 @@
           box-sizing:border-box!important;
         }
 
-        body.glueful-apple-dashboard #view-dashboard #glueful-dashboard-recent-applications-v1{
+        /* Attention rows stay inside the card instead of using the old
+           full-bleed negative margins. This keeps every row aligned with the
+           card edges while preserving the existing data and actions. */
+        body.glueful-apple-dashboard #view-dashboard #glueful-dashboard-attention-v1 .gf-attention-list{
+          margin:16px 0 0!important;
+          display:grid!important;
+          gap:0!important;
+          border-top:1px solid #f0f0f2!important;
           width:100%!important;
-          max-width:none!important;
           box-sizing:border-box!important;
+        }
+        body.glueful-apple-dashboard #view-dashboard #glueful-dashboard-attention-v1 .gf-attention-row{
+          display:grid!important;
+          grid-template-columns:40px minmax(0,1fr) auto!important;
+          gap:16px!important;
+          width:100%!important;
+          min-width:0!important;
+          padding:14px 0!important;
+          border:0!important;
+          border-bottom:1px solid #f0f0f2!important;
+          border-radius:0!important;
+          background:#fff!important;
+          box-sizing:border-box!important;
+          position:relative!important;
+        }
+        body.glueful-apple-dashboard #view-dashboard #glueful-dashboard-attention-v1 .gf-company-mark{
+          width:40px!important;
+          height:40px!important;
+          border-radius:10px!important;
+          font-size:12px!important;
         }
       }
 
@@ -115,6 +164,26 @@
           padding:24px 26px 48px!important;
           box-sizing:border-box!important;
           transform:none!important;
+        }
+        body.glueful-apple-dashboard #view-dashboard .view-header{
+          position:relative!important;
+        }
+        body.glueful-apple-dashboard #view-dashboard #glueful-dashboard-header-actions{
+          position:absolute!important;
+          top:0!important;
+          right:0!important;
+          left:auto!important;
+          bottom:auto!important;
+          transform:none!important;
+        }
+        body.glueful-apple-dashboard #view-dashboard #glueful-dashboard-attention-v1 .gf-attention-list{
+          margin:16px 0 0!important;
+          width:100%!important;
+        }
+        body.glueful-apple-dashboard #view-dashboard #glueful-dashboard-attention-v1 .gf-attention-row{
+          width:100%!important;
+          padding:14px 0!important;
+          box-sizing:border-box!important;
         }
       }
     `;
