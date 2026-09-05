@@ -23,16 +23,22 @@
     try{
       if('serviceWorker' in navigator){
         try{
-          await navigator.serviceWorker.register('./sw.js?v=155',{updateViaCache:'none'});
+          await navigator.serviceWorker.register('./sw.js?v=156',{updateViaCache:'none'});
         }catch(error){
           console.warn('[Glueful] Service Worker registration/update unavailable:',error);
         }
       }
 
       try{
-        await load('./glueful-feature-loader-v1.js?v=155');
+        await load('./glueful-feature-loader-v1.js?v=156');
       }catch(error){
         console.warn('[Glueful] Direct feature-loader bootstrap failed:',error);
+      }
+
+      try{
+        await load('./glueful-dashboard-apple-v1.js?v=1');
+      }catch(error){
+        console.warn('[Glueful] Dashboard visual layer unavailable:',error);
       }
     }catch(error){
       console.warn('[Glueful] Client bootstrap failed:',error);
