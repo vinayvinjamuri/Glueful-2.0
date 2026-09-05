@@ -1,13 +1,11 @@
-const CACHE_NAME = "glueful-cache-v153-premium-ui";
+const CACHE_NAME = "glueful-cache-v154-stable";
 
 const RUNTIME = [
   "./glueful-feature-loader-v1.js",
   "./glueful-app-branding-v1.js",
   "./glueful-mobile-update-guard-v2.js",
   "./glueful-resume-studio-supabase-bridge.js",
-  "./glueful-critical-navigation-v1.js",
-  "./glueful-ui-premium-v1.js",
-  "./glueful-ui-stability-v2.js"
+  "./glueful-critical-navigation-v1.js"
 ];
 
 const LEGACY_RUNTIME_NAMES = [
@@ -36,7 +34,10 @@ const LEGACY_RUNTIME_NAMES = [
   "glueful-jobs-scroll-recovery-v1.js",
   "glueful-jobs-page-scroll-fix-v1.js",
   "glueful-jobs-page-scroll-fix-v2.js",
-  "glueful-jobs-page-scroll-fix-v3.js"
+  "glueful-jobs-page-scroll-fix-v3.js",
+  "glueful-ui-premium-v1.js",
+  "glueful-ui-stability-v1.js",
+  "glueful-ui-stability-v2.js"
 ];
 
 function escapeRegExp(v){return String(v).replace(/[.*+?^${}()|[\\]\\]/g,"\\$&")}
@@ -50,7 +51,7 @@ function patchStartupSequence(html){
   return html;
 }
 function injectRuntimeScripts(html){
-  const tags=RUNTIME.map(src=>`<script src="${src}?v=153"></script>`).join("\n");
+  const tags=RUNTIME.map(src=>`<script src="${src}?v=154"></script>`).join("\n");
   return html.includes("</body>")?html.replace("</body>",`${tags}\n</body>`):`${html}\n${tags}`;
 }
 function noStoreRequest(request){
