@@ -3,17 +3,15 @@
  */
 (function(){
   'use strict';
-  if(window.__GLUEFUL_DASHBOARD_DESKTOP_SPACING_V1__) return;
+  if(window.__GLUEFUL_DASHBOARD_DESKTOP_SPACING_V1__)return;
   window.__GLUEFUL_DASHBOARD_DESKTOP_SPACING_V1__=true;
   const STYLE_ID='glueful-dashboard-desktop-spacing-v1-style';
   function install(){
-    if(document.getElementById(STYLE_ID)) return;
-    const s=document.createElement('style'); s.id=STYLE_ID;
+    if(document.getElementById(STYLE_ID))return;
+    const s=document.createElement('style');s.id=STYLE_ID;
     s.textContent=`
       @media(min-width:1101px){
-        /* Let the browser/page own vertical scrolling instead of nesting a
-           second scrollbar inside the dashboard window. */
-        html,body{overflow-y:auto!important;}
+        html,body{overflow-y:auto!important;overflow-x:hidden!important;}
         body.glueful-apple-dashboard #view-dashboard{
           position:static!important;
           top:auto!important;
@@ -27,11 +25,44 @@
           padding:40px 0 48px!important;
           box-sizing:border-box!important;
           overflow:visible!important;
+          height:auto!important;
+          max-height:none!important;
         }
-        /* Keep the primary action beside the profile control with a clear gap. */
+        /* Keep the Add Application action in the same top row as the profile control. */
+        body.glueful-apple-dashboard #view-dashboard .view-header{
+          position:relative!important;
+          padding-right:150px!important;
+          box-sizing:border-box!important;
+        }
+        body.glueful-apple-dashboard #view-dashboard #glueful-dashboard-header-actions{
+          position:fixed!important;
+          top:134px!important;
+          right:86px!important;
+          width:auto!important;
+          height:auto!important;
+          margin:0!important;
+          padding:0!important;
+          z-index:1100!important;
+          display:flex!important;
+          align-items:center!important;
+          justify-content:flex-end!important;
+          gap:8px!important;
+        }
+        body.glueful-apple-dashboard #view-dashboard #glueful-dashboard-header-actions .glueful-approved-application{
+          position:relative!important;
+          flex:0 0 auto!important;
+          width:160px!important;
+          min-width:160px!important;
+          max-width:160px!important;
+          height:52px!important;
+          min-height:52px!important;
+          margin:0!important;
+          box-sizing:border-box!important;
+          white-space:nowrap!important;
+        }
         body.glueful-apple-dashboard #view-dashboard .view-header button,
         body.glueful-apple-dashboard #view-dashboard .view-header a{
-          margin-right:48px!important;
+          margin-right:0!important;
         }
         body.glueful-apple-dashboard #view-dashboard .view-header{
           margin-top:0!important;
@@ -57,6 +88,24 @@
     `;
     document.head.appendChild(s);
   }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',install,{once:true});
-  else install();
+  function relaxDashboardAncestors(){
+    const dashboard=document.getElementById('view-dashboard');
+    if(!dashboard)return;
+    let node=dashboard.parentElement;
+    let depth=0;
+    while(node&&node!==document.body&&depth<4){
+      node.style.setProperty('overflow-y','visible','important');
+      node.style.setProperty('overflow-x','visible','important');
+      depth++;
+      node=node.parentElement;
+    }
+  }
+  function sync(){
+    install();
+    const dashboard=document.getElementById('view-dashboard');
+    const active=!!dashboard&&(dashboard.classList.contains('active')||dashboard.style.display==='block');
+    if(active)relaxDashboardAncestors();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',sync,{once:true});
+  else sync();
 })();
