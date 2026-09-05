@@ -13,12 +13,18 @@
     s.textContent=`
       @media(min-width:1101px){
         body.glueful-apple-dashboard #view-dashboard{
-          padding-top:56px!important;
-          margin-top:0!important;
-          margin-left:254px!important;
-          margin-right:24px!important;
-          width:min(1240px,calc(100vw - 278px))!important;
+          position:fixed!important;
+          top:40px!important;
+          left:270px!important;
+          right:24px!important;
+          bottom:0!important;
+          width:auto!important;
+          max-width:none!important;
+          margin:0!important;
+          padding:16px 0 36px!important;
           box-sizing:border-box!important;
+          overflow-x:hidden!important;
+          overflow-y:auto!important;
         }
         body.glueful-apple-dashboard #view-dashboard .view-header{
           margin-top:0!important;
