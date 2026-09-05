@@ -24,7 +24,8 @@
       './glueful-dashboard-apple-layout-v1.js?v=2',
       './glueful-dashboard-reference-step1-v1.js?v=1',
       './glueful-dashboard-reference-step2-v1.js?v=1',
-      './glueful-dashboard-reference-step3-v1.js?v=1'
+      './glueful-dashboard-reference-step3-v1.js?v=1',
+      './glueful-dashboard-reference-step4-v1.js?v=1'
     ],
     jobs: [
       './glueful-jobs-auth-bootstrap-v1.js',
