@@ -15,8 +15,8 @@
         body.glueful-apple-dashboard .side-nav,
         body.glueful-apple-dashboard .app-sidebar,
         body.glueful-apple-dashboard #glueful-drawer{
-          width:210px!important;min-width:210px!important;max-width:210px!important;
-          padding-left:12px!important;padding-right:12px!important;
+          width:250px!important;min-width:250px!important;max-width:250px!important;
+          padding-left:16px!important;padding-right:16px!important;
         }
         body.glueful-apple-dashboard .sidebar .drawer-close,
         body.glueful-apple-dashboard .sidebar .close,
@@ -35,8 +35,8 @@
         body.glueful-apple-dashboard #view-profile,
         body.glueful-apple-dashboard #view-saved-jobs,
         body.glueful-apple-dashboard #view-settings{
-          width:min(1200px,calc(100vw - 258px))!important;
-          margin-left:234px!important;margin-right:24px!important;
+          width:min(1200px,calc(100vw - 298px))!important;
+          margin-left:274px!important;margin-right:24px!important;
         }
       }
       @media(min-width:701px) and (max-width:1100px){
@@ -44,8 +44,8 @@
         body.glueful-apple-dashboard .side-nav,
         body.glueful-apple-dashboard .app-sidebar,
         body.glueful-apple-dashboard #glueful-drawer{
-          width:220px!important;max-width:220px!important;
-          padding-left:10px!important;padding-right:10px!important;
+          width:230px!important;max-width:230px!important;
+          padding-left:12px!important;padding-right:12px!important;
         }
       }
       body.glueful-apple-dashboard .sidebar,
