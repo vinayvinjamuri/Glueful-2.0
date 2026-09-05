@@ -23,26 +23,26 @@
     try{
       if('serviceWorker' in navigator){
         try{
-          await navigator.serviceWorker.register('./sw.js?v=150',{updateViaCache:'none'});
+          await navigator.serviceWorker.register('./sw.js?v=151',{updateViaCache:'none'});
         }catch(error){
           console.warn('[Glueful] Service Worker registration/update unavailable:',error);
         }
       }
 
       try{
-        await load('./glueful-feature-loader-v1.js?v=150');
+        await load('./glueful-feature-loader-v1.js?v=151');
       }catch(error){
         console.warn('[Glueful] Direct feature-loader bootstrap failed:',error);
       }
 
       try{
-        await load('./glueful-mobile-update-guard-v2.js?v=150');
+        await load('./glueful-mobile-update-guard-v2.js?v=151');
       }catch(error){
         console.warn('[Glueful] Direct update-guard bootstrap failed:',error);
       }
 
       try{
-        await load('./glueful-ui-premium-v1.js?v=150');
+        await load('./glueful-ui-premium-v1.js?v=151');
       }catch(error){
         console.warn('[Glueful] Premium UI bootstrap failed:',error);
       }
