@@ -22,7 +22,7 @@
           max-width:1240px!important;
           margin-left:270px!important;
           margin-right:24px!important;
-          padding:40px 0 48px!important;
+          padding:20px 0 48px!important;
           box-sizing:border-box!important;
           overflow:visible!important;
           height:auto!important;
