@@ -23,7 +23,8 @@
       './glueful-dashboard-apple-v1.js',
       './glueful-dashboard-apple-layout-v1.js?v=2',
       './glueful-dashboard-reference-step1-v1.js?v=1',
-      './glueful-dashboard-reference-step2-v1.js?v=1'
+      './glueful-dashboard-reference-step2-v1.js?v=1',
+      './glueful-dashboard-reference-step3-v1.js?v=1'
     ],
     jobs: [
       './glueful-jobs-auth-bootstrap-v1.js',
@@ -168,9 +169,6 @@
   window.gluefulFeatureLoader = { sync: sync, loaded: loaded, groups: Object.keys(GROUPS) };
 
   function boot() {
-    /* Orbit AI and Gmail are global integrations. Bootstrap them regardless
-       of which dynamic view is currently active. This prevents a missing
-       integration when the entry point is created after initial page load. */
     scheduleGroup('orbit');
     scheduleGroup('gmail');
     sync();
