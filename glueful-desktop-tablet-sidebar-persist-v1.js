@@ -1,6 +1,6 @@
 /* Glueful — Desktop/Tablet Sidebar Persist V1
- * Keeps the existing navigation drawer permanently open on desktop/tablet
- * for every view except Dashboard. Mobile behavior remains unchanged.
+ * Keeps the existing desktop/tablet sidebar permanently open for every view
+ * except Dashboard. The mobile drawer remains untouched.
  * Presentation only; existing navigation handlers are preserved.
  */
 (function(){
@@ -16,12 +16,12 @@
     s.id=STYLE_ID;
     s.textContent=`
       @media (min-width:701px){
-        /* Dashboard keeps its approved sidebar behavior. Every other view
-           uses the existing drawer as a persistent navigation rail. */
+        /* Dashboard keeps its approved navigation behavior. On every other
+           desktop/tablet view, keep only the real desktop sidebar open.
+           IMPORTANT: #glueful-drawer is the mobile drawer and stays untouched. */
         body:not(.glueful-apple-dashboard) .sidebar,
         body:not(.glueful-apple-dashboard) .side-nav,
-        body:not(.glueful-apple-dashboard) .app-sidebar,
-        body:not(.glueful-apple-dashboard) #glueful-drawer{
+        body:not(.glueful-apple-dashboard) .app-sidebar{
           display:flex!important;
           visibility:visible!important;
           opacity:1!important;
@@ -52,10 +52,8 @@
           pointer-events:none!important;
         }
 
-        /* A persistent rail does not need its open/close control on desktop/tablet. */
-        body:not(.glueful-apple-dashboard) #glueful-dashboard-hamburger,
-        body:not(.glueful-apple-dashboard) #glueful-drawer .drawer-close,
-        body:not(.glueful-apple-dashboard) #glueful-drawer .close{
+        /* Hamburger is unnecessary when the desktop/tablet sidebar is persistent. */
+        body:not(.glueful-apple-dashboard) #glueful-dashboard-hamburger{
           display:none!important;
         }
       }
