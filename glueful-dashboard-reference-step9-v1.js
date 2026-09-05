@@ -35,8 +35,8 @@
         body.glueful-apple-dashboard #view-profile,
         body.glueful-apple-dashboard #view-saved-jobs,
         body.glueful-apple-dashboard #view-settings{
-          width:min(1200px,calc(100vw - 278px))!important;
-          margin-left:254px!important;margin-right:24px!important;
+          width:min(1240px,calc(100vw - 242px))!important;
+          margin-left:218px!important;margin-right:24px!important;
         }
       }
       @media(min-width:701px) and (max-width:1100px){
