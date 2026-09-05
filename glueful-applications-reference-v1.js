@@ -1,14 +1,14 @@
-/* Glueful — Applications Reference UI V2
+/* Glueful — Applications Reference UI V3
  * Presentation-only layer for the Applications page.
  * Matches the locked light Apple-style dashboard shell without changing
  * application data, handlers, forms or navigation behavior.
  */
 (function(){
   'use strict';
-  if(window.__GLUEFUL_APPLICATIONS_REFERENCE_V2__) return;
-  window.__GLUEFUL_APPLICATIONS_REFERENCE_V2__=true;
+  if(window.__GLUEFUL_APPLICATIONS_REFERENCE_V3__) return;
+  window.__GLUEFUL_APPLICATIONS_REFERENCE_V3__=true;
 
-  const STYLE_ID='glueful-applications-reference-v2-style';
+  const STYLE_ID='glueful-applications-reference-v3-style';
 
   function install(){
     if(document.getElementById(STYLE_ID)) return;
@@ -22,8 +22,11 @@
 
       @media(min-width:1101px){
         body #view-applications{
-          position:static!important;width:calc(100% - 294px)!important;max-width:1240px!important;
-          margin-left:270px!important;margin-right:24px!important;margin-top:0!important;
+          position:relative!important;
+          left:-153px!important;
+          width:min(1240px,calc(100vw - 465px))!important;
+          max-width:none!important;
+          margin-left:270px!important;margin-right:0!important;margin-top:0!important;
           padding:32px 0 48px!important;box-sizing:border-box!important;
           overflow:visible!important;height:auto!important;min-height:0!important;max-height:none!important;
         }
@@ -74,16 +77,26 @@
         }
         body #view-applications tr:last-child td{border-bottom:0!important;}
         body #view-applications [class*="status"],body #view-applications .badge,body #view-applications .pill{border-radius:999px!important;}
+
+        /* Keep the page action aligned with the global profile control, like the dashboard. */
+        body #view-applications .view-header > button,
+        body #view-applications .view-header > a{
+          position:fixed!important;
+          top:23px!important;
+          right:290px!important;
+          z-index:1000!important;
+          margin:0!important;
+        }
       }
 
       @media(min-width:701px) and (max-width:1100px){
-        body #view-applications{width:calc(100% - 254px)!important;margin-left:230px!important;margin-right:24px!important;padding:28px 0 40px!important;box-sizing:border-box!important;}
+        body #view-applications{width:calc(100% - 254px)!important;margin-left:230px!important;margin-right:24px!important;padding:28px 0 40px!important;box-sizing:border-box!important;left:0!important;}
         body #view-applications .view-header{margin-bottom:22px!important;}
         body #view-applications .view-title{font-size:32px!important;}
       }
 
       @media(max-width:700px){
-        body #view-applications{width:100%!important;margin:0!important;padding:16px 12px 96px!important;box-sizing:border-box!important;}
+        body #view-applications{width:100%!important;margin:0!important;padding:16px 12px 96px!important;box-sizing:border-box!important;left:0!important;}
         body #view-applications .view-header{display:block!important;margin:0 0 18px!important;}
         body #view-applications .view-title{font-size:26px!important;line-height:1.08!important;letter-spacing:-.6px!important;margin:0 0 5px!important;}
         body #view-applications .view-subtitle{font-size:13px!important;line-height:1.35!important;}
