@@ -1,14 +1,14 @@
-/* Glueful — Applications Reference UI V3
+/* Glueful — Applications Reference UI V4
  * Presentation-only layer for the Applications page.
  * Matches the locked light Apple-style dashboard shell without changing
  * application data, handlers, forms or navigation behavior.
  */
 (function(){
   'use strict';
-  if(window.__GLUEFUL_APPLICATIONS_REFERENCE_V3__) return;
-  window.__GLUEFUL_APPLICATIONS_REFERENCE_V3__=true;
+  if(window.__GLUEFUL_APPLICATIONS_REFERENCE_V4__) return;
+  window.__GLUEFUL_APPLICATIONS_REFERENCE_V4__=true;
 
-  const STYLE_ID='glueful-applications-reference-v3-style';
+  const STYLE_ID='glueful-applications-reference-v4-style';
 
   function install(){
     if(document.getElementById(STYLE_ID)) return;
@@ -23,9 +23,9 @@
       @media(min-width:1101px){
         body #view-applications{
           position:relative!important;
-          left:-153px!important;
-          width:min(1240px,calc(100vw - 465px))!important;
-          max-width:none!important;
+          left:-261px!important;
+          width:1240px!important;
+          max-width:calc(100vw - 424px)!important;
           margin-left:270px!important;margin-right:0!important;margin-top:0!important;
           padding:32px 0 48px!important;box-sizing:border-box!important;
           overflow:visible!important;height:auto!important;min-height:0!important;max-height:none!important;
