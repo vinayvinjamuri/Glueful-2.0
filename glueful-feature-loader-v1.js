@@ -21,7 +21,8 @@
       './glueful-dashboard-approved-v1.js',
       './glueful-dashboard-job-network-removal-v1.js',
       './glueful-dashboard-apple-v1.js',
-      './glueful-dashboard-apple-layout-v1.js?v=2'
+      './glueful-dashboard-apple-layout-v1.js?v=2',
+      './glueful-dashboard-reference-step1-v1.js?v=1'
     ],
     jobs: [
       './glueful-jobs-auth-bootstrap-v1.js',
