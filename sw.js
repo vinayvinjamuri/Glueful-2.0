@@ -1,4 +1,4 @@
-const CACHE_NAME = "glueful-cache-v151-premium-ui";
+const CACHE_NAME = "glueful-cache-v152-premium-ui";
 
 const RUNTIME = [
   "./glueful-feature-loader-v1.js",
@@ -6,7 +6,8 @@ const RUNTIME = [
   "./glueful-mobile-update-guard-v2.js",
   "./glueful-resume-studio-supabase-bridge.js",
   "./glueful-critical-navigation-v1.js",
-  "./glueful-ui-premium-v1.js"
+  "./glueful-ui-premium-v1.js",
+  "./glueful-ui-stability-v1.js"
 ];
 
 const LEGACY_RUNTIME_NAMES = [
@@ -44,12 +45,12 @@ function patchStartupSequence(html){
   const blocking=`        await loadAll();\n\n        renderAll();\n\n        /*\n         * The authenticated app is now ready:\n         * session + user data + rendering are complete.\n         */\n        hideGluefulSplash();`;
   const fast=`        renderAll();\n        hideGluefulSplash();\n        void loadAll().then(() => renderAll()).catch(error => console.error("[Glueful] Background account hydration failed:", error));`;
   if(html.includes(blocking))html=html.replace(blocking,fast);
-  html=html.replace("        await syncPlacementPortalFromCloud(user);","        void syncPlacementPortalFromCloud(user).catch(error => console.warn(\"[Glueful] Placement portal background sync failed:\", error));");
+  html=html.replace("        await syncPlacementPortalFromCloud(user);","        void syncPlacementPortalFromCloud(user).catch(error => console.warn(\"[Glueful] Placement portal background sync failed:\",error));");
   html=html.replace(/<meta\s+name=["']viewport["']\s+content=["']([^"']*)["']\s*\/?>/i,(_,c)=>/interactive-widget\s*=\s*[^,\s]+/i.test(c)?`<meta name="viewport" content="${c}" />`:`<meta name="viewport" content="${c}, interactive-widget=resizes-content" />`);
   return html;
 }
 function injectRuntimeScripts(html){
-  const tags=RUNTIME.map(src=>`<script src="${src}?v=151"></script>`).join("\n");
+  const tags=RUNTIME.map(src=>`<script src="${src}?v=152"></script>`).join("\n");
   return html.includes("</body>")?html.replace("</body>",`${tags}\n</body>`):`${html}\n${tags}`;
 }
 function noStoreRequest(request){
