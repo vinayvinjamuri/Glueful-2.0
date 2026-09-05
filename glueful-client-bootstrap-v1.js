@@ -5,7 +5,7 @@
 (function(){
   'use strict';
   if(window.__GLUEFUL_CLIENT_BOOTSTRAP_V1__) return;
-  window.__GLUEFUL_CLIENT_BOOTSTRAP_VV1__ = true;
+  window.__GLUEFUL_CLIENT_BOOTSTRAP_V1__ = true;
 
   (function installPrepaintGate(){
     var root=document.documentElement;
