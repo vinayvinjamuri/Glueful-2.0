@@ -7,7 +7,6 @@
   if(window.__GLUEFUL_CLIENT_BOOTSTRAP_V1__) return;
   window.__GLUEFUL_CLIENT_BOOTSTRAP_V1__ = true;
 
-  /* Keep the old HTML shell from flashing while the current feature runtime loads. */
   (function installPrepaintGate(){
     var root=document.documentElement;
     if(root) root.classList.add('glueful-booting');
@@ -23,7 +22,6 @@
     };
   })();
 
-  /* Remove the legacy startup splash before the application paints. */
   (function removeLegacySplash(){
     var style=document.createElement('style');
     style.id='glueful-no-startup-splash-v1';
@@ -57,7 +55,7 @@
   async function boot(){
     try{
       if('serviceWorker' in navigator){try{await navigator.serviceWorker.register('./sw.js?v=158',{updateViaCache:'none'});}catch(error){console.warn('[Glueful] Service Worker registration/update unavailable:',error);}}
-      try{await load('./glueful-feature-loader-v1.js?v=160');}catch(error){console.warn('[Glueful] Direct feature-loader bootstrap failed:',error);}
+      try{await load('./glueful-feature-loader-v1.js?v=161');}catch(error){console.warn('[Glueful] Direct feature-loader bootstrap failed:',error);}
       try{await load('./glueful-dashboard-apple-v1.js?v=1');}catch(error){console.warn('[Glueful] Dashboard visual layer unavailable:',error);}
       await waitForFinalRuntime(5000);
     }catch(error){console.warn('[Glueful] Client bootstrap failed:',error);}
