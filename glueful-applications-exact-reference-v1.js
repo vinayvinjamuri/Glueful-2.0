@@ -1,6 +1,5 @@
 /* Glueful — Applications Exact Reference V1
- * Matches the approved Applications reference composition:
- * persistent sidebar, main applications column, and Search Progress at the top of the right rail.
+ * Final desktop composition matching the approved Applications reference.
  * Presentation only; existing application data and handlers remain untouched.
  */
 (function(){
@@ -15,13 +14,12 @@
     s.id=id;
     s.textContent=`
       @media(min-width:1101px){
-        /* Reference geometry: 264px navigation, 52px breathing room,
-           872px applications workspace, 44px gap, 358px right rail. */
         body #view-applications{
           position:relative!important;
-          left:316px!important;
-          width:872px!important;
-          max-width:872px!important;
+          left:28px!important;
+          width:min(920px,calc(100vw - 28px - 380px))!important;
+          max-width:920px!important;
+          min-width:0!important;
           margin:0!important;
           padding:18px 0 48px!important;
           box-sizing:border-box!important;
@@ -31,57 +29,46 @@
           max-height:none!important;
         }
         body #view-applications .view-header{
+          position:relative!important;
+          display:flex!important;
+          align-items:flex-start!important;
+          justify-content:space-between!important;
+          width:100%!important;
           min-height:82px!important;
           margin:0 0 28px!important;
           padding:0!important;
         }
-        body #view-applications .view-title{
-          font-size:36px!important;
-          line-height:1.08!important;
-          letter-spacing:-1.2px!important;
-          margin:0 0 6px!important;
-        }
+        body #view-applications .view-title{font-size:36px!important;line-height:1.08!important;letter-spacing:-1.2px!important;margin:0 0 6px!important;}
         body #view-applications .view-subtitle{font-size:16px!important;margin:0!important;}
-        body #view-applications input,body #view-applications select,body #view-applications textarea{
-          min-height:44px!important;border:1px solid #e5e5ea!important;border-radius:12px!important;
-          background:#fff!important;color:#1d1d1f!important;box-sizing:border-box!important;
-        }
-        body #view-applications .application-card,body #view-applications .job-application-card,body #view-applications .card{
-          background:#fff!important;color:#1d1d1f!important;border:1px solid #e5e5ea!important;
-          border-radius:16px!important;box-shadow:0 8px 24px rgba(0,0,0,.035)!important;
-        }
-        /* Desktop/tablet persistent navigation: no hamburger. */
-        body #glueful-dashboard-hamburger,
-        body:not(.glueful-apple-dashboard) [aria-label="Open navigation menu"],
-        body:not(.glueful-apple-dashboard) [title="Open navigation menu"]{
-          display:none!important;visibility:hidden!important;pointer-events:none!important;
-        }
-        /* Keep the top Add control in the header rather than over the list. */
-        body #view-applications .view-header > button:not(:first-child),
-        body #view-applications .view-header > a{
-          position:fixed!important;top:16px!important;right:350px!important;z-index:1001!important;margin:0!important;
-        }
-        /* Old left-side workspace is intentionally gone. */
-        body #glueful-applications-left-v1{display:none!important;visibility:hidden!important;}
-        /* Exact right rail: Search Progress first. */
+        body #view-applications input,body #view-applications select,body #view-applications textarea{min-height:44px!important;border:1px solid #e5e5ea!important;border-radius:12px!important;background:#fff!important;color:#1d1d1f!important;box-sizing:border-box!important;}
+        body #view-applications .application-card,body #view-applications .job-application-card,body #view-applications .card{background:#fff!important;color:#1d1d1f!important;border:1px solid #e5e5ea!important;border-radius:16px!important;box-shadow:0 8px 24px rgba(0,0,0,.035)!important;}
+        body #view-applications > *:not(#glueful-applications-workspace-v1){box-sizing:border-box!important;}
+        body #view-applications .view-header > button,body #view-applications .view-header > a{position:fixed!important;top:16px!important;right:335px!important;z-index:1001!important;margin:0!important;}
         body #glueful-applications-workspace-v1{
           position:fixed!important;
           top:88px!important;
-          right:42px!important;
-          width:358px!important;
+          right:12px!important;
+          width:340px!important;
+          max-width:340px!important;
           display:flex!important;
           flex-direction:column!important;
           gap:16px!important;
-          z-index:20!important;
+          z-index:900!important;
+          box-sizing:border-box!important;
         }
-        .gf-insight-card{
-          background:#fff;border:1px solid #e5e5ea;border-radius:18px;padding:20px;
-          box-shadow:0 10px 30px rgba(0,0,0,.045);box-sizing:border-box;
-        }
+        body #glueful-applications-workspace-v1 > *{width:100%!important;max-width:none!important;box-sizing:border-box!important;}
+        body #glueful-applications-workspace-v1 > :first-child{order:1!important;}
+        body #glueful-applications-workspace-v1 > :nth-child(2){order:2!important;}
+        body #glueful-applications-workspace-v1 > :nth-child(3){order:3!important;}
+        body #glueful-applications-workspace-v1 > :nth-child(4){order:4!important;}
+        body #glueful-dashboard-hamburger,body:not(.glueful-apple-dashboard) [aria-label="Open navigation menu"],body:not(.glueful-apple-dashboard) [title="Open navigation menu"]{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+        body #glueful-applications-left-v1,body #view-applications .glueful-applications-search-progress,body #view-applications .glueful-applications-focus-today,body #view-applications [data-glueful-applications-left-rail]{display:none!important;visibility:hidden!important;}
+        .gf-insight-card{background:#fff;border:1px solid #e5e5ea;border-radius:18px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.045);box-sizing:border-box;}
         .gf-progress-card{min-height:172px!important;}
         .gf-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px;}
         .gf-card-head h3{margin:0;font-size:17px;letter-spacing:-.25px;color:#1d1d1f;}
         .gf-card-head p{margin:4px 0 0;font-size:12px;color:#86868b;}
+        .gf-card-head a{font-size:12px;color:#5146e5;text-decoration:none;font-weight:600;}
         .gf-goal-value{font-size:12px;color:#1d1d1f;align-self:flex-start;margin-top:2px;}
         .gf-progress{height:8px;border-radius:99px;background:#eeeef4;overflow:hidden;}
         .gf-progress span{display:block;width:50%;height:100%;border-radius:99px;background:linear-gradient(90deg,#6d3df5,#3578ff);}
@@ -95,7 +82,7 @@
         .gf-action-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid #f0f0f2;}.gf-action-icon{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#f4f5f8;color:#65708a;font-size:17px;flex:0 0 auto;}.gf-action-icon.green{background:#eafaf2;color:#12a76a;}.gf-action-row b{display:block;font-size:12px;color:#1d1d1f;}.gf-action-row small{display:block;margin-top:3px;font-size:11px;color:#86868b;}.gf-action-row small.attention{color:#ef4444;}.gf-quick-card button{width:100%;height:40px;margin-top:8px;border:1px solid #e5e5ea;border-radius:11px;background:#fafafd;color:#30343b;text-align:left;padding:0 12px;font-size:12px;cursor:pointer;}
       }
       @media(min-width:701px) and (max-width:1100px){
-        body #glueful-applications-left-v1,body #glueful-applications-workspace-v1{display:none!important;}
+        body #glueful-applications-workspace-v1{display:none!important;}
         body #view-applications{width:calc(100% - 254px)!important;max-width:none!important;margin-left:230px!important;margin-right:24px!important;padding:28px 0 40px!important;left:0!important;box-sizing:border-box!important;transform:none!important;}
         body #glueful-dashboard-hamburger{display:none!important;}
       }
