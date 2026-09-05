@@ -31,3 +31,37 @@ function render(){const d=document.getElementById('view-dashboard');if(!d||!(d.c
 function start(){installStyle();document.body.classList.add('glueful-premium-ui');[500,1500,3000].forEach(t=>setTimeout(render,t));document.addEventListener('click',()=>{setTimeout(render,200);setTimeout(render,800)},true);window.addEventListener('resize',render,{passive:true})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
+
+/* Responsive shell correction: keep the existing dashboard/functionality, but let the visual layer actually use the available desktop/tablet width. */
+(function(){
+'use strict';
+const ID='glueful-premium-shell-v1';
+function install(){
+ if(document.getElementById(ID))return;
+ const s=document.createElement('style');s.id=ID;s.textContent=`
+@media (min-width:1101px){
+ body.glueful-premium-ui{overflow-x:hidden!important;background:#f6f7f9!important}
+ body.glueful-premium-ui .bottom-nav{display:none!important}
+ body.glueful-premium-ui .sidebar,body.glueful-premium-ui .side-nav,body.glueful-premium-ui .app-sidebar{display:flex!important;visibility:visible!important;opacity:1!important;position:fixed!important;left:0!important;top:0!important;bottom:0!important;width:236px!important;min-width:236px!important;max-width:236px!important;height:100vh!important;z-index:1000!important;box-sizing:border-box!important;flex-direction:column!important}
+ body.glueful-premium-ui #view-dashboard,body.glueful-premium-ui #view-jobs,body.glueful-premium-ui #view-applications,body.glueful-premium-ui #view-interviews,body.glueful-premium-ui #view-profile,body.glueful-premium-ui #view-saved-jobs,body.glueful-premium-ui #view-settings{width:min(1200px,calc(100vw - 284px))!important;max-width:1200px!important;margin-left:260px!important;margin-right:24px!important;box-sizing:border-box!important}
+ body.glueful-premium-ui #view-dashboard{padding-top:24px!important;padding-bottom:32px!important}
+ body.glueful-premium-ui #view-dashboard .view-header{min-height:64px!important;margin-bottom:18px!important}
+ body.glueful-premium-ui #view-dashboard .stat-grid,body.glueful-premium-ui #view-dashboard .stats-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:14px!important;margin-bottom:18px!important}
+ body.glueful-premium-ui #view-dashboard .stat-card{min-height:126px!important;padding:18px!important;border-radius:18px!important}
+ body.glueful-premium-ui #view-dashboard .heat-card{background:#fff!important;color:#17181b!important;border:1px solid #e7e9ee!important;box-shadow:0 8px 30px rgba(24,31,48,.055)!important}
+ body.glueful-premium-ui #view-dashboard .heat-card .activity-month,body.glueful-premium-ui #view-dashboard .heat-card .activity-label,body.glueful-premium-ui #view-dashboard .heat-card .heat-hint,body.glueful-premium-ui #view-dashboard .heat-card .heat-legend{color:#747985!important}
+ body.glueful-premium-ui #view-dashboard .heat-card .activity-nav{background:#f7f8fa!important;border:1px solid #e2e5ea!important;color:#30343b!important}
+ body.glueful-premium-ui #view-dashboard .heat-card .heat-cell{border-color:#e6e9ee!important}
+ body.glueful-premium-ui #view-dashboard #dashboard-interviews .empty-state{background:#fff!important;color:#747985!important;border:1px solid #e7e9ee!important;border-radius:18px!important;box-shadow:0 8px 30px rgba(24,31,48,.055)!important}
+}
+@media (min-width:701px) and (max-width:1100px){
+ body.glueful-premium-ui .bottom-nav{display:none!important}
+ body.glueful-premium-ui #view-dashboard,body.glueful-premium-ui #view-jobs,body.glueful-premium-ui #view-applications,body.glueful-premium-ui #view-interviews,body.glueful-premium-ui #view-profile,body.glueful-premium-ui #view-saved-jobs,body.glueful-premium-ui #view-settings{width:calc(100% - 40px)!important;max-width:1100px!important;margin:0 auto!important;box-sizing:border-box!important}
+ body.glueful-premium-ui #view-dashboard{padding:20px!important}
+ body.glueful-premium-ui #view-dashboard .stat-grid,body.glueful-premium-ui #view-dashboard .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+`;
+document.head.appendChild(s);
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
+})();
