@@ -25,7 +25,7 @@
       }
       try{await load('./glueful-desktop-tablet-sidebar-persist-v2.js?v=6');}
       catch(error){console.warn('[Glueful] Persistent sidebar layer unavailable:',error);}
-      try{await load('./glueful-feature-loader-v1.js?v=174');}
+      try{await load('./glueful-feature-loader-v1.js?v=175');}
       catch(error){console.warn('[Glueful] Feature loader unavailable:',error);}
       try{await load('./glueful-dashboard-apple-v1.js?v=1');}
       catch(error){console.warn('[Glueful] Dashboard visual layer unavailable:',error);}
