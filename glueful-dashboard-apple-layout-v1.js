@@ -7,6 +7,7 @@
   window.__GLUEFUL_DASHBOARD_APPLE_LAYOUT_V1__=true;
 
   const STYLE_ID='glueful-dashboard-apple-layout-v1';
+  const SHELL_CLASS='glueful-dashboard-wide-shell-v1';
 
   function install(){
     if(document.getElementById(STYLE_ID)) return;
@@ -22,6 +23,13 @@
           margin-right:auto!important;
           box-sizing:border-box!important;
         }
+        body.glueful-apple-dashboard .${SHELL_CLASS}{
+          width:100%!important;
+          max-width:none!important;
+          min-width:0!important;
+          box-sizing:border-box!important;
+          align-self:stretch!important;
+        }
       }
 
       /* Desktop/tablet application summary stays balanced as the window grows. */
@@ -32,8 +40,7 @@
         }
       }
 
-      /* Replace the oversized legacy heatmap cells with compact, scannable cells.
-         The existing cells remain clickable/data-backed; only their presentation changes. */
+      /* Compact activity grid; existing cells/data remain untouched. */
       body.glueful-apple-dashboard #view-dashboard .heat-grid{
         display:grid!important;
         grid-template-columns:repeat(7,minmax(0,1fr))!important;
@@ -109,11 +116,36 @@
     return !!d&&(d.classList.contains('active')||d.style.display==='block');
   }
 
-  function sync(){
-    install();
-    document.body.classList.toggle('glueful-apple-dashboard',active());
+  function widenShell(){
+    if(window.matchMedia && !window.matchMedia('(min-width:701px)').matches) return;
+    const d=document.getElementById('view-dashboard');
+    if(!d) return;
+    let node=d.parentElement;
+    let depth=0;
+    while(node && node !== document.body && depth < 5){
+      const rect=node.getBoundingClientRect();
+      if(rect.width < Math.min(window.innerWidth - 80, 1000)){
+        node.classList.add(SHELL_CLASS);
+        break;
+      }
+      node=node.parentElement;
+      depth++;
+    }
   }
 
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',sync,{once:true});
-  else sync();
+  function sync(){
+    install();
+    const on=active();
+    document.body.classList.toggle('glueful-apple-dashboard',on);
+    if(on) widenShell();
+  }
+
+  function start(){
+    sync();
+    document.addEventListener('click',function(){setTimeout(sync,250);},true);
+    window.addEventListener('resize',sync,{passive:true});
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true});
+  else start();
 })();
