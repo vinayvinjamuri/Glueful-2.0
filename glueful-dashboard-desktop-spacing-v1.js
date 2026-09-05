@@ -13,11 +13,12 @@
     s.textContent=`
       @media(min-width:1101px){
         body.glueful-apple-dashboard #view-dashboard{
-          padding-top:0!important;
+          padding-top:56px!important;
           margin-top:0!important;
-          margin-left:167px!important;
+          margin-left:254px!important;
           margin-right:24px!important;
-          width:min(1240px,calc(100vw - 215px))!important;
+          width:min(1240px,calc(100vw - 278px))!important;
+          box-sizing:border-box!important;
         }
         body.glueful-apple-dashboard #view-dashboard .view-header{
           margin-top:0!important;
