@@ -14,13 +14,16 @@
       @media(min-width:1101px){
         body.glueful-apple-dashboard #view-dashboard{
           padding-top:0!important;
-          margin-top:-89px!important;
+          margin-top:0!important;
+          margin-left:202px!important;
+          margin-right:24px!important;
+          width:min(1240px,calc(100vw - 250px))!important;
         }
         body.glueful-apple-dashboard #view-dashboard .view-header{
           margin-top:0!important;
-          margin-bottom:0!important;
+          margin-bottom:12px!important;
           padding-top:0!important;
-          padding-bottom:3px!important;
+          padding-bottom:12px!important;
         }
         body.glueful-apple-dashboard #view-dashboard .view-title{
           margin-top:0!important;
