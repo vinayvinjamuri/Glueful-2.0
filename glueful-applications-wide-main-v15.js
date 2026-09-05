@@ -1,6 +1,6 @@
 /* Glueful — Applications Wide Main V15
- * Gives the Applications list more usable width while keeping the right rail
- * separated and visible. Presentation only; application data/handlers untouched.
+ * Final reference geometry for the desktop Applications view.
+ * Presentation only; application data and existing handlers are untouched.
  */
 (function(){
   'use strict';
@@ -13,61 +13,62 @@
     const s=document.createElement('style');
     s.id=id;
     s.textContent=`
-      @media(min-width:1051px){
-        /* Persistent 230px sidebar + 20px gap + main workspace + 24px gap + right rail. */
+      @media(min-width:1101px){
+        /* Reference desktop geometry: persistent sidebar, wide center list,
+           dedicated right rail. */
         body #view-applications{
           position:relative!important;
-          left:0!important;
-          margin-left:250px!important;
-          margin-right:0!important;
-          width:calc(100vw - 250px - 320px)!important;
-          max-width:1000px!important;
-          min-width:520px!important;
-          padding:28px 0 48px!important;
-          box-sizing:border-box!important;
+          left:auto!important;
+          top:auto!important;
+          width:auto!important;
+          max-width:none!important;
+          min-width:0!important;
+          margin:0 0 0 264px!important;
+          padding:24px 28px 48px!important;
           transform:none!important;
-          overflow:visible!important;
-          height:auto!important;
-          max-height:none!important;
-        }
-
-        /* Make the actual application controls/cards use the full main column. */
-        body #view-applications > *:not(#glueful-applications-workspace-v1),
-        body #view-applications .applications-list,
-        body #view-applications .application-list,
-        body #view-applications .applications-grid,
-        body #view-applications .application-grid{
-          max-width:100%!important;
           box-sizing:border-box!important;
+          overflow:visible!important;
         }
 
         body #view-applications .view-header{
           width:100%!important;
-          min-height:82px!important;
+          min-height:70px!important;
           margin:0 0 28px!important;
           padding:0!important;
         }
 
-        /* Right rail: compact enough to sit beside the wider main column. */
+        /* The main Applications content owns the space to the left of the
+           fixed 358px reference rail. */
+        body #view-applications > *:not(#glueful-applications-workspace-v1){
+          max-width:calc(100% - 386px)!important;
+          box-sizing:border-box!important;
+        }
+
         body #glueful-applications-workspace-v1{
           position:fixed!important;
-          top:160px!important;
+          top:14px!important;
           right:28px!important;
-          width:280px!important;
-          max-width:280px!important;
+          width:358px!important;
+          max-width:358px!important;
+          z-index:900!important;
           display:flex!important;
           flex-direction:column!important;
           gap:16px!important;
-          z-index:20!important;
+          box-sizing:border-box!important;
         }
 
-        body #view-applications .view-header > button:not(:first-child),
-        body #view-applications .view-header > a{
-          position:fixed!important;
-          top:23px!important;
-          right:290px!important;
-          z-index:1001!important;
+        body #glueful-applications-workspace-v1 > *{
+          width:100%!important;
+          max-width:none!important;
+          box-sizing:border-box!important;
         }
+
+        /* Reference order: Search Progress, Application Insights,
+           Upcoming Actions, Quick Actions. */
+        body #glueful-applications-workspace-v1 > :first-child{order:1!important;}
+        body #glueful-applications-workspace-v1 > :nth-child(2){order:2!important;}
+        body #glueful-applications-workspace-v1 > :nth-child(3){order:3!important;}
+        body #glueful-applications-workspace-v1 > :nth-child(4){order:4!important;}
 
         body #glueful-dashboard-hamburger,
         body:not(.glueful-apple-dashboard) [aria-label="Open navigation menu"],
@@ -76,19 +77,30 @@
           visibility:hidden!important;
           pointer-events:none!important;
         }
+
+        body #view-applications .glueful-applications-search-progress,
+        body #view-applications .glueful-applications-focus-today,
+        body #view-applications [data-glueful-applications-left-rail]{
+          display:none!important;
+        }
       }
 
-      @media(min-width:701px) and (max-width:1050px){
-        body #glueful-applications-workspace-v1{display:none!important;}
+      @media(min-width:701px) and (max-width:1100px){
         body #view-applications{
-          width:calc(100% - 274px)!important;
+          margin-left:244px!important;
+          margin-right:20px!important;
+          padding:24px 0 40px!important;
+          width:auto!important;
           max-width:none!important;
           min-width:0!important;
-          margin-left:250px!important;
-          margin-right:24px!important;
-          left:0!important;
           transform:none!important;
           box-sizing:border-box!important;
+        }
+        body #glueful-applications-workspace-v1{
+          position:static!important;
+          width:100%!important;
+          max-width:none!important;
+          margin-top:20px!important;
         }
         body #glueful-dashboard-hamburger{display:none!important;}
       }
