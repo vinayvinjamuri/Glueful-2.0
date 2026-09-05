@@ -1,12 +1,12 @@
-/* Glueful — Applications Reference UI V6
+/* Glueful — Applications Reference UI V7
  * Presentation-only layer for the Applications page.
  * Adds useful workspace panels without changing application data or handlers.
  */
 (function(){
   'use strict';
-  if(window.__GLUEFUL_APPLICATIONS_REFERENCE_V6__) return;
-  window.__GLUEFUL_APPLICATIONS_REFERENCE_V6__=true;
-  const STYLE_ID='glueful-applications-reference-v6-style';
+  if(window.__GLUEFUL_APPLICATIONS_REFERENCE_V7__) return;
+  window.__GLUEFUL_APPLICATIONS_REFERENCE_V7__=true;
+  const STYLE_ID='glueful-applications-reference-v7-style';
 
   function addWorkspace(){
     if(document.getElementById('glueful-applications-workspace-v1')) return;
@@ -70,7 +70,7 @@
     s.textContent=`
       html,body{background:#f5f5f7!important;color:#1d1d1f!important;}body{color-scheme:light!important;}
       @media(min-width:1101px){
-        body #view-applications{position:relative!important;left:0!important;width:min(900px,calc(100vw - 690px))!important;max-width:900px!important;margin-left:405px!important;margin-right:0!important;padding:32px 0 48px!important;box-sizing:border-box!important;overflow:visible!important;height:auto!important;}
+        body #view-applications{position:relative!important;left:-430px!important;width:960px!important;max-width:960px!important;margin-left:405px!important;margin-right:0!important;padding:32px 0 48px!important;box-sizing:border-box!important;overflow:visible!important;height:auto!important;}
         body #view-applications .view-header{position:relative!important;display:flex!important;align-items:flex-start!important;justify-content:space-between!important;width:100%!important;min-height:82px!important;margin:0 0 28px!important;padding:0!important;}
         body #view-applications .view-title{margin:0 0 6px!important;font-size:36px!important;line-height:1.08!important;letter-spacing:-1.2px!important;color:#1d1d1f!important;}
         body #view-applications .view-subtitle{margin:0!important;font-size:16px!important;color:#6e6e73!important;}
