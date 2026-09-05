@@ -1,11 +1,12 @@
-const CACHE_NAME = "glueful-cache-v148-latest-sync";
+const CACHE_NAME = "glueful-cache-v150-premium-ui";
 
 const RUNTIME = [
   "./glueful-feature-loader-v1.js",
   "./glueful-app-branding-v1.js",
   "./glueful-mobile-update-guard-v2.js",
   "./glueful-resume-studio-supabase-bridge.js",
-  "./glueful-critical-navigation-v1.js"
+  "./glueful-critical-navigation-v1.js",
+  "./glueful-ui-premium-v1.js"
 ];
 
 const LEGACY_RUNTIME_NAMES = [
@@ -48,7 +49,7 @@ function patchStartupSequence(html){
   return html;
 }
 function injectRuntimeScripts(html){
-  const tags=RUNTIME.map(src=>`<script src="${src}?v=148"></script>`).join("\n");
+  const tags=RUNTIME.map(src=>`<script src="${src}?v=150"></script>`).join("\n");
   return html.includes("</body>")?html.replace("</body>",`${tags}\n</body>`):`${html}\n${tags}`;
 }
 function noStoreRequest(request){
