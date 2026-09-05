@@ -1,6 +1,5 @@
-/* Glueful Dashboard Reference Step 5
- * Stabilizes the reference dashboard presentation.
- * Replaces only the visual stats row and removes the obsolete interview shell.
+/* Glueful Dashboard Reference Step 5 — stable cleanup
+ * Keeps one reference stats row and removes the obsolete dashboard interview shell.
  * Existing application/interview functionality remains untouched.
  */
 (function(){
@@ -29,15 +28,25 @@
     const c={applied:0,screening:0,assessment:0,interview:0,offer:0,rejected:0};
     try{const sb=window.supabaseClient;if(!sb?.auth)return c;const session=await sb.auth.getSession();if(!session?.data?.session?.user)return c;const r=await sb.from('applications').select('status');if(!r.error&&Array.isArray(r.data))r.data.forEach(row=>{const st=String(row?.status||'').trim().toLowerCase();if(Object.prototype.hasOwnProperty.call(c,st))c[st]++;});}catch(_){ }return c;
   }
+  function removeLegacy(d){
+    const old=d.querySelector('.stat-grid,.stats-grid');
+    if(old) old.style.setProperty('display','none','important');
+    const interviews=d.querySelector('#dashboard-interviews');
+    if(interviews) interviews.style.setProperty('display','none','important');
+    d.querySelectorAll('.section-title').forEach(el=>{
+      if(/upcoming\s+interviews/i.test((el.textContent||'').trim()) && !el.closest('#dashboard-interviews')) el.style.setProperty('display','none','important');
+    });
+  }
   function render(c){
     const d=document.getElementById('view-dashboard');if(!d||!active())return;
+    removeLegacy(d);
     let host=d.querySelector('#'+HOST_ID);
     if(!host){host=document.createElement('section');host.id=HOST_ID;host.className=HOST_ID;const old=d.querySelector('.stat-grid,.stats-grid');if(old&&old.parentElement)old.parentElement.insertBefore(host,old);else d.prepend(host);}
     const total=c.applied+c.screening+c.assessment+c.interview+c.offer+c.rejected;
     const activeCount=c.applied+c.screening+c.assessment;
     const cards=[['Total Applications',total,'All applications in your dashboard'],['Active',activeCount,'Applied, screening + assessment'],['Interviews',c.interview,'Interview stage'],['Offers',c.offer,'Offers received'],['Rejections',c.rejected,'Rejected applications']];
     host.innerHTML=cards.map(x=>`<div class="gf-ref-card"><div class="gf-ref-label">${esc(x[0])}</div><div class="gf-ref-value">${esc(x[1])}</div><div class="gf-ref-meta">${esc(x[2])}</div></div>`).join('');
-    const old=d.querySelector('.stat-grid,.stats-grid');if(old)old.style.display='none';
+    removeLegacy(d);
   }
   async function sync(){install();if(!active())return;const c=await getCounts();if(active())render(c);}
   function start(){install();sync();}
