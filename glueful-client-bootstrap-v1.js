@@ -32,7 +32,7 @@
     try{
       if('serviceWorker' in navigator){try{await navigator.serviceWorker.register('./sw.js?v=158',{updateViaCache:'none'});}catch(error){console.warn('[Glueful] Service Worker unavailable:',error);}}
       try{await load('./glueful-desktop-tablet-sidebar-persist-v2.js?v=6');}catch(error){console.warn('[Glueful] Persistent sidebar layer unavailable:',error);}
-      try{await load('./glueful-feature-loader-v1.js?v=177');}catch(error){console.warn('[Glueful] Feature loader unavailable:',error);}
+      try{await load('./glueful-feature-loader-v1.js?v=178');}catch(error){console.warn('[Glueful] Feature loader unavailable:',error);}
     }catch(error){console.warn('[Glueful] Client bootstrap failed:',error);}
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){void boot();},{once:true});else void boot();
