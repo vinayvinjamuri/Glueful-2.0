@@ -1,13 +1,14 @@
-/* Glueful — Applications Grid Spec V1
+/* Glueful — Applications Grid Spec V2
  * Structural presentation layer for the approved Applications specification.
- * Keeps existing application data and handlers intact.
+ * The existing app shell already reserves the persistent 260px sidebar space;
+ * this layer therefore owns only the content grid inside that shell.
  */
 (function(){
   'use strict';
-  if(window.__GLUEFUL_APPLICATIONS_GRID_SPEC_V1__) return;
-  window.__GLUEFUL_APPLICATIONS_GRID_SPEC_V1__=true;
+  if(window.__GLUEFUL_APPLICATIONS_GRID_SPEC_V2__) return;
+  window.__GLUEFUL_APPLICATIONS_GRID_SPEC_V2__=true;
 
-  const STYLE_ID='glueful-applications-grid-spec-v1-style';
+  const STYLE_ID='glueful-applications-grid-spec-v2-style';
 
   function moveWorkspaceIntoView(){
     const view=document.getElementById('view-applications');
@@ -24,10 +25,12 @@
       html,body{background:#f8f8fa!important;color:#16161a!important;}
 
       @media(min-width:1280px){
+        /* The application shell already begins after the 260px sidebar.
+           Do not add a second sidebar offset here. */
         body #view-applications{
           position:relative!important;left:0!important;top:0!important;
-          width:calc(100vw - 260px)!important;max-width:none!important;min-width:0!important;
-          margin:0 0 0 260px!important;padding:0 32px 48px!important;
+          width:100%!important;max-width:none!important;min-width:0!important;
+          margin:0!important;padding:0 32px 48px!important;
           box-sizing:border-box!important;transform:none!important;overflow:visible!important;
           height:auto!important;max-height:none!important;display:grid!important;
           grid-template-columns:minmax(0,840px) 320px!important;
@@ -40,8 +43,8 @@
           display:flex!important;align-items:center!important;justify-content:space-between!important;
           background:#f8f8fa!important;box-sizing:border-box!important;
         }
-        body #view-applications .view-title{font-size:34px!important;line-height:1.08!important;font-weight:700!important;letter-spacing:-1px!important;margin:24px 0 4px!important;}
-        body #view-applications .view-subtitle{font-size:16px!important;line-height:1.35!important;margin:0 0 24px!important;color:#6b6b76!important;}
+        body #view-applications .view-title{font-size:34px!important;line-height:1.08!important;font-weight:700!important;letter-spacing:-1px!important;margin:0 0 4px!important;}
+        body #view-applications .view-subtitle{font-size:16px!important;line-height:1.35!important;margin:0!important;color:#6b6b76!important;}
         body #view-applications > *:not(.view-header):not(#glueful-applications-workspace-v1){grid-column:1!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;}
         body #view-applications #glueful-applications-workspace-v1{
           grid-column:2!important;grid-row:2!important;position:static!important;top:auto!important;right:auto!important;
@@ -62,7 +65,10 @@
       }
 
       @media(min-width:768px) and (max-width:1279px){
-        body #view-applications{position:relative!important;left:0!important;top:0!important;width:calc(100vw - 220px)!important;max-width:none!important;min-width:0!important;margin:0 0 0 220px!important;padding:0 24px 40px!important;box-sizing:border-box!important;transform:none!important;overflow:visible!important;display:block!important;}
+        body #view-applications{
+          position:relative!important;left:0!important;top:0!important;width:100%!important;max-width:none!important;min-width:0!important;
+          margin:0!important;padding:0 24px 40px!important;box-sizing:border-box!important;transform:none!important;overflow:visible!important;display:block!important;
+        }
         body #view-applications .view-header{position:relative!important;width:100%!important;height:72px!important;min-height:72px!important;margin:0 0 24px!important;padding:0!important;display:flex!important;align-items:center!important;justify-content:space-between!important;background:#f8f8fa!important;box-sizing:border-box!important;}
         body #view-applications > *:not(.view-header):not(#glueful-applications-workspace-v1){max-width:100%!important;box-sizing:border-box!important;}
         body #view-applications #glueful-applications-workspace-v1{position:static!important;width:100%!important;max-width:none!important;margin-top:20px!important;display:flex!important;gap:16px!important;}
