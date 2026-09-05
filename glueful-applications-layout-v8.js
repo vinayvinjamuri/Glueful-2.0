@@ -14,13 +14,14 @@
     s.id=id;
     s.textContent=`
       @media(min-width:1101px){
-        /* Sidebar occupies 230px. Keep the Applications workspace clear of it. */
+        /* Preserve the existing Applications workspace anchor, then place the
+           persistent-sidebar side panels in the newly available left rail. */
         body #view-applications{
           position:relative!important;
-          left:0!important;
-          width:916px!important;
-          max-width:916px!important;
-          margin-left:373px!important;
+          left:-430px!important;
+          width:960px!important;
+          max-width:960px!important;
+          margin-left:405px!important;
           margin-right:0!important;
           padding:32px 0 48px!important;
           box-sizing:border-box!important;
@@ -38,7 +39,6 @@
           right:290px!important;
           z-index:1001!important;
         }
-        /* The persistent sidebar replaces the menu control on desktop. */
         body:not(.glueful-apple-dashboard) #glueful-dashboard-hamburger,
         body:not(.glueful-apple-dashboard) [aria-label="Open navigation menu"],
         body:not(.glueful-apple-dashboard) [title="Open navigation menu"]{
