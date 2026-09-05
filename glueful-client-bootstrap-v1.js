@@ -1,10 +1,31 @@
 /* Glueful — Client Bootstrap V1
- * Runtime bootstrap only. Never hide the document while feature layers load.
+ * Runtime bootstrap. The legacy UI never paints before the active feature group is ready.
  */
 (function(){
   'use strict';
   if(window.__GLUEFUL_CLIENT_BOOTSTRAP_V1__) return;
   window.__GLUEFUL_CLIENT_BOOTSTRAP_V1__ = true;
+
+  /* Boot gate: do not show the legacy/base HTML while the newest active
+     feature layer is being assembled. This removes the old-version flash
+     without bringing back the splash screen. */
+  (function installBootGate(){
+    try{
+      document.documentElement.classList.add('glueful-booting');
+      var style=document.createElement('style');
+      style.id='glueful-boot-gate';
+      style.textContent='html.glueful-booting body > *{visibility:hidden!important}html.glueful-booting body{background:#F8F9FC!important;color:#141826!important}';
+      (document.head||document.documentElement).appendChild(style);
+      var reveal=function(){
+        document.documentElement.classList.remove('glueful-booting');
+      };
+      window.addEventListener('glueful-initial-view-ready',reveal,{once:true});
+      /* Safety release: a failed optional feature must never leave a blank app. */
+      setTimeout(reveal,8000);
+    }catch(error){
+      console.warn('[Glueful] Boot gate unavailable:',error);
+    }
+  })();
 
   /* Splash screen removed: keep it invisible from the first paint and
      remove any legacy splash node as soon as the DOM is available. */
@@ -47,10 +68,10 @@
       }
       try{await load('./glueful-desktop-tablet-sidebar-persist-v2.js?v=6');}
       catch(error){console.warn('[Glueful] Persistent sidebar layer unavailable:',error);}
-      try{await load('./glueful-feature-loader-v1.js?v=175');}
+      try{await load('./glueful-feature-loader-v1.js?v=176');}
       catch(error){console.warn('[Glueful] Feature loader unavailable:',error);}
-      try{await load('./glueful-dashboard-apple-v1.js?v=1');}
-      catch(error){console.warn('[Glueful] Dashboard visual layer unavailable:',error);}
+      /* Dashboard is owned by the feature loader now. Do not load a second
+         standalone visual layer that can cause an old/new UI race. */
     }catch(error){
       console.warn('[Glueful] Client bootstrap failed:',error);
     }
