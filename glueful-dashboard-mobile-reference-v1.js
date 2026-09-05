@@ -26,9 +26,9 @@
       @media(max-width:800px){
         body.glueful-apple-dashboard{background:#f5f5f7!important;color:#1d1d1f!important}
         body.glueful-apple-dashboard #view-dashboard{background:#f5f5f7!important;color:#1d1d1f!important}
-        body.glueful-apple-dashboard #view-dashboard .view-header{padding:4px 0 14px!important;margin:0!important}
-        body.glueful-apple-dashboard #view-dashboard .view-title{color:#1d1d1f!important}
-        body.glueful-apple-dashboard #view-dashboard .view-subtitle{color:#6e6e73!important}
+        body.glueful-apple-dashboard #view-dashboard .view-header{position:relative!important;padding:4px 0 14px!important;margin:0!important;min-height:82px!important;box-sizing:border-box!important}
+        body.glueful-apple-dashboard #view-dashboard .view-header .view-title{color:#1d1d1f!important;margin-left:82px!important;max-width:calc(100% - 175px)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+        body.glueful-apple-dashboard #view-dashboard .view-header .view-subtitle{color:#6e6e73!important;margin-left:82px!important;max-width:calc(100% - 175px)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
         body.glueful-apple-dashboard #view-dashboard .stat-card{background:#fff!important;color:#1d1d1f!important;border:1px solid #e5e5ea!important;box-shadow:0 8px 24px rgba(0,0,0,.045)!important}
         body.glueful-apple-dashboard #view-dashboard .stat-card .stat-label{color:#6e6e73!important}
         body.glueful-apple-dashboard #view-dashboard .stat-card .stat-value{color:#1d1d1f!important}
@@ -59,8 +59,7 @@
   }
 
   function syncStats(d,c){
-    const host=d.querySelector('#glueful-reference-stats-v1');
-    if(!host)return;
+    const host=d.querySelector('#glueful-reference-stats-v1');if(!host)return;
     const cards=Array.from(host.querySelectorAll('.gf-ref-card')).slice(0,5);if(cards.length<5)return;
     const total=c.applied+c.screening+c.assessment+c.interview+c.offer+c.rejected;
     const values=[['Total Applications',total,'All applications in your dashboard'],['Active',c.applied+c.screening+c.assessment,'Applied, screening + assessment'],['Interviews',c.interview,'Interview stage'],['Offers',c.offer,'Offers received'],['Rejections',c.rejected,'Rejected applications']];
