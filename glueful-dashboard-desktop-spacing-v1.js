@@ -15,9 +15,9 @@
         body.glueful-apple-dashboard #view-dashboard{
           padding-top:0!important;
           margin-top:0!important;
-          margin-left:202px!important;
+          margin-left:167px!important;
           margin-right:24px!important;
-          width:min(1240px,calc(100vw - 250px))!important;
+          width:min(1240px,calc(100vw - 215px))!important;
         }
         body.glueful-apple-dashboard #view-dashboard .view-header{
           margin-top:0!important;
