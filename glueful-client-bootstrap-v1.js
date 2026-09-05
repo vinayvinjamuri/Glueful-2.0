@@ -6,6 +6,28 @@
   if(window.__GLUEFUL_CLIENT_BOOTSTRAP_V1__) return;
   window.__GLUEFUL_CLIENT_BOOTSTRAP_V1__ = true;
 
+  /* Splash screen removed: keep it invisible from the first paint and
+     remove any legacy splash node as soon as the DOM is available. */
+  (function disableLegacySplash(){
+    try{
+      var style=document.createElement('style');
+      style.id='glueful-no-splash';
+      style.textContent='#glueful-splash{display:none!important;opacity:0!important;visibility:hidden!important;pointer-events:none!important}';
+      (document.head||document.documentElement).appendChild(style);
+      var remove=function(){
+        var splash=document.getElementById('glueful-splash');
+        if(splash) splash.remove();
+      };
+      if(document.readyState==='loading'){
+        document.addEventListener('DOMContentLoaded',remove,{once:true});
+      }else{
+        remove();
+      }
+    }catch(error){
+      console.warn('[Glueful] Legacy splash removal unavailable:',error);
+    }
+  })();
+
   function load(src){
     return new Promise(function(resolve,reject){
       var s=document.createElement('script');
