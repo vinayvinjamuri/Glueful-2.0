@@ -1,4 +1,4 @@
-/* Glueful Dashboard Reference Step 9 — responsive navigation polish
+/* Glueful Dashboard Reference Step 9 — responsive sidebar polish
  * Presentation only. Keeps existing navigation handlers and mobile bottom-nav behavior.
  */
 (function(){
@@ -10,13 +10,23 @@
     if(document.getElementById(STYLE_ID)) return;
     const s=document.createElement('style'); s.id=STYLE_ID;
     s.textContent=`
-      /* Desktop: compact reference sidebar. */
       @media(min-width:1101px){
         body.glueful-apple-dashboard .sidebar,
         body.glueful-apple-dashboard .side-nav,
         body.glueful-apple-dashboard .app-sidebar,
         body.glueful-apple-dashboard #glueful-drawer{
           width:210px!important;min-width:210px!important;max-width:210px!important;
+          padding-left:12px!important;padding-right:12px!important;
+        }
+        body.glueful-apple-dashboard .sidebar .drawer-close,
+        body.glueful-apple-dashboard .sidebar .close,
+        body.glueful-apple-dashboard .side-nav .drawer-close,
+        body.glueful-apple-dashboard .side-nav .close,
+        body.glueful-apple-dashboard .app-sidebar .drawer-close,
+        body.glueful-apple-dashboard .app-sidebar .close,
+        body.glueful-apple-dashboard #glueful-drawer .drawer-close,
+        body.glueful-apple-dashboard #glueful-drawer .close{
+          display:none!important;
         }
         body.glueful-apple-dashboard #view-dashboard,
         body.glueful-apple-dashboard #view-jobs,
@@ -29,26 +39,19 @@
           margin-left:234px!important;margin-right:24px!important;
         }
       }
-
-      /* Tablet: the existing drawer remains the navigation model, but uses the
-         same compact spacing and typography as the desktop reference. */
       @media(min-width:701px) and (max-width:1100px){
         body.glueful-apple-dashboard .sidebar,
         body.glueful-apple-dashboard .side-nav,
         body.glueful-apple-dashboard .app-sidebar,
         body.glueful-apple-dashboard #glueful-drawer{
           width:220px!important;max-width:220px!important;
+          padding-left:10px!important;padding-right:10px!important;
         }
       }
-
-      /* Shared navigation density. Mobile keeps its existing drawer/bottom-nav
-         behavior; only the visual density changes. */
       body.glueful-apple-dashboard .sidebar,
       body.glueful-apple-dashboard .side-nav,
       body.glueful-apple-dashboard .app-sidebar,
-      body.glueful-apple-dashboard #glueful-drawer{
-        box-sizing:border-box!important;
-      }
+      body.glueful-apple-dashboard #glueful-drawer{box-sizing:border-box!important;}
       body.glueful-apple-dashboard .sidebar a,
       body.glueful-apple-dashboard .side-nav a,
       body.glueful-apple-dashboard .app-sidebar a,
@@ -58,16 +61,12 @@
       body.glueful-apple-dashboard .sidebar .nav-item,
       body.glueful-apple-dashboard .side-nav .nav-item,
       body.glueful-apple-dashboard .app-sidebar .nav-item,
-      body.glueful-apple-dashboard #glueful-drawer .nav-item{
-        margin-bottom:2px!important;
-      }
+      body.glueful-apple-dashboard #glueful-drawer .nav-item{margin-bottom:2px!important;}
       @media(max-width:700px){
         body.glueful-apple-dashboard .sidebar a,
         body.glueful-apple-dashboard .side-nav a,
         body.glueful-apple-dashboard .app-sidebar a,
-        body.glueful-apple-dashboard #glueful-drawer a{
-          min-height:40px!important;
-        }
+        body.glueful-apple-dashboard #glueful-drawer a{min-height:40px!important;}
       }
     `;
     document.head.appendChild(s);
