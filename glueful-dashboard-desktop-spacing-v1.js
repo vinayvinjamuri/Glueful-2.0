@@ -12,9 +12,14 @@
     const s=document.createElement('style'); s.id=STYLE_ID;
     s.textContent=`
       @media(min-width:1101px){
+        body.glueful-apple-dashboard #view-dashboard{
+          padding-top:0!important;
+        }
         body.glueful-apple-dashboard #view-dashboard .view-header{
           margin-top:0!important;
           margin-bottom:12px!important;
+          padding-top:0!important;
+          padding-bottom:12px!important;
         }
         body.glueful-apple-dashboard #view-dashboard .view-title{
           margin-top:0!important;
