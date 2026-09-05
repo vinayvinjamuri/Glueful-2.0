@@ -55,7 +55,8 @@
   async function boot(){
     try{
       if('serviceWorker' in navigator){try{await navigator.serviceWorker.register('./sw.js?v=158',{updateViaCache:'none'});}catch(error){console.warn('[Glueful] Service Worker registration/update unavailable:',error);}}
-      try{await load('./glueful-feature-loader-v1.js?v=163');}catch(error){console.warn('[Glueful] Direct feature-loader bootstrap failed:',error);}
+      try{await load('./glueful-desktop-tablet-sidebar-persist-v1.js?v=1');}catch(error){console.warn('[Glueful] Persistent sidebar layer unavailable:',error);}
+      try{await load('./glueful-feature-loader-v1.js?v=164');}catch(error){console.warn('[Glueful] Direct feature-loader bootstrap failed:',error);}
       try{await load('./glueful-dashboard-apple-v1.js?v=1');}catch(error){console.warn('[Glueful] Dashboard visual layer unavailable:',error);}
       await waitForFinalRuntime(5000);
     }catch(error){console.warn('[Glueful] Client bootstrap failed:',error);}
