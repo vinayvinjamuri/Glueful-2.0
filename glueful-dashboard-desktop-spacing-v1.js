@@ -28,7 +28,7 @@
           height:auto!important;
           max-height:none!important;
         }
-        /* Keep the Add Application action in the same top row as the profile control. */
+        /* Keep Add Application beside the fixed Profile control in the top chrome row. */
         body.glueful-apple-dashboard #view-dashboard .view-header{
           position:relative!important;
           padding-right:150px!important;
@@ -36,7 +36,7 @@
         }
         body.glueful-apple-dashboard #view-dashboard #glueful-dashboard-header-actions{
           position:fixed!important;
-          top:134px!important;
+          top:23px!important;
           right:86px!important;
           width:auto!important;
           height:auto!important;
