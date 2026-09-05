@@ -1,6 +1,5 @@
 /* Glueful Dashboard Desktop Spacing V1
- * Presentation only. Tightens the desktop dashboard composition without
- * changing data, navigation, or feature behavior.
+ * Presentation only. Desktop dashboard alignment and scroll behavior.
  */
 (function(){
   'use strict';
@@ -12,19 +11,27 @@
     const s=document.createElement('style'); s.id=STYLE_ID;
     s.textContent=`
       @media(min-width:1101px){
+        /* Let the browser/page own vertical scrolling instead of nesting a
+           second scrollbar inside the dashboard window. */
+        html,body{overflow-y:auto!important;}
         body.glueful-apple-dashboard #view-dashboard{
-          position:fixed!important;
-          top:40px!important;
-          left:270px!important;
-          right:24px!important;
-          bottom:0!important;
-          width:auto!important;
-          max-width:none!important;
-          margin:0!important;
-          padding:16px 0 36px!important;
+          position:static!important;
+          top:auto!important;
+          left:auto!important;
+          right:auto!important;
+          bottom:auto!important;
+          width:calc(100% - 294px)!important;
+          max-width:1240px!important;
+          margin-left:270px!important;
+          margin-right:24px!important;
+          padding:40px 0 48px!important;
           box-sizing:border-box!important;
-          overflow-x:hidden!important;
-          overflow-y:auto!important;
+          overflow:visible!important;
+        }
+        /* Keep the primary action beside the profile control with a clear gap. */
+        body.glueful-apple-dashboard #view-dashboard .view-header button,
+        body.glueful-apple-dashboard #view-dashboard .view-header a{
+          margin-right:48px!important;
         }
         body.glueful-apple-dashboard #view-dashboard .view-header{
           margin-top:0!important;
