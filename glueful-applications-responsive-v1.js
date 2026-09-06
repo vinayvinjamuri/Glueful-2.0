@@ -24,25 +24,32 @@
     s.textContent=`
       html,body{overflow-x:hidden!important;}
 
-      /* Tablet: preserve the desktop information hierarchy while stacking
-         the utility workspace above the full-width Applications column. */
+      /* Tablet: stack the utility workspace ABOVE the Applications column.
+         The flex parent is important because the rail is appended after the
+         application DOM; without it, the rail falls below the card list. */
       @media(min-width:768px) and (max-width:1279px){
         body #${VIEW}{
+          display:flex!important;
+          flex-direction:column!important;
+          align-items:stretch!important;
           overflow-x:hidden!important;
           overflow-y:hidden!important;
           box-sizing:border-box!important;
+          height:100dvh!important;
+          min-height:100dvh!important;
         }
         body #${VIEW}>.view-header{
           order:1!important;
           width:100%!important;max-width:none!important;min-width:0!important;
           margin-left:0!important;margin-right:0!important;box-sizing:border-box!important;
+          flex:0 0 auto!important;
         }
         body #${VIEW}>#${RAIL}{
           order:2!important;position:relative!important;inset:auto!important;
           display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
           gap:14px!important;width:100%!important;max-width:none!important;min-width:0!important;
           margin:0 0 16px!important;padding:0!important;box-sizing:border-box!important;
-          z-index:2!important;
+          z-index:2!important;flex:0 0 auto!important;
         }
         body #${VIEW}>#${RAIL}>*{
           width:100%!important;max-width:none!important;min-width:0!important;box-sizing:border-box!important;
@@ -54,6 +61,7 @@
         body #${VIEW}>*:not(.view-header):not(#${RAIL}){
           order:3!important;width:100%!important;max-width:none!important;min-width:0!important;
           margin-left:0!important;margin-right:0!important;box-sizing:border-box!important;transform:none!important;
+          flex:0 0 auto!important;
         }
         body #${VIEW} .glueful-applications-main-wide,
         body #${VIEW} .glueful-applications-main-centered{
