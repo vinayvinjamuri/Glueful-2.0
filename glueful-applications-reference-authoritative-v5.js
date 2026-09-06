@@ -1,7 +1,8 @@
 /* Glueful — Applications Main Column Authoritative V5
  * Keep the existing 260px sidebar exactly as-is.
- * Make the Applications view occupy the full post-sidebar viewport.
- * Keep search wide, then place filters + application list centered beneath it.
+ * Use a simple vertical flow for the Applications main column so
+ * search -> filters -> applications remain tightly stacked.
+ * The right rail is independently anchored on the right.
  * Existing data, controls, navigation and handlers are preserved.
  */
 (function(){
@@ -19,7 +20,7 @@
       @media(min-width:1280px){
         html,body{overflow-x:hidden!important;}
 
-        /* Sidebar is owned by its existing layer and remains exactly 260px. */
+        /* Sidebar remains exactly 260px. Only the Applications content changes. */
         body.glueful-applications-apple #view-applications{
           position:fixed!important;
           left:260px!important;
@@ -34,20 +35,13 @@
           margin:0!important;
           padding:26px 32px 52px!important;
           box-sizing:border-box!important;
-          display:grid!important;
-          grid-template-columns:minmax(0,1fr) 350px!important;
-          grid-template-rows:auto auto auto!important;
-          column-gap:28px!important;
-          row-gap:18px!important;
-          align-items:start!important;
+          display:block!important;
           overflow-x:hidden!important;
           overflow-y:auto!important;
           transform:none!important;
         }
 
         body.glueful-applications-apple #view-applications>.view-header{
-          grid-column:1/-1!important;
-          grid-row:1!important;
           width:100%!important;
           max-width:none!important;
           min-width:0!important;
@@ -70,31 +64,40 @@
           flex:0 0 auto!important;
         }
 
-        /* Search gets its own row so filters can never overlap it. */
+        /* Search occupies the main column and sits directly under the header. */
         body.glueful-applications-apple #view-applications>.glueful-applications-main-wide{
-          grid-column:1!important;
-          grid-row:2!important;
+          width:calc(100% - 378px)!important;
+          max-width:none!important;
+          min-width:0!important;
+          margin:14px 378px 0 0!important;
+          box-sizing:border-box!important;
+        }
+
+        body.glueful-applications-apple #view-applications>.glueful-applications-main-wide input[type="search"],
+        body.glueful-applications-apple #view-applications>.glueful-applications-main-wide input[placeholder*="Search"],
+        body.glueful-applications-apple #view-applications>.glueful-applications-main-wide input[placeholder*="search"]{
           width:100%!important;
           max-width:none!important;
           min-width:0!important;
-          margin:0!important;
           box-sizing:border-box!important;
         }
 
-        /* Filters and application list share a centered 760px content column. */
+        /* Filters + application list form one centered 760px column below search. */
         body.glueful-applications-apple #view-applications>.glueful-applications-main-centered{
-          grid-column:1!important;
-          grid-row:3!important;
-          width:min(100%,760px)!important;
+          width:min(calc(100% - 378px),760px)!important;
           max-width:760px!important;
           min-width:0!important;
           margin-left:auto!important;
-          margin-right:auto!important;
+          margin-right:378px!important;
           box-sizing:border-box!important;
         }
 
-        body.glueful-applications-apple #view-applications>.glueful-applications-main-centered:not(:first-of-type){
-          margin-top:0!important;
+        body.glueful-applications-apple #view-applications>.glueful-applications-main-wide + .glueful-applications-main-centered{
+          margin-top:18px!important;
+        }
+
+        body.glueful-applications-apple #view-applications>.glueful-applications-main-centered + .glueful-applications-main-centered{
+          margin-top:16px!important;
         }
 
         body.glueful-applications-apple #view-applications .application-card,
@@ -107,22 +110,11 @@
           box-sizing:border-box!important;
         }
 
-        body.glueful-applications-apple #view-applications input[type="search"],
-        body.glueful-applications-apple #view-applications input[placeholder*="Search"],
-        body.glueful-applications-apple #view-applications input[placeholder*="search"]{
-          width:100%!important;
-          max-width:none!important;
-          min-width:0!important;
-          box-sizing:border-box!important;
-        }
-
-        /* Right rail occupies the full content area beside search + centered list. */
+        /* Right rail is independent of the vertical main flow, so it cannot create blank space. */
         body.glueful-applications-apple #view-applications>#glueful-applications-workspace-v1{
-          grid-column:2!important;
-          grid-row:2 / span 2!important;
-          position:static!important;
-          top:auto!important;
-          right:auto!important;
+          position:absolute!important;
+          top:110px!important;
+          right:32px!important;
           left:auto!important;
           width:350px!important;
           max-width:350px!important;
@@ -131,7 +123,6 @@
           padding:0!important;
           display:flex!important;
           flex-direction:column!important;
-          align-self:start!important;
           gap:16px!important;
           box-sizing:border-box!important;
           visibility:visible!important;
@@ -208,7 +199,6 @@
       if(el!==searchOwner)el.classList.add('glueful-applications-main-centered');
     });
 
-    /* Any remaining non-header/non-rail content follows the centered list pattern. */
     [...view.children].forEach(function(el){
       if(el.id==='glueful-applications-workspace-v1'||el.classList.contains('view-header')||el===searchOwner)return;
       if(!el.classList.contains('glueful-applications-main-centered'))el.classList.add('glueful-applications-main-centered');
