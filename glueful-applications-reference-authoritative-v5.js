@@ -110,7 +110,49 @@
           box-sizing:border-box!important;
         }
 
-        /* Right rail is independent of the vertical main flow, so it cannot create blank space. */
+        /* The workspace is mounted inside the legacy rail-v2 wrapper.
+         * Anchor that wrapper itself so the insights cards cannot fall into
+         * the application list's normal vertical flow. */
+        body.glueful-applications-apple #view-applications>#glueful-applications-rail-v2{
+          position:absolute!important;
+          top:110px!important;
+          right:32px!important;
+          left:auto!important;
+          width:350px!important;
+          max-width:350px!important;
+          min-width:350px!important;
+          margin:0!important;
+          padding:0!important;
+          display:flex!important;
+          flex-direction:column!important;
+          gap:16px!important;
+          align-self:auto!important;
+          box-sizing:border-box!important;
+          z-index:5!important;
+          visibility:visible!important;
+          opacity:1!important;
+        }
+
+        body.glueful-applications-apple #view-applications>#glueful-applications-rail-v2>#glueful-applications-workspace-v1{
+          position:static!important;
+          width:100%!important;
+          max-width:none!important;
+          min-width:0!important;
+          margin:0!important;
+          padding:0!important;
+          display:flex!important;
+          flex-direction:column!important;
+          gap:16px!important;
+          box-sizing:border-box!important;
+        }
+
+        body.glueful-applications-apple #view-applications>#glueful-applications-rail-v2>#glueful-applications-workspace-v1>*{
+          width:100%!important;
+          max-width:none!important;
+          box-sizing:border-box!important;
+        }
+
+        /* Keep compatibility if a future loader mounts the workspace directly. */
         body.glueful-applications-apple #view-applications>#glueful-applications-workspace-v1{
           position:absolute!important;
           top:110px!important;
@@ -125,14 +167,9 @@
           flex-direction:column!important;
           gap:16px!important;
           box-sizing:border-box!important;
+          z-index:5!important;
           visibility:visible!important;
           opacity:1!important;
-        }
-
-        body.glueful-applications-apple #view-applications>#glueful-applications-workspace-v1>*{
-          width:100%!important;
-          max-width:none!important;
-          box-sizing:border-box!important;
         }
 
         body.glueful-applications-apple #view-applications [style*="position: fixed"],
@@ -172,7 +209,7 @@
 
   function classify(view){
     [...view.children].forEach(function(el){
-      if(el.id==='glueful-applications-workspace-v1'||el.classList.contains('view-header'))return;
+      if(el.id==='glueful-applications-workspace-v1'||el.id==='glueful-applications-rail-v2'||el.classList.contains('view-header'))return;
       el.classList.remove('glueful-applications-main-wide','glueful-applications-main-centered');
       el.style.setProperty('min-width','0','important');
       el.style.setProperty('transform','none','important');
@@ -196,11 +233,11 @@
     });
 
     centered.forEach(function(el){
-      if(el!==searchOwner)el.classList.add('glueful-applications-main-centered');
+      if(el!==searchOwner&&el.id!=='glueful-applications-rail-v2')el.classList.add('glueful-applications-main-centered');
     });
 
     [...view.children].forEach(function(el){
-      if(el.id==='glueful-applications-workspace-v1'||el.classList.contains('view-header')||el===searchOwner)return;
+      if(el.id==='glueful-applications-workspace-v1'||el.id==='glueful-applications-rail-v2'||el.classList.contains('view-header')||el===searchOwner)return;
       if(!el.classList.contains('glueful-applications-main-centered'))el.classList.add('glueful-applications-main-centered');
     });
   }
