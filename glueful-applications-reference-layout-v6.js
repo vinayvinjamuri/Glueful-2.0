@@ -1,12 +1,12 @@
-/* Glueful — Applications Reference Layout V6.1
+/* Glueful — Applications Reference Layout V6.2
  * Final desktop geometry: fixed 260px sidebar, 370px left utility rail,
- * and 952px Applications main column. Data/handlers are untouched.
+ * and a compact ~600px Applications main column. Data/handlers are untouched.
  */
 (function(){
   'use strict';
-  if(window.__GLUEFUL_APPLICATIONS_REFERENCE_LAYOUT_V61__)return;
-  window.__GLUEFUL_APPLICATIONS_REFERENCE_LAYOUT_V61__=true;
-  const STYLE_ID='glueful-applications-reference-layout-v61-style';
+  if(window.__GLUEFUL_APPLICATIONS_REFERENCE_LAYOUT_V62__)return;
+  window.__GLUEFUL_APPLICATIONS_REFERENCE_LAYOUT_V62__=true;
+  const STYLE_ID='glueful-applications-reference-layout-v62-style';
 
   function install(){
     if(document.getElementById(STYLE_ID))return;
@@ -25,7 +25,7 @@
           overflow-x:hidden!important;overflow-y:auto!important;transform:none!important;
         }
 
-        /* Utility rail: it lives immediately beside the 260px sidebar. */
+        /* Left utility rail: 370px wide, immediately beside the 260px sidebar. */
         body.glueful-applications-apple #view-applications > #glueful-applications-rail-v2{
           position:absolute!important;left:12px!important;right:auto!important;top:22px!important;
           width:370px!important;max-width:370px!important;min-width:370px!important;
@@ -44,7 +44,6 @@
         body.glueful-applications-apple #view-applications > #glueful-applications-rail-v2 > #glueful-applications-workspace-v1 > *{
           width:100%!important;max-width:370px!important;box-sizing:border-box!important;
         }
-        /* Direct-mount fallback. */
         body.glueful-applications-apple #view-applications > #glueful-applications-workspace-v1{
           position:absolute!important;left:12px!important;right:auto!important;top:22px!important;
           width:370px!important;max-width:370px!important;min-width:370px!important;
@@ -57,12 +56,16 @@
           width:100%!important;max-width:370px!important;box-sizing:border-box!important;
         }
 
-        /* Main column: x = 260 sidebar + 32 content padding + 383 offset = 675px. */
+        /*
+         * Compact main column:
+         * sidebar 260px + content padding 32px + offset 383px = x675px.
+         * Main width is capped at 600px, leaving the rest of the screen open.
+         */
         body.glueful-applications-apple #view-applications > .view-header,
         body.glueful-applications-apple #view-applications > .glueful-applications-main-wide,
         body.glueful-applications-apple #view-applications > .glueful-applications-main-centered{
-          width:min(952px,calc(100% - 383px))!important;
-          max-width:952px!important;min-width:0!important;
+          width:min(600px,calc(100% - 383px))!important;
+          max-width:600px!important;min-width:0!important;
           margin-left:383px!important;margin-right:0!important;
           box-sizing:border-box!important;
         }
@@ -108,7 +111,6 @@
     `;
     document.head.appendChild(s);
   }
-
   function sync(){
     const view=document.getElementById('view-applications');
     if(!view)return;
