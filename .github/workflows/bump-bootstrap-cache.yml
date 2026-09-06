@@ -1,0 +1,44 @@
+name: Force fresh bootstrap asset
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  bump-bootstrap-cache:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Bump bootstrap query in index
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          old = './glueful-client-bootstrap-v1.js?v=149'
+          new = './glueful-client-bootstrap-v1.js?v=150'
+          if old in s:
+              s = s.replace(old, new, 1)
+              p.write_text(s, encoding='utf-8')
+          elif new not in s:
+              raise SystemExit('Expected bootstrap script reference was not found')
+          PY
+
+      - name: Commit and push
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then
+            echo 'No index change needed.'
+            exit 0
+          fi
+          git commit -m 'Bump bootstrap asset cache version'
+          git push
