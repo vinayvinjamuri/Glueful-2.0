@@ -1,0 +1,52 @@
+name: Force fresh Interviews asset
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: interviews-v6
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Force Interviews cache bust
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text()
+          s = s.replace('./glueful-interviews-authoritative-v1.js?v=5', './glueful-interviews-authoritative-v1.js?v=6', 1)
+          p.write_text(s)
+          PY
+
+      - name: Deploy Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Deploy Pages
+        uses: actions/deploy-pages@v4
+
+      - name: Commit cache-busted index and remove workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -f .github/workflows/force-interviews-v6.yml
+          git add index.html .github/workflows/force-interviews-v6.yml
+          git commit -m "Force fresh Interviews presentation" || exit 0
+          git push
