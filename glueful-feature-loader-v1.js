@@ -15,7 +15,8 @@
       './glueful-profile-instant-open-v1.js',
       './glueful-dashboard-hamburger-v2.js',
       './glueful-applications-clean-v6.js?v=2',
-      './glueful-applications-list-scroll-v1.js?v=1'
+      './glueful-applications-list-scroll-v1.js?v=1',
+      './glueful-applications-responsive-v1.js?v=1'
     ],
     jobs: ['./glueful-jobs-auth-bootstrap-v1.js','./glueful-jobs-discover-v15-authoritative.js','./glueful-jobs-relevance-v1.js','./glueful-jobs-resume-action-v1.js','./glueful-jobs-logo-patch-v1.js','./glueful-jobs-mobile-card-polish-v1.js','./glueful-jobs-mobile-ux-v15.js','./glueful-jobs-smooth-logos-v1.js','./glueful-jobs-feed-recovery-v2.js','./glueful-jobs-official-link-guard-v1.js','./glueful-jobs-logo-recovery-v1.js','./glueful-jobs-logo-recovery-v2.js','./glueful-jobs-logo-recovery-v3.js','./glueful-jobs-brandfetch-final-v1.js','./glueful-jobs-page-scroll-fix-v4.js','./glueful-reference-design-v1.js?v=2'],
     orbit: ['./glueful-orbit-bootstrap-v1.js','./glueful-orbit-v2.js','./glueful-orbit-ui-v3.js','./glueful-orbit-ui-v16.js','./glueful-orbit-ui-v17.js','./glueful-orbit-ai-bridge-v1.js','./glueful-orbit-career-engine-v1.js','./glueful-orbit-navigation-v1.js','./glueful-orbit-stability-v1.js','./glueful-orbit-chat-layout-v1.js','./glueful-orbit-ime-final-v1.js'],
