@@ -1,16 +1,17 @@
-/* Glueful Applications — List Scroll Only V2
- * Presentation-only behavior: the Applications shell never scrolls on desktop.
- * Only the application-card list is allowed to scroll.
+/* Glueful Applications — List Scroll Only V3
+ * Desktop: the Applications shell and all of its ancestors are non-scrollable.
+ * Only the application-card list owns vertical scrolling.
  */
 (function(){
   'use strict';
-  if(window.__GLUEFUL_APPLICATIONS_LIST_SCROLL_V2__)return;
-  window.__GLUEFUL_APPLICATIONS_LIST_SCROLL_V2__=true;
+  if(window.__GLUEFUL_APPLICATIONS_LIST_SCROLL_V3__)return;
+  window.__GLUEFUL_APPLICATIONS_LIST_SCROLL_V3__=true;
 
   const VIEW='view-applications';
   const RAIL='glueful-applications-clean-v6-rail';
-  const STYLE='glueful-applications-list-scroll-v2-style';
-  const CLASS='glueful-applications-scroll-container-v2';
+  const STYLE='glueful-applications-list-scroll-v3-style';
+  const CLASS='glueful-applications-scroll-container-v3';
+  const LOCK='glueful-applications-scroll-lock-v3';
 
   function getView(){return document.getElementById(VIEW);}
   function active(v){return !!v&&(v.classList.contains('active')||v.style.display==='block');}
@@ -21,22 +22,23 @@
     s.id=STYLE;
     s.textContent=`
       @media(min-width:1280px){
-        /* Applications owns the viewport; it must never scroll. */
         html,body{overflow:hidden!important;}
+        body.${LOCK}{overflow:hidden!important;}
+        body.${LOCK} #${VIEW}{overflow:hidden!important;}
+        body.${LOCK} #${VIEW}.${LOCK}{overflow:hidden!important;}
         body #${VIEW}{
           overflow:hidden!important;
           height:100vh!important;
           min-height:100vh!important;
           max-height:100vh!important;
         }
-
-        /* Only this container, which contains the cards, may scroll. */
         body #${VIEW} .${CLASS}{
           overflow-y:auto!important;
           overflow-x:hidden!important;
           max-height:calc(100vh - var(--gf-app-scroll-top, 300px) - 24px)!important;
           scrollbar-gutter:stable!important;
           overscroll-behavior:contain!important;
+          -webkit-overflow-scrolling:touch!important;
         }
         body #${VIEW} .${CLASS}::-webkit-scrollbar{width:8px!important;}
         body #${VIEW} .${CLASS}::-webkit-scrollbar-thumb{background:#cbd2df!important;border-radius:8px!important;}
@@ -44,6 +46,19 @@
       }
     `;
     document.head.appendChild(s);
+  }
+
+  function lockAncestors(view){
+    if(!view)return;
+    document.documentElement.classList.remove(LOCK);
+    document.body.classList.remove(LOCK);
+    let p=view.parentElement;
+    while(p&&p!==document.documentElement){
+      p.classList.add(LOCK);
+      p=p.parentElement;
+    }
+    document.documentElement.classList.add(LOCK);
+    document.body.classList.add(LOCK);
   }
 
   function cardListContainer(view){
@@ -70,6 +85,7 @@
     const view=getView();
     if(!active(view))return;
     install();
+    lockAncestors(view);
     view.querySelectorAll('.'+CLASS).forEach(el=>el.classList.remove(CLASS));
     const list=cardListContainer(view);
     if(!list)return;
@@ -83,8 +99,8 @@
     [150,500,1200,2500].forEach(t=>setTimeout(sync,t));
     window.addEventListener('resize',sync,{passive:true});
     new MutationObserver(function(){
-      clearTimeout(window.__gfAppListScrollTimerV2);
-      window.__gfAppListScrollTimerV2=setTimeout(sync,30);
+      clearTimeout(window.__gfAppListScrollTimerV3);
+      window.__gfAppListScrollTimerV3=setTimeout(sync,30);
     }).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style']});
   }
 
