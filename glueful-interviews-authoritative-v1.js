@@ -1,13 +1,14 @@
-/* Glueful Interviews — Authoritative presentation shell V1
- * Layout-only layer. Existing interview data, rendering, and actions remain untouched.
+/* Glueful Interviews — Authoritative presentation shell V2
+ * Desktop presentation now matches the approved wide Interviews reference.
+ * Existing interview data, rendering, and actions remain untouched.
  */
 (function(){
   'use strict';
-  if(window.__GLUEFUL_INTERVIEWS_AUTHORITATIVE_V1__) return;
-  window.__GLUEFUL_INTERVIEWS_AUTHORITATIVE_V1__=true;
+  if(window.__GLUEFUL_INTERVIEWS_AUTHORITATIVE_V2__) return;
+  window.__GLUEFUL_INTERVIEWS_AUTHORITATIVE_V2__=true;
 
   const VIEW='view-interviews';
-  const STYLE='glueful-interviews-authoritative-v1-style';
+  const STYLE='glueful-interviews-authoritative-v2-style';
 
   function install(){
     if(document.getElementById(STYLE)) return;
@@ -17,8 +18,8 @@
       html,body{overflow-x:hidden!important}
 
       /* ================================================================
-         DESKTOP — one authoritative Interviews canvas
-         Sidebar ≈245px | content starts ≈675px | content ≈952px
+         DESKTOP — wide Interviews workspace
+         Sidebar ≈245px | content starts ≈309px | right edge ≈1620px
          ================================================================ */
       @media(min-width:1280px){
         body #${VIEW}{
@@ -31,7 +32,7 @@
           height:100vh!important;
           min-height:100vh!important;
           margin:0!important;
-          padding:24px 32px 52px 0!important;
+          padding:16px 44px 48px 64px!important;
           box-sizing:border-box!important;
           overflow-x:hidden!important;
           overflow-y:auto!important;
@@ -39,40 +40,43 @@
           background:#f7f8fc!important;
         }
 
-        /* Every top-level Interviews wrapper gets the same authoritative
-           content column. This removes the legacy centered/oversized shell. */
+        /* One wide content canvas. The old 430px left offset is removed. */
         body #${VIEW}>*{
           box-sizing:border-box!important;
-          width:952px!important;
-          max-width:952px!important;
+          width:100%!important;
+          max-width:none!important;
           min-width:0!important;
-          margin-left:430px!important;
+          margin-left:0!important;
           margin-right:0!important;
           transform:none!important;
         }
 
-        body #${VIEW}>* .view-title,
-        body #${VIEW}>* h1{
+        /* Flatten common legacy centered wrappers so the whole Interviews
+           presentation begins at the same left edge as the header. */
+        body #${VIEW}>* > *{
+          box-sizing:border-box!important;
+          max-width:100%!important;
+          min-width:0!important;
+        }
+
+        body #${VIEW} .view-title,
+        body #${VIEW} h1{
           margin-left:0!important;
         }
 
-        body #${VIEW}>* input,
-        body #${VIEW}>* select,
-        body #${VIEW}>* textarea,
-        body #${VIEW}>* button,
-        body #${VIEW}>* [class*="interview"],
-        body #${VIEW}>* [class*="empty"]{
-          max-width:100%!important;
+        body #${VIEW} input,
+        body #${VIEW} select,
+        body #${VIEW} textarea,
+        body #${VIEW} button{
           box-sizing:border-box!important;
         }
 
-        /* Do not allow the legacy empty-state panel to establish a wider
-           min-content width than the authoritative content column. */
-        body #${VIEW}>* .interview-card,
-        body #${VIEW}>* .interview-item,
-        body #${VIEW}>* [class*="interview-card"],
-        body #${VIEW}>* [class*="interview-item"]{
-          width:100%!important;
+        body #${VIEW} .interview-card,
+        body #${VIEW} .interview-item,
+        body #${VIEW} [class*="interview-card"],
+        body #${VIEW} [class*="interview-item"],
+        body #${VIEW} [class*="empty-state"],
+        body #${VIEW} [class*="empty"]{
           min-width:0!important;
           max-width:100%!important;
           box-sizing:border-box!important;
@@ -80,8 +84,7 @@
       }
 
       /* ================================================================
-         TABLET — sidebar remains authoritative; content fills the right
-         workspace without creating a centered desktop-width overflow.
+         TABLET — keep the sidebar and fill the available workspace.
          ================================================================ */
       @media(min-width:768px) and (max-width:1279px){
         body #${VIEW}{
@@ -111,8 +114,7 @@
       }
 
       /* ================================================================
-         MOBILE — the navigation drawer owns the sidebar; Interviews is
-         a normal single-column page underneath the mobile header.
+         MOBILE — navigation drawer owns the sidebar.
          ================================================================ */
       @media(max-width:767px){
         body #${VIEW}{
@@ -147,9 +149,9 @@
   function normalize(){
     const v=document.getElementById(VIEW);
     if(!v) return;
-    v.querySelectorAll('[style]').forEach(function(el){
-      /* Remove only geometry declarations that can resurrect the legacy
-         centered Interviews shell. All other inline styles stay intact. */
+    /* Remove only legacy shell geometry from the view's top-level wrappers.
+       Nested component geometry is intentionally preserved. */
+    Array.from(v.children).forEach(function(el){
       ['left','right','width','max-width','min-width','margin-left','margin-right','transform'].forEach(function(p){
         el.style.removeProperty(p);
       });
