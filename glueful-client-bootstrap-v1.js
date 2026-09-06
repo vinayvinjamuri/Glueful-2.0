@@ -1,6 +1,6 @@
 /* Glueful — Client Bootstrap V1
- * Runtime bootstrap. The legacy UI never paints before the active feature group is ready.
- * V6 freshness: Dashboard is the shared sidebar geometry master; Interviews final guard loads last.
+ * Resumes V3 freshness: load the current feature loader and let the live
+ * resume DOM receive the presentation layer after legacy rendering completes.
  */
 (function(){
   'use strict';
@@ -17,9 +17,9 @@
   (function disableLegacySplash(){try{var style=document.createElement('style');style.id='glueful-no-splash';style.textContent='#glueful-splash{display:none!important;opacity:0!important;visibility:hidden!important;pointer-events:none!important}';(document.head||document.documentElement).appendChild(style);var remove=function(){var splash=document.getElementById('glueful-splash');if(splash)splash.remove();};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',remove,{once:true});else remove();}catch(error){console.warn('[Glueful] Legacy splash removal unavailable:',error);}})();
   function load(src){return new Promise(function(resolve,reject){var s=document.createElement('script');s.src=src;s.async=false;s.onload=resolve;s.onerror=reject;(document.head||document.documentElement).appendChild(s);});}
   async function boot(){try{
-    if('serviceWorker' in navigator){try{await navigator.serviceWorker.register('./sw.js?v=162',{updateViaCache:'none'});}catch(error){console.warn('[Glueful] Service Worker unavailable:',error);}}
+    if('serviceWorker' in navigator){try{await navigator.serviceWorker.register('./sw.js?v=163',{updateViaCache:'none'});}catch(error){console.warn('[Glueful] Service Worker unavailable:',error);}}
     try{await load('./glueful-desktop-tablet-sidebar-persist-v2.js?v=10');}catch(error){console.warn('[Glueful] Persistent sidebar layer unavailable:',error);}
-    try{await load('./glueful-feature-loader-v1.js?v=192');}catch(error){console.warn('[Glueful] Feature loader unavailable:',error);}
+    try{await load('./glueful-feature-loader-v1.js?v=193');}catch(error){console.warn('[Glueful] Feature loader unavailable:',error);}
     try{await load('./glueful-global-sidebar-authoritative-v1.js?v=4');}catch(error){console.warn('[Glueful] Global sidebar authority unavailable:',error);}
     try{await load('./glueful-global-sidebar-typography-v1.js?v=2');}catch(error){console.warn('[Glueful] Sidebar typography layer unavailable:',error);}
     try{await load('./glueful-interviews-final-layout-v1.js?v=1');}catch(error){console.warn('[Glueful] Interviews final layout unavailable:',error);}
