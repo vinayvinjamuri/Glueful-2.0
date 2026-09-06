@@ -2,6 +2,8 @@
  * Main Applications column only.
  * The existing 260px sidebar is intentionally untouched.
  * Existing data, controls, navigation and handlers are preserved.
+ * V4 fix: #view-applications already lives in the post-sidebar shell,
+ * so it must NOT receive a second 260px left margin.
  */
 (function(){
   'use strict';
@@ -18,7 +20,8 @@
       @media(min-width:1280px){
         html,body{overflow-x:hidden!important;}
 
-        /* ONLY the Applications view is being sized here. */
+        /* ONLY the Applications view is being sized here.
+           The parent shell already starts after the fixed 260px sidebar. */
         body.glueful-applications-apple #view-applications{
           position:relative!important;
           left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;
@@ -27,7 +30,7 @@
           max-width:none!important;
           min-width:0!important;
           min-height:100vh!important;
-          margin:0 0 0 260px!important;
+          margin:0!important;
           padding:26px 32px 52px!important;
           box-sizing:border-box!important;
           display:grid!important;
@@ -39,7 +42,6 @@
           overflow:visible!important;
         }
 
-        /* Header spans the Applications workspace only. */
         body.glueful-applications-apple #view-applications>.view-header{
           grid-column:1/-1!important;
           grid-row:1!important;
@@ -65,7 +67,6 @@
           flex:0 0 auto!important;
         }
 
-        /* Main application column: fills every pixel left after the fixed rail. */
         body.glueful-applications-apple #view-applications>:not(.view-header):not(#glueful-applications-workspace-v1){
           grid-column:1!important;
           grid-row:auto!important;
@@ -138,7 +139,7 @@
           width:calc(100vw - 260px)!important;
           max-width:none!important;
           min-width:0!important;
-          margin:0 0 0 260px!important;
+          margin:0!important;
           padding:26px 26px 48px!important;
           box-sizing:border-box!important;
         }
