@@ -1,16 +1,16 @@
-/* Glueful Applications — List Scroll Only V1
+/* Glueful Applications — List Scroll Only V2
  * Presentation-only behavior: keep the existing Applications sizing/layout
  * untouched and make only the application-card list internally scrollable.
  */
 (function(){
   'use strict';
-  if(window.__GLUEFUL_APPLICATIONS_LIST_SCROLL_V1__)return;
-  window.__GLUEFUL_APPLICATIONS_LIST_SCROLL_V1__=true;
+  if(window.__GLUEFUL_APPLICATIONS_LIST_SCROLL_V2__)return;
+  window.__GLUEFUL_APPLICATIONS_LIST_SCROLL_V2__=true;
 
   const VIEW='view-applications';
   const RAIL='glueful-applications-clean-v6-rail';
-  const STYLE='glueful-applications-list-scroll-v1-style';
-  const CLASS='glueful-applications-scroll-container-v1';
+  const STYLE='glueful-applications-list-scroll-v2-style';
+  const CLASS='glueful-applications-scroll-container-v2';
 
   function getView(){return document.getElementById(VIEW);}
   function active(v){return !!v&&(v.classList.contains('active')||v.style.display==='block');}
@@ -21,8 +21,12 @@
     s.id=STYLE;
     s.textContent=`
       @media(min-width:1280px){
+        /* The page itself must never create a second scrollbar. */
+        html,body{overflow:hidden!important;}
         body #${VIEW}{overflow:hidden!important;}
         body #${VIEW}.${CLASS}{overflow:hidden!important;}
+
+        /* The application list is the single scrollable region in the main column. */
         body #${VIEW} .${CLASS}{
           overflow-y:auto!important;
           overflow-x:hidden!important;
