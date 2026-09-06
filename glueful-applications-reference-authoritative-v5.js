@@ -1,7 +1,7 @@
 /* Glueful — Applications Main Column Authoritative V5
  * Keep the existing 260px sidebar exactly as-is.
  * Make the Applications view occupy the full post-sidebar viewport.
- * Keep search wide, then center the filters/application list beneath it.
+ * Keep search wide, then place filters + application list centered beneath it.
  * Existing data, controls, navigation and handlers are preserved.
  */
 (function(){
@@ -19,7 +19,7 @@
       @media(min-width:1280px){
         html,body{overflow-x:hidden!important;}
 
-        /* The sidebar remains owned by its existing layer at exactly 260px. */
+        /* Sidebar is owned by its existing layer and remains exactly 260px. */
         body.glueful-applications-apple #view-applications{
           position:fixed!important;
           left:260px!important;
@@ -36,9 +36,9 @@
           box-sizing:border-box!important;
           display:grid!important;
           grid-template-columns:minmax(0,1fr) 350px!important;
-          grid-template-rows:auto minmax(0,1fr)!important;
+          grid-template-rows:auto auto auto!important;
           column-gap:28px!important;
-          row-gap:22px!important;
+          row-gap:18px!important;
           align-items:start!important;
           overflow-x:hidden!important;
           overflow-y:auto!important;
@@ -70,7 +70,7 @@
           flex:0 0 auto!important;
         }
 
-        /* Search remains full-width across the main Applications column. */
+        /* Search gets its own row so filters can never overlap it. */
         body.glueful-applications-apple #view-applications>.glueful-applications-main-wide{
           grid-column:1!important;
           grid-row:2!important;
@@ -81,8 +81,10 @@
           box-sizing:border-box!important;
         }
 
+        /* Filters and application list share a centered 760px content column. */
         body.glueful-applications-apple #view-applications>.glueful-applications-main-centered{
           grid-column:1!important;
+          grid-row:3!important;
           width:min(100%,760px)!important;
           max-width:760px!important;
           min-width:0!important;
@@ -91,7 +93,10 @@
           box-sizing:border-box!important;
         }
 
-        /* Application cards themselves fill the centered list, not the rail. */
+        body.glueful-applications-apple #view-applications>.glueful-applications-main-centered:not(:first-of-type){
+          margin-top:0!important;
+        }
+
         body.glueful-applications-apple #view-applications .application-card,
         body.glueful-applications-apple #view-applications .job-application-card,
         body.glueful-applications-apple #view-applications [class*="application-card"]{
@@ -111,10 +116,10 @@
           box-sizing:border-box!important;
         }
 
-        /* Right rail stays fixed to the right side of Applications only. */
+        /* Right rail occupies the full content area beside search + centered list. */
         body.glueful-applications-apple #view-applications>#glueful-applications-workspace-v1{
           grid-column:2!important;
-          grid-row:2!important;
+          grid-row:2 / span 2!important;
           position:static!important;
           top:auto!important;
           right:auto!important;
@@ -193,7 +198,7 @@
       if(owner)centered.add(owner);
     });
 
-    /* The filter row normally contains these labels; center it with the list. */
+    /* Center the filter row with the application list. */
     [...view.children].forEach(function(el){
       const text=(el.textContent||'').replace(/\\s+/g,' ').trim();
       if(/Recently.*All.*Applied.*Interview.*Offer.*Rejected/i.test(text))centered.add(el);
