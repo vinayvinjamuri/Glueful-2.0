@@ -5,6 +5,7 @@
   'use strict';
   if(window.__GLUEFUL_CLIENT_BOOTSTRAP_V1__) return;
   window.__GLUEFUL_CLIENT_BOOTSTRAP_V1__ = true;
+
   (function installBootGate(){
     try{
       document.documentElement.classList.add('glueful-booting');
@@ -17,6 +18,86 @@
       setTimeout(reveal,1500);
     }catch(error){console.warn('[Glueful] Boot gate unavailable:',error);}
   })();
+
+  /* Applications desktop layout is installed here as a hard fallback so it
+   * cannot be blocked by any later feature script. It only targets the
+   * Applications view, so Dashboard and every other view remain untouched.
+   */
+  (function installApplicationsLayout(){
+    try{
+      var style=document.createElement('style');
+      style.id='glueful-applications-bootstrap-layout';
+      style.textContent=`
+        @media(min-width:1280px){
+          html,body{overflow-x:hidden!important;}
+          #view-applications{
+            position:fixed!important;left:260px!important;right:0!important;top:0!important;bottom:0!important;
+            width:auto!important;height:100vh!important;min-height:100vh!important;margin:0!important;
+            padding:26px 32px 52px!important;box-sizing:border-box!important;
+            overflow-x:hidden!important;overflow-y:auto!important;transform:none!important;
+          }
+          #view-applications > #glueful-applications-rail-v2,
+          #view-applications > #glueful-applications-workspace-v1{
+            position:absolute!important;left:12px!important;right:auto!important;top:22px!important;
+            width:370px!important;max-width:370px!important;min-width:370px!important;
+            margin:0!important;padding:0!important;box-sizing:border-box!important;
+            z-index:50!important;visibility:visible!important;opacity:1!important;
+          }
+          #view-applications > #glueful-applications-rail-v2{
+            display:flex!important;flex-direction:column!important;gap:16px!important;
+          }
+          #view-applications > #glueful-applications-rail-v2 > #glueful-applications-workspace-v1{
+            position:static!important;width:100%!important;max-width:none!important;min-width:0!important;
+            margin:0!important;padding:0!important;display:flex!important;flex-direction:column!important;gap:16px!important;
+            box-sizing:border-box!important;visibility:visible!important;opacity:1!important;
+          }
+          #view-applications > #glueful-applications-rail-v2 > #glueful-applications-workspace-v1 > *,
+          #view-applications > #glueful-applications-workspace-v1 > *{
+            width:100%!important;max-width:370px!important;box-sizing:border-box!important;
+          }
+          #view-applications > .view-header,
+          #view-applications > .glueful-applications-main-wide,
+          #view-applications > .glueful-applications-main-centered{
+            width:min(952px,calc(100% - 383px))!important;max-width:952px!important;min-width:0!important;
+            margin-left:383px!important;margin-right:0!important;box-sizing:border-box!important;
+          }
+          #view-applications > .view-header{
+            min-height:72px!important;margin-top:0!important;margin-bottom:0!important;
+            padding:0!important;display:flex!important;align-items:flex-start!important;
+            justify-content:space-between!important;gap:22px!important;
+          }
+          #view-applications > .view-header > button,
+          #view-applications > .view-header > a{
+            position:static!important;inset:auto!important;transform:none!important;margin:0!important;flex:0 0 auto!important;
+          }
+          #view-applications > .glueful-applications-main-wide{margin-top:14px!important;}
+          #view-applications > .glueful-applications-main-wide + .glueful-applications-main-centered{margin-top:14px!important;}
+          #view-applications > .glueful-applications-main-centered + .glueful-applications-main-centered{margin-top:16px!important;}
+          #view-applications input[type="search"],
+          #view-applications input[placeholder*="Search"],
+          #view-applications input[placeholder*="search"]{
+            width:100%!important;max-width:none!important;min-width:0!important;box-sizing:border-box!important;
+          }
+          #view-applications .application-card,
+          #view-applications .job-application-card,
+          #view-applications [class*="application-card"]{
+            width:100%!important;max-width:none!important;min-width:0!important;min-height:94px!important;box-sizing:border-box!important;
+          }
+        }
+        @media(min-width:768px) and (max-width:1279px){
+          #view-applications > #glueful-applications-rail-v2,
+          #view-applications > #glueful-applications-workspace-v1{display:none!important;}
+          #view-applications{width:calc(100vw - 260px)!important;margin:0!important;padding:26px!important;box-sizing:border-box!important;}
+        }
+        @media(max-width:767px){
+          #view-applications > #glueful-applications-rail-v2,
+          #view-applications > #glueful-applications-workspace-v1{display:none!important;}
+        }
+      `;
+      (document.head||document.documentElement).appendChild(style);
+    }catch(error){console.warn('[Glueful] Applications bootstrap layout unavailable:',error);}
+  })();
+
   (function disableLegacySplash(){
     try{
       var style=document.createElement('style');
@@ -27,6 +108,7 @@
       if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',remove,{once:true});else remove();
     }catch(error){console.warn('[Glueful] Legacy splash removal unavailable:',error);}
   })();
+
   function load(src){return new Promise(function(resolve,reject){var s=document.createElement('script');s.src=src;s.async=false;s.onload=resolve;s.onerror=reject;(document.head||document.documentElement).appendChild(s);});}
   async function boot(){
     try{
