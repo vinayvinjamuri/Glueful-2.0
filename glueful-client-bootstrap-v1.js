@@ -1,5 +1,6 @@
 /* Glueful — Client Bootstrap V1
  * Runtime bootstrap. The legacy UI never paints before the active feature group is ready.
+ * V2 freshness bump: force the current feature loader/service worker to take control.
  */
 (function(){
   'use strict';
@@ -112,9 +113,9 @@
   function load(src){return new Promise(function(resolve,reject){var s=document.createElement('script');s.src=src;s.async=false;s.onload=resolve;s.onerror=reject;(document.head||document.documentElement).appendChild(s);});}
   async function boot(){
     try{
-      if('serviceWorker' in navigator){try{await navigator.serviceWorker.register('./sw.js?v=158',{updateViaCache:'none'});}catch(error){console.warn('[Glueful] Service Worker unavailable:',error);}}
-      try{await load('./glueful-desktop-tablet-sidebar-persist-v2.js?v=6');}catch(error){console.warn('[Glueful] Persistent sidebar layer unavailable:',error);}
-      try{await load('./glueful-feature-loader-v1.js?v=185');}catch(error){console.warn('[Glueful] Feature loader unavailable:',error);}
+      if('serviceWorker' in navigator){try{await navigator.serviceWorker.register('./sw.js?v=159',{updateViaCache:'none'});}catch(error){console.warn('[Glueful] Service Worker unavailable:',error);}}
+      try{await load('./glueful-desktop-tablet-sidebar-persist-v2.js?v=7');}catch(error){console.warn('[Glueful] Persistent sidebar layer unavailable:',error);}
+      try{await load('./glueful-feature-loader-v1.js?v=186');}catch(error){console.warn('[Glueful] Feature loader unavailable:',error);}
     }catch(error){console.warn('[Glueful] Client bootstrap failed:',error);}
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){void boot();},{once:true});else void boot();
