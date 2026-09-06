@@ -1,0 +1,32 @@
+name: Bump Resumes UI Cache
+on:
+  push:
+    branches: [main]
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bump bootstrap query once
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          old='./glueful-client-bootstrap-v1.js?v=153'
+          new='./glueful-client-bootstrap-v1.js?v=154'
+          if old in s:
+              s=s.replace(old,new,1)
+              p.write_text(s,encoding='utf-8')
+          PY
+          if git diff --quiet -- index.html; then
+            echo 'No cache bump needed'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Bump bootstrap cache for Resumes UI'
+          git push
