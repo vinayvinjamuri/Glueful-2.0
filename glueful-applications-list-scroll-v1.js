@@ -1,6 +1,6 @@
 /* Glueful Applications — List Scroll Only V2
- * Presentation-only behavior: keep the existing Applications sizing/layout
- * untouched and make only the application-card list internally scrollable.
+ * Presentation-only behavior: the Applications shell never scrolls on desktop.
+ * Only the application-card list is allowed to scroll.
  */
 (function(){
   'use strict';
@@ -21,12 +21,16 @@
     s.id=STYLE;
     s.textContent=`
       @media(min-width:1280px){
-        /* The page itself must never create a second scrollbar. */
+        /* Applications owns the viewport; it must never scroll. */
         html,body{overflow:hidden!important;}
-        body #${VIEW}{overflow:hidden!important;}
-        body #${VIEW}.${CLASS}{overflow:hidden!important;}
+        body #${VIEW}{
+          overflow:hidden!important;
+          height:100vh!important;
+          min-height:100vh!important;
+          max-height:100vh!important;
+        }
 
-        /* The application list is the single scrollable region in the main column. */
+        /* Only this container, which contains the cards, may scroll. */
         body #${VIEW} .${CLASS}{
           overflow-y:auto!important;
           overflow-x:hidden!important;
@@ -57,7 +61,6 @@
       p=p.parentElement;
     }
 
-    /* Fallback: choose the nearest ancestor shared by all cards. */
     p=cards[0].parentElement;
     while(p&&p!==view&&!cards.every(c=>p.contains(c)))p=p.parentElement;
     return p&&p!==view?p:null;
@@ -67,13 +70,9 @@
     const view=getView();
     if(!active(view))return;
     install();
-
-    const old=view.querySelectorAll('.'+CLASS);
-    old.forEach(el=>el.classList.remove(CLASS));
-
+    view.querySelectorAll('.'+CLASS).forEach(el=>el.classList.remove(CLASS));
     const list=cardListContainer(view);
     if(!list)return;
-
     list.classList.add(CLASS);
     const top=Math.max(0,Math.round(list.getBoundingClientRect().top));
     view.style.setProperty('--gf-app-scroll-top',top+'px');
@@ -84,8 +83,8 @@
     [150,500,1200,2500].forEach(t=>setTimeout(sync,t));
     window.addEventListener('resize',sync,{passive:true});
     new MutationObserver(function(){
-      clearTimeout(window.__gfAppListScrollTimer);
-      window.__gfAppListScrollTimer=setTimeout(sync,30);
+      clearTimeout(window.__gfAppListScrollTimerV2);
+      window.__gfAppListScrollTimerV2=setTimeout(sync,30);
     }).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style']});
   }
 
