@@ -10,7 +10,27 @@ function install(){
  if(document.getElementById(STYLE))return;
  const s=document.createElement('style');s.id=STYLE;
  s.textContent=`
+/* glueful-interviews-v6-width-patch */
 html,body{overflow-x:hidden!important}
+@media(min-width:1280px){
+ body #${VIEW} .${UI}-hero,
+ body #${VIEW} .${UI}-toolbar,
+ body #${VIEW} .${UI}-empty{
+   width:100%!important;
+   max-width:none!important;
+   min-width:0!important;
+   margin-left:0!important;
+   margin-right:0!important;
+   float:none!important;
+   clear:both!important;
+   box-sizing:border-box!important;
+ }
+ body #${VIEW} .${UI}-hero{display:block!important;visibility:visible!important;}
+ body #${VIEW} .${UI}-toolbar{display:flex!important;visibility:visible!important;}
+ body #${VIEW} .${UI}-empty{display:flex!important;visibility:visible!important;}
+ body #${VIEW} .${UI}-empty-copy,
+ body #${VIEW} .${UI}-empty-add{display:flex!important;visibility:visible!important;}
+}
 @media(min-width:1280px){
  body #${VIEW}{position:fixed!important;left:245px!important;right:0!important;top:0!important;bottom:0!important;width:auto!important;height:100vh!important;min-height:100vh!important;margin:0!important;padding:16px 44px 48px 48px!important;box-sizing:border-box!important;overflow-x:hidden!important;overflow-y:auto!important;background:#f7f8fc!important;}
  body #${VIEW}>.${UI}-shell{display:block!important;width:100%!important;max-width:none!important;min-width:0!important;margin:0!important;padding:0!important;box-sizing:border-box!important;}
