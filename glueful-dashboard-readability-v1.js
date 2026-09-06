@@ -1,20 +1,35 @@
-/* Glueful — Dashboard Readability V1
+/* Glueful — Dashboard Readability V2
  * Desktop readability and header-action spacing only.
- * Does not alter dashboard data or handlers.
+ * Keeps one authoritative greeting; does not alter dashboard data or handlers.
  */
 (function(){
   'use strict';
-  if(window.__GLUEFUL_DASHBOARD_READABILITY_V1__) return;
-  window.__GLUEFUL_DASHBOARD_READABILITY_V1__=true;
-  const STYLE='glueful-dashboard-readability-v1-style';
+  if(window.__GLUEFUL_DASHBOARD_READABILITY_V2__) return;
+  window.__GLUEFUL_DASHBOARD_READABILITY_V2__=true;
+  const STYLE='glueful-dashboard-readability-v2-style';
   function install(){
     if(document.getElementById(STYLE)) return;
     const s=document.createElement('style'); s.id=STYLE;
     s.textContent=`
       @media(min-width:1101px){
         body.glueful-apple-dashboard #view-dashboard{font-size:15px!important;}
-        body.glueful-apple-dashboard #view-dashboard .view-title{font-size:28px!important;line-height:1.15!important;}
-        body.glueful-apple-dashboard #view-dashboard .view-title::before{font-size:28px!important;line-height:1.15!important;}
+
+        /* The real title text is hidden because the reference greeting is rendered
+           by ::before. This prevents "Hi Vinjamuri" from appearing underneath it. */
+        body.glueful-apple-dashboard #view-dashboard .view-title{
+          font-size:0!important;
+          line-height:0!important;
+          color:transparent!important;
+        }
+        body.glueful-apple-dashboard #view-dashboard .view-title::before{
+          content:"Good morning, Vinay! 👋"!important;
+          display:block!important;
+          font-size:28px!important;
+          line-height:1.15!important;
+          font-weight:750!important;
+          letter-spacing:-.45px!important;
+          color:#111827!important;
+        }
         body.glueful-apple-dashboard #view-dashboard .view-subtitle{font-size:15px!important;line-height:1.4!important;}
         body.glueful-apple-dashboard #view-dashboard .view-header button,
         body.glueful-apple-dashboard #view-dashboard .view-header a{font-size:14px!important;}
@@ -57,6 +72,22 @@
           position:relative!important;width:170px!important;min-width:170px!important;max-width:170px!important;
           height:44px!important;min-height:44px!important;margin:0!important;padding:0 18px!important;
           border-radius:12px!important;font-size:14px!important;white-space:nowrap!important;
+        }
+      }
+
+      @media(max-width:700px){
+        body.glueful-apple-dashboard #view-dashboard .view-title{
+          font-size:0!important;
+          line-height:0!important;
+          color:transparent!important;
+        }
+        body.glueful-apple-dashboard #view-dashboard .view-title::before{
+          content:"Good morning, Vinay! 👋"!important;
+          display:block!important;
+          font-size:19px!important;
+          line-height:1.2!important;
+          font-weight:750!important;
+          color:#111827!important;
         }
       }
     `;
