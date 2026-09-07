@@ -2,6 +2,7 @@ name: Force fresh bootstrap asset
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 permissions:
   contents: write
 jobs:
