@@ -17,18 +17,11 @@
     function start(){
       var v=document.getElementById('view-resume');
       if(!v){setTimeout(start,200);return;}
-      function dark(el){try{var c=getComputedStyle(el).backgroundColor||'';var m=c.match(/rgba?\\(([^)]+)\\)/i);if(!m)return false;var p=m[1].split(',').map(function(x){return parseFloat(x.trim())});return p.length>=3&&p[0]<105&&p[1]<110&&p[2]<125}catch(_){return false}}
       function paint(){
         v=document.getElementById('view-resume');if(!v)return;
         v.style.setProperty('position','relative','important');v.style.setProperty('left','auto','important');v.style.setProperty('right','auto','important');v.style.setProperty('transform','none','important');v.style.setProperty('margin-left','260px','important');v.style.setProperty('margin-right','0','important');v.style.setProperty('width','calc(100vw - 260px)','important');v.style.setProperty('max-width','none','important');v.style.setProperty('min-height','100vh','important');v.style.setProperty('box-sizing','border-box','important');v.style.setProperty('padding','22px 30px 52px','important');v.style.setProperty('background','#f7f8fb','important');v.style.setProperty('color','#111827','important');
-        Array.from(v.children).forEach(function(el){var r=el.getBoundingClientRect();if(r.width>=500&&r.left>350){el.style.setProperty('width','100%','important');el.style.setProperty('max-width','none','important');el.style.setProperty('margin-left','0','important');el.style.setProperty('margin-right','0','important');}}
-        );
-        Array.from(v.querySelectorAll('div,section,article,li')).forEach(function(el){if(el.matches('.view-header,header,button,a,label,img,svg,canvas'))return;var r=el.getBoundingClientRect();if(r.width<600||r.height<55||r.height>170||!dark(el))return;var t=(el.textContent||'').replace(/\\s+/g,' ').trim();if(/search company|search.*resume/i.test(t)&&r.height<90)return;var info=/resumes are grouped|search by company|resume library/i.test(t)&&r.height<115;el.style.setProperty('background',info?'#f4f7ff':'#fff','important');el.style.setProperty('background-color',info?'#f4f7ff':'#fff','important');el.style.setProperty('color',info?'#536b9d':'#111827','important');el.style.setProperty('border','1px solid '+(info?'#d9e4ff':'#e1e6ef'),'important');el.style.setProperty('border-radius','15px','important');el.style.setProperty('box-shadow',info?'none':'0 4px 16px rgba(25,35,58,.045)','important');if(!info)el.querySelectorAll('*').forEach(function(c){if(!c.matches('img,svg,canvas,button,a,input'))c.style.setProperty('color','#111827','important')});});
-        v.querySelectorAll('input[type=search],input[type=text]').forEach(function(i){i.style.setProperty('background','#fff','important');i.style.setProperty('background-color','#fff','important');i.style.setProperty('color','#172033','important');i.style.setProperty('border','1px solid #dfe4ee','important');i.style.setProperty('border-radius','11px','important');});
-        v.querySelectorAll('button').forEach(function(b){var t=(b.textContent||'').trim();if(/filter/i.test(t)){b.style.setProperty('background','#fff','important');b.style.setProperty('color','#1f2a3d','important');b.style.setProperty('border','1px solid #dfe4ee','important');b.style.setProperty('border-radius','11px','important')}if(/add\\s+resume|upload\\s+resume|import\\s+resume|new\\s+resume/i.test(t)){b.style.setProperty('background','linear-gradient(135deg,#7137e8,#4d72ff)','important');b.style.setProperty('color','#fff','important')}});
       }
       paint();[100,300,700,1200,2000,3500,5000,8000,12000].forEach(function(t){setTimeout(paint,t)});
-      new MutationObserver(function(m){if(m.some(function(x){return x.type==='childList'||x.type==='attributes'}))setTimeout(paint,30)}).observe(v,{childList:true,subtree:true,attributes:true,attributeFilter:['style','class']});
     }
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
   }catch(error){console.warn('[Glueful] Resume emergency authority unavailable:',error);}})();
@@ -41,7 +34,7 @@
     try{await load('./glueful-global-sidebar-authoritative-v1.js?v=4');}catch(error){console.warn('[Glueful] Global sidebar authority unavailable:',error);}
     try{await load('./glueful-global-sidebar-typography-v1.js?v=2');}catch(error){console.warn('[Glueful] Sidebar typography layer unavailable:',error);}
     try{await load('./glueful-interviews-final-layout-v1.js?v=1');}catch(error){console.warn('[Glueful] Interviews final layout unavailable:',error);}
-    try{await load('./glueful-resumes-hard-authority-v1.js?v=3');}catch(error){console.warn('[Glueful] Resumes hard authority unavailable:',error);}
+    try{await load('./glueful-resumes-hard-authority-v1.js?v=4');}catch(error){console.warn('[Glueful] Resumes hard authority unavailable:',error);}
   }catch(error){console.warn('[Glueful] Client bootstrap failed:',error);}}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){void boot();},{once:true});else void boot();
 })();
