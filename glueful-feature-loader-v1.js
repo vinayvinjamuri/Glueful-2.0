@@ -1,5 +1,6 @@
-/* Glueful — Feature Loader V6
- * Applications uses one clean reference presentation source.
+/* Glueful — Feature Loader V7
+ * Resume group follows the actual #view-resumes DOM id.
+ * No other feature group behavior is changed.
  */
 (function () {
   'use strict';
@@ -26,11 +27,11 @@
   const loaded=Object.create(null),loading=Object.create(null),scheduled=Object.create(null);
   function yieldToBrowser(){return new Promise(function(resolve){if(typeof requestAnimationFrame==='function')requestAnimationFrame(function(){setTimeout(resolve,0)});else setTimeout(resolve,0)})}
   function loadScript(src){return new Promise(function(resolve,reject){const existing=document.querySelector('script[data-glueful-feature-src="'+src+'"]');if(existing){resolve();return}const script=document.createElement('script');script.src=src;script.async=false;script.dataset.gluefulFeatureSrc=src;script.onload=resolve;script.onerror=function(){reject(new Error('Failed to load '+src))};document.body.appendChild(script)})}
-  function initialViewForGroup(name){return {dashboard:'view-dashboard',applications:'view-applications',jobs:'view-jobs',resume:'view-resume',gmail:'view-gmail'}[name]||null}
-  function isActive(id){const e=document.getElementById(id);return !!e&&(e.classList.contains('active')||e.style.display==='block')}
+  function initialViewForGroup(name){return {dashboard:'view-dashboard',applications:'view-applications',jobs:'view-jobs',resume:'view-resumes',gmail:'view-gmail'}[name]||null}
+  function isActive(id){const e=document.getElementById(id);return !!e&&(e.classList.contains('active')||e.style.display==='block'||e.classList.contains('glueful-single-view-visible'))}
   async function loadGroup(name){if(loaded[name])return;if(loading[name])return loading[name];const files=GROUPS[name];if(!files)return;loading[name]=(async function(){for(const src of files){await yieldToBrowser();try{await loadScript(src)}catch(error){console.error('[Glueful] Feature load failed:',name,src,error)}}loaded[name]=true;const initialView=initialViewForGroup(name);if(initialView&&isActive(initialView))window.dispatchEvent(new CustomEvent('glueful-initial-view-ready',{detail:{group:name,view:initialView}}))})();return loading[name]}
   function scheduleGroup(name){if(loaded[name]||loading[name]||scheduled[name])return;scheduled[name]=true;const run=function(){scheduled[name]=false;void loadGroup(name)};if(typeof requestAnimationFrame==='function')requestAnimationFrame(function(){setTimeout(run,0)});else setTimeout(run,0)}
-  function sync(){if(isActive('view-dashboard'))scheduleGroup('dashboard');if(isActive('view-applications'))scheduleGroup('applications');if(isActive('view-jobs')||document.getElementById('jobs-view')?.closest('.active'))scheduleGroup('jobs');if(isActive('view-resume'))scheduleGroup('resume');if(isActive('view-gmail'))scheduleGroup('gmail');const orbit=document.getElementById('glueful-orbit-v2-root');if(orbit&&(orbit.classList.contains('open')||orbit.style.display==='block'))scheduleGroup('orbit')}
+  function sync(){if(isActive('view-dashboard'))scheduleGroup('dashboard');if(isActive('view-applications'))scheduleGroup('applications');if(isActive('view-jobs')||document.getElementById('jobs-view')?.closest('.active'))scheduleGroup('jobs');if(isActive('view-resumes'))scheduleGroup('resume');if(isActive('view-gmail'))scheduleGroup('gmail');const orbit=document.getElementById('glueful-orbit-v2-root');if(orbit&&(orbit.classList.contains('open')||orbit.style.display==='block'))scheduleGroup('orbit')}
   window.gluefulLoadFeature=loadGroup;window.gluefulFeatureLoader={sync:sync,loaded:loaded,groups:Object.keys(GROUPS)};
   function boot(){scheduleGroup('orbit');scheduleGroup('gmail');void loadScript('./glueful-reference-design-v1.js?v=2').catch(function(error){console.warn('[Glueful] Shared reference design unavailable:',error)});sync();if(!document.body)return;new MutationObserver(function(mutations){for(const mutation of mutations){if(mutation.type==='childList'||(mutation.type==='attributes'&&mutation.attributeName==='class')){sync();break}}}).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']})}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
