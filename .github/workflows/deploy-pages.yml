@@ -24,6 +24,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Force fresh client bootstrap asset
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          pat = r'\.\/glueful-client-bootstrap-v1\.js\?v=(\d+)'
+          m = re.search(pat, s)
+          if not m:
+              raise SystemExit('Bootstrap script reference not found')
+          version = int(m.group(1)) + 1
+          s = s[:m.start()] + f'./glueful-client-bootstrap-v1.js?v={version}' + s[m.end():]
+          p.write_text(s, encoding='utf-8')
+          print(f'Deploying bootstrap asset v{version}')
+          PY
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
