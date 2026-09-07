@@ -116,6 +116,7 @@
       if('serviceWorker' in navigator){try{await navigator.serviceWorker.register('./sw.js?v=159',{updateViaCache:'none'});}catch(error){console.warn('[Glueful] Service Worker unavailable:',error);}}
       try{await load('./glueful-desktop-tablet-sidebar-persist-v2.js?v=7');}catch(error){console.warn('[Glueful] Persistent sidebar layer unavailable:',error);}
       try{await load('./glueful-feature-loader-v1.js?v=186');}catch(error){console.warn('[Glueful] Feature loader unavailable:',error);}
+      try{await load('./glueful-single-view-authority-v1.js?v=1');}catch(error){console.warn('[Glueful] Single-view authority unavailable:',error);}
     }catch(error){console.warn('[Glueful] Client bootstrap failed:',error);}
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){void boot();},{once:true});else void boot();
