@@ -9,7 +9,7 @@
 
   const IDS=[
     'view-dashboard','view-applications','view-interviews','view-profile',
-    'view-saved-jobs','view-settings','view-jobs','view-resume',
+    'view-saved-jobs','view-settings','view-jobs','view-resumes',
     'view-add-application','view-gmail'
   ];
   const MAP={
@@ -18,7 +18,7 @@
     interviews:'view-interviews',interview:'view-interviews',
     profile:'view-profile',settings:'view-settings',
     jobs:'view-jobs','saved-jobs':'view-saved-jobs',savedjobs:'view-saved-jobs',
-    resume:'view-resume',resumes:'view-resume',
+    resume:'view-resumes',resumes:'view-resumes',
     'add-application':'view-add-application',addapplication:'view-add-application',
     gmail:'view-gmail'
   };
