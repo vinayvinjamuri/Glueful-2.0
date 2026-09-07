@@ -1,37 +1,44 @@
 name: Force fresh bootstrap asset
+
 on:
   push:
     branches: [main]
-  workflow_dispatch:
+
 permissions:
   contents: write
+
 jobs:
   bump-bootstrap-cache:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Bump bootstrap query in index
+        shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
-          import re
-          p=Path('index.html')
-          s=p.read_text(encoding='utf-8')
-          pat=r'\.\/glueful-client-bootstrap-v1\.js\?v=(\d+)'
-          m=re.search(pat,s)
-          if not m:
-              raise SystemExit('Bootstrap script reference not found')
-          old=m.group(0)
-          new=f'./glueful-client-bootstrap-v1.js?v={int(m.group(1))+1}'
-          p.write_text(s.replace(old,new,1),encoding='utf-8')
-          print(f'{old} -> {new}')
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          old = './glueful-client-bootstrap-v1.js?v=149'
+          new = './glueful-client-bootstrap-v1.js?v=150'
+          if old in s:
+              s = s.replace(old, new, 1)
+              p.write_text(s, encoding='utf-8')
+          elif new not in s:
+              raise SystemExit('Expected bootstrap script reference was not found')
           PY
+
       - name: Commit and push
+        shell: bash
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          if git diff --cached --quiet; then exit 0; fi
+          if git diff --cached --quiet; then
+            echo 'No index change needed.'
+            exit 0
+          fi
           git commit -m 'Bump bootstrap asset cache version'
           git push
