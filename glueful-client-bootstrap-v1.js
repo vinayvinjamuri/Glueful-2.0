@@ -22,7 +22,7 @@
     try{await load('./glueful-global-sidebar-authoritative-v1.js?v=4');}catch(error){console.warn('[Glueful] Global sidebar authority unavailable:',error);}
     try{await load('./glueful-global-sidebar-typography-v1.js?v=2');}catch(error){console.warn('[Glueful] Sidebar typography layer unavailable:',error);}
     try{await load('./glueful-interviews-final-layout-v1.js?v=1');}catch(error){console.warn('[Glueful] Interviews final layout unavailable:',error);}
-    try{await load('./glueful-resumes-hard-authority-v1.js?v=2');}catch(error){console.warn('[Glueful] Resumes hard authority unavailable:',error);}
+    try{await load('./glueful-resumes-hard-authority-v1.js?v=3');}catch(error){console.warn('[Glueful] Resumes hard authority unavailable:',error);}
   }catch(error){console.warn('[Glueful] Client bootstrap failed:',error);}}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){void boot();},{once:true});else void boot();
 })();
