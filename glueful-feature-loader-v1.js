@@ -6,33 +6,17 @@
  */
 (function () {
   'use strict';
-  if (window.__GLUEFUL_FEATURE_LOADER_V1__) return;
-  window.__GLUEFUL_FEATURE_LOADER_V1__ = true;
+  if(window.__GLUEFUL_FEATURE_LOADER_V1__) return;
+  window.__GLUEFUL_FEATURE_LOADER_V1__=true;
   const BUILD_ID=window.__GLUEFUL_BUILD_ID__||'20260908-current-1';
-  const GROUPS = {
-    dashboard: [
-      './glueful-navigation-responsive-v1.js?v=2','./glueful-profile-instant-open-v1.js','./glueful-dashboard-fixed-v1.js','./glueful-dashboard-header-fix-v1.js','./glueful-dashboard-hamburger-v2.js','./glueful-dashboard-approved-v1.js','./glueful-dashboard-job-network-removal-v1.js','./glueful-dashboard-apple-v1.js','./glueful-dashboard-apple-layout-v1.js?v=2','./glueful-dashboard-reference-step1-v1.js?v=1','./glueful-dashboard-reference-step2-v1.js?v=1','./glueful-dashboard-reference-step3-v1.js?v=1','./glueful-dashboard-reference-step4-v1.js?v=1','./glueful-dashboard-reference-step5-v1.js?v=2','./glueful-dashboard-reference-step6-v1.js?v=1','./glueful-dashboard-reference-step7-v1.js?v=1','./glueful-dashboard-reference-step8-v1.js?v=1','./glueful-dashboard-reference-step9-v1.js?v=2','./glueful-dashboard-reference-step10-v1.js?v=1','./glueful-dashboard-mobile-reference-v1.js?v=2','./glueful-dashboard-mobile-header-polish-v1.js?v=1','./glueful-dashboard-desktop-header-polish-v1.js?v=1','./glueful-dashboard-desktop-spacing-v1.js?v=12','./glueful-dashboard-reference-final-polish-v1.js?v=2','./glueful-dashboard-layout-authoritative-v1.js?v=1','./glueful-reference-design-v1.js?v=2','./glueful-dashboard-reference-authoritative-v2.js?v=1','./glueful-dashboard-reference-authoritative-v3.js?v=2','./glueful-dashboard-desktop-typography-v1.js?v=1'
-    ],
-    applications: [
-      './glueful-navigation-responsive-v1.js?v=2',
-      './glueful-profile-instant-open-v1.js',
-      './glueful-dashboard-hamburger-v2.js',
-      './glueful-applications-clean-v6.js?v=2',
-      './glueful-applications-list-scroll-v1.js?v=2',
-      './glueful-applications-responsive-v1.js?v=1',
-      './glueful-applications-tablet-final-v1.js?v=1'
-    ],
-    interviews: [
-      './glueful-navigation-responsive-v1.js?v=2',
-      './glueful-profile-instant-open-v1.js',
-      './glueful-dashboard-hamburger-v2.js',
-      './glueful-interviews-desktop-layout-v1.js?v=1',
-      './glueful-interviews-authoritative-v1.js?v=6'
-    ],
-    jobs: ['./glueful-jobs-auth-bootstrap-v1.js','./glueful-jobs-discover-v15-authoritative.js','./glueful-jobs-relevance-v1.js','./glueful-jobs-resume-action-v1.js','./glueful-jobs-logo-patch-v1.js','./glueful-jobs-mobile-card-polish-v1.js','./glueful-jobs-mobile-ux-v15.js','./glueful-jobs-smooth-logos-v1.js','./glueful-jobs-feed-recovery-v2.js','./glueful-jobs-official-link-guard-v1.js','./glueful-jobs-logo-recovery-v1.js','./glueful-jobs-logo-recovery-v2.js','./glueful-jobs-logo-recovery-v3.js','./glueful-jobs-brandfetch-final-v1.js','./glueful-jobs-page-scroll-fix-v4.js','./glueful-reference-design-v1.js?v=2'],
-    orbit: ['./glueful-orbit-bootstrap-v1.js','./glueful-orbit-v2.js','./glueful-orbit-ui-v3.js','./glueful-orbit-ui-v16.js','./glueful-orbit-ui-v17.js','./glueful-orbit-ai-bridge-v1.js','./glueful-orbit-career-engine-v1.js','./glueful-orbit-navigation-v1.js','./glueful-orbit-stability-v1.js','./glueful-orbit-chat-layout-v1.js','./glueful-orbit-ime-final-v1.js'],
-    resume: ['./glueful-resume-render-diagnostics.js','./glueful-resume-fixed-page-bootstrap.js','./glueful-resume-layout-model.js','./glueful-resume-pdf-layout-importer.js','./glueful-resume-fixed-page-renderer.js','./glueful-resume-fixed-page-ux-v6.js','./glueful-resume-fixed-page-controller.js','./glueful-resume-vector-docx-export-v2.js','./glueful-resume-typography-patch-v1.js','./glueful-resume-import-guard-v1.js','./glueful-resume-pdf-export-fix-v1.js','./glueful-resume-viewer-v1.js','./glueful-reference-design-v1.js?v=2','./glueful-resumes-reference-empty-v1.js?v=1'],
-    gmail: ['./glueful-gmail-loader-v1.js']
+  const GROUPS={
+    dashboard:['./glueful-profile-instant-open-v1.js','./glueful-dashboard-fixed-v1.js','./glueful-dashboard-header-fix-v1.js','./glueful-dashboard-hamburger-v2.js','./glueful-dashboard-approved-v1.js','./glueful-dashboard-job-network-removal-v1.js','./glueful-dashboard-apple-v1.js','./glueful-dashboard-apple-layout-v1.js?v=2','./glueful-dashboard-reference-step1-v1.js?v=1','./glueful-dashboard-reference-step2-v1.js?v=1','./glueful-dashboard-reference-step3-v1.js?v=1','./glueful-dashboard-reference-step4-v1.js?v=1','./glueful-dashboard-reference-step5-v1.js?v=2','./glueful-dashboard-reference-step6-v1.js?v=1','./glueful-dashboard-reference-step7-v1.js?v=1','./glueful-dashboard-reference-step8-v1.js?v=1','./glueful-dashboard-reference-step9-v1.js?v=2','./glueful-dashboard-reference-step10-v1.js?v=1','./glueful-dashboard-mobile-reference-v1.js?v=2','./glueful-dashboard-mobile-header-polish-v1.js?v=1','./glueful-dashboard-desktop-header-polish-v1.js?v=1','./glueful-dashboard-desktop-spacing-v1.js?v=12','./glueful-dashboard-reference-final-polish-v1.js?v=2','./glueful-dashboard-layout-authoritative-v1.js?v=1','./glueful-reference-design-v1.js?v=2','./glueful-dashboard-reference-authoritative-v2.js?v=1','./glueful-dashboard-reference-authoritative-v3.js?v=2','./glueful-dashboard-desktop-typography-v1.js?v=1'],
+    applications:['./glueful-profile-instant-open-v1.js','./glueful-dashboard-hamburger-v2.js','./glueful-applications-clean-v6.js?v=2','./glueful-applications-list-scroll-v1.js?v=2','./glueful-applications-responsive-v1.js?v=1','./glueful-applications-tablet-final-v1.js?v=1'],
+    interviews:['./glueful-profile-instant-open-v1.js','./glueful-dashboard-hamburger-v2.js','./glueful-interviews-desktop-layout-v1.js?v=1','./glueful-interviews-authoritative-v1.js?v=6'],
+    jobs:['./glueful-jobs-auth-bootstrap-v1.js','./glueful-jobs-discover-v15-authoritative.js','./glueful-jobs-relevance-v1.js','./glueful-jobs-resume-action-v1.js','./glueful-jobs-logo-patch-v1.js','./glueful-jobs-mobile-card-polish-v1.js','./glueful-jobs-mobile-ux-v15.js','./glueful-jobs-smooth-logos-v1.js','./glueful-jobs-feed-recovery-v2.js','./glueful-jobs-official-link-guard-v1.js','./glueful-jobs-logo-recovery-v1.js','./glueful-jobs-logo-recovery-v2.js','./glueful-jobs-logo-recovery-v3.js','./glueful-jobs-brandfetch-final-v1.js','./glueful-jobs-page-scroll-fix-v4.js','./glueful-reference-design-v1.js?v=2'],
+    orbit:['./glueful-orbit-bootstrap-v1.js','./glueful-orbit-v2.js','./glueful-orbit-ui-v3.js','./glueful-orbit-ui-v16.js','./glueful-orbit-ui-v17.js','./glueful-orbit-ai-bridge-v1.js','./glueful-orbit-career-engine-v1.js','./glueful-orbit-navigation-v1.js','./glueful-orbit-stability-v1.js','./glueful-orbit-chat-layout-v1.js','./glueful-orbit-ime-final-v1.js'],
+    resume:['./glueful-resume-render-diagnostics.js','./glueful-resume-fixed-page-bootstrap.js','./glueful-resume-layout-model.js','./glueful-resume-pdf-layout-importer.js','./glueful-resume-fixed-page-renderer.js','./glueful-resume-fixed-page-ux-v6.js','./glueful-resume-fixed-page-controller.js','./glueful-resume-vector-docx-export-v2.js','./glueful-resume-typography-patch-v1.js','./glueful-resume-import-guard-v1.js','./glueful-resume-pdf-export-fix-v1.js','./glueful-resume-viewer-v1.js','./glueful-reference-design-v1.js?v=2','./glueful-resumes-reference-empty-v1.js?v=1'],
+    gmail:['./glueful-gmail-loader-v1.js']
   };
   const loaded=Object.create(null),loading=Object.create(null),scheduled=Object.create(null);
   function fresh(src){const sep=src.indexOf('?')>=0?'&':'?';return src+sep+'glueful_build='+encodeURIComponent(BUILD_ID)}
@@ -45,5 +29,5 @@
   function sync(){if(isActive('view-dashboard'))scheduleGroup('dashboard');if(isActive('view-applications'))scheduleGroup('applications');if(isActive('view-interviews'))scheduleGroup('interviews');if(isActive('view-jobs')||document.getElementById('jobs-view')?.closest('.active'))scheduleGroup('jobs');if(isActive('view-resumes'))scheduleGroup('resume');if(isActive('view-gmail'))scheduleGroup('gmail');const orbit=document.getElementById('glueful-orbit-v2-root');if(orbit&&(orbit.classList.contains('open')||orbit.style.display==='block'))scheduleGroup('orbit')}
   window.gluefulLoadFeature=loadGroup;window.gluefulFeatureLoader={sync:sync,loaded:loaded,groups:Object.keys(GROUPS),buildId:BUILD_ID};
   function boot(){scheduleGroup('orbit');scheduleGroup('gmail');void loadScript('./glueful-reference-design-v1.js?v=2').catch(function(error){console.warn('[Glueful] Shared reference design unavailable:',error)});sync();if(!document.body)return;new MutationObserver(function(mutations){for(const mutation of mutations){if(mutation.type==='childList'||(mutation.type==='attributes'&&mutation.attributeName==='class')){sync();break}}}).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']})}
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',boot,{once:true}); else boot();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
