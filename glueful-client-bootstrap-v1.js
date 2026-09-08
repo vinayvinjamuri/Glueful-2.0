@@ -1,6 +1,6 @@
 /* Glueful — Client Bootstrap V1
  * Runtime bootstrap. The legacy UI never paints before the active feature group is ready.
- * V5 freshness bump for the Resume-window-only alignment repair.
+ * V3 freshness bump for the resume-window-only repair.
  */
 (function(){
   'use strict';
@@ -97,37 +97,6 @@
       `;
       (document.head||document.documentElement).appendChild(style);
     }catch(error){console.warn('[Glueful] Applications bootstrap layout unavailable:',error);}
-  })();
-
-  (function installResumeWindowAlignment(){
-    try{
-      var style=document.createElement('style');
-      style.id='glueful-resume-window-bootstrap-alignment';
-      style.textContent=`
-        @media(min-width:1280px){
-          body #view-resumes{
-            position:fixed!important;left:260px!important;right:0!important;top:0!important;bottom:0!important;
-            width:calc(100vw - 260px)!important;height:100vh!important;min-height:100vh!important;margin:0!important;
-            padding:20px 32px 48px!important;box-sizing:border-box!important;
-            overflow-x:hidden!important;overflow-y:auto!important;transform:none!important;
-            background:#f7f8fb!important;
-          }
-          body #view-resumes .glueful-resumes-reference-shell{
-            width:100%!important;max-width:none!important;min-width:0!important;
-            margin:0!important;padding:0!important;box-sizing:border-box!important;
-          }
-        }
-        @media(min-width:768px) and (max-width:1279px){
-          body #view-resumes{margin-left:260px!important;width:calc(100vw - 260px)!important;box-sizing:border-box!important;padding:20px 26px 40px!important;background:#f7f8fb!important;}
-          body #view-resumes .glueful-resumes-reference-shell{width:100%!important;max-width:none!important;min-width:0!important;margin:0!important;}
-        }
-        @media(max-width:767px){
-          body #view-resumes{width:100%!important;margin:0!important;padding:18px!important;box-sizing:border-box!important;background:#f7f8fb!important;}
-          body #view-resumes .glueful-resumes-reference-shell{width:100%!important;min-width:0!important;max-width:none!important;margin:0!important;}
-        }
-      `;
-      (document.head||document.documentElement).appendChild(style);
-    }catch(error){console.warn('[Glueful] Resume window alignment unavailable:',error);}
   })();
 
   (function disableLegacySplash(){
