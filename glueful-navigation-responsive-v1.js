@@ -1,15 +1,15 @@
-/* Glueful — Navigation Responsive V2
- * Keeps drawer taps visually immediate and guarantees that only the
- * requested top-level application view is visible at any time.
+/* Glueful — Navigation Responsive V3
+ * Resume routing repair only: the real Resume window is #view-resumes.
+ * Every non-resume route is unchanged.
  */
 (function () {
   'use strict';
-  if (window.__GLUEFUL_NAVIGATION_RESPONSIVE_V2__) return;
-  window.__GLUEFUL_NAVIGATION_RESPONSIVE_V2__ = true;
+  if (window.__GLUEFUL_NAVIGATION_RESPONSIVE_V3__) return;
+  window.__GLUEFUL_NAVIGATION_RESPONSIVE_V3__ = true;
 
   const VIEW_IDS = [
     'view-dashboard','view-applications','view-interviews','view-profile',
-    'view-saved-jobs','view-settings','view-jobs','view-resume',
+    'view-saved-jobs','view-settings','view-jobs','view-resumes',
     'view-add-application','view-gmail'
   ];
 
@@ -19,7 +19,7 @@
     interviews:'view-interviews', interview:'view-interviews',
     profile:'view-profile', settings:'view-settings',
     jobs:'view-jobs', 'saved-jobs':'view-saved-jobs', savedjobs:'view-saved-jobs',
-    resume:'view-resume', resumes:'view-resume',
+    resume:'view-resumes', resumes:'view-resumes',
     'add-application':'view-add-application', addapplication:'view-add-application',
     gmail:'view-gmail'
   };
