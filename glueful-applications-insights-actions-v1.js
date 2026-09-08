@@ -1,132 +1,33 @@
-/* Glueful — Applications Insights & Actions V1
- * Data layer for the existing Applications utility rail.
- * Reads the authenticated user's applications and updates the existing UI
- * without replacing the visual layout or creating a second presentation layer.
- */
+/* Glueful — Applications Insights & Actions V2 */
 (function(){
-  'use strict';
-  if(window.__GLUEFUL_APPLICATIONS_INSIGHTS_ACTIONS_V1__) return;
-  window.__GLUEFUL_APPLICATIONS_INSIGHTS_ACTIONS_V1__=true;
-
-  const VIEW='view-applications';
-  const RAIL='glueful-applications-clean-v6-rail';
-  let monthMode='month';
-  let rows=[];
-
-  function view(){return document.getElementById(VIEW)}
-  function active(){const v=view();return !!v&&(v.classList.contains('active')||v.style.display==='block')}
-  function dateOf(r){
-    const keys=['applied_date','appliedDate','application_date','applicationDate','created_at','createdAt'];
-    for(const k of keys){const v=r&&r[k];if(v){const d=new Date(v);if(!isNaN(d))return d}}
-    return null;
-  }
-  function pickDate(r,keys){
-    for(const k of keys){const v=r&&r[k];if(v){const d=new Date(v);if(!isNaN(d))return d}}
-    return null;
-  }
-  function norm(s){return String(s||'').trim().toLowerCase().replace(/[_-]+/g,' ')}
-  function status(r){return norm(r&&(r.status||r.application_status||r.applicationStatus))}
-  function inPeriod(d,mode){
-    if(!d)return false;
-    const now=new Date();
-    if(mode==='all')return true;
-    if(mode==='year')return d.getFullYear()===now.getFullYear();
-    return d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth();
-  }
-  function countPeriod(){
-    const period=rows.filter(r=>inPeriod(dateOf(r),monthMode));
-    const c={total:period.length,applied:0,interview:0,offer:0,rejected:0};
-    period.forEach(r=>{
-      const s=status(r);
-      if(['applied','submitted','application sent'].includes(s))c.applied++;
-      else if(s==='interview'||s==='interviewing')c.interview++;
-      else if(s==='offer'||s==='offered')c.offer++;
-      else if(s==='rejected'||s==='declined')c.rejected++;
-      else if(s==='screening'||s==='assessment')c.applied++;
-    });
-    return c;
-  }
-  function fmt(d){return d.toLocaleDateString(undefined,{month:'short',day:'numeric'})}
-  function company(r){return r.company||r.company_name||r.companyName||r.employer||'Application'}
-  function role(r){return r.role||r.job_title||r.jobTitle||r.position||r.title||''}
-
-  async function fetchRows(){
-    try{
-      const sb=window.supabaseClient;
-      if(!sb?.auth)return [];
-      const session=await sb.auth.getSession();
-      if(!session?.data?.session?.user)return [];
-      const result=await sb.from('applications').select('*');
-      return result.error||!Array.isArray(result.data)?[]:result.data;
-    }catch(_){return []}
-  }
-
-  function renderInsights(){
-    const rail=document.getElementById(RAIL);if(!rail)return;
-    const card=rail.querySelector('.insights');if(!card)return;
-    const c=countPeriod();
-    const total=c.total;
-    const donut=card.querySelector('.donut strong');if(donut)donut.textContent=total;
-    const vals=card.querySelectorAll('.legend b');
-    if(vals[0])vals[0].textContent=c.applied;
-    if(vals[1])vals[1].textContent=c.interview;
-    if(vals[2])vals[2].textContent=c.offer;
-    if(vals[3])vals[3].textContent=c.rejected;
-    const month=card.querySelector('.month');
-    if(month){month.textContent=monthMode==='all'?'All Time':monthMode==='year'?'This Year':'This Month';month.setAttribute('aria-label','Change insight period')}
-    const denom=Math.max(total,1);
-    const appliedDeg=Math.round(c.applied/denom*360);
-    const interviewDeg=Math.round(c.interview/denom*360);
-    const offerDeg=Math.round(c.offer/denom*360);
-    const stop1=appliedDeg,stop2=stop1+interviewDeg,stop3=stop2+offerDeg;
-    const donutEl=card.querySelector('.donut');
-    if(donutEl)donutEl.style.background=`conic-gradient(#6841ee 0 ${stop1}deg,#356ef6 ${stop1}deg ${stop2}deg,#15c48a ${stop2}deg ${stop3}deg,#ef4b58 ${stop3}deg 360deg)`;
-  }
-
-  function renderActions(){
-    const rail=document.getElementById(RAIL);if(!rail)return;
-    const card=rail.querySelector('.upcoming');if(!card)return;
-    const now=new Date();
-    const interviewKeys=['interview_date','interviewDate','interview_at','interviewAt','scheduled_interview_at','scheduledInterviewAt'];
-    const followKeys=['follow_up_date','followUpDate','followup_date','followupDate','next_action_date','nextActionDate','next_follow_up','nextFollowUp'];
-    const interviews=rows.map(r=>({r,d:pickDate(r,interviewKeys)})).filter(x=>x.d&&x.d>=now&&['interview','interviewing'].includes(status(x.r))).sort((a,b)=>a.d-b.d);
-    const followups=rows.map(r=>({r,d:pickDate(r,followKeys)})).filter(x=>x.d&&!['rejected','offer','offered','declined'].includes(status(x.r))).sort((a,b)=>a.d-b.d);
-    const actions=card.querySelectorAll('.action');
-    const i=actions[0],f=actions[1];
-    if(i){
-      const b=i.querySelector('b'),s=i.querySelector('small');
-      if(interviews.length){const x=interviews[0];if(b)b.textContent=`Interview — ${company(x.r)}`;if(s)s.textContent=`${fmt(x.d)}${role(x.r)?' · '+role(x.r):''}`;i.dataset.applicationId=x.r.id||''}
-      else{if(b)b.textContent='No upcoming interviews';if(s)s.textContent="You're all caught up! 🎉";i.dataset.applicationId=''}
-    }
-    if(f){
-      const b=f.querySelector('b'),s=f.querySelector('small');
-      if(followups.length){const x=followups[0];if(b)b.textContent='Follow-ups';if(s)s.textContent=`${followups.length} application${followups.length===1?'':'s'} need${followups.length===1?'s':''} attention · next ${fmt(x.d)}`}
-      else{if(b)b.textContent='Follow-ups';if(s)s.textContent='No follow-ups due'}
-    }
-    const link=card.querySelector('.link');
-    if(link){link.onclick=function(e){e.preventDefault();const cal=[...document.querySelectorAll('button,a,[role="button"]')].find(el=>/calendar/i.test((el.textContent||'').trim()));if(cal&&cal!==link)cal.click();else if(window.drawerNavigate)window.drawerNavigate('interviews')}}
-  }
-
-  function setupPeriodMenu(){
-    const rail=document.getElementById(RAIL);const button=rail?.querySelector('.month');if(!button||button.dataset.gfBound)return;
-    button.dataset.gfBound='1';
-    button.addEventListener('click',function(e){
-      e.preventDefault();
-      monthMode=monthMode==='month'?'year':monthMode==='year'?'all':'month';
-      renderInsights();
-    });
-  }
-
-  async function sync(){
-    if(!active())return;
-    rows=await fetchRows();
-    if(!active())return;
-    renderInsights();renderActions();setupPeriodMenu();
-  }
-  function start(){
-    if(active())sync();
-    window.addEventListener('glueful-initial-view-ready',function(e){if(e.detail?.view===VIEW)sync()});
-    window.addEventListener('glueful-applications-refresh',sync);
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+'use strict';
+if(window.__GLUEFUL_APPLICATIONS_INSIGHTS_ACTIONS_V2__)return;
+window.__GLUEFUL_APPLICATIONS_INSIGHTS_ACTIONS_V2__=true;
+const VIEW='view-applications',RAIL='glueful-applications-clean-v6-rail';
+let mode='month',rows=[];
+const modes={today:'Today',week:'This Week',month:'This Month',year:'This Year'};
+function view(){return document.getElementById(VIEW)}
+function active(){const v=view();return !!v&&(v.classList.contains('active')||v.style.display==='block')}
+function dateOf(r){for(const k of ['applied_date','appliedDate','application_date','applicationDate','created_at','createdAt']){const d=r?.[k]?new Date(r[k]):null;if(d&&!isNaN(d))return d}return null}
+function pick(r,ks){for(const k of ks){const d=r?.[k]?new Date(r[k]):null;if(d&&!isNaN(d))return d}return null}
+function norm(s){return String(s||'').trim().toLowerCase().replace(/[_-]+/g,' ')}
+function status(r){return norm(r?.status||r?.application_status||r?.applicationStatus)}
+function inPeriod(d,m){
+ if(!d)return false;const n=new Date();
+ if(m==='today')return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate();
+ if(m==='week'){const day=(n.getDay()+6)%7;const start=new Date(n);start.setHours(0,0,0,0);start.setDate(n.getDate()-day);const end=new Date(start);end.setDate(start.getDate()+7);return d>=start&&d<end}
+ if(m==='year')return d.getFullYear()===n.getFullYear();
+ return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth();
+}
+function counts(){const a=rows.filter(r=>inPeriod(dateOf(r),mode));const c={total:a.length,applied:0,interview:0,offer:0,rejected:0};a.forEach(r=>{const s=status(r);if(['applied','submitted','application sent','screening','assessment'].includes(s))c.applied++;else if(['interview','interviewing'].includes(s))c.interview++;else if(['offer','offered'].includes(s))c.offer++;else if(['rejected','declined'].includes(s))c.rejected++});return c}
+function fmt(d){return d.toLocaleDateString(undefined,{month:'short',day:'numeric'})}
+function company(r){return r?.company||r?.company_name||r?.companyName||r?.employer||'Application'}
+function role(r){return r?.role||r?.job_title||r?.jobTitle||r?.position||r?.title||''}
+async function fetchRows(){try{const sb=window.supabaseClient;if(!sb?.auth)return[];const s=await sb.auth.getSession();if(!s?.data?.session?.user)return[];const r=await sb.from('applications').select('*');return r.error||!Array.isArray(r.data)?[]:r.data}catch(_){return[]}}
+function render(){const rail=document.getElementById(RAIL);if(!rail)return;const card=rail.querySelector('.insights');if(card){const c=counts(),d=card.querySelector('.donut strong'),v=card.querySelectorAll('.legend b'),sel=card.querySelector('.month');if(d)d.textContent=c.total;if(v[0])v[0].textContent=c.applied;if(v[1])v[1].textContent=c.interview;if(v[2])v[2].textContent=c.offer;if(v[3])v[3].textContent=c.rejected;if(sel)sel.value=mode;const t=Math.max(c.total,1),a=c.applied/t*360,i=c.interview/t*360,o=c.offer/t*360,el=card.querySelector('.donut');if(el)el.style.background=`conic-gradient(#6841ee 0 ${a}deg,#356ef6 ${a}deg ${a+i}deg,#15c48a ${a+i}deg ${a+i+o}deg,#ef4b58 ${a+i+o}deg 360deg)`}}
+ const card=rail.querySelector('.upcoming');if(card){const now=new Date(),ik=['interview_date','interviewDate','interview_at','interviewAt','scheduled_interview_at','scheduledInterviewAt'],fk=['follow_up_date','followUpDate','followup_date','followupDate','next_action_date','nextActionDate','next_follow_up','nextFollowUp'];const ints=rows.map(r=>({r,d:pick(r,ik)})).filter(x=>x.d&&x.d>=now&&['interview','interviewing'].includes(status(x.r))).sort((a,b)=>a.d-b.d),fus=rows.map(r=>({r,d:pick(r,fk)})).filter(x=>x.d&&!['rejected','offer','offered','declined'].includes(status(x.r))).sort((a,b)=>a.d-b.d),as=card.querySelectorAll('.action');if(as[0]){const b=as[0].querySelector('b'),s=as[0].querySelector('small');if(ints[0]){b.textContent=`Interview — ${company(ints[0].r)}`;s.textContent=`${fmt(ints[0].d)}${role(ints[0].r)?' · '+role(ints[0].r):''}`}else{b.textContent='No upcoming interviews';s.textContent="You're all caught up! 🎉"}}if(as[1]){const b=as[1].querySelector('b'),s=as[1].querySelector('small');if(fus.length){b.textContent='Follow-ups';s.textContent=`${fus.length} application${fus.length===1?'':'s'} need${fus.length===1?'s':''} attention · next ${fmt(fus[0].d)}`}else{s.textContent='No follow-ups due'}}}}
+function setup(){const rail=document.getElementById(RAIL);if(!rail)return;const card=rail.querySelector('.insights');if(card&&!card.dataset.v2Bound){const old=card.querySelector('.month');if(old){const sel=document.createElement('select');sel.className='month';sel.setAttribute('aria-label','Application insight period');Object.entries(modes).forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;sel.appendChild(o)});old.replaceWith(sel);sel.value=mode;sel.addEventListener('change',()=>{mode=sel.value;render()})}card.dataset.v2Bound='1'}if(!rail.dataset.actionsV2){rail.dataset.actionsV2='1';rail.addEventListener('click',e=>{const b=e.target.closest('.quick button,.upcoming .link');if(!b)return;e.preventDefault();const text=(b.textContent||'').replace(/\s+/g,' ');const all=[...document.querySelectorAll('button,a,[role="button"]')];if(/view all/i.test(text)){if(window.drawerNavigate)window.drawerNavigate('interviews');return}let target=null;if(/add new application/i.test(text))target=all.find(x=>x!==b&&/add\s+(new\s+)?application/i.test(x.textContent||''));else if(/resume/i.test(text))target=all.find(x=>x!==b&&/import.*resume|resume/i.test(x.textContent||''));else if(/calendar/i.test(text))target=all.find(x=>x!==b&&/calendar/i.test(x.textContent||''));else if(/export/i.test(text))target=all.find(x=>x!==b&&/export.*application/i.test(x.textContent||''));if(target)target.click();else if(/export/i.test(text)){const keys=[...new Set(rows.flatMap(r=>Object.keys(r)))];const csv=[keys,...rows.map(r=>keys.map(k=>`"${String(r[k]??'').replace(/"/g,'""')}"`))].map(x=>x.join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='glueful-applications.csv';a.click();URL.revokeObjectURL(a.href)}})}}
+async function sync(){if(!active())return;rows=await fetchRows();if(!active())return;render();setup()}
+function start(){sync();window.addEventListener('glueful-initial-view-ready',e=>{if(e.detail?.view===VIEW)sync()});window.addEventListener('glueful-applications-refresh',sync)}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
