@@ -1,6 +1,7 @@
-/* Glueful — Feature Loader V11
+/* Glueful — Feature Loader V12
  * Loads the current feature set with one deployment freshness token.
  * Resume Studio uses the device-only V3 editor: no recent-resume history.
+ * Global shell/typography standard is loaded once at boot.
  */
 (function () {
   'use strict';
@@ -26,6 +27,6 @@
   function scheduleGroup(name){if(loaded[name]||loading[name]||scheduled[name])return;scheduled[name]=true;const run=function(){scheduled[name]=false;void loadGroup(name)};if(typeof requestAnimationFrame==='function')requestAnimationFrame(function(){setTimeout(run,0)});else setTimeout(run,0)}
   function sync(){if(isActive('view-dashboard'))scheduleGroup('dashboard');if(isActive('view-applications'))scheduleGroup('applications');if(isActive('view-interviews'))scheduleGroup('interviews');if(isActive('view-jobs')||document.getElementById('jobs-view')?.closest('.active'))scheduleGroup('jobs');if(isActive('view-resumes'))scheduleGroup('resume');if(isActive('view-gmail'))scheduleGroup('gmail');const orbit=document.getElementById('glueful-orbit-v2-root');if(orbit&&(orbit.classList.contains('open')||orbit.style.display==='block'))scheduleGroup('orbit')}
   window.gluefulLoadFeature=loadGroup;window.gluefulFeatureLoader={sync:sync,loaded:loaded,groups:Object.keys(GROUPS),buildId:BUILD_ID};
-  function boot(){scheduleGroup('orbit');scheduleGroup('gmail');void loadScript('./glueful-reference-design-v1.js?v=2').catch(function(error){console.warn('[Glueful] Shared reference design unavailable:',error)});sync();if(!document.body)return;new MutationObserver(function(mutations){for(const mutation of mutations){if(mutation.type==='childList'||(mutation.type==='attributes'&&mutation.attributeName==='class')){sync();break}}}).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']})}
+  function boot(){scheduleGroup('orbit');scheduleGroup('gmail');void loadScript('./glueful-reference-design-v1.js?v=2').catch(function(error){console.warn('[Glueful] Shared reference design unavailable:',error)});void loadScript('./glueful-global-shell-standard-v1.js?v=1').catch(function(error){console.warn('[Glueful] Global shell standard unavailable:',error)});sync();if(!document.body)return;new MutationObserver(function(mutations){for(const mutation of mutations){if(mutation.type==='childList'||(mutation.type==='attributes'&&mutation.attributeName==='class')){sync();break}}}).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']})}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
