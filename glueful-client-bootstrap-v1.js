@@ -12,6 +12,15 @@
   var BUILD_ID='20260908-current-1';
   window.__GLUEFUL_BUILD_ID__=BUILD_ID;
 
+  (function installStartupRuntimeGuard(){
+    try{
+      var script=document.createElement('script');
+      script.src='./glueful-current-runtime-guard-v1.js?v=1';
+      script.async=false;
+      (document.head||document.documentElement).appendChild(script);
+    }catch(error){console.warn('[Glueful] Runtime guard unavailable:',error);}
+  })();
+
   (function installBootGate(){
     try{
       document.documentElement.classList.add('glueful-booting');
