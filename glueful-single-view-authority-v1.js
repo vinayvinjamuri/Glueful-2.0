@@ -1,139 +1,76 @@
-/* Glueful — Single View Authority V1
- * Keeps exactly one top-level application view visible at a time.
- * Presentation/layout untouched: this only fixes view isolation.
+/* Glueful — Single View Navigation V2
+ * Minimal SPA view isolation. No animation, timers, polling, or MutationObserver.
+ * Navigation stays inside the existing document and switches views immediately.
  */
 (function(){
   'use strict';
-  if(window.__GLUEFUL_SINGLE_VIEW_AUTHORITY_V1__) return;
-  window.__GLUEFUL_SINGLE_VIEW_AUTHORITY_V1__=true;
+  if(window.__GLUEFUL_SINGLE_VIEW_AUTHORITY_V2__) return;
+  window.__GLUEFUL_SINGLE_VIEW_AUTHORITY_V2__=true;
 
-  const IDS=[
-    'view-dashboard','view-applications','view-interviews','view-profile',
-    'view-saved-jobs','view-settings','view-jobs','view-resumes',
-    'view-add-application','view-gmail'
-  ];
-  const MAP={
-    dashboard:'view-dashboard',home:'view-dashboard',
-    applications:'view-applications',application:'view-applications',
-    interviews:'view-interviews',interview:'view-interviews',
-    profile:'view-profile',settings:'view-settings',
-    jobs:'view-jobs','saved-jobs':'view-saved-jobs',savedjobs:'view-saved-jobs',
-    resume:'view-resumes',resumes:'view-resumes',
-    'add-application':'view-add-application',addapplication:'view-add-application',
-    gmail:'view-gmail'
-  };
-  let currentId=null;
+  const IDS=['view-dashboard','view-applications','view-interviews','view-profile','view-saved-jobs','view-settings','view-jobs','view-resumes','view-add-application','view-gmail'];
+  const MAP={dashboard:'view-dashboard',home:'view-dashboard',applications:'view-applications',application:'view-applications',interviews:'view-interviews',interview:'view-interviews',profile:'view-profile',settings:'view-settings',jobs:'view-jobs','saved-jobs':'view-saved-jobs',savedjobs:'view-saved-jobs',resume:'view-resumes',resumes:'view-resumes','add-application':'view-add-application',addapplication:'view-add-application',gmail:'view-gmail'};
+  let currentId='view-dashboard';
 
   function normalize(value){
     if(!value) return null;
-    let s=String(value).trim().replace(/^#/,'').toLowerCase();
-    if(IDS.indexOf(s)!==-1) return s;
-    return MAP[s]||null;
+    const s=String(value).trim().replace(/^#/,'').toLowerCase();
+    return IDS.indexOf(s)!==-1?s:(MAP[s]||null);
   }
 
   function targetFromElement(el){
     if(!el) return null;
-    const direct=normalize(el.getAttribute&&el.getAttribute('data-view'));
+    const direct=normalize(el.getAttribute('data-view'));
     if(direct) return direct;
-    const href=el.getAttribute&&el.getAttribute('href');
-    const fromHref=normalize(href);
-    if(fromHref) return fromHref;
-    const onclick=el.getAttribute&&el.getAttribute('onclick');
+    const href=normalize(el.getAttribute('href'));
+    if(href) return href;
+    const onclick=el.getAttribute('onclick');
     if(onclick){
-      const m=onclick.match(/(?:drawerNavigate|navigateTo|switchView)\s*\(\s*["']([^"']+)["']/i);
-      const fromClick=normalize(m&&m[1]);
-      if(fromClick) return fromClick;
+      const match=onclick.match(/(?:drawerNavigate|navigateTo|switchView)\s*\(\s*["']([^"']+)["']/i);
+      if(match) return normalize(match[1]);
     }
     return null;
-  }
-
-  function activeNavTarget(){
-    const roots=document.querySelectorAll('.sidebar,.side-nav,.app-sidebar,#glueful-drawer,nav');
-    for(const root of roots){
-      const items=root.querySelectorAll('[data-view],[href],[onclick]');
-      for(const item of items){
-        if(!item.classList.contains('active') && item.getAttribute('aria-current')!=='page' && item.getAttribute('aria-current')!=='true') continue;
-        const id=targetFromElement(item);
-        if(id) return id;
-      }
-    }
-    return null;
-  }
-
-  function activeViewTarget(){
-    for(const id of IDS){
-      const el=document.getElementById(id);
-      if(el && (el.classList.contains('active') || el.getAttribute('aria-hidden')==='false')) return id;
-    }
-    return null;
-  }
-
-  function installStyle(){
-    if(document.getElementById('glueful-single-view-authority-style')) return;
-    const s=document.createElement('style');
-    s.id='glueful-single-view-authority-style';
-    s.textContent=IDS.map(function(id){return 'body #'+id+'{display:none!important;}'}).join('')+
-      IDS.map(function(id){return 'body #'+id+'.glueful-single-view-visible{display:block!important;}'}).join('');
-    (document.head||document.documentElement).appendChild(s);
   }
 
   function sync(id){
-    const target=normalize(id)||activeNavTarget()||activeViewTarget()||currentId||'view-dashboard';
+    const target=normalize(id)||currentId;
     if(!document.getElementById(target)) return;
     currentId=target;
     IDS.forEach(function(viewId){
       const el=document.getElementById(viewId);
-      if(!el) return;
-      if(viewId===target) el.classList.add('glueful-single-view-visible');
-      else el.classList.remove('glueful-single-view-visible');
+      if(el) el.classList.toggle('glueful-single-view-visible',viewId===target);
     });
-  }
-
-  function wrapNavigation(){
-    const original=window.drawerNavigate;
-    if(typeof original!=='function') return false;
-    if(original.__gluefulSingleViewWrapped) return true;
-    function wrapped(view){
-      const requested=normalize(view);
-      if(requested) sync(requested);
-      const result=original.apply(this,arguments);
-      if(requested){
-        sync(requested);
-        setTimeout(function(){sync(requested);},0);
-        setTimeout(function(){sync(requested);},120);
-      }else{
-        setTimeout(function(){sync();},0);
-      }
-      return result;
-    }
-    wrapped.__gluefulSingleViewWrapped=true;
-    wrapped.__gluefulOriginal=original;
-    window.drawerNavigate=wrapped;
-    return true;
   }
 
   function install(){
-    installStyle();
-    sync(activeNavTarget()||activeViewTarget()||'view-dashboard');
-    wrapNavigation();
+    if(!document.getElementById('glueful-single-view-navigation-style')){
+      const style=document.createElement('style');
+      style.id='glueful-single-view-navigation-style';
+      style.textContent=IDS.map(function(id){return 'body #'+id+'{display:none!important;}'}).join('')+IDS.map(function(id){return 'body #'+id+'.glueful-single-view-visible{display:block!important;}'}).join('');
+      (document.head||document.documentElement).appendChild(style);
+    }
+    sync(currentId);
+
     document.addEventListener('click',function(event){
-      const item=event.target&&event.target.closest ? event.target.closest('.sidebar [data-view],.sidebar [href],.sidebar [onclick],.side-nav [data-view],.side-nav [href],.side-nav [onclick],.app-sidebar [data-view],.app-sidebar [href],.app-sidebar [onclick],#glueful-drawer [data-view],#glueful-drawer [href],#glueful-drawer [onclick],nav [data-view],nav [href],nav [onclick]') : null;
-      const id=targetFromElement(item);
-      if(id) sync(id);
+      const item=event.target&&event.target.closest?event.target.closest('.sidebar [data-view],.sidebar [href],.sidebar [onclick],.side-nav [data-view],.side-nav [href],.side-nav [onclick],.app-sidebar [data-view],.app-sidebar [href],.app-sidebar [onclick],#glueful-drawer [data-view],#glueful-drawer [href],#glueful-drawer [onclick],nav [data-view],nav [href],nav [onclick]'):null;
+      const target=targetFromElement(item);
+      if(!target) return;
+      if(item.getAttribute('href')&&normalize(item.getAttribute('href'))) event.preventDefault();
+      sync(target);
     },true);
-    let tries=0;
-    const retry=setInterval(function(){
-      if(wrapNavigation() || ++tries>80) clearInterval(retry);
-    },50);
-    const observer=new MutationObserver(function(mutations){
-      for(const mutation of mutations){
-        if(mutation.type==='childList'){
-          sync();
-          break;
-        }
+
+    const original=window.drawerNavigate;
+    if(typeof original==='function'&&!original.__gluefulSingleViewWrapped){
+      function drawerNavigation(view){
+        const target=normalize(view);
+        if(target) sync(target);
+        const result=original.apply(this,arguments);
+        if(target) sync(target);
+        return result;
       }
-    });
-    if(document.body) observer.observe(document.body,{childList:true,subtree:true});
+      drawerNavigation.__gluefulSingleViewWrapped=true;
+      drawerNavigation.__gluefulOriginal=original;
+      window.drawerNavigate=drawerNavigation;
+    }
   }
 
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',install,{once:true});
