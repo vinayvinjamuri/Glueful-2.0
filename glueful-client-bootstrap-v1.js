@@ -1,11 +1,16 @@
 /* Glueful — Client Bootstrap V1
  * Runtime bootstrap. The legacy UI never paints before the active feature group is ready.
- * V3 freshness bump for the resume-window-only repair.
+ * Current-runtime freshness: every startup asset is fetched with a unique build id.
  */
 (function(){
   'use strict';
   if(window.__GLUEFUL_CLIENT_BOOTSTRAP_V1__) return;
   window.__GLUEFUL_CLIENT_BOOTSTRAP_V1__ = true;
+
+  /* One deployment id for the entire browser session. Change this on every
+   * source deployment so the browser can never reuse an older Glueful asset. */
+  var BUILD_ID='20260908-current-1';
+  window.__GLUEFUL_BUILD_ID__=BUILD_ID;
 
   (function installBootGate(){
     try{
@@ -110,10 +115,14 @@
     }catch(error){console.warn('[Glueful] Legacy splash removal unavailable:',error);}
   })();
 
-  function load(src){return new Promise(function(resolve,reject){var s=document.createElement('script');s.src=src;s.async=false;s.onload=resolve;s.onerror=reject;(document.head||document.documentElement).appendChild(s);});}
+  function fresh(src){
+    var sep=src.indexOf('?')>=0?'&':'?';
+    return src+sep+'glueful_build='+encodeURIComponent(BUILD_ID);
+  }
+  function load(src){return new Promise(function(resolve,reject){var s=document.createElement('script');s.src=fresh(src);s.async=false;s.onload=resolve;s.onerror=reject;(document.head||document.documentElement).appendChild(s);});}
   async function boot(){
     try{
-      if('serviceWorker' in navigator){try{await navigator.serviceWorker.register('./sw.js?v=160',{updateViaCache:'none'});}catch(error){console.warn('[Glueful] Service Worker unavailable:',error);}}
+      if('serviceWorker' in navigator){try{await navigator.serviceWorker.register(fresh('./sw.js'),{updateViaCache:'none'});}catch(error){console.warn('[Glueful] Service Worker unavailable:',error);}}
       try{await load('./glueful-desktop-tablet-sidebar-persist-v2.js?v=7');}catch(error){console.warn('[Glueful] Persistent sidebar layer unavailable:',error);}
       try{await load('./glueful-feature-loader-v1.js?v=187');}catch(error){console.warn('[Glueful] Feature loader unavailable:',error);}
       try{await load('./glueful-single-view-authority-v1.js?v=2');}catch(error){console.warn('[Glueful] Single-view authority unavailable:',error);}

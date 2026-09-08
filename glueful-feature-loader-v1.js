@@ -1,11 +1,13 @@
-/* Glueful — Feature Loader V8
- * Resume group follows the actual #view-resumes DOM id.
- * No other feature group behavior is changed.
+/* Glueful — Feature Loader V9
+ * Loads the current feature set and applies one deployment freshness token
+ * to every asset. Feature behavior/order is unchanged; stale browser copies
+ * cannot satisfy a startup request while the network is available.
  */
 (function () {
   'use strict';
   if (window.__GLUEFUL_FEATURE_LOADER_V1__) return;
   window.__GLUEFUL_FEATURE_LOADER_V1__ = true;
+  const BUILD_ID=window.__GLUEFUL_BUILD_ID__||'20260908-current-1';
   const GROUPS = {
     dashboard: [
       './glueful-navigation-responsive-v1.js?v=2','./glueful-profile-instant-open-v1.js','./glueful-dashboard-fixed-v1.js','./glueful-dashboard-header-fix-v1.js','./glueful-dashboard-hamburger-v2.js','./glueful-dashboard-approved-v1.js','./glueful-dashboard-job-network-removal-v1.js','./glueful-dashboard-apple-v1.js','./glueful-dashboard-apple-layout-v1.js?v=2','./glueful-dashboard-reference-step1-v1.js?v=1','./glueful-dashboard-reference-step2-v1.js?v=1','./glueful-dashboard-reference-step3-v1.js?v=1','./glueful-dashboard-reference-step4-v1.js?v=1','./glueful-dashboard-reference-step5-v1.js?v=2','./glueful-dashboard-reference-step6-v1.js?v=1','./glueful-dashboard-reference-step7-v1.js?v=1','./glueful-dashboard-reference-step8-v1.js?v=1','./glueful-dashboard-reference-step9-v1.js?v=2','./glueful-dashboard-reference-step10-v1.js?v=1','./glueful-dashboard-mobile-reference-v1.js?v=2','./glueful-dashboard-mobile-header-polish-v1.js?v=1','./glueful-dashboard-desktop-header-polish-v1.js?v=1','./glueful-dashboard-desktop-spacing-v1.js?v=12','./glueful-dashboard-reference-final-polish-v1.js?v=2','./glueful-dashboard-layout-authoritative-v1.js?v=1','./glueful-reference-design-v1.js?v=2','./glueful-dashboard-reference-authoritative-v2.js?v=1','./glueful-dashboard-reference-authoritative-v3.js?v=2','./glueful-dashboard-desktop-typography-v1.js?v=1'
@@ -25,14 +27,15 @@
     gmail: ['./glueful-gmail-loader-v1.js']
   };
   const loaded=Object.create(null),loading=Object.create(null),scheduled=Object.create(null);
+  function fresh(src){const sep=src.indexOf('?')>=0?'&':'?';return src+sep+'glueful_build='+encodeURIComponent(BUILD_ID)}
   function yieldToBrowser(){return new Promise(function(resolve){if(typeof requestAnimationFrame==='function')requestAnimationFrame(function(){setTimeout(resolve,0)});else setTimeout(resolve,0)})}
-  function loadScript(src){return new Promise(function(resolve,reject){const existing=document.querySelector('script[data-glueful-feature-src="'+src+'"]');if(existing){resolve();return}const script=document.createElement('script');script.src=src;script.async=false;script.dataset.gluefulFeatureSrc=src;script.onload=resolve;script.onerror=function(){reject(new Error('Failed to load '+src))};document.body.appendChild(script)})}
+  function loadScript(src){return new Promise(function(resolve,reject){const existing=document.querySelector('script[data-glueful-feature-src="'+src+'"]');if(existing){resolve();return}const script=document.createElement('script');script.src=fresh(src);script.async=false;script.dataset.gluefulFeatureSrc=src;script.onload=resolve;script.onerror=function(){reject(new Error('Failed to load '+src))};document.body.appendChild(script)})}
   function initialViewForGroup(name){return {dashboard:'view-dashboard',applications:'view-applications',jobs:'view-jobs',resume:'view-resumes',gmail:'view-gmail'}[name]||null}
   function isActive(id){const e=document.getElementById(id);return !!e&&(e.classList.contains('active')||e.style.display==='block'||e.classList.contains('glueful-single-view-visible'))}
   async function loadGroup(name){if(loaded[name])return;if(loading[name])return loading[name];const files=GROUPS[name];if(!files)return;loading[name]=(async function(){for(const src of files){await yieldToBrowser();try{await loadScript(src)}catch(error){console.error('[Glueful] Feature load failed:',name,src,error)}}loaded[name]=true;const initialView=initialViewForGroup(name);if(initialView&&isActive(initialView))window.dispatchEvent(new CustomEvent('glueful-initial-view-ready',{detail:{group:name,view:initialView}}))})();return loading[name]}
   function scheduleGroup(name){if(loaded[name]||loading[name]||scheduled[name])return;scheduled[name]=true;const run=function(){scheduled[name]=false;void loadGroup(name)};if(typeof requestAnimationFrame==='function')requestAnimationFrame(function(){setTimeout(run,0)});else setTimeout(run,0)}
   function sync(){if(isActive('view-dashboard'))scheduleGroup('dashboard');if(isActive('view-applications'))scheduleGroup('applications');if(isActive('view-jobs')||document.getElementById('jobs-view')?.closest('.active'))scheduleGroup('jobs');if(isActive('view-resumes'))scheduleGroup('resume');if(isActive('view-gmail'))scheduleGroup('gmail');const orbit=document.getElementById('glueful-orbit-v2-root');if(orbit&&(orbit.classList.contains('open')||orbit.style.display==='block'))scheduleGroup('orbit')}
-  window.gluefulLoadFeature=loadGroup;window.gluefulFeatureLoader={sync:sync,loaded:loaded,groups:Object.keys(GROUPS)};
+  window.gluefulLoadFeature=loadGroup;window.gluefulFeatureLoader={sync:sync,loaded:loaded,groups:Object.keys(GROUPS),buildId:BUILD_ID};
   function boot(){scheduleGroup('orbit');scheduleGroup('gmail');void loadScript('./glueful-reference-design-v1.js?v=2').catch(function(error){console.warn('[Glueful] Shared reference design unavailable:',error)});sync();if(!document.body)return;new MutationObserver(function(mutations){for(const mutation of mutations){if(mutation.type==='childList'||(mutation.type==='attributes'&&mutation.attributeName==='class')){sync();break}}}).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']})}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',boot,{once:true}); else boot();
 })();

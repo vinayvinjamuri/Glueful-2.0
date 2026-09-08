@@ -1,7 +1,9 @@
-/* Glueful Service Worker V158
- * Hard freshness recovery for the current Glueful shell and all Glueful-owned assets.
+/* Glueful Service Worker V159
+ * Current-runtime freshness policy.
+ * Every same-origin GET is network-first so a newly deployed Glueful build
+ * cannot be replaced by an older cached shell or feature asset.
  */
-const CACHE_NAME = "glueful-cache-v158-stable";
+const CACHE_NAME = "glueful-cache-v159-current";
 
 self.addEventListener("install", event => {
   event.waitUntil(self.skipWaiting());
@@ -18,19 +20,15 @@ self.addEventListener("activate", event => {
 });
 
 self.addEventListener("fetch", event => {
-  const url = new URL(event.request.url);
+  const request = event.request;
+  const url = new URL(request.url);
 
-  if (url.origin !== self.location.origin) return;
+  if (url.origin !== self.location.origin || request.method !== "GET") return;
 
-  // Never let an old cached shell/bootstrap win over the latest deployment.
-  if (
-    url.pathname.endsWith("/index.html") ||
-    url.pathname.endsWith("/glueful-client-bootstrap-v1.js") ||
-    (url.pathname.includes("/glueful-") && url.pathname.endsWith(".js"))
-  ) {
-    event.respondWith(
-      fetch(new Request(event.request, { cache: "no-store" }))
-        .catch(() => fetch(event.request))
-    );
-  }
+  // Online: always use the deployed files. Offline: use the current cache.
+  event.respondWith(
+    fetch(new Request(request, { cache: "no-store" }))
+      .then(response => response)
+      .catch(() => caches.match(request).then(cached => cached || Response.error()))
+  );
 });
