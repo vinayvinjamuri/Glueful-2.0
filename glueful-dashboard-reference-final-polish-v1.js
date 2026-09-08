@@ -27,24 +27,31 @@
           margin-bottom:24px!important;
         }
 
-        /* + Application sits directly beside the fixed profile control. */
+        /* Keep the two dashboard actions compact, equal-sized, and clearly separated. */
         body.glueful-apple-dashboard #view-dashboard #glueful-dashboard-header-actions{
           position:fixed!important;
-          top:23px!important;
+          top:25px!important;
           right:76px!important;
-          width:160px!important;
-          height:44px!important;
+          width:290px!important;
+          height:40px!important;
           margin:0!important;
           padding:0!important;
+          display:flex!important;
+          align-items:center!important;
+          justify-content:flex-end!important;
+          gap:10px!important;
           z-index:1000!important;
         }
+        body.glueful-apple-dashboard #view-dashboard #glueful-dashboard-header-actions #glueful-dashboard-gmail-sync,
         body.glueful-apple-dashboard #view-dashboard #glueful-dashboard-header-actions .glueful-approved-application{
-          width:160px!important;
-          min-width:160px!important;
-          max-width:160px!important;
-          height:44px!important;
-          min-height:44px!important;
+          width:140px!important;
+          min-width:140px!important;
+          max-width:140px!important;
+          height:40px!important;
+          min-height:40px!important;
+          max-height:40px!important;
           margin:0!important;
+          box-sizing:border-box!important;
         }
       }
     `;
