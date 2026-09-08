@@ -1,15 +1,15 @@
-/* Glueful — Navigation Responsive V3
- * Resume routing repair only: the real Resume window is #view-resumes.
- * Every non-resume route is unchanged.
+/* Glueful — Navigation Responsive V2
+ * Keeps drawer taps visually immediate and guarantees that only the
+ * requested top-level application view is visible at any time.
  */
 (function () {
   'use strict';
-  if (window.__GLUEFUL_NAVIGATION_RESPONSIVE_V3__) return;
-  window.__GLUEFUL_NAVIGATION_RESPONSIVE_V3__ = true;
+  if (window.__GLUEFUL_NAVIGATION_RESPONSIVE_V2__) return;
+  window.__GLUEFUL_NAVIGATION_RESPONSIVE_V2__ = true;
 
   const VIEW_IDS = [
     'view-dashboard','view-applications','view-interviews','view-profile',
-    'view-saved-jobs','view-settings','view-jobs','view-resumes',
+    'view-saved-jobs','view-settings','view-jobs','view-resume',
     'view-add-application','view-gmail'
   ];
 
@@ -19,7 +19,7 @@
     interviews:'view-interviews', interview:'view-interviews',
     profile:'view-profile', settings:'view-settings',
     jobs:'view-jobs', 'saved-jobs':'view-saved-jobs', savedjobs:'view-saved-jobs',
-    resume:'view-resumes', resumes:'view-resumes',
+    resume:'view-resume', resumes:'view-resume',
     'add-application':'view-add-application', addapplication:'view-add-application',
     gmail:'view-gmail'
   };
@@ -147,7 +147,6 @@
       window.drawerNavigate = responsiveDrawerNavigate;
     }
 
-    /* Keep the invariant even when the legacy router changes inline styles. */
     const observer = new MutationObserver(function () {
       if (currentView) syncView(currentView);
     });
@@ -160,7 +159,6 @@
       });
     }
 
-    /* Initial state: respect the currently active drawer item. */
     const active = document.querySelector(
       '.sidebar .active,.side-nav .active,.app-sidebar .active,#glueful-drawer .active,' +
       'nav .active,[aria-current="page"],[aria-current="true"]'
