@@ -25,7 +25,7 @@
     return null;
   }
   function norm(s){return String(s||'').trim().toLowerCase().replace(/[_-]+/g,' ')}
-  function status(r){return norm(r&& (r.status||r.application_status||r.applicationStatus))}
+  function status(r){return norm(r&&(r.status||r.application_status||r.applicationStatus))}
   function inPeriod(d,mode){
     if(!d)return false;
     const now=new Date();
@@ -46,7 +46,6 @@
     });
     return c;
   }
-  function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
   function fmt(d){return d.toLocaleDateString(undefined,{month:'short',day:'numeric'})}
   function company(r){return r.company||r.company_name||r.companyName||r.employer||'Application'}
   function role(r){return r.role||r.job_title||r.jobTitle||r.position||r.title||''}
@@ -73,8 +72,6 @@
     if(vals[1])vals[1].textContent=c.interview;
     if(vals[2])vals[2].textContent=c.offer;
     if(vals[3])vals[3].textContent=c.rejected;
-    const subtitle=card.querySelector('.head h3')?.nextElementSibling;
-    if(subtitle)subtitle.textContent=monthMode==='all'?'All time':monthMode==='year'?'This year':'This month';
     const month=card.querySelector('.month');
     if(month){month.textContent=monthMode==='all'?'All Time':monthMode==='year'?'This Year':'This Month';month.setAttribute('aria-label','Change insight period')}
     const denom=Math.max(total,1);
@@ -115,9 +112,8 @@
     button.dataset.gfBound='1';
     button.addEventListener('click',function(e){
       e.preventDefault();
-      const current=monthMode==='month'?'month':monthMode==='year'?'year':'all';
-      const next=current==='month'?'year':current==='year'?'all':'month';
-      monthMode=next;renderInsights();
+      monthMode=monthMode==='month'?'year':monthMode==='year'?'all':'month';
+      renderInsights();
     });
   }
 
@@ -129,11 +125,6 @@
   }
   function start(){
     if(active())sync();
-    document.addEventListener('click',function(e){
-      if(!active())return;
-      const target=e.target.closest('#glueful-applications-clean-v6-rail');
-      if(target&&!target.dataset.gfRefreshBound){target.dataset.gfRefreshBound='1';setupPeriodMenu()}
-    },true);
     window.addEventListener('glueful-initial-view-ready',function(e){if(e.detail?.view===VIEW)sync()});
     window.addEventListener('glueful-applications-refresh',sync);
   }
