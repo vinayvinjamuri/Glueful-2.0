@@ -108,7 +108,13 @@
         '#glueful-drawer [data-view],#glueful-drawer [href],#glueful-drawer [onclick],nav [data-view],nav [href],nav [onclick]'
       ) : null;
       const target = requestedView(item);
-      if (target) syncView(target);
+      if (target) {
+        // Glueful is a single-page app: internal view links must not
+        // trigger a document navigation/reload. Keep the current runtime
+        // alive and let the existing drawerNavigate handler switch views.
+        event.preventDefault();
+        syncView(target);
+      }
     }, true);
 
     const original = window.drawerNavigate;
