@@ -1,6 +1,6 @@
 /* Glueful — Client Bootstrap V1
  * Runtime bootstrap. The legacy UI never paints before the active feature group is ready.
- * V4 freshness bump for the resume-window-only alignment repair.
+ * V5 freshness bump for the Resume-window-only alignment repair.
  */
 (function(){
   'use strict';
@@ -99,7 +99,6 @@
     }catch(error){console.warn('[Glueful] Applications bootstrap layout unavailable:',error);}
   })();
 
-  /* Resume-window alignment only. No other view or sidebar selectors here. */
   (function installResumeWindowAlignment(){
     try{
       var style=document.createElement('style');
@@ -108,28 +107,19 @@
         @media(min-width:1280px){
           body #view-resumes{
             position:fixed!important;left:260px!important;right:0!important;top:0!important;bottom:0!important;
-            width:auto!important;height:100vh!important;min-height:100vh!important;margin:0!important;
+            width:calc(100vw - 260px)!important;height:100vh!important;min-height:100vh!important;margin:0!important;
             padding:20px 32px 48px!important;box-sizing:border-box!important;
             overflow-x:hidden!important;overflow-y:auto!important;transform:none!important;
             background:#f7f8fb!important;
           }
           body #view-resumes .glueful-resumes-reference-shell{
-            width:min(1080px,100%)!important;min-width:0!important;max-width:1080px!important;
-            margin:0 auto!important;padding-top:0!important;box-sizing:border-box!important;
-          }
-          body #view-resumes .glueful-resumes-reference-top{
-            width:100%!important;height:58px!important;margin:0 0 30px!important;box-sizing:border-box!important;
-          }
-          body #view-resumes .glueful-resumes-title-row{
-            width:100%!important;margin:0 0 22px!important;box-sizing:border-box!important;
-          }
-          body #view-resumes .glueful-resumes-card{
-            width:100%!important;margin:0!important;box-sizing:border-box!important;
+            width:100%!important;max-width:none!important;min-width:0!important;
+            margin:0!important;padding:0!important;box-sizing:border-box!important;
           }
         }
         @media(min-width:768px) and (max-width:1279px){
           body #view-resumes{margin-left:260px!important;width:calc(100vw - 260px)!important;box-sizing:border-box!important;padding:20px 26px 40px!important;background:#f7f8fb!important;}
-          body #view-resumes .glueful-resumes-reference-shell{width:100%!important;max-width:900px!important;min-width:0!important;margin:0 auto!important;}
+          body #view-resumes .glueful-resumes-reference-shell{width:100%!important;max-width:none!important;min-width:0!important;margin:0!important;}
         }
         @media(max-width:767px){
           body #view-resumes{width:100%!important;margin:0!important;padding:18px!important;box-sizing:border-box!important;background:#f7f8fb!important;}
