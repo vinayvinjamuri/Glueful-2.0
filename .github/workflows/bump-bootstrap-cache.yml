@@ -19,15 +19,19 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
+
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
-          old = './glueful-client-bootstrap-v1.js?v=150'
-          new = './glueful-client-bootstrap-v1.js?v=151'
-          if old in s:
-              s = s.replace(old, new, 1)
-              p.write_text(s, encoding='utf-8')
-          elif new not in s:
-              raise SystemExit('Expected bootstrap script reference was not found')
+          pattern = r'(\./glueful-client-bootstrap-v1\.js\?v=)(\d+)'
+          m = re.search(pattern, s)
+          if not m:
+              raise SystemExit('Bootstrap script reference was not found')
+          current = int(m.group(2))
+          new = current + 1
+          s = s[:m.start()] + m.group(1) + str(new) + s[m.end():]
+          p.write_text(s, encoding='utf-8')
+          print(f'Bumped bootstrap query v{current} -> v{new}')
           PY
 
       - name: Commit and push
