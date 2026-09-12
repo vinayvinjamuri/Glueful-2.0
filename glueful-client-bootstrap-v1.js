@@ -1,6 +1,6 @@
 /* Glueful — Client Bootstrap V1
  * Runtime bootstrap. The legacy UI never paints before the active feature group is ready.
- * Current-runtime freshness: every startup asset is fetched with a unique build id.
+ * App-wide flexible layout is loaded last as a presentation-only layer.
  */
 (function(){
   'use strict';
@@ -9,7 +9,7 @@
 
   /* One deployment id for the entire browser session. Change this on every
    * source deployment so the browser can never reuse an older Glueful asset. */
-  var BUILD_ID='20260908-current-1';
+  var BUILD_ID='20260912-flex-1';
   window.__GLUEFUL_BUILD_ID__=BUILD_ID;
 
   (function installStartupRuntimeGuard(){
@@ -34,10 +34,8 @@
     }catch(error){console.warn('[Glueful] Boot gate unavailable:',error);}
   })();
 
-  /* Applications desktop layout is installed here as a hard fallback so it
-   * cannot be blocked by any later feature script. It only targets the
-   * Applications view, so Dashboard and every other view remain untouched.
-   */
+  /* Applications desktop layout remains unchanged. This is intentionally
+   * isolated to Applications so the rest of the app keeps its current design. */
   (function installApplicationsLayout(){
     try{
       var style=document.createElement('style');
@@ -135,6 +133,7 @@
       try{await load('./glueful-desktop-tablet-sidebar-persist-v2.js?v=7');}catch(error){console.warn('[Glueful] Persistent sidebar layer unavailable:',error);}
       try{await load('./glueful-feature-loader-v1.js?v=187');}catch(error){console.warn('[Glueful] Feature loader unavailable:',error);}
       try{await load('./glueful-single-view-authority-v1.js?v=2');}catch(error){console.warn('[Glueful] Single-view authority unavailable:',error);}
+      try{await load('./glueful-flexible-layout-v1.js?v=1');}catch(error){console.warn('[Glueful] Flexible layout unavailable:',error);}
     }catch(error){console.warn('[Glueful] Client bootstrap failed:',error);}
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){void boot();},{once:true});else void boot();
