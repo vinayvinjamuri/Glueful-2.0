@@ -1,66 +1,19 @@
-/* Glueful — Resumes reference empty-state V2
- * Resume-window only. No non-resume presentation is changed while Resumes
- * is not active.
+/* Glueful — Resumes reference empty-state V3
+ * Strictly scoped to #view-resumes presentation. Never hides or alters another view.
  */
 (function(){
   'use strict';
   if(window.__GLUEFUL_RESUMES_REFERENCE_EMPTY_V1__) return;
   window.__GLUEFUL_RESUMES_REFERENCE_EMPTY_V1__=true;
 
-  function resumeWindowIsActive(view){
-    if(!view) return false;
-    if(view.classList.contains('active') || view.classList.contains('glueful-single-view-visible')) return true;
-    if(view.getAttribute('aria-hidden') === 'false' || view.style.display === 'block') return true;
-    const resumeNav=document.querySelector(
-      '.sidebar [data-view="resumes"],.sidebar [href="resumes"],' +
-      '.side-nav [data-view="resumes"],.side-nav [href="resumes"],' +
-      '.app-sidebar [data-view="resumes"],.app-sidebar [href="resumes"],' +
-      'nav [data-view="resumes"],nav [href="resumes"]'
-    );
-    return !!(resumeNav && (
-      resumeNav.classList.contains('active') ||
-      resumeNav.getAttribute('aria-current') === 'page' ||
-      resumeNav.getAttribute('aria-current') === 'true'
-    ));
-  }
-
-  function syncResumeWindowIsolation(view){
-    const active=resumeWindowIsActive(view);
-    document.documentElement.classList.toggle('glueful-resume-window-active',active);
-  }
-
   function boot(){
     const view=document.getElementById('view-resumes');
     if(!view) return;
-    syncResumeWindowIsolation(view);
-
     const styleId='glueful-resumes-reference-empty-style';
     if(!document.getElementById(styleId)){
       const style=document.createElement('style');
       style.id=styleId;
       style.textContent=`
-        /* Only while the Resumes window is active. Sidebar is never targeted. */
-        html.glueful-resume-window-active body #view-dashboard,
-        html.glueful-resume-window-active body #view-applications,
-        html.glueful-resume-window-active body #view-interviews,
-        html.glueful-resume-window-active body #view-profile,
-        html.glueful-resume-window-active body #view-saved-jobs,
-        html.glueful-resume-window-active body #view-settings,
-        html.glueful-resume-window-active body #view-jobs,
-        html.glueful-resume-window-active body #view-resume,
-        html.glueful-resume-window-active body #view-add-application,
-        html.glueful-resume-window-active body #view-gmail{
-          display:none!important;
-          visibility:hidden!important;
-          pointer-events:none!important;
-        }
-        html.glueful-resume-window-active body #view-resumes{
-          display:block!important;
-          visibility:visible!important;
-          opacity:1!important;
-          z-index:100!important;
-        }
-
         @media(min-width:1280px){
           body #view-resumes{
             position:fixed!important;
@@ -215,14 +168,3 @@
   setTimeout(boot,400);
   setTimeout(boot,1200);
 
-  const observer=new MutationObserver(function(){
-    const view=document.getElementById('view-resumes');
-    if(view) syncResumeWindowIsolation(view);
-  });
-  if(document.body) observer.observe(document.body,{
-    subtree:true,
-    childList:true,
-    attributes:true,
-    attributeFilter:['class','style','aria-hidden']
-  });
-})();
