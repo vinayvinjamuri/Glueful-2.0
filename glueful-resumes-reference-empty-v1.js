@@ -21,6 +21,8 @@
             width:auto!important;height:100vh!important;min-height:100vh!important;
             margin:0!important;padding:0 32px 48px!important;box-sizing:border-box!important;
             overflow-x:hidden!important;overflow-y:auto!important;
+            isolation:isolate!important;
+            z-index:2!important;
             background:#f7f8fb!important;color:#141826!important;
           }
           body #view-resumes .glueful-resumes-reference-shell{
